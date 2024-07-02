@@ -1,0 +1,43 @@
+{
+  "name": "@three.ez/instanced-mesh",
+  "version": "0.2.0",
+  "description": "InstancedMesh2 enhances three.js's InstancedMesh by simplifying instance management, including visibility control and transformations. It introduces frustum culling for each instance, improving performance.",
+  "author": "agargaro",
+  "license": "MIT",
+  "main": "bundle.js",
+  "types": "index.d.ts",
+  "homepage": "https://agargaro.github.io/three.ez",
+  "repository": "https://github.com/three-ez/instanced-mesh",
+  "keywords": [
+    "three",
+    "three.js",
+    "threejs",
+    "3d",
+    "InstancedMesh",
+    "frustum culling",
+    "instance management",
+    "sorting"
+  ],
+  "scripts": {
+    "publish-beta": "npm version prerelease --preid=beta --git-tag-version false && npx webpack && cd publish && npm publish --tag beta --access public",
+    "publish-patch": "npm version patch --git-tag-version false && npx webpack && cd publish && npm publish --access public",
+    "publish-minor": "npm version minor --git-tag-version false && npx webpack && cd publish && npm publish --access public",
+    "publish-major": "npm version major --git-tag-version false && npx webpack && cd publish && npm publish --access public",
+    "build": "npx webpack",
+    "start": "npx vite"
+  },
+  "devDependencies": {
+    "@three.ez/main": "^0.5.4",
+    "@types/three": "^0.166.0",
+    "copy-pkg-json-webpack-plugin": "^0.0.40",
+    "copy-webpack-plugin": "^11.0.0",
+    "ts-loader": "^9.4.4",
+    "typescript": "^5.2.2",
+    "vite": "^4.4.9",
+    "webpack": "^5.88.2",
+    "webpack-cli": "^5.1.4"
+  },
+  "peerDependencies": {
+    "three": "^0.166.0"
+  }
+}
