@@ -1,5 +1,4 @@
-import { Box3, BufferGeometry, Camera, DataTexture, DynamicDrawUsage, FloatType, Group, InstancedBufferAttribute, Material, Matrix4, Mesh, RGBAFormat, Scene, Sphere, WebGLProgramParametersWithUniforms, WebGLRenderer } from "three";
-import { WebGLTextures } from "three/src/renderers/webgl/WebGLTextures";
+import { Box3, BufferGeometry, Camera, DataTexture, DynamicDrawUsage, FloatType, Group, InstancedBufferAttribute, Intersection, Material, Matrix4, Mesh, RGBAFormat, Raycaster, RedFormat, Scene, Sphere, WebGLProgramParametersWithUniforms, WebGLRenderer } from "three";
 
 export class TBD<T = {}, G extends BufferGeometry = BufferGeometry, M extends Material | Material[] = Material> extends Mesh<G, M> {
   public isInstancedMesh2 = true; // settiiamo i default
@@ -9,6 +8,7 @@ export class TBD<T = {}, G extends BufferGeometry = BufferGeometry, M extends Ma
   public morphTexture: DataTexture = null;
   public boundingBox: Box3 = null;
   public boundingSphere: Sphere = null;
+  public instancesCount: number;
   protected _count: number;
   protected _maxCount: number;
   protected _material: M;
@@ -36,10 +36,11 @@ export class TBD<T = {}, G extends BufferGeometry = BufferGeometry, M extends Ma
   constructor(count: number, geometry?: G, material?: M) {
     super(geometry, material);
 
-    this._material = material;
+    this.frustumCulled = false;
+    this.instancesCount = count;
     this._maxCount = count;
     this._count = count;
-    this.frustumCulled = false;
+    this._material = material;
 
     this.initIndixes(undefined);
     this.initMatricesTexture();
@@ -48,11 +49,11 @@ export class TBD<T = {}, G extends BufferGeometry = BufferGeometry, M extends Ma
   protected initIndixes(renderer: WebGLRenderer): void {
     // const gl = renderer.getContext();
     // const buffer = gl.createBuffer();
-    const array = new Uint32Array(this.count);
+    const array = new Uint32Array(this._maxCount);
     // gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
     // gl.bufferData(gl.ARRAY_BUFFER, array, gl.STREAM_DRAW);
 
-    for (let i = 0; i < this.count; i++) {
+    for (let i = 0; i < this._maxCount; i++) {
       array[i] = i;
     }
 
@@ -63,7 +64,7 @@ export class TBD<T = {}, G extends BufferGeometry = BufferGeometry, M extends Ma
   }
 
   protected initMatricesTexture(): void {
-    let size = Math.sqrt(this.count * 4); // 4 pixels needed for 1 matrix
+    let size = Math.sqrt(this._maxCount * 4); // 4 pixels needed for 1 matrix
     size = Math.ceil(size / 4) * 4;
     size = Math.max(size, 4);
 
@@ -122,7 +123,7 @@ export class TBD<T = {}, G extends BufferGeometry = BufferGeometry, M extends Ma
 
   public computeBoundingBox(): void {
     const geometry = this.geometry;
-    const count = this.count;
+    const count = this._count;
 
     if (this.boundingBox === null) this.boundingBox = new Box3();
 
@@ -139,7 +140,7 @@ export class TBD<T = {}, G extends BufferGeometry = BufferGeometry, M extends Ma
 
   public computeBoundingSphere(): void {
     const geometry = this.geometry;
-    const count = this.count;
+    const count = this._count;
 
     if (this.boundingSphere === null) this.boundingSphere = new Sphere();
 
@@ -154,9 +155,78 @@ export class TBD<T = {}, G extends BufferGeometry = BufferGeometry, M extends Ma
     }
   }
 
+  public override copy(source: TBD, recursive?: boolean): this {
+    super.copy(source, recursive);
+
+    this.instanceIndex.copy(source.instanceIndex);
+    this.instanceTexture = source.instanceTexture.clone();
+
+    if (source.morphTexture !== null) this.morphTexture = source.morphTexture.clone();
+
+    //TODO copy uniform?
+
+    this.instancesCount = source.instancesCount;
+    this._count = source._maxCount;
+    this._maxCount = source._maxCount;
+
+    if (source.boundingBox !== null) this.boundingBox = source.boundingBox.clone();
+    if (source.boundingSphere !== null) this.boundingSphere = source.boundingSphere.clone();
+
+    return this;
+  }
+
+  public getMorphAt(index: number, object: Mesh): void {
+    const objectInfluences = object.morphTargetInfluences;
+    const array = this.morphTexture.source.data.data;
+    const len = objectInfluences.length + 1; // All influences + the baseInfluenceSum
+    const dataIndex = index * len + 1; // Skip the baseInfluenceSum at the beginning
+
+    for (let i = 0; i < objectInfluences.length; i++) {
+      objectInfluences[i] = array[dataIndex + i];
+    }
+  }
+
+  public setMorphAt(index: number, object: Mesh): void {
+    const objectInfluences = object.morphTargetInfluences;
+    const len = objectInfluences.length + 1; // morphBaseInfluence + all influences
+
+    if (this.morphTexture === null) {
+      this.morphTexture = new DataTexture(new Float32Array(len * this._maxCount), len, this._maxCount, RedFormat, FloatType);
+    }
+
+    const array = this.morphTexture.source.data.data;
+    let morphInfluencesSum = 0;
+
+    for (let i = 0; i < objectInfluences.length; i++) {
+      morphInfluencesSum += objectInfluences[i];
+    }
+
+    const morphBaseInfluence = this.geometry.morphTargetsRelative ? 1 : 1 - morphInfluencesSum;
+    const dataIndex = len * index;
+    array[dataIndex] = morphBaseInfluence;
+    array.set(objectInfluences, dataIndex + 1);
+  }
+
+  public dispose(): this {
+    // TODO
+    // this.dispatchEvent({ type: 'dispose' });
+
+    this.instanceTexture.dispose();
+
+    if (this.morphTexture !== null) {
+      this.morphTexture.dispose();
+      this.morphTexture = null;
+    }
+
+    return this;
+  }
+
+  public override raycast(raycaster: Raycaster, intersects: Intersection[]): void {
+    console.error("TO IMPLEMENT");
+  }
+
 }
 
 const _instanceLocalMatrix = new Matrix4();
 const _box3 = new Box3();
 const _sphere = new Sphere();
-let textures: WebGLTextures;
