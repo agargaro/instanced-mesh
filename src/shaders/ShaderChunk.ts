@@ -7,7 +7,7 @@ ShaderChunk["instanced_pars_vertex"] = instanced_pars_vertex;
 
 ShaderChunk.project_vertex = ShaderChunk.project_vertex.replace("#ifdef USE_INSTANCING", "#if defined USE_INSTANCING || defined USE_INSTANCING_INDIRECT");
 ShaderChunk.worldpos_vertex = ShaderChunk.worldpos_vertex.replace("#ifdef USE_INSTANCING", "#if defined USE_INSTANCING || defined USE_INSTANCING_INDIRECT");
-ShaderChunk.defaultnormal_vertex = ShaderChunk.worldpos_vertex.replace("#ifdef USE_INSTANCING", "#if defined USE_INSTANCING || defined USE_INSTANCING_INDIRECT");
+ShaderChunk.defaultnormal_vertex = ShaderChunk.defaultnormal_vertex.replace("#ifdef USE_INSTANCING", "#if defined USE_INSTANCING || defined USE_INSTANCING_INDIRECT");
 
 // examples/jsm/modifiers/CurveModifier.js
 // examples/jsm/postprocessing/OutlinePass.js
