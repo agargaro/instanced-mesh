@@ -29,7 +29,7 @@ export class InstancedEntity {
     return this.matrix.premultiply(this.owner.matrixWorld);
   }
 
-  constructor(owner: InstancedMesh2, index: number) {
+  constructor(owner: InstancedMesh2<any, any, any>, index: number) {
     this.id = index;
     this.owner = owner;
     this.position = new Vector3();

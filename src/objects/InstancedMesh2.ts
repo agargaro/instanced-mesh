@@ -1,4 +1,18 @@
 import { Box3, BufferGeometry, Camera, DataTexture, DynamicDrawUsage, FloatType, Group, InstancedBufferAttribute, Intersection, Material, Matrix4, Mesh, Object3DEventMap, RGBAFormat, Raycaster, RedFormat, Scene, Sphere, Vector3, WebGLProgramParametersWithUniforms, WebGLRenderer } from "three";
+import { InstancedEntity } from "./InstancedEntity";
+
+export type Entity<T> = InstancedEntity & T;
+export type CreateEntityCallback<T> = (obj: Entity<T>, index: number) => void;
+
+export interface InstancedMesh2Params<T, G extends BufferGeometry, M extends Material | Material[]> {
+  geometry?: G,
+  material?: M,
+  onInstanceCreation?: CreateEntityCallback<Entity<T>>;
+  // behaviour: CullingMode;
+  // verbose?: boolean;
+  // bvhParams?: BVHParams;
+  // createEntities?: boolean;
+}
 
 export class InstancedMesh2<
   TCustomData = {},
@@ -7,7 +21,9 @@ export class InstancedMesh2<
   TEventMap extends Object3DEventMap = Object3DEventMap
 > extends Mesh<TGeometry, TMaterial, TEventMap> {
 
-  public isInstancedMesh2 = true; // settiiamo i default
+  public override type = 'InstancedMesh2';
+  public isInstancedMesh2 = true;
+  public instances: Entity<TCustomData>[];
   public instanceIndex: InstancedBufferAttribute;
   // public instanceIndex: GLInstancedBufferAttribute;
   public instanceTexture: DataTexture;
@@ -15,7 +31,7 @@ export class InstancedMesh2<
   public boundingBox: Box3 = null;
   public boundingSphere: Sphere = null;
   public instancesCount: number;
-  protected _matrixArray: Uint8Array;
+  protected _matrixArray: Float32Array;
   protected _count: number;
   protected _maxCount: number;
   protected _material: TMaterial;
@@ -40,17 +56,21 @@ export class InstancedMesh2<
   }
 
   /** THIS MATERIAL AND GEOMETRY CANNOT BE SHARED */
-  constructor(count: number, geometry?: TGeometry, material?: TMaterial) {
-    super(geometry, material);
+  constructor(count: number, config: InstancedMesh2Params<TCustomData, TGeometry, TMaterial>) {
+    if (count === undefined) throw new Error("'count' is mandatory.");
+    if (config === undefined) throw new Error("'config' is mandatory.");
+
+    super(config.geometry, config.material);
 
     this.frustumCulled = false;
     this.instancesCount = count;
     this._maxCount = count;
     this._count = count;
-    this._material = material;
+    this._material = config.material;
 
     this.initIndixes(undefined);
     this.initMatricesTexture();
+    this.createInstances(config.onInstanceCreation);
   }
 
   protected initIndixes(renderer: WebGLRenderer): void {
@@ -77,7 +97,23 @@ export class InstancedMesh2<
 
     const matrixArray = new Float32Array(size * size * 4); // 4 floats per RGBA pixel
     this.instanceTexture = new DataTexture(matrixArray, size, size, RGBAFormat, FloatType);
-    this._matrixArray = this.instanceTexture.image.data as Uint8Array;
+    this._matrixArray = matrixArray;
+    this.instanceTexture.needsUpdate = true;
+  }
+
+  protected createInstances(onInstanceCreation: CreateEntityCallback<Entity<TCustomData>>): void {
+    const count = this._maxCount; // we can create only first N count
+    this.instances = new Array(count);
+
+    for (let i = 0; i < count; i++) {
+      const instance = new InstancedEntity(this, i) as Entity<TCustomData>;
+      this.instances[i] = instance;
+
+      if (onInstanceCreation) {
+        onInstanceCreation(instance, i);
+        instance.forceUpdateMatrix();
+      }
+    }
   }
 
   protected patchMaterials(material: TMaterial): void {

@@ -8,15 +8,12 @@ const camera = new PerspectiveCameraAuto(70).translateZ(10);
 const scene = new Scene();
 const count = 100;
 
-const instancedMesh = new InstancedMesh2(count, new BoxGeometry(1, 1, 1), new MeshBasicMaterial({ color: 'blue' }));
+const instancedMesh = new InstancedMesh2(count, {
+  geometry: new BoxGeometry(1, 1, 1),
+  material: new MeshBasicMaterial({ color: 'blue' }),
+  onInstanceCreation: (o) => o.position.randomDirection()
+});
+
 scene.add(instancedMesh)
-
-const dolly = new Object3D();
-
-for (let i = 0; i < count; i++) {
-  dolly.position.randomDirection();
-  dolly.updateMatrix();
-  instancedMesh.setMatrixAt(i, dolly.matrix);
-}
 
 main.createView({ scene, camera });
