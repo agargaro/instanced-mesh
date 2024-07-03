@@ -1,4 +1,4 @@
-import { Box3, BufferGeometry, Camera, DataTexture, DynamicDrawUsage, FloatType, Group, InstancedBufferAttribute, Intersection, Material, Matrix4, Mesh, Object3DEventMap, RGBAFormat, Raycaster, RedFormat, Scene, Sphere, Vector3, WebGLProgramParametersWithUniforms, WebGLRenderer } from "three";
+import { Box3, BufferGeometry, Camera, DataTexture, DynamicDrawUsage, FloatType, Frustum, Group, InstancedBufferAttribute, Intersection, Material, Matrix4, Mesh, Object3DEventMap, RGBAFormat, Raycaster, RedFormat, Scene, Sphere, Vector3, WebGLProgramParametersWithUniforms, WebGLRenderer } from "three";
 import { InstancedEntity } from "./InstancedEntity";
 
 export type Entity<T> = InstancedEntity & T;
@@ -264,7 +264,7 @@ export class InstancedMesh2<
   }
 
   public override raycast(raycaster: Raycaster, intersects: Intersection[]): void {
-    console.error("TO IMPLEMENT");
+    // console.error("TO IMPLEMENT");
   }
 
   /** @internal @LASTREV 166 Matrix4 */
@@ -301,8 +301,49 @@ export class InstancedMesh2<
     te[offset + 15] = 1;
   }
 
+  public updateCulling(camera: Camera): void {
+    _projScreenMatrix.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse)
+    _frustum.setFromProjectionMatrix(_projScreenMatrix);
+
+    if (!this.geometry.boundingSphere) this.computeBoundingSphere();
+    const radius = this.geometry.boundingSphere.radius;
+
+    this.cullingDynamicOrigin(radius);
+  }
+
+  // JUST TO TEST
+  private cullingDynamicOrigin(radius: number): void {
+    const instances = this.instances;
+    const array = this.instanceIndex.array;
+    let count = 0;
+
+    for (let i = 0, l = this.instancesCount; i < l; i++) {
+      const instance = instances[i];
+      if (!instance._visible) continue;
+
+      _sphere.center.copy(instance.position);
+      _sphere.radius = radius * this.getMax(instance.scale);
+
+      if (_frustum.intersectsSphere(_sphere)) {
+        array[count++] = i;
+      }
+    }
+
+    this._count = count;
+    this.instanceIndex.needsUpdate = true;
+    // avoid send same data?
+  }
+
+  // this is faster than Math.max(scale.x, scale.y, scale.z)
+  private getMax(scale: Vector3): number {
+    if (scale.x > scale.y) return scale.x > scale.z ? scale.x : scale.z;
+    return scale.y > scale.z ? scale.y : scale.z;
+  }
+
 }
 
 const _instanceLocalMatrix = new Matrix4();
 const _box3 = new Box3();
 const _sphere = new Sphere();
+const _frustum = new Frustum();
+const _projScreenMatrix = new Matrix4();

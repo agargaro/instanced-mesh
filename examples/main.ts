@@ -1,19 +1,24 @@
 import { Main, PerspectiveCameraAuto } from '@three.ez/main';
-import { BoxGeometry, MeshBasicMaterial, Object3D, Scene } from 'three';
+import { AmbientLight, MeshBasicMaterial, Scene, SphereGeometry, SpotLight } from 'three';
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { InstancedMesh2 } from '../src';
 
 const main = new Main();
 
 const camera = new PerspectiveCameraAuto(70).translateZ(10);
 const scene = new Scene();
-const count = 100;
 
-const instancedMesh = new InstancedMesh2(count, {
-  geometry: new BoxGeometry(1, 1, 1),
+const instancedMesh = new InstancedMesh2(100000, {
+  geometry: new SphereGeometry(0.5, 32, 16),
   material: new MeshBasicMaterial({ color: 'blue' }),
-  onInstanceCreation: (o) => o.position.randomDirection()
+  onInstanceCreation: (o) => o.position.randomDirection().multiplyScalar(Math.random() * 50000)
 });
 
-scene.add(instancedMesh)
+scene.add(instancedMesh, new AmbientLight(), new SpotLight('white', 1000));
 
-main.createView({ scene, camera });
+instancedMesh.on('animate', () => instancedMesh.updateCulling(camera));
+
+main.createView({ scene, camera, backgroundColor: 'white' });
+
+const controls = new OrbitControls(camera, main.renderer.domElement);
+scene.on(['pointerdown', 'pointerup', 'dragend'], (e) => (controls.enabled = e.type === 'pointerdown' ? e.target === scene : true));
