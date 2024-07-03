@@ -1,6 +1,12 @@
-import { Box3, BufferGeometry, Camera, DataTexture, DynamicDrawUsage, FloatType, Group, InstancedBufferAttribute, Intersection, Material, Matrix4, Mesh, RGBAFormat, Raycaster, RedFormat, Scene, Sphere, WebGLProgramParametersWithUniforms, WebGLRenderer } from "three";
+import { Box3, BufferGeometry, Camera, DataTexture, DynamicDrawUsage, FloatType, Group, InstancedBufferAttribute, Intersection, Material, Matrix4, Mesh, Object3DEventMap, RGBAFormat, Raycaster, RedFormat, Scene, Sphere, Vector3, WebGLProgramParametersWithUniforms, WebGLRenderer } from "three";
 
-export class TBD<T = {}, G extends BufferGeometry = BufferGeometry, M extends Material | Material[] = Material> extends Mesh<G, M> {
+export class InstancedMesh2<
+  TCustomData = {},
+  TGeometry extends BufferGeometry = BufferGeometry,
+  TMaterial extends Material | Material[] = Material,
+  TEventMap extends Object3DEventMap = Object3DEventMap
+> extends Mesh<TGeometry, TMaterial, TEventMap> {
+
   public isInstancedMesh2 = true; // settiiamo i default
   public instanceIndex: InstancedBufferAttribute;
   // public instanceIndex: GLInstancedBufferAttribute;
@@ -9,9 +15,10 @@ export class TBD<T = {}, G extends BufferGeometry = BufferGeometry, M extends Ma
   public boundingBox: Box3 = null;
   public boundingSphere: Sphere = null;
   public instancesCount: number;
+  protected _matrixArray: Uint8Array;
   protected _count: number;
   protected _maxCount: number;
-  protected _material: M;
+  protected _material: TMaterial;
 
   // HACK TO MAKE IT WORK WITHOUT UPDATE CORE
   private isInstancedMesh = true; // must be set to use instancing rendering
@@ -23,7 +30,7 @@ export class TBD<T = {}, G extends BufferGeometry = BufferGeometry, M extends Ma
 
   // @ts-ignore
   public override get material() { return this._material }
-  public override set material(value: M) {
+  public override set material(value: TMaterial) {
     this._material = value;
     this.patchMaterials(value);
   }
@@ -33,7 +40,7 @@ export class TBD<T = {}, G extends BufferGeometry = BufferGeometry, M extends Ma
   }
 
   /** THIS MATERIAL AND GEOMETRY CANNOT BE SHARED */
-  constructor(count: number, geometry?: G, material?: M) {
+  constructor(count: number, geometry?: TGeometry, material?: TMaterial) {
     super(geometry, material);
 
     this.frustumCulled = false;
@@ -68,11 +75,12 @@ export class TBD<T = {}, G extends BufferGeometry = BufferGeometry, M extends Ma
     size = Math.ceil(size / 4) * 4;
     size = Math.max(size, 4);
 
-    const matricesArray = new Float32Array(size * size * 4); // 4 floats per RGBA pixel
-    this.instanceTexture = new DataTexture(matricesArray, size, size, RGBAFormat, FloatType);
+    const matrixArray = new Float32Array(size * size * 4); // 4 floats per RGBA pixel
+    this.instanceTexture = new DataTexture(matrixArray, size, size, RGBAFormat, FloatType);
+    this._matrixArray = this.instanceTexture.image.data as Uint8Array;
   }
 
-  protected patchMaterials(material: M): void {
+  protected patchMaterials(material: TMaterial): void {
     if (!material) return;
 
     if ((material as Material).isMaterial) {
@@ -111,19 +119,17 @@ export class TBD<T = {}, G extends BufferGeometry = BufferGeometry, M extends Ma
   }
 
   public getMatrixAt(index: number, matrix: Matrix4): void {
-    const matrixArray = this.instanceTexture.image.data;
-    matrix.fromArray(matrixArray, index * 16);
+    matrix.fromArray(this._matrixArray, index * 16);
   }
 
   public setMatrixAt(index: number, matrix: Matrix4): void {
-    const matrixArray = this.instanceTexture.image.data;
-    matrix.toArray(matrixArray, index * 16);
+    matrix.toArray(this._matrixArray, index * 16);
     this.instanceTexture.needsUpdate = true;
   }
 
   public computeBoundingBox(): void {
     const geometry = this.geometry;
-    const count = this._count;
+    const count = this.instancesCount;
 
     if (this.boundingBox === null) this.boundingBox = new Box3();
 
@@ -140,7 +146,7 @@ export class TBD<T = {}, G extends BufferGeometry = BufferGeometry, M extends Ma
 
   public computeBoundingSphere(): void {
     const geometry = this.geometry;
-    const count = this._count;
+    const count = this.instancesCount;
 
     if (this.boundingSphere === null) this.boundingSphere = new Sphere();
 
@@ -155,7 +161,7 @@ export class TBD<T = {}, G extends BufferGeometry = BufferGeometry, M extends Ma
     }
   }
 
-  public override copy(source: TBD, recursive?: boolean): this {
+  public override copy(source: InstancedMesh2, recursive?: boolean): this {
     super.copy(source, recursive);
 
     this.instanceIndex.copy(source.instanceIndex);
@@ -208,10 +214,10 @@ export class TBD<T = {}, G extends BufferGeometry = BufferGeometry, M extends Ma
   }
 
   public dispose(): this {
-    // TODO
-    // this.dispatchEvent({ type: 'dispose' });
+    this.dispatchEvent<any>({ type: 'dispose' }); // Typescript bug, need any cast
 
     this.instanceTexture.dispose();
+    //TODO dispose uniform
 
     if (this.morphTexture !== null) {
       this.morphTexture.dispose();
@@ -224,6 +230,56 @@ export class TBD<T = {}, G extends BufferGeometry = BufferGeometry, M extends Ma
   public override raycast(raycaster: Raycaster, intersects: Intersection[]): void {
     console.error("TO IMPLEMENT");
   }
+
+  /** @internal @LASTREV 166 Matrix4 */
+  public composeToArray(position: Vector3, scale: Vector3, quaternion: any, index: number): void {
+    // this can be optimized
+
+    const te = this._matrixArray;
+    const offset = index * 16;
+
+    const x = quaternion._x,
+      y = quaternion._y,
+      z = quaternion._z,
+      w = quaternion._w;
+    const x2 = x + x,
+      y2 = y + y,
+      z2 = z + z;
+    const xx = x * x2,
+      xy = x * y2,
+      xz = x * z2;
+    const yy = y * y2,
+      yz = y * z2,
+      zz = z * z2;
+    const wx = w * x2,
+      wy = w * y2,
+      wz = w * z2;
+
+    const sx = scale.x,
+      sy = scale.y,
+      sz = scale.z;
+
+    te[offset + 0] = (1 - (yy + zz)) * sx;
+    te[offset + 1] = (xy + wz) * sx;
+    te[offset + 2] = (xz - wy) * sx;
+    te[offset + 3] = 0;
+
+    te[offset + 4] = (xy - wz) * sy;
+    te[offset + 5] = (1 - (xx + zz)) * sy;
+    te[offset + 6] = (yz + wx) * sy;
+    te[offset + 7] = 0;
+
+    te[offset + 8] = (xz + wy) * sz;
+    te[offset + 9] = (yz - wx) * sz;
+    te[offset + 10] = (1 - (xx + yy)) * sz;
+    te[offset + 11] = 0;
+
+    te[offset + 12] = position.x;
+    te[offset + 13] = position.y;
+    te[offset + 14] = position.z;
+    te[offset + 15] = 1;
+  }
+
 
 }
 
