@@ -233,31 +233,16 @@ export class InstancedMesh2<
 
   /** @internal @LASTREV 166 Matrix4 */
   public composeToArray(position: Vector3, scale: Vector3, quaternion: any, index: number): void {
-    // this can be optimized
-
     const te = this._matrixArray;
     const offset = index * 16;
 
-    const x = quaternion._x,
-      y = quaternion._y,
-      z = quaternion._z,
-      w = quaternion._w;
-    const x2 = x + x,
-      y2 = y + y,
-      z2 = z + z;
-    const xx = x * x2,
-      xy = x * y2,
-      xz = x * z2;
-    const yy = y * y2,
-      yz = y * z2,
-      zz = z * z2;
-    const wx = w * x2,
-      wy = w * y2,
-      wz = w * z2;
+    const x = quaternion._x, y = quaternion._y, z = quaternion._z, w = quaternion._w;
+    const x2 = x + x, y2 = y + y, z2 = z + z;
+    const xx = x * x2, xy = x * y2, xz = x * z2;
+    const yy = y * y2, yz = y * z2, zz = z * z2;
+    const wx = w * x2, wy = w * y2, wz = w * z2;
 
-    const sx = scale.x,
-      sy = scale.y,
-      sz = scale.z;
+    const sx = scale.x, sy = scale.y, sz = scale.z;
 
     te[offset + 0] = (1 - (yy + zz)) * sx;
     te[offset + 1] = (xy + wz) * sx;
@@ -279,7 +264,6 @@ export class InstancedMesh2<
     te[offset + 14] = position.z;
     te[offset + 15] = 1;
   }
-
 
 }
 
