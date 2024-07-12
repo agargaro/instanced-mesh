@@ -1,6 +1,12 @@
 import { Matrix4, Mesh, Quaternion, Vector3 } from 'three';
 import { InstancedMesh2 } from './InstancedMesh2';
 
+// TODO: matrixNeedsUpdate with DynamicStream opt
+// TODO: frustum culling with only change detection
+// TODO: partial texture update
+// TODO: matrix update optimized if changes only rot, pos or scale.
+// TODO: addSetMatrix method and use decompose
+
 export class InstancedEntity {
   public isInstanceEntity = true;
   public readonly id: number;
@@ -8,21 +14,10 @@ export class InstancedEntity {
   public position: Vector3;
   public scale: Vector3;
   public quaternion: Quaternion;
-  /** @internal */ public _visible = true;
-  /** @internal */ public _matrixNeedsUpdate = false;
-
-//   public get visible(): boolean { return this._visible }
-//   public set visible(value: boolean) {
-//     if (value !== this._visible) {
-//       this.parent.setInstanceVisibility(this, value);
-//       this._visible = value;
-//     }
-//   }
+  public visible = true;
 
   public get matrix(): Matrix4 {
-    if (this._matrixNeedsUpdate) this.forceUpdateMatrix();
-    this.owner.getMatrixAt(this.id, _m);
-    return _m;
+    return _m.fromArray(this.owner._matrixArray, this.id * 16);
   }
 
   public get matrixWorld(): Matrix4 {
@@ -37,19 +32,19 @@ export class InstancedEntity {
     this.quaternion = new Quaternion();
   }
 
-  public updateMatrix(): void { //TODO this can be improved checking also visibility === false
-    // if (this.owner._streaMode === true) {
-    //   this._matrixNeedsUpdate = true;
-    // } else {
-      this.forceUpdateMatrix(); // TODO
-    // }
-  }
-
-  public forceUpdateMatrix(): void {
+  public updateMatrix(): void { 
     const parent = this.owner;
     parent.composeToArray(this.position, this.scale, this.quaternion, this.id);
-    // parent._matricesUpdated = true;
-    // this._matrixNeedsUpdate = false;
+    parent.instanceTexture.needsUpdate = true;
+  }
+
+  public copyTo(target: Mesh): void {
+    target.position.copy(this.position);
+    target.scale.copy(this.scale);
+    target.quaternion.copy(this.quaternion);
+    // const matrix = this.matrix;
+    // target.matrix.copy(matrix);
+    // target.matrixWorld.copy(matrix).premultiply(this.owner.matrixWorld);
   }
 
   public applyMatrix4(m: Matrix4): this {
@@ -104,12 +99,7 @@ export class InstancedEntity {
     return this.translateOnAxis(_zAxis, distance);
   }
 
-  public copyTo(target: Mesh): void {
-    target.position.copy(this.position);
-    target.scale.copy(this.scale);
-    target.quaternion.copy(this.quaternion);
-    // check other props
-  }
+  // TODO copy other Object3D methods
 
 }
 

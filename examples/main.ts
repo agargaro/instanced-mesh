@@ -1,24 +1,38 @@
 import { Main, PerspectiveCameraAuto } from '@three.ez/main';
-import { AmbientLight, MeshLambertMaterial, Scene, SphereGeometry, SpotLight } from 'three';
+import { BoxGeometry, MeshNormalMaterial, Scene } from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
-import { InstancedMesh2 } from '../src';
+import { GUI } from 'three/examples/jsm/libs/lil-gui.module.min';
+import { CullingBVH, InstancedMesh2 } from '../src';
+import { PRNG } from './random';
 
 const main = new Main();
+const count = 200000;
+const random = new PRNG(count);
 
 const camera = new PerspectiveCameraAuto(70).translateZ(10);
 const scene = new Scene();
 
-const instancedMesh = new InstancedMesh2(200000, {
-  geometry: new SphereGeometry(0.5, 32, 16),
-  material: new MeshLambertMaterial({ color: 'blue' }),
-  onInstanceCreation: (o) => o.position.randomDirection().multiplyScalar(Math.random() * 50000)
+const instancedMesh = new InstancedMesh2(main.renderer, count, {
+  geometry: new BoxGeometry(),
+  material: new MeshNormalMaterial(),
+  cullingType: CullingBVH,
+  onInstanceCreation: (o) => o.position.randomDirection().multiplyScalar(random.range(5, 2000)),
 });
 
-scene.add(instancedMesh, new AmbientLight(), new SpotLight('white', 1000));
+instancedMesh.raycastFrustum = true; // only with culling linear
 
-instancedMesh.on('animate', () => instancedMesh.updateCulling(camera));
+instancedMesh.on('click', (e) => {
+  instancedMesh.instances[e.intersection.instanceId].visible = false;
+});
 
-main.createView({ scene, camera, backgroundColor: 'gray' });
+scene.add(instancedMesh);
+
+main.createView({ scene, camera, onAfterRender: () => spheresCount.updateDisplay() });
 
 const controls = new OrbitControls(camera, main.renderer.domElement);
-scene.on(['pointerdown', 'pointerup', 'dragend'], (e) => (controls.enabled = e.type === 'pointerdown' ? e.target === scene : true));
+// scene.on(['pointerdown', 'pointerup', 'dragend'], (e) => (controls.enabled = e.type === 'pointerdown' ? e.target === scene : true));
+
+const gui = new GUI();
+gui.add(instancedMesh, "maxCount").name('instances total').disable();
+const spheresCount = gui.add(instancedMesh, 'count').name('instances rendered').disable();
+gui.add(camera, 'far', 100, 5000, 100).name('camera far').onChange(() => camera.updateProjectionMatrix());
