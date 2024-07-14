@@ -296,12 +296,13 @@ export class InstancedMesh2<
 
   protected BVHCulling(): void {
     const array = this.instanceIndex.array;
+    const instancesCount = this.instancesCount;
     let count = 0;
 
     this.bvh.frustumCulling(_projScreenMatrix, _frustumResult);
 
     for (const object of _frustumResult) {
-      if (object.visible) {
+      if (object.id < instancesCount && object.visible) {
         array[count++] = object.id;
       }
     }
