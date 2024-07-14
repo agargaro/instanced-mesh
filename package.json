@@ -41,6 +41,6 @@
     "three": "^0.166.1"
   },
   "dependencies": {
-    "bvh.js": "^0.0.1"
+    "bvh.js": "^0.0.2"
   }
 }

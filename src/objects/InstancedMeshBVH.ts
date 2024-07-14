@@ -1,5 +1,4 @@
-import { BVH, HybridBuilder, WebGLCoordinateSystem } from 'bvh.js';
-import { BVHNode, FloatArray } from 'bvh.js/core/BVHNode';
+import { BVH, HybridBuilder, WebGLCoordinateSystem, BVHNode, FloatArray } from 'bvh.js';
 import { Box3, Matrix4, Raycaster } from 'three';
 import { InstancedEntity } from './InstancedEntity';
 import { InstancedMesh2 } from './InstancedMesh2';
