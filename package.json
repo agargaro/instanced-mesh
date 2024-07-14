@@ -2,9 +2,11 @@
   "name": "@three.ez/instanced-mesh",
   "version": "0.2.0",
   "description": "InstancedMesh2 enhances three.js's InstancedMesh by simplifying instance management, including visibility control and transformations. It introduces frustum culling for each instance, improving performance.",
-  "author": "agargaro",
+  "author": "Andrea Gargaro <devgargaro@gmail.com>",
   "license": "MIT",
-  "main": "bundle.js",
+  "type": "module",
+  "module": "index.js",
+  "main": "index.umd.cjs",
   "types": "index.d.ts",
   "homepage": "https://agargaro.github.io/three.ez",
   "repository": "https://github.com/three-ez/instanced-mesh",
@@ -12,30 +14,29 @@
     "three",
     "three.js",
     "threejs",
-    "3d",
     "InstancedMesh",
     "frustum culling",
     "instance management",
-    "sorting"
+    "sorting",
+    "performance"
   ],
   "scripts": {
-    "publish-beta": "npm version prerelease --preid=beta --git-tag-version false && npx webpack && cd publish && npm publish --tag beta --access public",
-    "publish-patch": "npm version patch --git-tag-version false && npx webpack && cd publish && npm publish --access public",
-    "publish-minor": "npm version minor --git-tag-version false && npx webpack && cd publish && npm publish --access public",
-    "publish-major": "npm version major --git-tag-version false && npx webpack && cd publish && npm publish --access public",
-    "build": "npx webpack",
-    "start": "npx vite"
+    "start": "vite",
+    "build": "vite build",
+    "clean": "npx rimraf dist",
+    "publish-beta": "npm version prerelease --preid=beta --git-tag-version false && npm run build && cd dist && npm publish --tag beta --access public",
+    "publish-patch": "npm version patch --git-tag-version false && npm run build && cd dist && npm publish --access public",
+    "publish-minor": "npm version minor --git-tag-version false && npm run build && cd dist && npm publish --access public",
+    "publish-major": "npm version major --git-tag-version false && npm run build && cd dist && npm publish --access public"
   },
   "devDependencies": {
     "@three.ez/main": "^0.5.4",
     "@types/three": "^0.166.0",
-    "copy-pkg-json-webpack-plugin": "^0.0.40",
-    "copy-webpack-plugin": "^11.0.0",
-    "ts-loader": "^9.4.4",
-    "typescript": "^5.2.2",
-    "vite": "^4.4.9",
-    "webpack": "^5.88.2",
-    "webpack-cli": "^5.1.4"
+    "typescript": "^5.1.3",
+    "vite": "^5.2.13",
+    "vite-plugin-dts": "^3.9.1",
+    "vite-plugin-externalize-deps": "^0.8.0",
+    "vite-plugin-static-copy": "^1.0.6"
   },
   "peerDependencies": {
     "three": "^0.166.1"

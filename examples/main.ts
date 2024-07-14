@@ -6,9 +6,9 @@ import { CullingBVH, InstancedMesh2 } from '../src';
 import { PRNG } from './random';
 
 const config = {
-  count: 100000,
+  count: 200000,
   animatedCount: 2000,
-  spawnRadius: 50000,
+  spawnRadius: 100000,
   marginBVH: 100
 }
 

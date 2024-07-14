@@ -11,5 +11,8 @@
     "esModuleInterop": true,
     "noImplicitAny": false,
     "moduleResolution": "node"
-  }
+  },
+  "include": [
+    "src/**/*.ts"
+  ]
 }
