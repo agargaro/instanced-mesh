@@ -33,18 +33,14 @@ export class InstancedEntity {
   }
 
   public updateMatrix(): void { 
-    const parent = this.owner;
-    parent.composeToArray(this.position, this.scale, this.quaternion, this.id);
-    parent.instanceTexture.needsUpdate = true;
+    this.owner.composeMatrixInstance(this);
   }
 
   public copyTo(target: Mesh): void {
     target.position.copy(this.position);
     target.scale.copy(this.scale);
     target.quaternion.copy(this.quaternion);
-    // const matrix = this.matrix;
-    // target.matrix.copy(matrix);
-    // target.matrixWorld.copy(matrix).premultiply(this.owner.matrixWorld);
+    // target.updateMatrixWorld(true) //TODO consider it
   }
 
   public applyMatrix4(m: Matrix4): this {

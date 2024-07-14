@@ -22,8 +22,12 @@ export interface InstancedMesh2Params<T, G extends BufferGeometry, M extends Mat
   geometry?: G,
   material?: M,
   onInstanceCreation?: CreateEntityCallback<Entity<T>>;
-  // bvhParams?: BVHParams;
+  bvhParams?: BVHParams;
   // createEntities?: boolean;
+}
+
+export interface BVHParams {
+  margin?: number;
 }
 
 export class InstancedMesh2<
@@ -96,7 +100,7 @@ export class InstancedMesh2<
     this._material = config.material;
 
     if (this._cullingMode === CullingBVH || this._cullingMode === CullingBVHConservative) {
-      this.bvh = new InstancedMeshBVH(this);
+      this.bvh = new InstancedMeshBVH(this, config.bvhParams?.margin);
     }
 
     this.initIndixes(renderer);
@@ -185,9 +189,12 @@ export class InstancedMesh2<
   }
 
   /** @internal */
-  public composeToArray(position: Vector3, scale: Vector3, quaternion: any, index: number): void {
+  public composeMatrixInstance(entity: InstancedEntity): void {
+    const position = entity.position;
+    const quaternion = entity.quaternion as any;
+    const scale = entity.scale;
     const te = this._matrixArray;
-    const offset = index * 16;
+    const offset = entity.id * 16;
 
     const x = quaternion._x, y = quaternion._y, z = quaternion._z, w = quaternion._w;
     const x2 = x + x, y2 = y + y, z2 = z + z;
@@ -216,6 +223,9 @@ export class InstancedMesh2<
     te[offset + 13] = position.y;
     te[offset + 14] = position.z;
     te[offset + 15] = 1;
+
+    this.instanceTexture.needsUpdate = true;
+    this.bvh?.move(entity);
   }
 
   public override raycast(raycaster: Raycaster, result: Intersection[]): void {
@@ -247,7 +257,7 @@ export class InstancedMesh2<
     const getObjectCallback = raycastFrustum ? getObjectByIndex : getObject;
 
     for (let i = 0; i < checkCount; i++) {
-      const object = getObjectCallback(i); // TODO farlo anche al culling
+      const object = getObjectCallback(i);
       if (!object?.visible) continue;
 
       _mesh.matrixWorld = object.matrixWorld;
@@ -280,14 +290,15 @@ export class InstancedMesh2<
   protected frustumCulling(camera: Camera): void {
     _projScreenMatrix.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse);
 
-    if (this.bvh) {
-      this.bvh.frustumCulling(_projScreenMatrix, _frustumResult);
-    } else {
-      this.linearCulling();
-    }
+    if (this.bvh) this.BVHCulling();
+    else this.linearCulling();
+  }
 
+  protected BVHCulling(): void {
     const array = this.instanceIndex.array;
     let count = 0;
+
+    this.bvh.frustumCulling(_projScreenMatrix, _frustumResult);
 
     for (const object of _frustumResult) {
       if (object.visible) {
@@ -300,25 +311,31 @@ export class InstancedMesh2<
   }
 
   protected linearCulling(): void {
-    _frustum.setFromProjectionMatrix(_projScreenMatrix);
-
+    const array = this.instanceIndex.array;
     const bSphere = this.geometry.boundingSphere;
     const radius = bSphere.radius;
     const center = bSphere.center;
     const instances = this.instances;
     const instancesCount = this.instancesCount;
-    const geometryCenterd = center.x === 0 && center.y === 0 && center.z === 0;
+    const geometryCentered = center.x === 0 && center.y === 0 && center.z === 0;
+    let count = 0;
+
+    _frustum.setFromProjectionMatrix(_projScreenMatrix);
 
     for (let i = 0, l = instancesCount; i < l; i++) {
       const instance = instances[i];
       if (!instance.visible) continue;
 
-      if (geometryCenterd) _sphere.center.copy(instance.position);
+      if (geometryCentered) _sphere.center.copy(instance.position);
       else _sphere.center.copy(center).applyMatrix4(instance.matrix);
       _sphere.radius = radius * getMax(instance.scale);
 
-      if (_frustum.intersectsSphere(_sphere)) _frustumResult.push(instance);
+      if (_frustum.intersectsSphere(_sphere)) {
+        array[count++] = instance.id;
+      }
     }
+
+    this._count = count;
 
     function getMax(scale: Vector3): number {
       if (scale.x > scale.y) return scale.x > scale.z ? scale.x : scale.z;
@@ -341,7 +358,7 @@ export class InstancedMesh2<
 
     boundingBox.makeEmpty();
 
-    for (let i = 0; i < count; i++) { // TODO switch to for of?
+    for (let i = 0; i < count; i++) {
       _box3.copy(geoBoundingBox).applyMatrix4(instances[i].matrix);
       boundingBox.union(_box3);
     }
@@ -369,7 +386,7 @@ export class InstancedMesh2<
   public override copy(source: InstancedMesh2, recursive?: boolean): this {
     super.copy(source, recursive);
 
-    // this.instanceIndex.copy(source.instanceIndex); // TODO fix d.ts
+    (this.instanceIndex as any).copy(source.instanceIndex); // TODO fix d.ts
     this.instanceTexture = source.instanceTexture.clone();
 
     if (source.morphTexture !== null) this.morphTexture = source.morphTexture.clone();

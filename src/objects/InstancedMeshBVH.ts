@@ -59,12 +59,14 @@ export class InstancedMeshBVH {
 
     public move(object: InstancedEntity): void {
         const node = this.map.get(object);
+        if (!node) return;
         this.getBox(object, node.box); // update box
         this.bvh.move(node);
     }
 
     public delete(object: InstancedEntity): void {
         const node = this.map.get(object);
+        if (!node) return;
         this.bvh.delete(node);
         this.map.delete(object);
     }
@@ -83,6 +85,8 @@ export class InstancedMeshBVH {
     }
 
     public raycast(raycaster: Raycaster, result: InstancedEntity[]): void {
+        // TODO conver ray to local space
+
         const ray = raycaster.ray;
 
         _origin[0] = ray.origin.x;
@@ -97,7 +101,6 @@ export class InstancedMeshBVH {
     }
 
     protected getBox(object: InstancedEntity, array: FloatArray = new Float64Array(6)): FloatArray { // TODO refactor removing optional param
-        // box3.copy(this.geoBoundingBox).applyMatrix4(object.matrixWorld); // TODO update avoid using matrixWorld if is the same as matrix
         _box3.copy(this.geoBoundingBox).applyMatrix4(object.matrix);
 
         const min = _box3.min;
