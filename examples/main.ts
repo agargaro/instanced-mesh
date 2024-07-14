@@ -40,8 +40,6 @@ scene.on('animate', (e) => {
     mesh.position.setFromSphericalCoords(mesh.r, mesh.phi + e.total * 0.01, mesh.theta + e.total * 0.01);
     mesh.updateMatrix();
   }
-
-  // main.renderer.copyTextureToTexture(instancedMesh.instanceTexture, instancedMesh.instanceTexture,  ); // THREE.js PR to improve this?
 });
 
 scene.add(instancedMesh);
