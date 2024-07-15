@@ -1,4 +1,4 @@
-import { Box3, BufferAttribute, BufferGeometry, Camera, DataTexture, FloatType, Frustum, Group, InstancedBufferAttribute, Intersection, Material, Matrix4, Mesh, Object3DEventMap, RGBAFormat, Raycaster, RedFormat, Scene, Sphere, Vector3, WebGLProgramParametersWithUniforms, WebGLRenderer } from "three";
+import { Box3, BufferAttribute, BufferGeometry, Camera, DataTexture, FloatType, Frustum, Group, InstancedBufferAttribute, Intersection, Material, Matrix4, Mesh, Object3DEventMap, RGBAFormat, Ray, Raycaster, RedFormat, Scene, Sphere, Vector3, WebGLProgramParametersWithUniforms, WebGLRenderer } from "three";
 import { GLInstancedBufferAttribute } from "./GLInstancedBufferAttribute";
 import { InstancedEntity } from "./InstancedEntity";
 import { InstancedMeshBVH } from "./InstancedMeshBVH";
@@ -23,6 +23,7 @@ export interface InstancedMesh2Params<T, G extends BufferGeometry, M extends Mat
   material?: M,
   onInstanceCreation?: CreateEntityCallback<Entity<T>>;
   bvhParams?: BVHParams;
+  sortObjects?: boolean;
   // createEntities?: boolean;
 }
 
@@ -47,6 +48,8 @@ export class InstancedMesh2<
   public boundingSphere: Sphere = null;
   public instancesCount: number; // TODO handle update
   public bvh: InstancedMeshBVH;
+  public sortObjects: boolean;
+  public customSort = null;
   public raycastFrustum = false;
   /** @internal */ public _matrixArray: Float32Array;
   protected _count: number;
@@ -93,6 +96,7 @@ export class InstancedMesh2<
     super(config.geometry, config.material);
 
     this._cullingMode = config.cullingType;
+    this.sortObjects = config.sortObjects ?? false;
     this.frustumCulled = this._cullingMode === CullingNone;
     this.instancesCount = count;
     this._maxCount = count;
@@ -231,10 +235,24 @@ export class InstancedMesh2<
   public override raycast(raycaster: Raycaster, result: Intersection[]): void {
     if (this.material === undefined) return;
 
+    const raycastFrustum = this.raycastFrustum && !this.bvh && this._cullingMode !== CullingNone;
     let instancesToCheck: InstancedEntity[] | Uint32Array;
-    let raycastFrustum = this.raycastFrustum && !this.bvh && this._cullingMode !== CullingNone;
     _mesh.geometry = this.geometry;
     _mesh.material = this.material;
+
+    const originalRay = raycaster.ray;
+    const originalNear = raycaster.near;
+    const originalFar = raycaster.far;
+    
+    _tmpInverseMatrix.copy(this.matrixWorld).invert();
+    
+    extractMatrixScale(this.matrixWorld, _worldScale);
+    _direction.copy(raycaster.ray.direction).multiply(_worldScale);
+    const scaleFactor = _direction.length();
+    
+    raycaster.ray = _ray.copy(raycaster.ray).applyMatrix4(_tmpInverseMatrix);
+    raycaster.near /= scaleFactor;
+    raycaster.far /= scaleFactor;
 
     if (this.bvh) {
 
@@ -244,7 +262,7 @@ export class InstancedMesh2<
     } else {
 
       if (this.boundingSphere === null) this.computeBoundingSphere();
-      _sphere.copy(this.boundingSphere).applyMatrix4(this.matrixWorld);
+      _sphere.copy(this.boundingSphere);
       if (!raycaster.ray.intersectsSphere(_sphere)) return;
 
       instancesToCheck = raycastFrustum ? this.instanceIndex.array as Uint32Array : this.instances;
@@ -260,7 +278,7 @@ export class InstancedMesh2<
       const object = getObjectCallback(i);
       if (!object?.visible) continue;
 
-      _mesh.matrixWorld = object.matrixWorld;
+      _mesh.matrixWorld = object.matrix;
 
       _mesh.raycast(raycaster, _intersections);
 
@@ -277,6 +295,10 @@ export class InstancedMesh2<
 
     result.sort(ascSortIntersection);
 
+    raycaster.ray = originalRay;
+    raycaster.near = originalNear;
+    raycaster.far = originalFar;
+
     function getObject(index: number): InstancedEntity {
       return instancesToCheck[index] as InstancedEntity;
     }
@@ -288,7 +310,7 @@ export class InstancedMesh2<
   }
 
   protected frustumCulling(camera: Camera): void {
-    _projScreenMatrix.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse);
+    _projScreenMatrix.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse).multiply(this.matrixWorld);
 
     if (this.bvh) this.BVHCulling();
     else this.linearCulling();
@@ -462,7 +484,29 @@ const _frustumResult: InstancedEntity[] = [];
 const _instancesIntersected: InstancedEntity[] = [];
 const _intersections: Intersection[] = [];
 const _mesh = new Mesh();
+const _ray = new Ray();
+const _direction = new Vector3();
+const _worldScale = new Vector3();
+const _tmpInverseMatrix = new Matrix4();
 
 function ascSortIntersection(a: Intersection, b: Intersection): number {
   return a.distance - b.distance;
+}
+
+function sortOpaque(a: Vector3, b: Vector3) {
+  return a.z - b.z;
+}
+
+function sortTransparent(a: Vector3, b: Vector3) {
+  return b.z - a.z;
+}
+
+// https://github.com/mrdoob/three.js/blob/dev/src/math/Matrix4.js#L732
+// extracting the scale directly is ~3x faster than using "decompose"
+function extractMatrixScale(matrix, target) {
+  const te = matrix.elements;
+  const sx = target.set(te[0], te[1], te[2]).length();
+  const sy = target.set(te[4], te[5], te[6]).length();
+  const sz = target.set(te[8], te[9], te[10]).length();
+  return target.set(sx, sy, sz);
 }

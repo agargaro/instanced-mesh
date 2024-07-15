@@ -36,6 +36,8 @@ instancedMesh.on('click', (e) => {
   instancedMesh.instances[e.intersection.instanceId].visible = false;
 });
 
+instancedMesh.cursor = 'pointer';
+
 const dirLight = new DirectionalLight('white', 0.1);
 const spotLight = new SpotLight('white', 75000, 0, Math.PI / 6, 0.5, 1.4);
 camera.add(dirLight, spotLight);
@@ -63,4 +65,4 @@ gui.add(instancedMesh, "maxCount").name('instances max count').disable();
 const spheresCount = gui.add(instancedMesh, 'count').name('instances rendered').disable();
 gui.add(config, "count", 0, instancedMesh.maxCount).name('instances count').onChange((v) => instancedMesh.instancesCount = v);
 gui.add(config, "animatedCount", 0, 10000).name('instances animated');
-gui.add(camera, 'far', 100, 50000, 20).name('camera far').onChange(() => camera.updateProjectionMatrix());
+gui.add(camera, 'far', 100, config.spawnRadius, 20).name('camera far').onChange(() => camera.updateProjectionMatrix());

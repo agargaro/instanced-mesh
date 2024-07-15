@@ -1,6 +1,6 @@
 {
-  "name": "@three.ez/instanced-mesh",
-  "version": "0.2.0",
+  "name": "@three.ez/instanced-mesh-test",
+  "version": "0.0.2",
   "description": "InstancedMesh2 enhances three.js's InstancedMesh by simplifying instance management, including visibility control and transformations. It introduces frustum culling for each instance, improving performance.",
   "author": "Andrea Gargaro <devgargaro@gmail.com>",
   "license": "MIT",
@@ -18,7 +18,10 @@
     "frustum culling",
     "instance management",
     "sorting",
-    "performance"
+    "performance",
+    "BVH",
+    "acceleration",
+    "raycasting"
   ],
   "scripts": {
     "start": "vite",
@@ -42,6 +45,6 @@
     "three": "^0.166.1"
   },
   "dependencies": {
-    "bvh.js": "^0.0.2"
+    "bvh.js": "^0.0.3"
   }
 }
