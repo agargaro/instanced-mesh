@@ -1,7 +1,7 @@
 {
   "name": "@three.ez/instanced-mesh-test",
-  "version": "0.0.2",
-  "description": "InstancedMesh2 enhances three.js's InstancedMesh by simplifying instance management, including visibility control and transformations. It introduces frustum culling for each instance, improving performance.",
+  "version": "0.0.3",
+  "description": "InstancedMesh easier to use, with frustum culling and fast raycasting.",
   "author": "Andrea Gargaro <devgargaro@gmail.com>",
   "license": "MIT",
   "type": "module",
@@ -27,7 +27,6 @@
     "start": "vite",
     "build": "vite build",
     "clean": "npx rimraf dist",
-    "publish-beta": "npm version prerelease --preid=beta --git-tag-version false && npm run build && cd dist && npm publish --tag beta --access public",
     "publish-patch": "npm version patch --git-tag-version false && npm run build && cd dist && npm publish --access public",
     "publish-minor": "npm version minor --git-tag-version false && npm run build && cd dist && npm publish --access public",
     "publish-major": "npm version major --git-tag-version false && npm run build && cd dist && npm publish --access public"
