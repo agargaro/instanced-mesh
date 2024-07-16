@@ -1,5 +1,5 @@
 import { Asset, Main, PerspectiveCameraAuto } from '@three.ez/main';
-import { ACESFilmicToneMapping, AmbientLight, BufferGeometry, DirectionalLight, FogExp2, Mesh, MeshLambertMaterial, MeshStandardMaterial, PlaneGeometry, Scene, Vector3, Color, PCFSoftShadowMap } from 'three';
+import { ACESFilmicToneMapping, AmbientLight, BufferGeometry, DirectionalLight, FogExp2, Mesh, MeshLambertMaterial, MeshStandardMaterial, PCFSoftShadowMap, PlaneGeometry, Scene, Vector3 } from 'three';
 import { MapControls } from 'three/examples/jsm/controls/MapControls';
 import { GUI } from 'three/examples/jsm/libs/lil-gui.module.min';
 import { GLTF, GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
@@ -31,8 +31,14 @@ const trees = new InstancedMesh2(main.renderer, count, {
   }
 });
 trees.castShadow = true;
+trees.cursor = 'pointer';
+
+trees.on('click', (e) => {
+  trees.instances[e.intersection.instanceId].visible = false;
+});
 
 const ground = new Mesh(new PlaneGeometry(terrainSize, terrainSize, 10, 10), new MeshLambertMaterial({ color: 0x004622 }));
+ground.interceptByRaycaster = false;
 ground.receiveShadow = true;
 ground.rotateX(Math.PI / -2);
 
@@ -71,7 +77,7 @@ dirLight.on('animate', (e) => {
 
 scene.add(sky, trees, ground, new AmbientLight(), dirLight, dirLight.target);
 
-main.createView({ scene, camera, enabled: false, onAfterRender: () => treeCount.updateDisplay() });
+main.createView({ scene, camera, onAfterRender: () => treeCount.updateDisplay() });
 
 const controls = new MapControls(camera, main.renderer.domElement);
 controls.maxPolarAngle = Math.PI / 2.1;
