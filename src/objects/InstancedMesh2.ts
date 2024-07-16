@@ -1,4 +1,4 @@
-import { Box3, BufferAttribute, BufferGeometry, Camera, DataTexture, FloatType, Frustum, Group, InstancedBufferAttribute, Intersection, Material, Matrix4, Mesh, Object3DEventMap, RGBAFormat, Ray, Raycaster, RedFormat, Scene, Sphere, Vector3, WebGLProgramParametersWithUniforms, WebGLRenderer } from "three";
+import { Box3, BufferAttribute, BufferGeometry, Camera, DataTexture, FloatType, Frustum, InstancedBufferAttribute, Intersection, Material, Matrix4, Mesh, Object3DEventMap, RGBAFormat, Ray, Raycaster, RedFormat, Scene, Sphere, Vector3, WebGLProgramParametersWithUniforms, WebGLRenderer } from "three";
 import { GLInstancedBufferAttribute } from "./GLInstancedBufferAttribute";
 import { InstancedEntity } from "./InstancedEntity";
 import { InstancedMeshBVH } from "./InstancedMeshBVH";
@@ -9,6 +9,7 @@ import { InstancedMeshBVH } from "./InstancedMeshBVH";
 
 export type Entity<T> = InstancedEntity & T;
 export type CreateEntityCallback<T> = (obj: Entity<T>, index: number) => void;
+export type RenderListItem = { index: number, depth: number };
 export type CullingMode = typeof CullingBVH | typeof CullingBVHConservative | typeof CullingLinear | typeof CullingLinearConservative | typeof CullingNone;
 
 export const CullingBVH = 0;
@@ -72,7 +73,7 @@ export class InstancedMesh2<
     this.patchMaterials(value);
   }
 
-  public override onBeforeRender(renderer: WebGLRenderer, scene: Scene, camera: Camera, geometry: BufferGeometry, material: Material, group: Group): void {
+  public override onBeforeRender(renderer: WebGLRenderer, scene: Scene, camera: Camera, geometry: BufferGeometry, material: Material): void {
     if (this._cullingMode === CullingNone) return;
 
     this.frustumCulling(camera);
@@ -83,8 +84,11 @@ export class InstancedMesh2<
     gl.bufferSubData(gl.ARRAY_BUFFER, 0, instanceIndex.array, 0, this._count);
   }
 
-  override onBeforeShadow(renderer: WebGLRenderer, scene: Scene, shadowCamera: Camera, geometry: BufferGeometry, depthMaterial: Material, group: Group): void {
-    this.onBeforeRender(renderer, scene, shadowCamera, geometry, depthMaterial, group);
+  override onBeforeShadow(renderer: WebGLRenderer, object: any, camera: any, shadowCamera: any, geometry: any, depthMaterial: any): void { // TIX d.ts
+    if (!(depthMaterial as Material).isInstancedMeshPatched) {
+      this.patchMaterial(depthMaterial);
+    }
+    this.onBeforeRender(renderer, null, shadowCamera, geometry, depthMaterial);
   }
 
   /** THIS MATERIAL AND GEOMETRY CANNOT BE SHARED */
@@ -243,14 +247,14 @@ export class InstancedMesh2<
     const originalRay = raycaster.ray;
     const originalNear = raycaster.near;
     const originalFar = raycaster.far;
-    
-    _tmpInverseMatrix.copy(this.matrixWorld).invert();
-    
+
+    _invMatrixWorld.copy(this.matrixWorld).invert();
+
     extractMatrixScale(this.matrixWorld, _worldScale);
     _direction.copy(raycaster.ray.direction).multiply(_worldScale);
     const scaleFactor = _direction.length();
-    
-    raycaster.ray = _ray.copy(raycaster.ray).applyMatrix4(_tmpInverseMatrix);
+
+    raycaster.ray = _ray.copy(raycaster.ray).applyMatrix4(_invMatrixWorld);
     raycaster.near /= scaleFactor;
     raycaster.far /= scaleFactor;
 
@@ -310,22 +314,55 @@ export class InstancedMesh2<
   }
 
   protected frustumCulling(camera: Camera): void {
+    const sortObjects = this.sortObjects;
+    const array = this.instanceIndex.array;
+
     _projScreenMatrix.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse).multiply(this.matrixWorld);
+
+    if (sortObjects) {
+      _invMatrixWorld.copy(this.matrixWorld).invert();
+      _cameraPos.setFromMatrixPosition(camera.matrixWorld).applyMatrix4(_invMatrixWorld);
+    }
 
     if (this.bvh) this.BVHCulling();
     else this.linearCulling();
+
+    if (sortObjects) {
+      const customSort = this.customSort;
+
+      if (customSort === null) {
+        _renderList.sort(!(this.material as Material)?.transparent ? sortOpaque : sortTransparent);
+      } else {
+        customSort(_renderList, camera);
+      }
+
+      for (let i = 0, l = _renderList.length; i < l; i++) {
+        array[i] = _renderList[i].index;
+      }
+
+      this._count = _renderList.length;
+      _renderList.length = 0;
+    }
   }
 
   protected BVHCulling(): void {
     const array = this.instanceIndex.array;
     const instancesCount = this.instancesCount;
+    const sortObjects = this.sortObjects;
     let count = 0;
 
     this.bvh.frustumCulling(_projScreenMatrix, _frustumResult);
 
     for (const object of _frustumResult) {
-      if (object.id < instancesCount && object.visible) {
-        array[count++] = object.id;
+      const index = object.id;
+
+      if (index < instancesCount && object.visible) {
+        if (sortObjects) {
+          const depth = _cameraPos.distanceTo(object.position); // this can be less precise than sphere.center
+          _renderList.push({ depth, index });
+        } else {
+          array[count++] = index;
+        }
       }
     }
 
@@ -341,6 +378,7 @@ export class InstancedMesh2<
     const instances = this.instances;
     const instancesCount = this.instancesCount;
     const geometryCentered = center.x === 0 && center.y === 0 && center.z === 0;
+    const sortObjects = this.sortObjects;
     let count = 0;
 
     _frustum.setFromProjectionMatrix(_projScreenMatrix);
@@ -354,7 +392,12 @@ export class InstancedMesh2<
       _sphere.radius = radius * getMax(instance.scale);
 
       if (_frustum.intersectsSphere(_sphere)) {
-        array[count++] = instance.id;
+        if (sortObjects) {
+          const depth = _cameraPos.distanceTo(_sphere.center);
+          _renderList.push({ depth, index: instance.id });
+        } else {
+          array[count++] = instance.id;
+        }
       }
     }
 
@@ -487,18 +530,20 @@ const _mesh = new Mesh();
 const _ray = new Ray();
 const _direction = new Vector3();
 const _worldScale = new Vector3();
-const _tmpInverseMatrix = new Matrix4();
+const _invMatrixWorld = new Matrix4();
+const _renderList: RenderListItem[] = [];
+const _cameraPos = new Vector3();
 
 function ascSortIntersection(a: Intersection, b: Intersection): number {
   return a.distance - b.distance;
 }
 
-function sortOpaque(a: Vector3, b: Vector3) {
-  return a.z - b.z;
+function sortOpaque(a: RenderListItem, b: RenderListItem) {
+  return a.depth - b.depth;
 }
 
-function sortTransparent(a: Vector3, b: Vector3) {
-  return b.z - a.z;
+function sortTransparent(a: RenderListItem, b: RenderListItem) {
+  return b.depth - a.depth;
 }
 
 // https://github.com/mrdoob/three.js/blob/dev/src/math/Matrix4.js#L732

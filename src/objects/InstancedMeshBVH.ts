@@ -84,8 +84,6 @@ export class InstancedMeshBVH {
     }
 
     public raycast(raycaster: Raycaster, result: InstancedEntity[]): void {
-        // TODO conver ray to local space
-
         const ray = raycaster.ray;
 
         _origin[0] = ray.origin.x;
