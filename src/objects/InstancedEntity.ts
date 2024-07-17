@@ -1,8 +1,6 @@
 import { Matrix4, Mesh, Quaternion, Vector3 } from 'three';
 import { InstancedMesh2 } from './InstancedMesh2';
 
-// TODO: matrixNeedsUpdate with DynamicStream opt
-// TODO: frustum culling with only change detection
 // TODO: partial texture update
 // TODO: matrix update optimized if changes only rot, pos or scale.
 // TODO: addSetMatrix method and use decompose

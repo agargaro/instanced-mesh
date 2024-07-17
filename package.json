@@ -1,6 +1,6 @@
 {
-  "name": "@three.ez/instanced-mesh-test",
-  "version": "0.0.3",
+  "name": "@three.ez/instanced-mesh",
+  "version": "1.0.0",
   "description": "InstancedMesh easier to use, with frustum culling and fast raycasting.",
   "author": "Andrea Gargaro <devgargaro@gmail.com>",
   "license": "MIT",
@@ -8,7 +8,7 @@
   "module": "index.js",
   "main": "index.umd.cjs",
   "types": "index.d.ts",
-  "homepage": "https://agargaro.github.io/three.ez",
+  "homepage": "https://github.com/three-ez/instanced-mesh#readme",
   "repository": "https://github.com/three-ez/instanced-mesh",
   "keywords": [
     "three",
@@ -41,7 +41,7 @@
     "vite-plugin-static-copy": "^1.0.6"
   },
   "peerDependencies": {
-    "three": "^0.166.1"
+    "three": "^0.159.0"
   },
   "dependencies": {
     "bvh.js": "^0.0.3"

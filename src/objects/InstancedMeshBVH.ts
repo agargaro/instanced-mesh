@@ -4,7 +4,7 @@ import { InstancedEntity } from './InstancedEntity';
 import { InstancedMesh2 } from './InstancedMesh2';
 
 type NodeData = {};
-type LeafData = InstancedEntity; // consider to use only index instead?
+type LeafData = InstancedEntity;
 
 export class InstancedMeshBVH {
     public target: InstancedMesh2;

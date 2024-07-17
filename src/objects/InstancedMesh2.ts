@@ -4,13 +4,12 @@ import { InstancedEntity } from "./InstancedEntity";
 import { InstancedMeshBVH } from "./InstancedMeshBVH";
 
 // TODO: Add expand and count/maxCount when create?
-// TODO raycasting with only culledObjects?
 // TODO static scene, avoid culling if no camera move?
 
 export type Entity<T> = InstancedEntity & T;
 export type CreateEntityCallback<T> = (obj: Entity<T>, index: number) => void;
 export type RenderListItem = { index: number, depth: number };
-export type CullingMode = typeof CullingBVH | typeof CullingBVHConservative | typeof CullingLinear | typeof CullingLinearConservative | typeof CullingNone;
+export type CullingType = typeof CullingBVH | typeof CullingBVHConservative | typeof CullingLinear | typeof CullingLinearConservative | typeof CullingNone;
 
 export const CullingBVH = 0;
 export const CullingBVHConservative = 1;
@@ -19,7 +18,7 @@ export const CullingLinearConservative = 3;
 export const CullingNone = 4;
 
 export interface InstancedMesh2Params<T, G extends BufferGeometry, M extends Material | Material[]> {
-  cullingType: CullingMode;
+  cullingType: CullingType;
   geometry?: G,
   material?: M,
   onInstanceCreation?: CreateEntityCallback<Entity<T>>;
@@ -56,7 +55,7 @@ export class InstancedMesh2<
   protected _count: number;
   protected _maxCount: number;
   protected _material: TMaterial;
-  protected _cullingMode: CullingMode;
+  protected _cullingType: CullingType;
 
   // HACK TO MAKE IT WORK WITHOUT UPDATE CORE
   private isInstancedMesh = true; // must be set to use instancing rendering
@@ -74,7 +73,7 @@ export class InstancedMesh2<
   }
 
   public override onBeforeRender(renderer: WebGLRenderer, scene: Scene, camera: Camera, geometry: BufferGeometry, material: Material): void {
-    if (this._cullingMode === CullingNone) return;
+    if (this._cullingType === CullingNone) return;
 
     this.frustumCulling(camera);
 
@@ -99,15 +98,15 @@ export class InstancedMesh2<
 
     super(config.geometry, config.material);
 
-    this._cullingMode = config.cullingType;
+    this._cullingType = config.cullingType;
     this.sortObjects = config.sortObjects ?? false;
-    this.frustumCulled = this._cullingMode === CullingNone;
+    this.frustumCulled = this._cullingType === CullingNone;
     this.instancesCount = count;
     this._maxCount = count;
     this._count = count;
     this._material = config.material;
 
-    if (this._cullingMode === CullingBVH || this._cullingMode === CullingBVHConservative) {
+    if (this._cullingType === CullingBVH || this._cullingType === CullingBVHConservative) {
       this.bvh = new InstancedMeshBVH(this, config.bvhParams?.margin);
     }
 
@@ -155,7 +154,9 @@ export class InstancedMesh2<
       }
     }
 
-    this.bvh?.createFromArray();
+    if (onInstanceCreation) {
+      this.bvh?.createFromArray();
+    }
   }
 
   protected patchMaterials(material: TMaterial): void {
@@ -239,7 +240,7 @@ export class InstancedMesh2<
   public override raycast(raycaster: Raycaster, result: Intersection[]): void {
     if (this.material === undefined) return;
 
-    const raycastFrustum = this.raycastFrustum && !this.bvh && this._cullingMode !== CullingNone;
+    const raycastFrustum = this.raycastFrustum && !this.bvh && this._cullingType !== CullingNone;
     let instancesToCheck: InstancedEntity[] | Uint32Array;
     _mesh.geometry = this.geometry;
     _mesh.material = this.material;
