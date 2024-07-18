@@ -80,7 +80,7 @@ export class InstancedMeshBVH {
     }
 
     public frustumCullingConservative(): void {
-        throw new Error("Not implemented yet."); // TODO
+        throw new Error("Not implemented yet.");
     }
 
     public raycast(raycaster: Raycaster, result: InstancedEntity[]): void {

@@ -5,17 +5,17 @@ import { InstancedMeshBVH } from "./InstancedMeshBVH";
 
 // TODO: Add expand and count/maxCount when create?
 // TODO static scene, avoid culling if no camera move?
+// TODO getMorphAt to InstancedEntity
+// TODO sorting if CullingNone
 
 export type Entity<T> = InstancedEntity & T;
 export type CreateEntityCallback<T> = (obj: Entity<T>, index: number) => void;
 export type RenderListItem = { index: number, depth: number };
-export type CullingType = typeof CullingBVH | typeof CullingBVHConservative | typeof CullingLinear | typeof CullingLinearConservative | typeof CullingNone;
+export type CullingType = typeof CullingBVH | typeof CullingLinear | typeof CullingNone;
 
-export const CullingBVH = 0;
-export const CullingBVHConservative = 1;
-export const CullingLinear = 2;
-export const CullingLinearConservative = 3;
-export const CullingNone = 4;
+export const CullingNone = 0;
+export const CullingLinear = 1;
+export const CullingBVH = 2;
 
 export interface InstancedMesh2Params<T, G extends BufferGeometry, M extends Material | Material[]> {
   cullingType: CullingType;
@@ -29,6 +29,30 @@ export interface InstancedMesh2Params<T, G extends BufferGeometry, M extends Mat
 
 export interface BVHParams {
   margin?: number;
+}
+
+class InstancedRenderList {
+  public list: RenderListItem[] = [];
+  private pool: RenderListItem[] = [];
+
+  public push(depth: number, index: number) {
+    const pool = this.pool;
+    const count = this.list.length;
+
+    if (count >= pool.length) {
+      pool.push({ depth: null, index: null });
+    }
+
+    const item = pool[count];
+    item.depth = depth;
+    item.index = index;
+
+    this.list.push(item);
+  }
+
+  public reset(): void {
+    this.list.length = 0;
+  }
 }
 
 export class InstancedMesh2<
@@ -46,11 +70,11 @@ export class InstancedMesh2<
   public morphTexture: DataTexture = null;
   public boundingBox: Box3 = null;
   public boundingSphere: Sphere = null;
-  public instancesCount: number; // TODO handle update
+  public instancesCount: number; // TODO handle update from dynamic to static
   public bvh: InstancedMeshBVH;
   public sortObjects: boolean;
   public customSort = null;
-  public raycastFrustum = false;
+  public raycastOnlyFrustum = false;
   /** @internal */ public _matrixArray: Float32Array;
   protected _count: number;
   protected _maxCount: number;
@@ -106,7 +130,7 @@ export class InstancedMesh2<
     this._count = count;
     this._material = config.material;
 
-    if (this._cullingType === CullingBVH || this._cullingType === CullingBVHConservative) {
+    if (this._cullingType === CullingBVH) {
       this.bvh = new InstancedMeshBVH(this, config.bvhParams?.margin);
     }
 
@@ -240,7 +264,7 @@ export class InstancedMesh2<
   public override raycast(raycaster: Raycaster, result: Intersection[]): void {
     if (this.material === undefined) return;
 
-    const raycastFrustum = this.raycastFrustum && !this.bvh && this._cullingType !== CullingNone;
+    const raycastFrustum = this.raycastOnlyFrustum && !this.bvh && this._cullingType !== CullingNone;
     let instancesToCheck: InstancedEntity[] | Uint32Array;
     _mesh.geometry = this.geometry;
     _mesh.material = this.material;
@@ -323,6 +347,7 @@ export class InstancedMesh2<
     if (sortObjects) {
       _invMatrixWorld.copy(this.matrixWorld).invert();
       _cameraPos.setFromMatrixPosition(camera.matrixWorld).applyMatrix4(_invMatrixWorld);
+      _forward.set(0, 0, -1).transformDirection(camera.matrixWorld).transformDirection(_invMatrixWorld);
     }
 
     if (this.bvh) this.BVHCulling();
@@ -332,17 +357,18 @@ export class InstancedMesh2<
       const customSort = this.customSort;
 
       if (customSort === null) {
-        _renderList.sort(!(this.material as Material)?.transparent ? sortOpaque : sortTransparent);
+        _renderList.list.sort(!(this.material as Material)?.transparent ? sortOpaque : sortTransparent);
       } else {
-        customSort(_renderList, camera);
+        customSort(_renderList.list, camera);
       }
 
-      for (let i = 0, l = _renderList.length; i < l; i++) {
-        array[i] = _renderList[i].index;
+      const list = _renderList.list;
+      for (let i = 0, l = list.length; i < l; i++) {
+        array[i] = list[i].index;
       }
 
-      this._count = _renderList.length;
-      _renderList.length = 0;
+      this._count = list.length;
+      _renderList.reset();
     }
   }
 
@@ -359,8 +385,8 @@ export class InstancedMesh2<
 
       if (index < instancesCount && object.visible) {
         if (sortObjects) {
-          const depth = _cameraPos.distanceTo(object.position); // this can be less precise than sphere.center
-          _renderList.push({ depth, index });
+          const depth = _temp.subVectors(object.position, _cameraPos).dot(_forward); // this can be less precise than sphere.center
+          _renderList.push(depth, index);
         } else {
           array[count++] = index;
         }
@@ -394,8 +420,8 @@ export class InstancedMesh2<
 
       if (_frustum.intersectsSphere(_sphere)) {
         if (sortObjects) {
-          const depth = _cameraPos.distanceTo(_sphere.center);
-          _renderList.push({ depth, index: instance.id });
+          const depth = _temp.subVectors(_sphere.center, _cameraPos).dot(_forward);
+          _renderList.push(depth, instance.id);
         } else {
           array[count++] = instance.id;
         }
@@ -532,8 +558,10 @@ const _ray = new Ray();
 const _direction = new Vector3();
 const _worldScale = new Vector3();
 const _invMatrixWorld = new Matrix4();
-const _renderList: RenderListItem[] = [];
+const _renderList = new InstancedRenderList();
+const _forward = new Vector3();
 const _cameraPos = new Vector3();
+const _temp = new Vector3();
 
 function ascSortIntersection(a: Intersection, b: Intersection): number {
   return a.distance - b.distance;
