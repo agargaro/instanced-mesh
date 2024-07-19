@@ -41,7 +41,7 @@ const boxes = new InstancedMesh2(main.renderer, count, {
 const plantsCount = plantsPos.length * 2;
 
 const plants = new InstancedMesh2(main.renderer, plantsCount, {
-    cullingType: CullingLinear, // TODO fix bvh.js
+    cullingType: CullingBVH,
     geometry: new PlaneGeometry(),
     material: new TileMaterial(plantsCount, texture, 32, 32, { transparent: true, side: DoubleSide, depthWrite: false }),
     sortObjects: true,

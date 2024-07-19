@@ -70,7 +70,7 @@ const options = {
 };
 
 // https://github.com/mrdoob/three.js/blob/master/examples/webgl_mesh_batch.html#L291
-function sortFunction(list: RenderListItem[]): void {
+function sortFunction(list: RenderListItem[]): void { // TODO set default
   options.reversed = instancedMesh.material.transparent;
 
   let minZ = Infinity;
