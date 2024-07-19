@@ -34,6 +34,10 @@ export class InstancedEntity {
     this.owner.composeMatrixInstance(this);
   }
 
+  public setUniform(name: string, value: any): void { // TODO add type
+    this.owner.setUniformAt(this.id, name, value);
+  }
+
   public copyTo(target: Mesh): void {
     target.position.copy(this.position);
     target.scale.copy(this.scale);

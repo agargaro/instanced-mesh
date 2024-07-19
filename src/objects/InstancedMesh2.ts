@@ -1,9 +1,9 @@
-import { Box3, BufferAttribute, BufferGeometry, Camera, DataTexture, FloatType, Frustum, InstancedBufferAttribute, Intersection, Material, Matrix4, Mesh, Object3DEventMap, RGBAFormat, Ray, Raycaster, RedFormat, Scene, Sphere, Vector3, WebGLProgramParametersWithUniforms, WebGLRenderer } from "three";
+import { Box3, BufferAttribute, BufferGeometry, Camera, DataTexture, FloatType, Frustum, InstancedBufferAttribute, Intersection, Material, Matrix4, Mesh, Object3DEventMap, RGBAFormat, RGFormat, Ray, Raycaster, RedFormat, Scene, ShaderMaterial, Sphere, Vector3, WebGLProgramParametersWithUniforms, WebGLRenderer } from "three";
 import { GLInstancedBufferAttribute } from "./GLInstancedBufferAttribute";
 import { InstancedEntity } from "./InstancedEntity";
 import { InstancedMeshBVH } from "./InstancedMeshBVH";
 
-// TODO: Add expand and count/maxCount when create?
+// TODO Add expand and count/maxCount when create?
 // TODO static scene, avoid culling if no camera move?
 // TODO getMorphAt to InstancedEntity
 // TODO sorting if CullingNone
@@ -24,7 +24,7 @@ export interface InstancedMesh2Params<T, G extends BufferGeometry, M extends Mat
   onInstanceCreation?: CreateEntityCallback<Entity<T>>;
   bvhParams?: BVHParams;
   sortObjects?: boolean;
-  // createEntities?: boolean;
+  // createEntities?: boolean; // TODO
 }
 
 export interface BVHParams {
@@ -219,6 +219,15 @@ export class InstancedMesh2<
     }
 
     material.isInstancedMeshPatched = true;
+  }
+
+  public setUniformAt(id: number, name: string, value: any): void { // TODO add types, support multimaterial?
+    const texture = (this.material as ShaderMaterial).uniforms[name].value as DataTexture; // TODO add map?
+    const array = texture.image.data;
+    const size = texture.format === RedFormat ? 1 : (texture.format === RGFormat ? 2 : 4); // 3 is not supported
+
+    if (size === 1) array[id] = value;
+    else (value as Vector3).toArray(array, id * size); // TODO fix type
   }
 
   /** @internal */
