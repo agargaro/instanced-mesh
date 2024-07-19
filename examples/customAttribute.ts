@@ -2,7 +2,7 @@ import { Asset, Main, PerspectiveCameraAuto } from '@three.ez/main';
 import { BoxGeometry, DoubleSide, NearestFilter, PlaneGeometry, Scene, Texture, TextureLoader, Vector2, Vector3 } from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { GUI } from 'three/examples/jsm/libs/lil-gui.module.min';
-import { CullingBVH, CullingLinear, InstancedMesh2 } from '../src';
+import { CullingBVH, InstancedMesh2 } from '../src';
 import { TileMaterial } from './tileMaterial';
 
 const main = new Main({ rendererParameters: { antialias: true } }); // init renderer and other stuff
