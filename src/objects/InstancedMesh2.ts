@@ -1,6 +1,6 @@
 import { Box3, BufferAttribute, BufferGeometry, Camera, DataTexture, FloatType, Frustum, InstancedBufferAttribute, Intersection, Material, Matrix4, Mesh, Object3DEventMap, RGBAFormat, RGFormat, Ray, Raycaster, RedFormat, Scene, ShaderMaterial, Sphere, Vector3, WebGLProgramParametersWithUniforms, WebGLRenderer } from "three";
 import { GLInstancedBufferAttribute } from "./GLInstancedBufferAttribute";
-import { InstancedEntity } from "./InstancedEntity";
+import { InstancedEntity, UniformValue, UniformValueNoNumber } from "./InstancedEntity";
 import { InstancedMeshBVH } from "./InstancedMeshBVH";
 
 // TODO Add expand and count/maxCount when create?
@@ -31,7 +31,7 @@ export interface BVHParams {
   margin?: number;
 }
 
-class InstancedRenderList {
+class InstancedRenderList { // TODO move it
   public list: RenderListItem[] = [];
   private pool: RenderListItem[] = [];
 
@@ -80,6 +80,7 @@ export class InstancedMesh2<
   protected _maxCount: number;
   protected _material: TMaterial;
   protected _cullingType: CullingType;
+  protected _uniformsSetCallback = new Map<string, (id: number, value: UniformValue) => void>();
 
   // HACK TO MAKE IT WORK WITHOUT UPDATE CORE
   private isInstancedMesh = true; // must be set to use instancing rendering
@@ -221,13 +222,24 @@ export class InstancedMesh2<
     material.isInstancedMeshPatched = true;
   }
 
-  public setUniformAt(id: number, name: string, value: any): void { // TODO add types, support multimaterial?
-    const texture = (this.material as ShaderMaterial).uniforms[name].value as DataTexture; // TODO add map?
-    const array = texture.image.data;
-    const size = texture.format === RedFormat ? 1 : (texture.format === RGFormat ? 2 : 4); // 3 is not supported
+  public setUniformAt(id: number, name: string, value: UniformValue): void { // TODO support multimaterial?
+    let setCallback = this._uniformsSetCallback.get(name);
 
-    if (size === 1) array[id] = value;
-    else (value as Vector3).toArray(array, id * size); // TODO fix type
+    if (!setCallback) {
+      const texture = (this.material as ShaderMaterial).uniforms[name].value as DataTexture;
+      const size = texture.format === RedFormat ? 1 : (texture.format === RGFormat ? 2 : 4); // 3 is not supported
+      const array = texture.image.data;
+
+      if (size === 1) {
+        setCallback = (id: number, value: UniformValue) => { array[id] = value as number };
+      } else {
+        setCallback = (id: number, value: UniformValue) => { (value as UniformValueNoNumber).toArray(array, id * size) }; 
+      }
+
+      this._uniformsSetCallback.set(name, setCallback);
+    }
+
+    setCallback(id, value);
   }
 
   /** @internal */
