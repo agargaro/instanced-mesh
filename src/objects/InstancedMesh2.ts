@@ -2,6 +2,7 @@ import { Box3, BufferAttribute, BufferGeometry, Camera, DataTexture, FloatType, 
 import { GLInstancedBufferAttribute } from "./GLInstancedBufferAttribute";
 import { InstancedEntity, UniformValue, UniformValueNoNumber } from "./InstancedEntity";
 import { InstancedMeshBVH } from "./InstancedMeshBVH";
+import { createTexture_mat4 } from "../utils/createTexture";
 
 // TODO Add expand and count/maxCount when create?
 // TODO static scene, avoid culling if no camera move?
@@ -157,12 +158,8 @@ export class InstancedMesh2<
   }
 
   protected initMatricesTexture(): void {
-    let size = Math.sqrt(this._maxCount * 4); // 4 pixels needed for 1 matrix
-    size = Math.ceil(size / 4) * 4;
-    size = Math.max(size, 4);
-
-    const matrixArray = this._matrixArray = new Float32Array(size * size * 4); // 4 floats per RGBA pixel
-    this.instanceTexture = new DataTexture(matrixArray, size, size, RGBAFormat, FloatType);
+    this.instanceTexture = createTexture_mat4(this._maxCount)
+    this._matrixArray = this.instanceTexture.image.data as unknown as Float32Array;
   }
 
   protected createInstances(onInstanceCreation: CreateEntityCallback<Entity<TCustomData>>): void {
