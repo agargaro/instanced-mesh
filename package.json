@@ -1,6 +1,6 @@
 {
-  "name": "@three.ez/instanced-mesh",
-  "version": "1.0.0",
+  "name": "@three.ez/instanced-mesh-test",
+  "version": "0.0.7",
   "description": "InstancedMesh easier to use, with frustum culling and fast raycasting.",
   "author": "Andrea Gargaro <devgargaro@gmail.com>",
   "license": "MIT",

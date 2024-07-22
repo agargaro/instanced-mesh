@@ -1,9 +1,9 @@
 import { Main, PerspectiveCameraAuto } from '@three.ez/main';
 import { BoxGeometry, MeshNormalMaterial, Scene, Vector3 } from 'three';
-import { GUI } from 'three/examples/jsm/libs/lil-gui.module.min';
-import { CullingLinear, InstancedMesh2, RenderListItem } from '../src';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
-import { radixSort } from 'three/examples/jsm/utils/SortUtils';
+import { GUI } from 'three/examples/jsm/libs/lil-gui.module.min';
+import { CullingLinear, InstancedMesh2 } from '../src';
+import { createRadixSort } from '../src/utils/createRadixSort';
 
 const config = {
   count: 20000,
@@ -48,6 +48,8 @@ scene.on('animate', (e) => {
 
 main.createView({ scene, camera, enabled: false, backgroundColor: 'white', onAfterRender: () => spheresCount.updateDisplay() });
 
+const radixSort = createRadixSort(instancedMesh);
+
 const gui = new GUI();
 gui.add(instancedMesh, "maxCount").name('instances max count').disable();
 const spheresCount = gui.add(instancedMesh, 'count').name('instances rendered').disable();
@@ -60,34 +62,5 @@ gui.add(instancedMesh.material, "opacity", 0, 1).name('opacity').onChange(v => {
   instancedMesh.material.opacity = v;
 });
 gui.add(config, "customSort").name('custom sort').onChange(v => {
-  instancedMesh.customSort = v ? sortFunction : null;
+  instancedMesh.customSort = v ? radixSort : null;
 });
-
-const options = {
-  get: el => el.depth,
-  aux: new Array(config.count),
-  reversed: null
-};
-
-// https://github.com/mrdoob/three.js/blob/master/examples/webgl_mesh_batch.html#L291
-function sortFunction(list: RenderListItem[]): void { // TODO set default
-  options.reversed = instancedMesh.material.transparent;
-
-  let minZ = Infinity;
-  let maxZ = - Infinity;
-
-  for (const { depth } of list) {
-    if (depth > maxZ) maxZ = depth;
-    if (depth < minZ) minZ = depth;
-  }
-
-  // convert depth to unsigned 32 bit range
-  const depthDelta = maxZ - minZ;
-  const factor = (2 ** 32 - 1) / depthDelta; // UINT32_MAX / z range
-  for (const item of list) {
-    item.depth = (item.depth - minZ) * factor;
-  }
-
-  // perform a fast-sort using the hybrid radix sort function
-  radixSort(list, options);
-}
