@@ -1,8 +1,9 @@
-import { Box3, BufferAttribute, BufferGeometry, Camera, DataTexture, FloatType, Frustum, InstancedBufferAttribute, Intersection, Material, Matrix4, Mesh, Object3DEventMap, RGBAFormat, RGFormat, Ray, Raycaster, RedFormat, Scene, ShaderMaterial, Sphere, Vector3, WebGLProgramParametersWithUniforms, WebGLRenderer } from "three";
+import { Box3, BufferAttribute, BufferGeometry, Camera, DataTexture, FloatType, Frustum, InstancedBufferAttribute, Intersection, Material, Matrix4, Mesh, Object3DEventMap, RGFormat, Ray, Raycaster, RedFormat, Scene, ShaderMaterial, Sphere, Vector3, WebGLProgramParametersWithUniforms, WebGLRenderer } from "three";
+import { createTexture_mat4 } from "../utils/createTexture";
 import { GLInstancedBufferAttribute } from "./GLInstancedBufferAttribute";
 import { InstancedEntity, UniformValue, UniformValueNoNumber } from "./InstancedEntity";
 import { InstancedMeshBVH } from "./InstancedMeshBVH";
-import { createTexture_mat4 } from "../utils/createTexture";
+import { InstancedRenderItem, InstancedRenderList } from "./InstancedRenderList";
 
 // TODO Add expand and count/maxCount when create?
 // TODO static scene, avoid culling if no camera move?
@@ -11,7 +12,6 @@ import { createTexture_mat4 } from "../utils/createTexture";
 
 export type Entity<T> = InstancedEntity & T;
 export type CreateEntityCallback<T> = (obj: Entity<T>, index: number) => void;
-export type RenderListItem = { index: number, depth: number };
 export type CullingType = typeof CullingBVH | typeof CullingLinear | typeof CullingNone;
 
 export const CullingNone = 0;
@@ -30,30 +30,6 @@ export interface InstancedMesh2Params<T, G extends BufferGeometry, M extends Mat
 
 export interface BVHParams {
   margin?: number;
-}
-
-class InstancedRenderList { // TODO move it
-  public list: RenderListItem[] = [];
-  private pool: RenderListItem[] = [];
-
-  public push(depth: number, index: number) {
-    const pool = this.pool;
-    const count = this.list.length;
-
-    if (count >= pool.length) {
-      pool.push({ depth: null, index: null });
-    }
-
-    const item = pool[count];
-    item.depth = depth;
-    item.index = index;
-
-    this.list.push(item);
-  }
-
-  public reset(): void {
-    this.list.length = 0;
-  }
 }
 
 export class InstancedMesh2<
@@ -585,11 +561,11 @@ function ascSortIntersection(a: Intersection, b: Intersection): number {
   return a.distance - b.distance;
 }
 
-function sortOpaque(a: RenderListItem, b: RenderListItem) {
+function sortOpaque(a: InstancedRenderItem, b: InstancedRenderItem) {
   return a.depth - b.depth;
 }
 
-function sortTransparent(a: RenderListItem, b: RenderListItem) {
+function sortTransparent(a: InstancedRenderItem, b: InstancedRenderItem) {
   return b.depth - a.depth;
 }
 
