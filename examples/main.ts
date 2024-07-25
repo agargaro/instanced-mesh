@@ -208,10 +208,10 @@ scene.on("animate", (e) => {
 const dirLight = new DirectionalLight();
 dirLight.castShadow = true;
 dirLight.shadow.mapSize.set(4096, 4096);
-dirLight.shadow.camera.left = -128;
-dirLight.shadow.camera.right = 128;
-dirLight.shadow.camera.top = 128;
-dirLight.shadow.camera.bottom = -128;
+dirLight.shadow.camera.left = -1500;
+dirLight.shadow.camera.right = 1500;
+dirLight.shadow.camera.top = 1500;
+dirLight.shadow.camera.bottom = -1500;
 dirLight.shadow.camera.far = 5000;
 dirLight.shadow.bias = 0.02;
 dirLight.shadow.camera.updateProjectionMatrix();
