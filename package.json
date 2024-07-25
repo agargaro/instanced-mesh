@@ -44,6 +44,7 @@
     "three": ">=0.159.0"
   },
   "dependencies": {
-    "bvh.js": "^0.0.4"
+    "bvh.js": "^0.0.4",
+    "camera-controls": "^2.8.5"
   }
 }
