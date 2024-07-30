@@ -9,10 +9,14 @@ import { InstancedRenderItem, InstancedRenderList } from "./InstancedRenderList"
 // TODO static scene, avoid culling if no camera move?
 // TODO getMorphAt to InstancedEntity
 // TODO sorting if CullingNone
+// TODO: partial texture update
+// TODO: matrix update optimized if changes only rot, pos or scale.
+// TODO: addSetMatrix method and use decompose
+// TODO: send indexes data to gpu only if changes
 
 export type Entity<T> = InstancedEntity & T;
 export type CreateEntityCallback<T> = (obj: Entity<T>, index: number) => void;
-export type CullingType = typeof CullingBVH | typeof CullingLinear | typeof CullingNone;
+export type CullingType = typeof CullingNone | typeof CullingLinear | typeof CullingBVH;
 
 export const CullingNone = 0;
 export const CullingLinear = 1;
@@ -30,6 +34,7 @@ export interface InstancedMesh2Params<T, G extends BufferGeometry, M extends Mat
 
 export interface BVHParams {
   margin?: number;
+  highPrecision?: boolean;
 }
 
 export class InstancedMesh2<
@@ -94,6 +99,7 @@ export class InstancedMesh2<
 
   /** THIS MATERIAL AND GEOMETRY CANNOT BE SHARED */
   constructor(renderer: WebGLRenderer, count: number, config: InstancedMesh2Params<TCustomData, TGeometry, TMaterial>) {
+    if (renderer === undefined) throw new Error("'renderer' is mandatory.");
     if (count === undefined) throw new Error("'count' is mandatory.");
     if (config === undefined) throw new Error("'config' is mandatory.");
     if (config.cullingType === undefined) throw new Error("'cullingType' is mandatory.");
@@ -139,7 +145,7 @@ export class InstancedMesh2<
   }
 
   protected createInstances(onInstanceCreation: CreateEntityCallback<Entity<TCustomData>>): void {
-    const count = this._maxCount; // we can create only first N count
+    const count = this._maxCount; // TODO we can create only first N count
     this.instances = new Array(count);
 
     for (let i = 0; i < count; i++) {
@@ -182,7 +188,7 @@ export class InstancedMesh2<
       if (!shader.instancing) return;
 
       shader.instancing = false;
-      shader.instancingColor = false; // capire
+      shader.instancingColor = false; // TODO
       shader.uniforms.instanceTexture = { value: this.instanceTexture };
 
       if (!shader.defines) shader.defines = {};
@@ -206,7 +212,7 @@ export class InstancedMesh2<
       if (size === 1) {
         setCallback = (id: number, value: UniformValue) => { array[id] = value as number };
       } else {
-        setCallback = (id: number, value: UniformValue) => { (value as UniformValueNoNumber).toArray(array, id * size) }; 
+        setCallback = (id: number, value: UniformValue) => { (value as UniformValueNoNumber).toArray(array, id * size) };
       }
 
       this._uniformsSetCallback.set(name, setCallback);

@@ -1,10 +1,6 @@
 import { Matrix3, Matrix4, Mesh, Quaternion, Vector2, Vector3, Vector4 } from 'three';
 import { InstancedMesh2 } from './InstancedMesh2';
 
-// TODO: partial texture update
-// TODO: matrix update optimized if changes only rot, pos or scale.
-// TODO: addSetMatrix method and use decompose
-
 export type UniformValueNoNumber = Vector2 | Vector3 | Vector4 | Matrix3 | Matrix4;
 export type UniformValue = number | UniformValueNoNumber;
 

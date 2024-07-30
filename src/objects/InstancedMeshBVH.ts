@@ -11,25 +11,27 @@ export class InstancedMeshBVH {
     public geoBoundingBox: Box3;
     public bvh: BVH<NodeData, LeafData>;
     public map = new WeakMap<InstancedEntity, BVHNode<NodeData, LeafData>>();
+    protected _arrayType: typeof Float32Array | typeof Float64Array;
 
-    constructor(target: InstancedMesh2<any, any, any>, margin = 0) {
+    constructor(target: InstancedMesh2<any, any, any>, margin = 0, highPrecision = false) {
         this.target = target;
         target.geometry.computeBoundingBox();
         this.geoBoundingBox = target.geometry.boundingBox;
+        this._arrayType = highPrecision ? Float64Array : Float32Array;
         this.bvh = new BVH(new HybridBuilder(margin), WebGLCoordinateSystem);
     }
 
     public createFromArray(): void {
         const instances = this.target.instances;
         const count = this.target.instancesCount;
-        const boxes: FloatArray[] = new Array(count); // TODO change to float64Array?
+        const boxes: FloatArray[] = new Array(count);
         const objects: InstancedEntity[] = new Array(count); // we need to clone it because items are swapped
 
         this.clear();
 
         for (let i = 0; i < count; i++) {
             const instance = instances[i];
-            boxes[i] = this.getBox(instance); // this creates float64array
+            boxes[i] = this.getBox(instance, new this._arrayType(6));
             objects[i] = instance;
         }
 
@@ -39,7 +41,7 @@ export class InstancedMeshBVH {
     }
 
     public insert(object: InstancedEntity): void {
-        const node = this.bvh.insert(object, this.getBox(object));
+        const node = this.bvh.insert(object, this.getBox(object, new this._arrayType(6)));
         this.map.set(object, node);
     }
 
@@ -48,7 +50,7 @@ export class InstancedMeshBVH {
         const boxes: FloatArray[] = new Array(count);
 
         for (let i = 0; i < count; i++) {
-            boxes[i] = this.getBox(objects[i]); // this creates float64array
+            boxes[i] = this.getBox(objects[i], new this._arrayType(6));
         }
 
         this.bvh.insertRange(objects, boxes, (node) => {
@@ -59,7 +61,7 @@ export class InstancedMeshBVH {
     public move(object: InstancedEntity): void {
         const node = this.map.get(object);
         if (!node) return;
-        this.getBox(object, node.box); // update box
+        this.getBox(object, node.box); // this also updates box
         this.bvh.move(node);
     }
 
@@ -97,7 +99,7 @@ export class InstancedMeshBVH {
         this.bvh.intersectRay(_dir, _origin, raycaster.near, raycaster.far, result);
     }
 
-    protected getBox(object: InstancedEntity, array: FloatArray = new Float64Array(6)): FloatArray { // TODO refactor removing optional param
+    protected getBox(object: InstancedEntity, array: FloatArray): FloatArray {
         _box3.copy(this.geoBoundingBox).applyMatrix4(object.matrix);
 
         const min = _box3.min;
