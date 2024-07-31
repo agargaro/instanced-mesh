@@ -11,8 +11,8 @@ import { InstancedRenderItem, InstancedRenderList } from "./InstancedRenderList"
 // TODO sorting if CullingNone
 // TODO: partial texture update
 // TODO: matrix update optimized if changes only rot, pos or scale.
-// TODO: addSetMatrix method and use decompose
 // TODO: send indexes data to gpu only if changes
+// TODO: visibility if not culling
 
 export type Entity<T> = InstancedEntity & T;
 export type CreateEntityCallback<T> = (obj: Entity<T>, index: number) => void;
@@ -24,7 +24,7 @@ export interface InstancedMesh2Params<T, G extends BufferGeometry, M extends Mat
   perObjectFrustumCulled?: boolean;
   sortObjects?: boolean;
   bvh?: BVHParams;
-  // createEntities?: boolean; // TODO
+  createInstances?: boolean;
 }
 
 export interface BVHParams {
@@ -53,6 +53,7 @@ export class InstancedMesh2<
   public sortObjects: boolean;
   public customSort = null;
   public raycastOnlyFrustum = false;
+  public visibilityArray: boolean[];
   /** @internal */ public _matrixArray: Float32Array;
   protected _count: number;
   protected _maxCount: number;
@@ -75,6 +76,10 @@ export class InstancedMesh2<
   }
 
   public override onBeforeRender(renderer: WebGLRenderer, scene: Scene, camera: Camera, geometry: BufferGeometry, material: Material): void {
+    if (this.bvh?.bvh.root === null) { // if no entities created, this is necessary to avoid errors
+      this.bvh.create();
+    }
+
     if (!this.perObjectFrustumCulled) return;
 
     this.frustumCulling(camera);
@@ -107,23 +112,31 @@ export class InstancedMesh2<
     this._maxCount = count;
     this._count = count;
     this._material = config.material;
+    const createInstances = config.createInstances ?? true;
+
+    this.initIndixesAndVisibility(renderer);
+    this.initMatricesTexture();
+
+    if (createInstances) {
+      this.createInstances(config.onInstanceCreation);
+    }
 
     if (config.bvh) {
       this.bvh = new InstancedMeshBVH(this, config.bvh.margin, config.bvh.highPrecision);
+      if (config.onInstanceCreation) this.bvh.create();
     }
-
-    this.initIndixes(renderer);
-    this.initMatricesTexture();
-    this.createInstances(config.onInstanceCreation);
   }
 
-  protected initIndixes(renderer: WebGLRenderer): void {
+  protected initIndixesAndVisibility(renderer: WebGLRenderer): void {
+    const count = this._maxCount;
     const gl = renderer.getContext();
     const buffer = gl.createBuffer();
-    const array = new Uint32Array(this._maxCount);
+    const array = new Uint32Array(count);
+    const visibility = this.visibilityArray = new Array(count);
 
-    for (let i = 0; i < this._maxCount; i++) {
+    for (let i = 0; i < count; i++) {
       array[i] = i;
+      visibility[i] = true;
     }
 
     gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
@@ -148,12 +161,8 @@ export class InstancedMesh2<
 
       if (onInstanceCreation) {
         onInstanceCreation(instance, i);
-        instance.updateMatrix();
+        this.composeMatrixInstance(instance);
       }
-    }
-
-    if (onInstanceCreation) {
-      this.bvh?.createFromArray();
     }
   }
 
@@ -195,6 +204,30 @@ export class InstancedMesh2<
     material.isInstancedMeshPatched = true;
   }
 
+  public setMatrixAt(id: number, matrix: Matrix4): void {
+    matrix.toArray(this._matrixArray, id * 16);
+
+    if (this.instances) {
+      const instance = this.instances[id];
+      matrix.decompose(instance.position, instance.quaternion, instance.scale);
+    }
+
+    this.instanceTexture.needsUpdate = true;
+    this.bvh?.move(id);
+  }
+
+  public getMatrixAt(id: number, target = _tempMat4): Matrix4 {
+    return target.fromArray(this._matrixArray, id * 16);
+  }
+
+  public setVisibilityAt(id: number, value: boolean): void {
+    this.visibilityArray[id] = value;
+  }
+
+  public getVisibilityAt(id: number): boolean {
+    return this.visibilityArray[id];
+  }
+
   public setUniformAt(id: number, name: string, value: UniformValue): void { // TODO support multimaterial?
     let setCallback = this._uniformsSetCallback.get(name);
 
@@ -215,13 +248,46 @@ export class InstancedMesh2<
     setCallback(id, value);
   }
 
+  public getMorphAt(index: number, object: Mesh): void {
+    const objectInfluences = object.morphTargetInfluences;
+    const array = this.morphTexture.source.data.data;
+    const len = objectInfluences.length + 1; // All influences + the baseInfluenceSum
+    const dataIndex = index * len + 1; // Skip the baseInfluenceSum at the beginning
+
+    for (let i = 0; i < objectInfluences.length; i++) {
+      objectInfluences[i] = array[dataIndex + i];
+    }
+  }
+
+  public setMorphAt(index: number, object: Mesh): void {
+    const objectInfluences = object.morphTargetInfluences;
+    const len = objectInfluences.length + 1; // morphBaseInfluence + all influences
+
+    if (this.morphTexture === null) {
+      this.morphTexture = new DataTexture(new Float32Array(len * this._maxCount), len, this._maxCount, RedFormat, FloatType);
+    }
+
+    const array = this.morphTexture.source.data.data;
+    let morphInfluencesSum = 0;
+
+    for (let i = 0; i < objectInfluences.length; i++) {
+      morphInfluencesSum += objectInfluences[i];
+    }
+
+    const morphBaseInfluence = this.geometry.morphTargetsRelative ? 1 : 1 - morphInfluencesSum;
+    const dataIndex = len * index;
+    array[dataIndex] = morphBaseInfluence;
+    array.set(objectInfluences, dataIndex + 1);
+  }
+
   /** @internal */
   public composeMatrixInstance(entity: InstancedEntity): void {
     const position = entity.position;
     const quaternion = entity.quaternion as any;
     const scale = entity.scale;
     const te = this._matrixArray;
-    const offset = entity.id * 16;
+    const id = entity.id;
+    const offset = id * 16;
 
     const x = quaternion._x, y = quaternion._y, z = quaternion._z, w = quaternion._w;
     const x2 = x + x, y2 = y + y, z2 = z + z;
@@ -252,14 +318,14 @@ export class InstancedMesh2<
     te[offset + 15] = 1;
 
     this.instanceTexture.needsUpdate = true;
-    this.bvh?.move(entity);
+    this.bvh?.move(id);
   }
 
   public override raycast(raycaster: Raycaster, result: Intersection[]): void {
     if (this.material === undefined) return;
 
     const raycastFrustum = this.raycastOnlyFrustum && this.perObjectFrustumCulled && !this.bvh;
-    let instancesToCheck: InstancedEntity[] | Uint32Array;
+    let instancesToCheck: number[] | Uint32Array; // TODO Uint32Array
     _mesh.geometry = this.geometry;
     _mesh.material = this.material;
 
@@ -288,25 +354,24 @@ export class InstancedMesh2<
       _sphere.copy(this.boundingSphere);
       if (!raycaster.ray.intersectsSphere(_sphere)) return;
 
-      instancesToCheck = raycastFrustum ? this.instanceIndex.array as Uint32Array : this.instances;
+      instancesToCheck = this.instanceIndex.array as Uint32Array;
 
     }
 
-    const instances = this.instances;
     const instancesCount = this.instancesCount;
     const checkCount = raycastFrustum ? this._count : Math.min(instancesToCheck.length, instancesCount);
-    const getObjectCallback = raycastFrustum ? getObjectByIndex : getObject;
 
     for (let i = 0; i < checkCount; i++) {
-      const object = getObjectCallback(i);
-      if (!object?.visible) continue;
+      const objectIndex = instancesToCheck[i];
 
-      _mesh.matrixWorld = object.matrix;
+      if (objectIndex > instancesCount || !this.getVisibilityAt(objectIndex)) continue;
+
+      this.getMatrixAt(objectIndex, _mesh.matrixWorld);
 
       _mesh.raycast(raycaster, _intersections);
 
       for (const intersect of _intersections) {
-        intersect.instanceId = object.id;
+        intersect.instanceId = objectIndex;
         intersect.object = this;
         result.push(intersect);
       }
@@ -321,15 +386,6 @@ export class InstancedMesh2<
     raycaster.ray = originalRay;
     raycaster.near = originalNear;
     raycaster.far = originalFar;
-
-    function getObject(index: number): InstancedEntity {
-      return instancesToCheck[index] as InstancedEntity;
-    }
-
-    function getObjectByIndex(index: number): InstancedEntity {
-      const objectIndex = (instancesToCheck as Uint32Array)[index];
-      return objectIndex <= instancesCount ? instances[objectIndex] : undefined;
-    }
   }
 
   protected frustumCulling(camera: Camera): void {
@@ -374,12 +430,11 @@ export class InstancedMesh2<
 
     this.bvh.frustumCulling(_projScreenMatrix, _frustumResult);
 
-    for (const object of _frustumResult) {
-      const index = object.id;
-
-      if (index < instancesCount && object.visible) {
+    for (const index of _frustumResult) {
+      if (index < instancesCount && this.getVisibilityAt(index)) {
         if (sortObjects) {
-          const depth = _temp.subVectors(object.position, _cameraPos).dot(_forward); // this can be less precise than sphere.center
+          _position.setFromMatrixPosition(this.getMatrixAt(index))
+          const depth = _position.sub(_cameraPos).dot(_forward); // this can be less precise than sphere.center
           _renderList.push(depth, index);
         } else {
           array[count++] = index;
@@ -396,7 +451,6 @@ export class InstancedMesh2<
     const bSphere = this.geometry.boundingSphere;
     const radius = bSphere.radius;
     const center = bSphere.center;
-    const instances = this.instances;
     const instancesCount = this.instancesCount;
     const geometryCentered = center.x === 0 && center.y === 0 && center.z === 0;
     const sortObjects = this.sortObjects;
@@ -404,38 +458,30 @@ export class InstancedMesh2<
 
     _frustum.setFromProjectionMatrix(_projScreenMatrix);
 
-    for (let i = 0, l = instancesCount; i < l; i++) {
-      const instance = instances[i];
-      if (!instance.visible) continue;
+    for (let i = 0; i < instancesCount; i++) {
+      if (!this.getVisibilityAt(i)) continue;
 
-      if (geometryCentered) _sphere.center.copy(instance.position);
-      else _sphere.center.copy(center).applyMatrix4(instance.matrix);
-      _sphere.radius = radius * getMax(instance.scale);
+      const matrix = this.getMatrixAt(i);
+      if (geometryCentered) _sphere.center.copy(_position.setFromMatrixPosition(matrix));
+      else _sphere.center.copy(center).applyMatrix4(matrix);
+      _sphere.radius = radius * matrix.getMaxScaleOnAxis();
 
       if (_frustum.intersectsSphere(_sphere)) {
         if (sortObjects) {
-          const depth = _temp.subVectors(_sphere.center, _cameraPos).dot(_forward);
-          _renderList.push(depth, instance.id);
+          const depth = _position.subVectors(_sphere.center, _cameraPos).dot(_forward);
+          _renderList.push(depth, i);
         } else {
-          array[count++] = instance.id;
+          array[count++] = i;
         }
       }
     }
 
     this._count = count;
-
-    function getMax(scale: Vector3): number {
-      if (scale.x > scale.y) return scale.x > scale.z ? scale.x : scale.z;
-      return scale.y > scale.z ? scale.y : scale.z;
-    }
   }
 
-  // #region three.js InstancedMesh method
-
-  public computeBoundingBox(): void {
+  public computeBoundingBox(): void { // if bvh present, can override? TODO
     const geometry = this.geometry;
     const count = this.instancesCount;
-    const instances = this.instances;
 
     if (this.boundingBox === null) this.boundingBox = new Box3();
     if (geometry.boundingBox === null) geometry.computeBoundingBox();
@@ -446,7 +492,7 @@ export class InstancedMesh2<
     boundingBox.makeEmpty();
 
     for (let i = 0; i < count; i++) {
-      _box3.copy(geoBoundingBox).applyMatrix4(instances[i].matrix);
+      _box3.copy(geoBoundingBox).applyMatrix4(this.getMatrixAt(i));
       boundingBox.union(_box3);
     }
   }
@@ -454,7 +500,6 @@ export class InstancedMesh2<
   public computeBoundingSphere(): void {
     const geometry = this.geometry;
     const count = this.instancesCount;
-    const instances = this.instances;
 
     if (this.boundingSphere === null) this.boundingSphere = new Sphere();
     if (geometry.boundingSphere === null) geometry.computeBoundingSphere();
@@ -465,7 +510,7 @@ export class InstancedMesh2<
     boundingSphere.makeEmpty();
 
     for (let i = 0; i < count; i++) {
-      _sphere.copy(geoBoundingSphere).applyMatrix4(instances[i].matrix);
+      _sphere.copy(geoBoundingSphere).applyMatrix4(this.getMatrixAt(i));
       boundingSphere.union(_sphere);
     }
   }
@@ -490,38 +535,6 @@ export class InstancedMesh2<
     return this;
   }
 
-  public getMorphAt(index: number, object: Mesh): void {
-    const objectInfluences = object.morphTargetInfluences;
-    const array = this.morphTexture.source.data.data;
-    const len = objectInfluences.length + 1; // All influences + the baseInfluenceSum
-    const dataIndex = index * len + 1; // Skip the baseInfluenceSum at the beginning
-
-    for (let i = 0; i < objectInfluences.length; i++) {
-      objectInfluences[i] = array[dataIndex + i];
-    }
-  }
-
-  public setMorphAt(index: number, object: Mesh): void {
-    const objectInfluences = object.morphTargetInfluences;
-    const len = objectInfluences.length + 1; // morphBaseInfluence + all influences
-
-    if (this.morphTexture === null) {
-      this.morphTexture = new DataTexture(new Float32Array(len * this._maxCount), len, this._maxCount, RedFormat, FloatType);
-    }
-
-    const array = this.morphTexture.source.data.data;
-    let morphInfluencesSum = 0;
-
-    for (let i = 0; i < objectInfluences.length; i++) {
-      morphInfluencesSum += objectInfluences[i];
-    }
-
-    const morphBaseInfluence = this.geometry.morphTargetsRelative ? 1 : 1 - morphInfluencesSum;
-    const dataIndex = len * index;
-    array[dataIndex] = morphBaseInfluence;
-    array.set(objectInfluences, dataIndex + 1);
-  }
-
   public dispose(): this {
     this.dispatchEvent<any>({ type: 'dispose' });
 
@@ -536,16 +549,14 @@ export class InstancedMesh2<
     return this;
   }
 
-  //#endregion
-
 }
 
 const _box3 = new Box3();
 const _sphere = new Sphere();
 const _frustum = new Frustum();
 const _projScreenMatrix = new Matrix4();
-const _frustumResult: InstancedEntity[] = [];
-const _instancesIntersected: InstancedEntity[] = [];
+const _frustumResult: number[] = [];
+const _instancesIntersected: number[] = [];
 const _intersections: Intersection[] = [];
 const _mesh = new Mesh();
 const _ray = new Ray();
@@ -555,7 +566,8 @@ const _invMatrixWorld = new Matrix4();
 const _renderList = new InstancedRenderList();
 const _forward = new Vector3();
 const _cameraPos = new Vector3();
-const _temp = new Vector3();
+const _position = new Vector3();
+const _tempMat4 = new Matrix4();
 
 function ascSortIntersection(a: Intersection, b: Intersection): number {
   return a.distance - b.distance;
