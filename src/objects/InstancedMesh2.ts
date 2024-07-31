@@ -1,4 +1,4 @@
-import { Box3, BufferAttribute, BufferGeometry, Camera, DataTexture, FloatType, Frustum, InstancedBufferAttribute, Intersection, Material, Matrix4, Mesh, Object3DEventMap, RGFormat, Ray, Raycaster, RedFormat, Scene, ShaderMaterial, Sphere, Vector3, WebGLProgramParametersWithUniforms, WebGLRenderer } from "three";
+import { Box3, BufferAttribute, BufferGeometry, Camera, DataTexture, FloatType, Frustum, InstancedBufferAttribute, Intersection, Material, Matrix4, Mesh, MeshDepthMaterial, MeshDistanceMaterial, Object3DEventMap, RGBADepthPacking, RGFormat, Ray, Raycaster, RedFormat, Scene, ShaderMaterial, Sphere, Vector3, WebGLProgramParametersWithUniforms, WebGLRenderer } from "three";
 import { createTexture_mat4 } from "../utils/createTexture";
 import { GLInstancedBufferAttribute } from "./GLInstancedBufferAttribute";
 import { InstancedEntity, UniformValue, UniformValueNoNumber } from "./InstancedEntity";
@@ -18,7 +18,7 @@ export type Entity<T> = InstancedEntity & T;
 export type CreateEntityCallback<T> = (obj: Entity<T>, index: number) => void;
 
 export interface InstancedMesh2Params<T, G extends BufferGeometry, M extends Material | Material[]> {
-  geometry?: G,
+  geometry: G,
   material?: M,
   onInstanceCreation?: CreateEntityCallback<Entity<T>>;
   perObjectFrustumCulled?: boolean;
@@ -60,6 +60,9 @@ export class InstancedMesh2<
   protected _material: TMaterial;
   protected _uniformsSetCallback = new Map<string, (id: number, value: UniformValue) => void>();
 
+  public override customDepthMaterial = new MeshDepthMaterial({ depthPacking: RGBADepthPacking });
+  public override customDistanceMaterial = new MeshDistanceMaterial();
+
   // HACK TO MAKE IT WORK WITHOUT UPDATE CORE
   private isInstancedMesh = true; // must be set to use instancing rendering
   private instanceMatrix = new InstancedBufferAttribute(new Float32Array(0), 16); // must be init to avoid exception
@@ -91,19 +94,19 @@ export class InstancedMesh2<
   }
 
   override onBeforeShadow(renderer: WebGLRenderer, object: any, camera: any, shadowCamera: any, geometry: any, depthMaterial: any): void { // TIX d.ts
-    if (!(depthMaterial as Material).isInstancedMeshPatched) {
-      this.patchMaterial(depthMaterial);
-    }
     this.onBeforeRender(renderer, null, shadowCamera, geometry, depthMaterial);
   }
 
   /** THIS MATERIAL AND GEOMETRY CANNOT BE SHARED */
   constructor(renderer: WebGLRenderer, count: number, config: InstancedMesh2Params<TCustomData, TGeometry, TMaterial>) {
-    if (renderer === undefined) throw new Error("'renderer' is mandatory.");
-    if (count === undefined) throw new Error("'count' is mandatory.");
-    if (config === undefined) throw new Error("'config' is mandatory.");
+    if (!renderer) throw new Error("'renderer' is mandatory.");
+    if (count === undefined || count === null) throw new Error("'count' is mandatory.");
+    if (!config) throw new Error("'config' is mandatory.");
+    if (!config.geometry) throw new Error("'geometry' is mandatory.");
 
     super(config.geometry, config.material);
+
+    if (this.geometry.getAttribute("instanceIndex")) throw new Error('Cannot reuse already patched geometry.');
 
     this.perObjectFrustumCulled = config.perObjectFrustumCulled ?? true;
     this.sortObjects = config.sortObjects ?? false;
@@ -125,6 +128,9 @@ export class InstancedMesh2<
       this.bvh = new InstancedMeshBVH(this, config.bvh.margin, config.bvh.highPrecision);
       if (config.onInstanceCreation) this.bvh.create();
     }
+
+    this.patchMaterial(this.customDepthMaterial);
+    this.patchMaterial(this.customDistanceMaterial);
   }
 
   protected initIndixesAndVisibility(renderer: WebGLRenderer): void {
@@ -180,7 +186,7 @@ export class InstancedMesh2<
   }
 
   protected patchMaterial(material: Material): void {
-    if (material.isInstancedMeshPatched) return;
+    if (material.isInstancedMeshPatched) throw new Error('Cannot reuse already patched material.');
 
     const onBeforeCompile = material.onBeforeCompile;
 
