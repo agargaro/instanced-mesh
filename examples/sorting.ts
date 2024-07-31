@@ -2,7 +2,7 @@ import { Main, PerspectiveCameraAuto } from '@three.ez/main';
 import { BoxGeometry, MeshNormalMaterial, Scene, Vector3 } from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { GUI } from 'three/examples/jsm/libs/lil-gui.module.min';
-import { CullingLinear, InstancedMesh2 } from '../src';
+import { InstancedMesh2 } from '../src';
 import { createRadixSort } from '../src/utils/createRadixSort';
 
 const config = {
@@ -20,8 +20,7 @@ const scene = new Scene();
 const instancedMesh = new InstancedMesh2(main.renderer, config.count, {
   geometry: new BoxGeometry(0.1, 0.1, 0.1),
   material: new MeshNormalMaterial({ transparent: true, opacity: 0.2, depthWrite: false }),
-  cullingType: CullingLinear,
-  bvhParams: { margin: config.marginBVH },
+  bvh: { margin: config.marginBVH },
   sortObjects: true,
   onInstanceCreation: (object) => {
     object.position.random().multiplyScalar(5).subScalar(2.5);

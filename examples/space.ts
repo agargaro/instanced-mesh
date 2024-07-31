@@ -2,7 +2,7 @@ import { Main, PerspectiveCameraAuto } from '@three.ez/main';
 import { DirectionalLight, MeshLambertMaterial, OctahedronGeometry, Scene, SpotLight } from 'three';
 import { MapControls } from 'three/examples/jsm/controls/MapControls';
 import { GUI } from 'three/examples/jsm/libs/lil-gui.module.min';
-import { CullingBVH, InstancedMesh2 } from '../src';
+import { InstancedMesh2 } from '../src';
 import { PRNG } from './random';
 
 const config = {
@@ -21,8 +21,7 @@ const scene = new Scene();
 const instancedMesh = new InstancedMesh2<{ r: number, phi: number, theta: number }>(main.renderer, config.count, {
   geometry: new OctahedronGeometry(1, 2),
   material: new MeshLambertMaterial({ flatShading: true }),
-  cullingType: CullingBVH,
-  bvhParams: { margin: config.marginBVH },
+  bvh: { margin: config.marginBVH },
   onInstanceCreation: (object) => {
     const r = object.r = random.range(config.spawnRadius * 0.05, config.spawnRadius);
     const phi = object.phi = random.range(0, Math.PI * 2);

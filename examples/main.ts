@@ -4,7 +4,7 @@ import { MapControls } from 'three/examples/jsm/controls/MapControls';
 import { GUI } from 'three/examples/jsm/libs/lil-gui.module.min';
 import { GLTF, GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 import { Sky } from 'three/examples/jsm/objects/Sky';
-import { CullingBVH, InstancedMesh2 } from '../src';
+import { InstancedMesh2 } from '../src';
 
 const count = 1000000;
 const terrainSize = 125000;
@@ -21,7 +21,7 @@ const scene = new Scene();
 const treeGLTF = (await Asset.load<GLTF>(GLTFLoader, 'tree.glb')).scene.children[0] as Mesh<BufferGeometry, MeshStandardMaterial>;
 
 const trees = new InstancedMesh2(main.renderer, count, {
-  cullingType: CullingBVH,
+  bvh: {},
   geometry: treeGLTF.geometry,
   material: treeGLTF.material,
   onInstanceCreation: (obj, index) => {

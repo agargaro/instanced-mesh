@@ -16,19 +16,14 @@ import { InstancedRenderItem, InstancedRenderList } from "./InstancedRenderList"
 
 export type Entity<T> = InstancedEntity & T;
 export type CreateEntityCallback<T> = (obj: Entity<T>, index: number) => void;
-export type CullingType = typeof CullingNone | typeof CullingLinear | typeof CullingBVH;
-
-export const CullingNone = 0;
-export const CullingLinear = 1;
-export const CullingBVH = 2;
 
 export interface InstancedMesh2Params<T, G extends BufferGeometry, M extends Material | Material[]> {
-  cullingType: CullingType;
   geometry?: G,
   material?: M,
   onInstanceCreation?: CreateEntityCallback<Entity<T>>;
-  bvhParams?: BVHParams;
+  perObjectFrustumCulled?: boolean;
   sortObjects?: boolean;
+  bvh?: BVHParams;
   // createEntities?: boolean; // TODO
 }
 
@@ -54,6 +49,7 @@ export class InstancedMesh2<
   public boundingSphere: Sphere = null;
   public instancesCount: number; // TODO handle update from dynamic to static
   public bvh: InstancedMeshBVH;
+  public perObjectFrustumCulled: boolean;
   public sortObjects: boolean;
   public customSort = null;
   public raycastOnlyFrustum = false;
@@ -61,7 +57,6 @@ export class InstancedMesh2<
   protected _count: number;
   protected _maxCount: number;
   protected _material: TMaterial;
-  protected _cullingType: CullingType;
   protected _uniformsSetCallback = new Map<string, (id: number, value: UniformValue) => void>();
 
   // HACK TO MAKE IT WORK WITHOUT UPDATE CORE
@@ -80,7 +75,7 @@ export class InstancedMesh2<
   }
 
   public override onBeforeRender(renderer: WebGLRenderer, scene: Scene, camera: Camera, geometry: BufferGeometry, material: Material): void {
-    if (this._cullingType === CullingNone) return;
+    if (!this.perObjectFrustumCulled) return;
 
     this.frustumCulling(camera);
 
@@ -102,20 +97,19 @@ export class InstancedMesh2<
     if (renderer === undefined) throw new Error("'renderer' is mandatory.");
     if (count === undefined) throw new Error("'count' is mandatory.");
     if (config === undefined) throw new Error("'config' is mandatory.");
-    if (config.cullingType === undefined) throw new Error("'cullingType' is mandatory.");
 
     super(config.geometry, config.material);
 
-    this._cullingType = config.cullingType;
+    this.perObjectFrustumCulled = config.perObjectFrustumCulled ?? true;
     this.sortObjects = config.sortObjects ?? false;
-    this.frustumCulled = this._cullingType === CullingNone;
+    this.frustumCulled = !this.perObjectFrustumCulled;
     this.instancesCount = count;
     this._maxCount = count;
     this._count = count;
     this._material = config.material;
 
-    if (this._cullingType === CullingBVH) {
-      this.bvh = new InstancedMeshBVH(this, config.bvhParams?.margin);
+    if (config.bvh) {
+      this.bvh = new InstancedMeshBVH(this, config.bvh.margin, config.bvh.highPrecision);
     }
 
     this.initIndixes(renderer);
@@ -264,7 +258,7 @@ export class InstancedMesh2<
   public override raycast(raycaster: Raycaster, result: Intersection[]): void {
     if (this.material === undefined) return;
 
-    const raycastFrustum = this.raycastOnlyFrustum && !this.bvh && this._cullingType !== CullingNone;
+    const raycastFrustum = this.raycastOnlyFrustum && this.perObjectFrustumCulled && !this.bvh;
     let instancesToCheck: InstancedEntity[] | Uint32Array;
     _mesh.geometry = this.geometry;
     _mesh.material = this.material;
