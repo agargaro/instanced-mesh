@@ -93,7 +93,7 @@ export class InstancedMesh2<
     gl.bufferSubData(gl.ARRAY_BUFFER, 0, instanceIndex.array, 0, this._count);
   }
 
-  override onBeforeShadow(renderer: WebGLRenderer, object: any, camera: any, shadowCamera: any, geometry: any, depthMaterial: any): void { // TIX d.ts
+  override onBeforeShadow(renderer: WebGLRenderer, object: any, camera: any, shadowCamera: any, geometry: any, depthMaterial: any): void { // FIX d.ts
     this.onBeforeRender(renderer, null, shadowCamera, geometry, depthMaterial);
   }
 
