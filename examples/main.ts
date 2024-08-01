@@ -17,6 +17,8 @@ import {
   RepeatWrapping,
   RGBADepthPacking,
   Scene,
+  SpotLight,
+  SpotLightHelper,
   Texture,
   TextureLoader,
   Vector3,
@@ -61,7 +63,18 @@ const robotGLTF = await Asset.load<GLTF>(GLTFLoader, "Robot.glb");
 robotGLTF.scene.traverse((o) => {
   if ((o as Mesh).isMesh) {
     o.receiveShadow = true;
-    o.castShadow = true;
+    // o.castShadow = true;
+  }
+  if(o.name === 'Head') {
+    const spotLight = new SpotLight(0xfff8cc, 350, 250, Math.PI / 8, 0.2).translateZ(2);
+    spotLight.castShadow = true;
+    const target = new Object3D();
+    target.position.set(o.position.x, o.position.y, o.position.z + 100);
+    spotLight.target = target;
+    const spotLightHelper = new SpotLightHelper( spotLight );
+    o.add(target)
+    o.add(spotLight);
+    o.add( spotLightHelper );
   }
 });
 
@@ -170,7 +183,7 @@ const bushes = new InstancedMesh2(main.renderer, bushesNum, {
   },
 });
 
-ground.castShadow = true;
+// ground.castShadow = true;
 ground.receiveShadow = true;
 
 trees.castShadow = true;
