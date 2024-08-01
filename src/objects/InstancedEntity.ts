@@ -1,10 +1,6 @@
 import { Matrix3, Matrix4, Mesh, Quaternion, Vector2, Vector3, Vector4 } from 'three';
 import { InstancedMesh2 } from './InstancedMesh2';
 
-// TODO: partial texture update
-// TODO: matrix update optimized if changes only rot, pos or scale.
-// TODO: addSetMatrix method and use decompose
-
 export type UniformValueNoNumber = Vector2 | Vector3 | Vector4 | Matrix3 | Matrix4;
 export type UniformValue = number | UniformValueNoNumber;
 
@@ -15,10 +11,12 @@ export class InstancedEntity {
   public position: Vector3;
   public scale: Vector3;
   public quaternion: Quaternion;
-  public visible = true;
+
+  public get visible(): boolean { return this.owner.getVisibilityAt(this.id) }
+  public set visible(value: boolean) { this.owner.setVisibilityAt(this.id, value) }
 
   public get matrix(): Matrix4 {
-    return _m.fromArray(this.owner._matrixArray, this.id * 16);
+    return this.owner.getMatrixAt(this.id, _m);
   }
 
   public get matrixWorld(): Matrix4 {
@@ -33,7 +31,7 @@ export class InstancedEntity {
     this.quaternion = new Quaternion();
   }
 
-  public updateMatrix(): void { 
+  public updateMatrix(): void {
     this.owner.composeMatrixInstance(this);
   }
 

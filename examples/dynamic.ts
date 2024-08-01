@@ -2,7 +2,7 @@ import { Main, PerspectiveCameraAuto } from '@three.ez/main';
 import { MeshNormalMaterial, Scene, SphereGeometry, Vector3 } from 'three';
 import { FlyControls } from 'three/examples/jsm/controls/FlyControls';
 import { GUI } from 'three/examples/jsm/libs/lil-gui.module.min';
-import { CullingLinear, InstancedMesh2 } from '../src';
+import { InstancedMesh2 } from '../src';
 
 const count = 150000;
 const worldSize = 20000;
@@ -12,7 +12,6 @@ const camera = new PerspectiveCameraAuto(70, 0.1, 500);
 const scene = new Scene();
 
 const spheres = new InstancedMesh2<{ dir: Vector3 }>(main.renderer, count, {
-  cullingType: CullingLinear,
   geometry: new SphereGeometry(), 
   material: new MeshNormalMaterial(),
   onInstanceCreation: (obj, index) => {

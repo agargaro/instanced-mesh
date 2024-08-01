@@ -1,81 +1,80 @@
 import { BVH, HybridBuilder, WebGLCoordinateSystem, BVHNode, FloatArray } from 'bvh.js';
 import { Box3, Matrix4, Raycaster } from 'three';
-import { InstancedEntity } from './InstancedEntity';
 import { InstancedMesh2 } from './InstancedMesh2';
 
 type NodeData = {};
-type LeafData = InstancedEntity;
+type LeafData = number; // instance id
 
 export class InstancedMeshBVH {
     public target: InstancedMesh2;
     public geoBoundingBox: Box3;
     public bvh: BVH<NodeData, LeafData>;
-    public map = new WeakMap<InstancedEntity, BVHNode<NodeData, LeafData>>();
+    public map = new Map<number, BVHNode<NodeData, LeafData>>();
+    protected _arrayType: typeof Float32Array | typeof Float64Array;
 
-    constructor(target: InstancedMesh2<any, any, any>, margin = 0) {
+    constructor(target: InstancedMesh2<any, any, any>, margin = 0, highPrecision = false) {
         this.target = target;
         target.geometry.computeBoundingBox();
         this.geoBoundingBox = target.geometry.boundingBox;
+        this._arrayType = highPrecision ? Float64Array : Float32Array;
         this.bvh = new BVH(new HybridBuilder(margin), WebGLCoordinateSystem);
     }
 
-    public createFromArray(): void {
-        const instances = this.target.instances;
+    public create(): void {
         const count = this.target.instancesCount;
-        const boxes: FloatArray[] = new Array(count); // TODO change to float64Array?
-        const objects: InstancedEntity[] = new Array(count); // we need to clone it because items are swapped
+        const boxes: FloatArray[] = new Array(count);
+        const objects: Uint32Array = new Uint32Array(count); // TODO could be opt if instances are less than 65k
 
         this.clear();
 
         for (let i = 0; i < count; i++) {
-            const instance = instances[i];
-            boxes[i] = this.getBox(instance); // this creates float64array
-            objects[i] = instance;
+            boxes[i] = this.getBox(i, new this._arrayType(6));
+            objects[i] = i;
         }
 
-        this.bvh.createFromArray(objects, boxes, (node) => {
+        this.bvh.createFromArray(objects as unknown as number[], boxes, (node) => {
             this.map.set(node.object, node);
         });
     }
 
-    public insert(object: InstancedEntity): void {
-        const node = this.bvh.insert(object, this.getBox(object));
-        this.map.set(object, node);
+    public insert(id: number): void {
+        const node = this.bvh.insert(id, this.getBox(id, new this._arrayType(6)));
+        this.map.set(id, node);
     }
 
-    public insertRange(objects: InstancedEntity[]): void {
-        const count = objects.length;
+    public insertRange(ids: number[]): void {
+        const count = ids.length;
         const boxes: FloatArray[] = new Array(count);
 
         for (let i = 0; i < count; i++) {
-            boxes[i] = this.getBox(objects[i]); // this creates float64array
+            boxes[i] = this.getBox(ids[i], new this._arrayType(6));
         }
 
-        this.bvh.insertRange(objects, boxes, (node) => {
+        this.bvh.insertRange(ids, boxes, (node) => {
             this.map.set(node.object, node);
         });
     }
 
-    public move(object: InstancedEntity): void {
-        const node = this.map.get(object);
+    public move(id: number): void {
+        const node = this.map.get(id);
         if (!node) return;
-        this.getBox(object, node.box); // update box
+        this.getBox(id, node.box); // this also updates box
         this.bvh.move(node);
     }
 
-    public delete(object: InstancedEntity): void {
-        const node = this.map.get(object);
+    public delete(id: number): void {
+        const node = this.map.get(id);
         if (!node) return;
         this.bvh.delete(node);
-        this.map.delete(object);
+        this.map.delete(id);
     }
 
     public clear(): void {
         this.bvh.clear();
-        this.map = new WeakMap<InstancedEntity, BVHNode<NodeData, LeafData>>();
+        this.map = new Map();
     }
 
-    public frustumCulling(projScreenMatrix: Matrix4, result: InstancedEntity[]): void {
+    public frustumCulling(projScreenMatrix: Matrix4, result: number[]): void {
         this.bvh.frustumCulling(projScreenMatrix.elements, result);
     }
 
@@ -83,7 +82,7 @@ export class InstancedMeshBVH {
         throw new Error("Not implemented yet.");
     }
 
-    public raycast(raycaster: Raycaster, result: InstancedEntity[]): void {
+    public raycast(raycaster: Raycaster, result: number[]): void {
         const ray = raycaster.ray;
 
         _origin[0] = ray.origin.x;
@@ -97,8 +96,8 @@ export class InstancedMeshBVH {
         this.bvh.intersectRay(_dir, _origin, raycaster.near, raycaster.far, result);
     }
 
-    protected getBox(object: InstancedEntity, array: FloatArray = new Float64Array(6)): FloatArray { // TODO refactor removing optional param
-        _box3.copy(this.geoBoundingBox).applyMatrix4(object.matrix);
+    protected getBox(id: number, array: FloatArray): FloatArray {
+        _box3.copy(this.geoBoundingBox).applyMatrix4(this.target.getMatrixAt(id));
 
         const min = _box3.min;
         const max = _box3.max;

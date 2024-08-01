@@ -53,88 +53,9 @@ const camera = new PerspectiveCameraAuto(70, 0.1, 10000);
 camera.position.set(0, 3, 15);
 const scene = new Scene();
 
-const raycaster = new Raycaster();
+const treeGLTF = (await Asset.load<GLTF>(GLTFLoader, 'tree.glb')).scene.children[0] as Mesh<BufferGeometry, MeshStandardMaterial>;
 
-const treeGLTF = (await Asset.load<GLTF>(GLTFLoader, "tree.glb")).scene.children[0] as Mesh<BufferGeometry, MeshStandardMaterial>;
-const rockGLTF = (await Asset.load<GLTF>(GLTFLoader, "Rock_3.glb")).scene.children[0] as Mesh<BufferGeometry, MeshStandardMaterial>;
-const plantGLTF = (await Asset.load<GLTF>(GLTFLoader, "Plant_3.glb")).scene.children[0] as Mesh<BufferGeometry, MeshStandardMaterial>;
-const bushGLTF = (await Asset.load<GLTF>(GLTFLoader, "Bush_2.glb")).scene.children[0] as Mesh<BufferGeometry, MeshStandardMaterial>;
-const robotGLTF = await Asset.load<GLTF>(GLTFLoader, "Robot.glb");
-robotGLTF.scene.traverse((o) => {
-  if ((o as Mesh).isMesh) {
-    o.receiveShadow = true;
-    // o.castShadow = true;
-  }
-  if(o.name === 'Head') {
-    const spotLight = new SpotLight(0xfff8cc, 350, 250, Math.PI / 8, 0.2).translateZ(2);
-    spotLight.castShadow = true;
-    const target = new Object3D();
-    target.position.set(o.position.x, o.position.y, o.position.z + 100);
-    spotLight.target = target;
-    const spotLightHelper = new SpotLightHelper( spotLight );
-    o.add(target)
-    o.add(spotLight);
-    o.add( spotLightHelper );
-  }
-});
-
-const grass: Texture = await Asset.load(TextureLoader, "grass.jpg");
-grass.repeat.set(terrainTextureRepeat, terrainTextureRepeat);
-grass.wrapS = grass.wrapT = RepeatWrapping;
-
-const normal: Texture = await Asset.load(TextureLoader, "normal.jpg");
-normal.repeat.set(terrainTextureRepeat, terrainTextureRepeat);
-normal.wrapS = normal.wrapT = RepeatWrapping;
-
-const ground = new Terrain(terrainSize, terrainSegments, grass, normal);
-octree.addGraphNode(ground);
-const sampler = new MeshSurfaceSampler(ground).setWeightAttribute(null).build();
-
-raycaster.set(new Vector3(0, 500000, 0), new Vector3(0, -1, 0));
-const intersection = raycaster.intersectObject(ground)[0].point;
-
-const playerObjectHolder = new Object3D();
-const playerRadius = 3;
-
-const playerController = new MW.CharacterController(playerObjectHolder, playerRadius);
-playerController.teleport(intersection.x, intersection.y + 20, intersection.z);
-world.add(playerController);
-
-const tpsCameraControls = new MW.TPSCameraControls(camera, playerObjectHolder, world, main.renderer.domElement);
-
-const keyInputControl = new MW.KeyInputControl();
-keyInputControl.addEventListener("movekeyon", () => (playerController.isRunning = true));
-keyInputControl.addEventListener("movekeyoff", () => (playerController.isRunning = false));
-keyInputControl.addEventListener("jumpkeypress", () => playerController.jump());
-
-keyInputControl.addEventListener("movekeychange", () => {
-  var cameraFrontAngle = tpsCameraControls.frontAngle;
-  var characterFrontAngle = keyInputControl.frontAngle;
-  playerController.direction = cameraFrontAngle + characterFrontAngle;
-});
-
-tpsCameraControls.addEventListener("update", () => {
-  if (!playerController.isRunning) return;
-
-  const cameraFrontAngle = tpsCameraControls.frontAngle;
-  const characterFrontAngle = keyInputControl.frontAngle;
-  playerController.direction = cameraFrontAngle + characterFrontAngle;
-});
-
-playerObjectHolder.add(robotGLTF.scene);
-
-const animationController = new MW.AnimationController(robotGLTF.scene, robotGLTF.animations);
-animationController.motion.Robot_Jump.setLoop(LoopOnce, 0);
-animationController.motion.Robot_Jump.clampWhenFinished = true;
-
-playerController.addEventListener("startIdling", () => animationController.play("Robot_Idle"));
-playerController.addEventListener("startWalking", () => animationController.play("Robot_Running"));
-playerController.addEventListener("startJumping", () => animationController.play("Robot_Jump"));
-playerController.addEventListener("startSliding", () => animationController.play("Robot_Jump"));
-playerController.addEventListener("startFalling", () => animationController.play("Robot_Jump"));
-animationController.play("Robot_Jump");
-
-const trees = new InstancedMesh2(main.renderer, treeNum, {
+const trees = new InstancedMesh2(main.renderer, count, {
   cullingType: CullingBVH,
   geometry: treeGLTF.geometry,
   material: treeGLTF.material,

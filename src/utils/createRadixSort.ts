@@ -1,5 +1,6 @@
 import { radixSort } from "three/examples/jsm/utils/SortUtils";
-import { InstancedMesh2, RenderListItem } from "../objects/InstancedMesh2";
+import { InstancedMesh2 } from "../objects/InstancedMesh2";
+import { InstancedRenderItem } from "../objects/InstancedRenderList";
 
 export function createRadixSort(target: InstancedMesh2) { // TODO add type
 
@@ -10,7 +11,7 @@ export function createRadixSort(target: InstancedMesh2) { // TODO add type
     };
 
     // https://github.com/mrdoob/three.js/blob/master/examples/webgl_mesh_batch.html#L291
-    return function sortFunction(list: RenderListItem[]): void {
+    return function sortFunction(list: InstancedRenderItem[]): void {
         options.reversed = target.material.transparent;
 
         let minZ = Infinity;

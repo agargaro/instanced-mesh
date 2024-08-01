@@ -2,7 +2,7 @@ import { Asset, Main, PerspectiveCameraAuto } from '@three.ez/main';
 import { BoxGeometry, DoubleSide, NearestFilter, PlaneGeometry, Scene, Texture, TextureLoader, Vector2, Vector3 } from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { GUI } from 'three/examples/jsm/libs/lil-gui.module.min';
-import { CullingBVH, InstancedMesh2 } from '../src';
+import { InstancedMesh2 } from '../src';
 import { TileMaterial } from './tileMaterial';
 
 const main = new Main({ rendererParameters: { antialias: true } }); // init renderer and other stuff
@@ -22,18 +22,16 @@ const plantsPos: Vector3[] = [];
 const grass = [0, 15], stone = [1, 15], snow = [2, 11], plant = [14, 10];
 
 const boxes = new InstancedMesh2(main.renderer, count, {
-    cullingType: CullingBVH,
     geometry: new BoxGeometry(),
     material: new TileMaterial(count, texture, 32, 32),
+    bvh: {},
     onInstanceCreation: (obj, index) => {
         obj.position.x = (index % side) - side / 2;
         obj.position.z = Math.floor(index / side) - side / 2;
         const noise = Math.sin(obj.position.x * obj.position.z * 0.0005);
         obj.position.y = Math.floor(Math.max(-1, Math.sin(obj.position.x * 0.04) + Math.sin(obj.position.z * 0.04) + noise) * height / 2);
-
         const cube = obj.position.y - noise * 8 > height * 0.8 ? snow : (obj.position.y - noise * 8 > 0 ? stone : grass);
         obj.setUniform('offsetTexture', vec2.set(cube[0], cube[1]));
-
         if (cube === grass && Math.random() <= 0.05) plantsPos.push(obj.position);
     },
 });
@@ -41,15 +39,14 @@ const boxes = new InstancedMesh2(main.renderer, count, {
 const plantsCount = plantsPos.length * 2;
 
 const plants = new InstancedMesh2(main.renderer, plantsCount, {
-    cullingType: CullingBVH,
     geometry: new PlaneGeometry(),
     material: new TileMaterial(plantsCount, texture, 32, 32, { transparent: true, side: DoubleSide, depthWrite: false }),
+    bvh: {},
     sortObjects: true,
     onInstanceCreation: (obj, index) => {
         obj.position.copy(plantsPos[Math.floor(index / 2)]);
         obj.position.y += 1;
         if (index % 2 === 0) obj.rotateY(Math.PI / 2);
-
         obj.setUniform('offsetTexture', vec2.set(plant[0], plant[1]));
     },
 });
