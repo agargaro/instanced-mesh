@@ -26,7 +26,7 @@ import {
 import { GUI } from "three/examples/jsm/libs/lil-gui.module.min";
 import { GLTF, GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
 import { Sky } from "three/examples/jsm/objects/Sky";
-import { CullingBVH, InstancedMesh2 } from "../src";
+import { InstancedMesh2 } from "../src";
 import { Terrain } from "./terrain";
 import { MeshSurfaceSampler } from "three/examples/jsm/math/MeshSurfaceSampler";
 
@@ -53,10 +53,93 @@ const camera = new PerspectiveCameraAuto(70, 0.1, 10000);
 camera.position.set(0, 3, 15);
 const scene = new Scene();
 
-const treeGLTF = (await Asset.load<GLTF>(GLTFLoader, 'tree.glb')).scene.children[0] as Mesh<BufferGeometry, MeshStandardMaterial>;
+const raycaster = new Raycaster();
 
-const trees = new InstancedMesh2(main.renderer, count, {
-  cullingType: CullingBVH,
+const treeGLTF = (await Asset.load<GLTF>(GLTFLoader, "tree.glb")).scene.children[0] as Mesh<BufferGeometry, MeshStandardMaterial>;
+const rockGLTF = (await Asset.load<GLTF>(GLTFLoader, "Rock_3.glb")).scene.children[0] as Mesh<BufferGeometry, MeshStandardMaterial>;
+const plantGLTF = (await Asset.load<GLTF>(GLTFLoader, "Plant_3.glb")).scene.children[0] as Mesh<BufferGeometry, MeshStandardMaterial>;
+const bushGLTF = (await Asset.load<GLTF>(GLTFLoader, "Bush_2.glb")).scene.children[0] as Mesh<BufferGeometry, MeshStandardMaterial>;
+const robotGLTF = await Asset.load<GLTF>(GLTFLoader, "Robot.glb");
+robotGLTF.scene.traverse((o) => {
+  if ((o as Mesh).isMesh) {
+    o.receiveShadow = true;
+    o.castShadow = true;
+  }
+  if(o.name === 'Head') {
+    const spotLight = new SpotLight(0xfff8cc, 10000, 250, Math.PI / 6, 0.8).translateZ(1.1);
+    spotLight.castShadow = true;
+    spotLight.shadow.mapSize.set(1024, 1024);
+    spotLight.shadow.camera.far = 50000;
+    spotLight.shadow.bias = 0.1;
+    spotLight.shadow.camera.updateProjectionMatrix();
+
+    const target = new Object3D();
+    target.position.set(o.position.x, o.position.y, o.position.z + 100);
+    spotLight.target = target;
+
+    o.add(target)
+    o.add(spotLight);
+  }
+});
+
+const grass: Texture = await Asset.load(TextureLoader, "grass.jpg");
+grass.repeat.set(terrainTextureRepeat, terrainTextureRepeat);
+grass.wrapS = grass.wrapT = RepeatWrapping;
+
+const normal: Texture = await Asset.load(TextureLoader, "normal.jpg");
+normal.repeat.set(terrainTextureRepeat, terrainTextureRepeat);
+normal.wrapS = normal.wrapT = RepeatWrapping;
+
+const ground = new Terrain(terrainSize, terrainSegments, grass, normal);
+octree.addGraphNode(ground);
+const sampler = new MeshSurfaceSampler(ground).setWeightAttribute(null).build();
+
+raycaster.set(new Vector3(0, 500000, 0), new Vector3(0, -1, 0));
+const intersection = raycaster.intersectObject(ground)[0].point;
+
+const playerObjectHolder = new Object3D();
+const playerRadius = 3;
+
+const playerController = new MW.CharacterController(playerObjectHolder, playerRadius);
+playerController.teleport(intersection.x, intersection.y + 20, intersection.z);
+world.add(playerController);
+
+const tpsCameraControls = new MW.TPSCameraControls(camera, playerObjectHolder, world, main.renderer.domElement);
+
+const keyInputControl = new MW.KeyInputControl();
+keyInputControl.addEventListener("movekeyon", () => (playerController.isRunning = true));
+keyInputControl.addEventListener("movekeyoff", () => (playerController.isRunning = false));
+keyInputControl.addEventListener("jumpkeypress", () => playerController.jump());
+
+keyInputControl.addEventListener("movekeychange", () => {
+  var cameraFrontAngle = tpsCameraControls.frontAngle;
+  var characterFrontAngle = keyInputControl.frontAngle;
+  playerController.direction = cameraFrontAngle + characterFrontAngle;
+});
+
+tpsCameraControls.addEventListener("update", () => {
+  if (!playerController.isRunning) return;
+
+  const cameraFrontAngle = tpsCameraControls.frontAngle;
+  const characterFrontAngle = keyInputControl.frontAngle;
+  playerController.direction = cameraFrontAngle + characterFrontAngle;
+});
+
+playerObjectHolder.add(robotGLTF.scene);
+
+const animationController = new MW.AnimationController(robotGLTF.scene, robotGLTF.animations);
+animationController.motion.Robot_Jump.setLoop(LoopOnce, 0);
+animationController.motion.Robot_Jump.clampWhenFinished = true;
+
+playerController.addEventListener("startIdling", () => animationController.play("Robot_Idle"));
+playerController.addEventListener("startWalking", () => animationController.play("Robot_Running"));
+playerController.addEventListener("startJumping", () => animationController.play("Robot_Jump"));
+playerController.addEventListener("startSliding", () => animationController.play("Robot_Jump"));
+playerController.addEventListener("startFalling", () => animationController.play("Robot_Jump"));
+animationController.play("Robot_Jump");
+
+const trees = new InstancedMesh2(main.renderer, treeNum, {
+  bvh: {},
   geometry: treeGLTF.geometry,
   material: treeGLTF.material,
   onInstanceCreation: (obj, index) => {
@@ -72,7 +155,7 @@ trees.on("click", (e) => {
 });
 
 const rocks = new InstancedMesh2(main.renderer, rockNum, {
-  cullingType: CullingBVH,
+  bvh: {},
   geometry: rockGLTF.geometry,
   material: rockGLTF.material,
   onInstanceCreation: (obj, index) => {
@@ -83,7 +166,7 @@ const rocks = new InstancedMesh2(main.renderer, rockNum, {
 });
 
 const plants = new InstancedMesh2(main.renderer, plantNum, {
-  cullingType: CullingBVH,
+  bvh: {},
   geometry: plantGLTF.geometry,
   material: plantGLTF.material,
   onInstanceCreation: (obj, index) => {
@@ -94,7 +177,7 @@ const plants = new InstancedMesh2(main.renderer, plantNum, {
 });
 
 const bushes = new InstancedMesh2(main.renderer, bushesNum, {
-  cullingType: CullingBVH,
+  bvh: {},
   geometry: bushGLTF.geometry,
   material: bushGLTF.material,
   onInstanceCreation: (obj, index) => {
@@ -104,7 +187,7 @@ const bushes = new InstancedMesh2(main.renderer, bushesNum, {
   },
 });
 
-// ground.castShadow = true;
+ground.castShadow = true;
 ground.receiveShadow = true;
 
 trees.castShadow = true;
@@ -147,11 +230,8 @@ dirLight.shadow.camera.right = 1500;
 dirLight.shadow.camera.top = 1500;
 dirLight.shadow.camera.bottom = -1500;
 dirLight.shadow.camera.far = 5000;
-dirLight.shadow.bias = 0.02;
+dirLight.shadow.bias = 0.1;
 dirLight.shadow.camera.updateProjectionMatrix();
-
-const helper = new CameraHelper( dirLight.shadow.camera );
-scene.add( helper );
 
 const sunOffset = new Vector3();
 dirLight.on("animate", (e) => {
@@ -161,7 +241,7 @@ dirLight.on("animate", (e) => {
   dirLight.target.position.copy(camera.position).sub(sunOffset);
 });
 
-scene.add(sky, trees, rocks, bushes, plants, ground, new AmbientLight(), dirLight, dirLight.target, playerObjectHolder);
+scene.add(sky, trees, rocks, bushes, plants, ground, new AmbientLight(0xffffff, 0.5), dirLight, dirLight.target, playerObjectHolder);
 
 main.createView({
   scene,
