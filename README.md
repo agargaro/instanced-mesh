@@ -1,5 +1,7 @@
 # three.ez - InstancedMesh2
 
+<img src="public/banner.png" />
+
 [![npm](https://img.shields.io/npm/v/@three.ez/instanced-mesh)](https://www.npmjs.com/package/@three.ez/instanced-mesh)
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=three-ez_instanced-mesh&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=three-ez_instanced-mesh)
 [![DeepScan grade](https://deepscan.io/api/teams/21196/projects/27592/branches/883543/badge/grade.svg)](https://deepscan.io/dashboard#view=project&tid=21196&pid=27592&bid=883543)
