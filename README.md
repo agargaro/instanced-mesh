@@ -7,22 +7,28 @@
 [![BundlePhobia](https://badgen.net/bundlephobia/min/@three.ez/instanced-mesh)](https://bundlephobia.com/package/@three.ez/instanced-mesh)
 [![Discord](https://img.shields.io/discord/1150091562227859457)](https://discord.gg/MVTwrdX3JM)
 
-`InstancedMesh2` is an enhanced version of `InstancedMesh` that offers the following advantages:
-
+`InstancedMesh2` is an alternative version of `InstancedMesh` that offers advantages:
 - frustum culling for each instance
-- fast raycasting
-- simplified instance management (Object3D-like)
-- visibility management for each instance
+- visibility for each instance
+- each instance has an object similar to Object3D
+- sorting
+- BVH spatial indexing for fast raycasting and frustum culling
+
+## HOW DOES IT WORK?
+
+It works similarly to `BatchedMesh`: 
+Data (matrices, colors, etc.) are stored in `Texture` instead of `InstancedAttribute`.
+The one `InstancedAttribute` is used to store the indices of the instances to be rendered.
 
 ```typescript
 import { CullingBVH, InstancedMesh2 } from '@three.ez/instanced-mesh';
 
 const myInstancedMesh = new InstancedMesh2(renderer, count, {
-  cullingType: CullingBVH, // mandatory field
-  geometry: geometry, // default: undefined
+  geometry: geometry, // mandatory. default: undefined
   material: material, // default: undefined
+  perObjectCulling: true, // default: true
   sortObjects: false, // default: false
-  bvhParams: { margin: 0 }, // default: { margin: 0 }
+  bvh: {}, // default: { margin: 0, highPrecision: false }
   onInstanceCreation: (obj, index) => {
     obj.position.random();
     obj.scale.setScalar(2);
