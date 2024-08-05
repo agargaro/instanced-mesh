@@ -13,12 +13,8 @@ const random = new PRNG(count);
 const camera = new PerspectiveCameraAuto(70, 0.1, 10000).translateZ(10);
 const scene = new Scene();
 
-const instancedMesh = new InstancedMesh2(main.renderer, count, {
-    geometry: new OctahedronGeometry(1, 2),
-    material: new MeshNormalMaterial({ flatShading: true }),
-    bvh: {},
-    createInstances: false,
-});
+const instancedMesh = new InstancedMesh2(main.renderer, count, new OctahedronGeometry(1, 2), new MeshNormalMaterial({ flatShading: true }));
+instancedMesh.computeBVH();
 
 const matrix = new Matrix4();
 const vec3 = new Vector3();

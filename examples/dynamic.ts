@@ -11,13 +11,11 @@ const main = new Main({ rendererParameters: { antialias: true } }); // init rend
 const camera = new PerspectiveCameraAuto(70, 0.1, 500);
 const scene = new Scene();
 
-const spheres = new InstancedMesh2<{ dir: Vector3 }>(main.renderer, count, {
-  geometry: new SphereGeometry(), 
-  material: new MeshNormalMaterial(),
-  onInstanceCreation: (obj, index) => {
-    obj.position.randomDirection().multiplyScalar(((Math.random() * 0.99 + 0.01) * worldSize) / 2);
-    obj.dir = new Vector3().randomDirection();
-  },
+const spheres = new InstancedMesh2<{ dir: Vector3 }>(main.renderer, count, new SphereGeometry(), new MeshNormalMaterial());
+
+spheres.createInstances((obj, index) => {
+  obj.position.randomDirection().multiplyScalar(((Math.random() * 0.99 + 0.01) * worldSize) / 2);
+  obj.dir = new Vector3().randomDirection();
 });
 
 spheres.on('animate', (e) => {
@@ -29,7 +27,8 @@ spheres.on('animate', (e) => {
 
 scene.add(spheres);
 
-main.createView({ scene, camera, enabled: false, onAfterRender: () => {
+main.createView({
+  scene, camera, enabled: false, onAfterRender: () => {
     spheresCount.updateDisplay();
   }
 });

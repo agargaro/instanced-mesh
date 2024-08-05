@@ -8,40 +8,35 @@
 [![Discord](https://img.shields.io/discord/1150091562227859457)](https://discord.gg/MVTwrdX3JM)
 
 `InstancedMesh2` is an alternative version of `InstancedMesh` that offers advantages:
-- frustum culling for each instance
-- visibility for each instance
-- each instance has an object similar to Object3D
-- sorting
-- BVH spatial indexing for fast raycasting and frustum culling
-
-## HOW DOES IT WORK?
-
-It works similarly to `BatchedMesh`: 
-Data (matrices, colors, etc.) are stored in `Texture` instead of `InstancedAttribute`.
-The one `InstancedAttribute` is used to store the indices of the instances to be rendered.
+- *frustum culling for each instance*
+- *visibility for each instance*
+- *each instance has an object similar to `Object3D`*
+- *sorting*
+- *spatial indexing [*BVH*](https://en.wikipedia.org/wiki/Bounding_volume_hierarchy) for fast raycasting and frustum culling*
 
 ```typescript
 import { CullingBVH, InstancedMesh2 } from '@three.ez/instanced-mesh';
 
-const myInstancedMesh = new InstancedMesh2(renderer, count, {
-  geometry: geometry, // mandatory. default: undefined
-  material: material, // default: undefined
-  perObjectCulling: true, // default: true
-  sortObjects: false, // default: false
-  bvh: {}, // default: { margin: 0, highPrecision: false }
-  onInstanceCreation: (obj, index) => {
-    obj.position.random();
-    obj.scale.setScalar(2);
-    obj.quaternion.random();
-  }
+const myInstancedMesh = new InstancedMesh2(renderer, count, geometry, material);
+
+myInstancedMesh.createInstances((obj, index) => {
+  obj.position.z = index;
+  obj.rotateY(Math.PI);
 });
+
+myInstancedMesh.computeBVH();
 ```
 
 This library has only one dependency: `three.js r159+`.
 
+## 🛠️ How does it work?
+
+It works similarly to `BatchedMesh`: **matrices, colors, etc.** are stored in `Texture` instead of `InstancedAttribute`. <br />
+The only `InstancedAttribute` is used to store the indices of the instances to be rendered.
+
 ## 🔑 Key Features 
 
-### 🛠️ Meshes Instances
+### Meshes Instances
 Each instance has its own object accessible through the `instances` property. <br />
 You can easily modify visibility, apply transformations, and add custom data to each mesh instance.
 
@@ -59,7 +54,7 @@ myInstancedMesh.instances[3].rotateX(Math.PI);
 myInstancedMesh.instances[3].updateMatrix(); // necessary after transformations
 ```     
 
-### 🎥 Frustum Culling
+### Frustum Culling
 InstancedMesh2 offers three different strategies for frustum culling:
 - **CullingNone**: Frustum culling is disabled, suitable if all instances are always visible in the camera's frustum.
 - **CullingLinear**: Individual frustum culling for each instance, necessary if most meshes are animated.

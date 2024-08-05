@@ -5,27 +5,18 @@ import { InstancedEntity, UniformValue, UniformValueNoNumber } from "./Instanced
 import { InstancedMeshBVH } from "./InstancedMeshBVH";
 import { InstancedRenderItem, InstancedRenderList } from "./InstancedRenderList";
 
-// TODO Add expand and count/maxCount when create?
-// TODO static scene, avoid culling if no camera move?
-// TODO getMorphAt to InstancedEntity
-// TODO sorting if CullingNone
+// TODO: Add expand and count/maxCount when create?
+// TODO: static scene, avoid culling if no camera move?
+// TODO: getMorphAt to InstancedEntity
+// TODO: sorting if CullingNone
 // TODO: partial texture update
 // TODO: matrix update optimized if changes only rot, pos or scale.
 // TODO: send indexes data to gpu only if changes
 // TODO: visibility if not culling
+// TODO: Use BVH only for raycasting
 
 export type Entity<T> = InstancedEntity & T;
 export type CreateEntityCallback<T> = (obj: Entity<T>, index: number) => void;
-
-export interface InstancedMesh2Params<T, G extends BufferGeometry, M extends Material | Material[]> {
-  geometry: G,
-  material?: M,
-  onInstanceCreation?: CreateEntityCallback<Entity<T>>;
-  perObjectFrustumCulled?: boolean;
-  sortObjects?: boolean;
-  bvh?: BVHParams;
-  createInstances?: boolean;
-}
 
 export interface BVHParams {
   margin?: number;
@@ -49,8 +40,8 @@ export class InstancedMesh2<
   public boundingSphere: Sphere = null;
   public instancesCount: number; // TODO handle update from dynamic to static
   public bvh: InstancedMeshBVH;
-  public perObjectFrustumCulled: boolean;
-  public sortObjects: boolean;
+  public perObjectFrustumCulled = true;
+  public sortObjects = false; // TODO should this be true?
   public customSort = null;
   public raycastOnlyFrustum = false;
   public visibilityArray: boolean[];
@@ -79,10 +70,6 @@ export class InstancedMesh2<
   }
 
   public override onBeforeRender(renderer: WebGLRenderer, scene: Scene, camera: Camera, geometry: BufferGeometry, material: Material): void {
-    if (this.bvh?.bvh.root === null) { // if no entities created, this is necessary to avoid errors
-      this.bvh.create();
-    }
-
     if (!this.perObjectFrustumCulled) return;
 
     this.frustumCulling(camera);
@@ -98,36 +85,23 @@ export class InstancedMesh2<
   }
 
   /** THIS MATERIAL AND GEOMETRY CANNOT BE SHARED */
-  constructor(renderer: WebGLRenderer, count: number, config: InstancedMesh2Params<TCustomData, TGeometry, TMaterial>) {
+  constructor(renderer: WebGLRenderer, count: number, geometry: TGeometry, material?: TMaterial) {
     if (!renderer) throw new Error("'renderer' is mandatory.");
-    if (count === undefined || count === null) throw new Error("'count' is mandatory.");
-    if (!config) throw new Error("'config' is mandatory.");
-    if (!config.geometry) throw new Error("'geometry' is mandatory.");
+    if (!(count > 0)) throw new Error("'count' must be greater than 0.");
+    if (!geometry) throw new Error("'geometry' is mandatory.");
 
-    super(config.geometry, config.material);
+    super(geometry, material);
 
     if (this.geometry.getAttribute("instanceIndex")) throw new Error('Cannot reuse already patched geometry.');
 
-    this.perObjectFrustumCulled = config.perObjectFrustumCulled ?? true;
-    this.sortObjects = config.sortObjects ?? false;
     this.frustumCulled = !this.perObjectFrustumCulled;
     this.instancesCount = count;
     this._maxCount = count;
     this._count = count;
-    this._material = config.material;
-    const createInstances = config.createInstances ?? true;
+    this._material = material;
 
     this.initIndixesAndVisibility(renderer);
     this.initMatricesTexture();
-
-    if (createInstances) {
-      this.createInstances(config.onInstanceCreation);
-    }
-
-    if (config.bvh) {
-      this.bvh = new InstancedMeshBVH(this, config.bvh.margin, config.bvh.highPrecision);
-      if (config.onInstanceCreation) this.bvh.create();
-    }
 
     this.patchMaterial(this.customDepthMaterial);
     this.patchMaterial(this.customDistanceMaterial);
@@ -155,21 +129,6 @@ export class InstancedMesh2<
   protected initMatricesTexture(): void {
     this.instanceTexture = createTexture_mat4(this._maxCount)
     this._matrixArray = this.instanceTexture.image.data as unknown as Float32Array;
-  }
-
-  protected createInstances(onInstanceCreation: CreateEntityCallback<Entity<TCustomData>>): void {
-    const count = this._maxCount; // TODO we can create only first N count
-    this.instances = new Array(count);
-
-    for (let i = 0; i < count; i++) {
-      const instance = new InstancedEntity(this, i) as Entity<TCustomData>;
-      this.instances[i] = instance;
-
-      if (onInstanceCreation) {
-        onInstanceCreation(instance, i);
-        this.composeMatrixInstance(instance);
-      }
-    }
   }
 
   protected patchMaterials(material: TMaterial): void {
@@ -208,6 +167,27 @@ export class InstancedMesh2<
     }
 
     material.isInstancedMeshPatched = true;
+  }
+
+  public createInstances(onInstanceCreation: CreateEntityCallback<Entity<TCustomData>>): void {
+    const count = this._maxCount; // TODO we can create only first N count ?
+    this.instances = new Array(count);
+
+    for (let i = 0; i < count; i++) {
+      const instance = new InstancedEntity(this, i) as Entity<TCustomData>;
+      this.instances[i] = instance;
+
+      if (onInstanceCreation) {
+        onInstanceCreation(instance, i);
+        this.composeMatrixInstance(instance);
+      }
+    }
+  }
+
+  public computeBVH(config: BVHParams = {}): void {
+    // TODO reuse same BVH
+    this.bvh = new InstancedMeshBVH(this, config.margin, config.highPrecision);
+    this.bvh.create();
   }
 
   public setMatrixAt(id: number, matrix: Matrix4): void {
