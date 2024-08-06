@@ -33,14 +33,14 @@ function createGeometry(segments: number, width = 0.1, height = 1.5): BufferGeom
         const i2 = i + 1;
 
         vertices[index + 0] = -stepWidth * i2;
-        vertices[index + 1] = halfHeight - stepHeight * i2;
+        vertices[index + 1] = height - stepHeight * i2;
         vertices[index + 2] = 0;
         normals[index + 0] = -normal.x;
         normals[index + 1] = normal.y;
         normals[index + 2] = normal.z;
 
         vertices[index + 3] = stepWidth * i2;
-        vertices[index + 4] = halfHeight - stepHeight * i2;
+        vertices[index + 4] = height - stepHeight * i2;
         vertices[index + 5] = 0;
         normals[index + 3] = normal.x;
         normals[index + 4] = normal.y;
@@ -119,7 +119,7 @@ export class Grass extends InstancedMesh2<{}, BufferGeometry, MeshPhongMaterial>
             `);
 
             parameters.fragmentShader = parameters.fragmentShader.replace("#include <normal_fragment_maps>", `#include <normal_fragment_maps>
-                normal *= faceDirection;
+                // normal *= faceDirection;
                 vec3 mixedColor = mix(bottomColor, topColor, vHeightPercent);
                 float occlusionPercent = min(1.0, vHeightPercent / 0.25);
                 diffuseColor = vec4(mix(occlusionColor, mixedColor, occlusionPercent), 1.0);
@@ -156,6 +156,9 @@ export class Grass extends InstancedMesh2<{}, BufferGeometry, MeshPhongMaterial>
         this.perObjectFrustumCulled = false;
 
         this.interceptByRaycaster = false;
+
+        this.receiveShadow = true;
+        // this.castShadow = true;
 
         this.on('animate', (e) => {
             this.time.value = Math.sin(e.total * 0.5);

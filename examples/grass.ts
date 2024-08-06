@@ -1,5 +1,5 @@
 import { Asset, Main, PerspectiveCameraAuto } from '@three.ez/main';
-import { AmbientLight, BufferGeometry, DirectionalLight, FogExp2, Mesh, MeshStandardMaterial, PlaneGeometry, RepeatWrapping, Scene, Texture, TextureLoader, Vector3, Vector4 } from 'three';
+import { ACESFilmicToneMapping, AmbientLight, BufferGeometry, DirectionalLight, FogExp2, Mesh, MeshStandardMaterial, PCFSoftShadowMap, PlaneGeometry, RepeatWrapping, Scene, Texture, TextureLoader, Vector3, Vector4 } from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { Sky } from 'three/examples/jsm/objects/Sky';
 import { Grass } from './objects/grass';
@@ -9,6 +9,11 @@ import { InstancedMesh2 } from '../src';
 import { TerrainSurfaceSampler } from './objects/terrainSurfaceSampler';
 
 const main = new Main();
+main.renderer.toneMapping = ACESFilmicToneMapping;
+main.renderer.toneMappingExposure = 0.5;
+main.renderer.shadowMap.enabled = true;
+main.renderer.shadowMap.type = PCFSoftShadowMap;
+
 const camera = new PerspectiveCameraAuto(70, 0.1, 10000).translateZ(10).translateY(10);
 const scene = new Scene();
 
@@ -23,6 +28,8 @@ const normal: Texture = await Asset.load(TextureLoader, "normal.jpg");
 normal.repeat.set(terrainTextureRepeat, terrainTextureRepeat);
 normal.wrapS = normal.wrapT = RepeatWrapping;
 const ground = new Terrain(terrainSize, terrainSegments, grass, normal);
+ground.receiveShadow = true;
+ground.castShadow = true;
 
 const sun = new Vector3();
 const sky = new Sky();
@@ -41,13 +48,14 @@ scene.on('animate', (e) => scene.fog.color.setHSL(0, 0, sun.y));
 
 const dirLight = new DirectionalLight();
 dirLight.castShadow = true;
-dirLight.shadow.mapSize.set(1024, 1024);
-dirLight.shadow.camera.left = -1500;
-dirLight.shadow.camera.right = 1500;
-dirLight.shadow.camera.top = 1500;
-dirLight.shadow.camera.bottom = -1500;
+dirLight.shadow.mapSize.set(4096, 4096);
+dirLight.shadow.camera.left = -750;
+dirLight.shadow.camera.right = 750;
+dirLight.shadow.camera.top = 750;
+dirLight.shadow.camera.bottom = -750;
 dirLight.shadow.camera.far = 5000;
 dirLight.shadow.camera.updateProjectionMatrix();
+dirLight.shadow.bias = 0.2;
 
 const sunOffset = new Vector3();
 dirLight.on('animate', (e) => {
@@ -64,20 +72,21 @@ const ySizeHalf = ySize / 2;
 
 scene.add(
     sky, ground, new AmbientLight(), dirLight, dirLight.target,
-    new Grass(main.renderer, 400000, 6, ground, new Vector4(terrainSegments / 2 - xSizeHalf, terrainSegments / 2 - ySizeHalf, xSize, ySize)),
-    new Grass(main.renderer, 200000, 1, ground, new Vector4(terrainSegments / 2 - xSizeHalf, terrainSegments / 2 - ySizeHalf + ySize, xSize, ySize)),
-    new Grass(main.renderer, 200000, 1, ground, new Vector4(terrainSegments / 2 - xSizeHalf, terrainSegments / 2 - ySizeHalf - ySize, xSize, ySize)),
-    new Grass(main.renderer, 200000, 1, ground, new Vector4(terrainSegments / 2 - xSizeHalf - xSize, terrainSegments / 2 - ySizeHalf, xSize, ySize)),
-    new Grass(main.renderer, 200000, 1, ground, new Vector4(terrainSegments / 2 - xSizeHalf + xSize, terrainSegments / 2 - ySizeHalf, xSize, ySize)),
-    new Grass(main.renderer, 200000, 1, ground, new Vector4(terrainSegments / 2 - xSizeHalf - xSize, terrainSegments / 2 - ySizeHalf + ySize, xSize, ySize)),
-    new Grass(main.renderer, 200000, 1, ground, new Vector4(terrainSegments / 2 - xSizeHalf - xSize, terrainSegments / 2 - ySizeHalf - ySize, xSize, ySize)),
-    new Grass(main.renderer, 200000, 1, ground, new Vector4(terrainSegments / 2 - xSizeHalf + xSize, terrainSegments / 2 - ySizeHalf + ySize, xSize, ySize)),
-    new Grass(main.renderer, 200000, 1, ground, new Vector4(terrainSegments / 2 - xSizeHalf + xSize, terrainSegments / 2 - ySizeHalf - ySize, xSize, ySize)),
+    new Grass(main.renderer, 200000, 6, ground, new Vector4(terrainSegments / 2 - xSizeHalf, terrainSegments / 2 - ySizeHalf, xSize, ySize)),
+    new Grass(main.renderer, 100000, 1, ground, new Vector4(terrainSegments / 2 - xSizeHalf, terrainSegments / 2 - ySizeHalf + ySize, xSize, ySize)),
+    new Grass(main.renderer, 100000, 1, ground, new Vector4(terrainSegments / 2 - xSizeHalf, terrainSegments / 2 - ySizeHalf - ySize, xSize, ySize)),
+    new Grass(main.renderer, 100000, 1, ground, new Vector4(terrainSegments / 2 - xSizeHalf - xSize, terrainSegments / 2 - ySizeHalf, xSize, ySize)),
+    new Grass(main.renderer, 100000, 1, ground, new Vector4(terrainSegments / 2 - xSizeHalf + xSize, terrainSegments / 2 - ySizeHalf, xSize, ySize)),
+    new Grass(main.renderer, 100000, 1, ground, new Vector4(terrainSegments / 2 - xSizeHalf - xSize, terrainSegments / 2 - ySizeHalf + ySize, xSize, ySize)),
+    new Grass(main.renderer, 100000, 1, ground, new Vector4(terrainSegments / 2 - xSizeHalf - xSize, terrainSegments / 2 - ySizeHalf - ySize, xSize, ySize)),
+    new Grass(main.renderer, 100000, 1, ground, new Vector4(terrainSegments / 2 - xSizeHalf + xSize, terrainSegments / 2 - ySizeHalf + ySize, xSize, ySize)),
+    new Grass(main.renderer, 100000, 1, ground, new Vector4(terrainSegments / 2 - xSizeHalf + xSize, terrainSegments / 2 - ySizeHalf - ySize, xSize, ySize)),
 );
 
 const treeGLTF = (await Asset.load<GLTF>(GLTFLoader, 'tree.glb')).scene.children[0] as Mesh<BufferGeometry, MeshStandardMaterial>;
 const trees = new InstancedMesh2(main.renderer, 2000, treeGLTF.geometry, treeGLTF.material);
 trees.castShadow = true;
+trees.receiveShadow = true;
 
 /** schifo */
 
