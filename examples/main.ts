@@ -138,54 +138,43 @@ playerController.addEventListener("startSliding", () => animationController.play
 playerController.addEventListener("startFalling", () => animationController.play("Robot_Jump"));
 animationController.play("Robot_Jump");
 
-const trees = new InstancedMesh2(main.renderer, treeNum, {
-  bvh: {},
-  geometry: treeGLTF.geometry,
-  material: treeGLTF.material,
-  onInstanceCreation: (obj, index) => {
-    sampler.sample(obj.position);
-    obj.scale.setScalar(Math.random() * 0.1 + 0.1);
-    obj.rotateY(Math.random() * Math.PI * 2);
-  },
-});
+const trees = new InstancedMesh2(main.renderer, treeNum, treeGLTF.geometry, treeGLTF.material);
+trees.createInstances((obj, index) => {
+  sampler.sample(obj.position);
+  obj.scale.setScalar(Math.random() * 0.1 + 0.1);
+  obj.rotateY(Math.random() * Math.PI * 2);
+})
+trees.computeBVH();
 trees.cursor = "pointer";
 
 trees.on("click", (e) => {
   trees.instances[e.intersection.instanceId].visible = false;
 });
 
-const rocks = new InstancedMesh2(main.renderer, rockNum, {
-  bvh: {},
-  geometry: rockGLTF.geometry,
-  material: rockGLTF.material,
-  onInstanceCreation: (obj, index) => {
-    sampler.sample(obj.position);
-    obj.scale.setScalar(Math.random() * 2 + 1);
-    obj.rotateY(Math.random() * Math.PI * 2);
-  },
-});
+const rocks = new InstancedMesh2(main.renderer, rockNum, rockGLTF.geometry, rockGLTF.material);
+rocks.createInstances((obj, index) => {
+  sampler.sample(obj.position);
+  obj.scale.setScalar(Math.random() * 2 + 1);
+  obj.rotateY(Math.random() * Math.PI * 2);
+})
+rocks.computeBVH();
 
-const plants = new InstancedMesh2(main.renderer, plantNum, {
-  bvh: {},
-  geometry: plantGLTF.geometry,
-  material: plantGLTF.material,
-  onInstanceCreation: (obj, index) => {
-    sampler.sample(obj.position);
-    obj.scale.setScalar(Math.random() * 3 + 1);
-    obj.rotateY(Math.random() * Math.PI * 2);
-  },
-});
+const plants = new InstancedMesh2(main.renderer, plantNum, plantGLTF.geometry, plantGLTF.material);
+plants.createInstances((obj, index) => {
+  sampler.sample(obj.position);
+  obj.scale.setScalar(Math.random() * 3 + 1);
+  obj.rotateY(Math.random() * Math.PI * 2);
+})
+plants.computeBVH();
 
-const bushes = new InstancedMesh2(main.renderer, bushesNum, {
-  bvh: {},
-  geometry: bushGLTF.geometry,
-  material: bushGLTF.material,
-  onInstanceCreation: (obj, index) => {
-    sampler.sample(obj.position);
-    obj.scale.setScalar(Math.random() * 5 + 2);
-    obj.rotateY(Math.random() * Math.PI * 2);
-  },
-});
+const bushes = new InstancedMesh2(main.renderer, bushesNum, bushGLTF.geometry, bushGLTF.material);
+bushes.createInstances((obj, index) => {
+  sampler.sample(obj.position);
+  obj.scale.setScalar(Math.random() * 5 + 2);
+  obj.rotateY(Math.random() * Math.PI * 2);
+})
+bushes.computeBVH();
+
 
 ground.castShadow = true;
 ground.receiveShadow = true;
