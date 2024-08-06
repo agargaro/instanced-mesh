@@ -2,7 +2,7 @@ import { Asset, Main, PerspectiveCameraAuto } from '@three.ez/main';
 import { BoxGeometry, DoubleSide, NearestFilter, PlaneGeometry, Scene, Texture, TextureLoader, Vector2, Vector3 } from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { GUI } from 'three/examples/jsm/libs/lil-gui.module.min';
-import { InstancedMesh2 } from '../src';
+import { createRadixSort, InstancedMesh2 } from '../src';
 import { TileMaterial } from './tileMaterial';
 
 const main = new Main({ rendererParameters: { antialias: true } }); // init renderer and other stuff
@@ -21,35 +21,37 @@ const plantsPos: Vector3[] = [];
 
 const grass = [0, 15], stone = [1, 15], snow = [2, 11], plant = [14, 10];
 
-const boxes = new InstancedMesh2(main.renderer, count, {
-    geometry: new BoxGeometry(),
-    material: new TileMaterial(count, texture, 32, 32),
-    bvh: {},
-    onInstanceCreation: (obj, index) => {
-        obj.position.x = (index % side) - side / 2;
-        obj.position.z = Math.floor(index / side) - side / 2;
-        const noise = Math.sin(obj.position.x * obj.position.z * 0.0005);
-        obj.position.y = Math.floor(Math.max(-1, Math.sin(obj.position.x * 0.04) + Math.sin(obj.position.z * 0.04) + noise) * height / 2);
-        const cube = obj.position.y - noise * 8 > height * 0.8 ? snow : (obj.position.y - noise * 8 > 0 ? stone : grass);
-        obj.setUniform('offsetTexture', vec2.set(cube[0], cube[1]));
-        if (cube === grass && Math.random() <= 0.05) plantsPos.push(obj.position);
-    },
+const boxes = new InstancedMesh2(main.renderer, count, new BoxGeometry(), new TileMaterial(count, texture, 32, 32));
+
+boxes.createInstances((obj, index) => {
+    obj.position.x = (index % side) - side / 2;
+    obj.position.z = Math.floor(index / side) - side / 2;
+    const noise = Math.sin(obj.position.x * obj.position.z * 0.0005);
+    obj.position.y = Math.floor(Math.max(-1, Math.sin(obj.position.x * 0.04) + Math.sin(obj.position.z * 0.04) + noise) * height / 2);
+    const cube = obj.position.y - noise * 8 > height * 0.8 ? snow : (obj.position.y - noise * 8 > 0 ? stone : grass);
+    obj.setUniform('offsetTexture', vec2.set(cube[0], cube[1]));
+    if (cube === grass && Math.random() <= 0.05) plantsPos.push(obj.position);
 });
+
+boxes.computeBVH();
+
 
 const plantsCount = plantsPos.length * 2;
+const geometry = new PlaneGeometry();
+const material = new TileMaterial(plantsCount, texture, 32, 32, { transparent: true, side: DoubleSide, depthWrite: false });
 
-const plants = new InstancedMesh2(main.renderer, plantsCount, {
-    geometry: new PlaneGeometry(),
-    material: new TileMaterial(plantsCount, texture, 32, 32, { transparent: true, side: DoubleSide, depthWrite: false }),
-    bvh: {},
-    sortObjects: true,
-    onInstanceCreation: (obj, index) => {
-        obj.position.copy(plantsPos[Math.floor(index / 2)]);
-        obj.position.y += 1;
-        if (index % 2 === 0) obj.rotateY(Math.PI / 2);
-        obj.setUniform('offsetTexture', vec2.set(plant[0], plant[1]));
-    },
+const plants = new InstancedMesh2(main.renderer, plantsCount, geometry, material);
+
+plants.createInstances((obj, index) => {
+    obj.position.copy(plantsPos[Math.floor(index / 2)]);
+    obj.position.y += 1;
+    if (index % 2 === 0) obj.rotateY(Math.PI / 2);
+    obj.setUniform('offsetTexture', vec2.set(plant[0], plant[1]));
 });
+
+plants.sortObjects = true;
+plants.customSort = createRadixSort(plants);
+plants.computeBVH();
 
 scene.add(boxes, plants);
 

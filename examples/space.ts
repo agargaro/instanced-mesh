@@ -18,18 +18,19 @@ const random = new PRNG(config.count);
 const camera = new PerspectiveCameraAuto(70, 0.1, 10000).translateZ(10);
 const scene = new Scene();
 
-const instancedMesh = new InstancedMesh2<{ r: number, phi: number, theta: number }>(main.renderer, config.count, {
-  geometry: new OctahedronGeometry(1, 2),
-  material: new MeshLambertMaterial({ flatShading: true }),
-  bvh: { margin: config.marginBVH },
-  onInstanceCreation: (object) => {
-    const r = object.r = random.range(config.spawnRadius * 0.05, config.spawnRadius);
-    const phi = object.phi = random.range(0, Math.PI * 2);
-    const theta = object.theta = random.range(0, Math.PI * 2);
-    object.position.setFromSphericalCoords(r, phi, theta);
-    object.scale.multiplyScalar(random.range(1, 50))
-  }
+const geometry = new OctahedronGeometry(1, 2);
+const material = new MeshLambertMaterial({ flatShading: true });
+const instancedMesh = new InstancedMesh2<{ r: number, phi: number, theta: number }>(main.renderer, config.count, geometry, material);
+
+instancedMesh.createInstances((object) => {
+  const r = object.r = random.range(config.spawnRadius * 0.05, config.spawnRadius);
+  const phi = object.phi = random.range(0, Math.PI * 2);
+  const theta = object.theta = random.range(0, Math.PI * 2);
+  object.position.setFromSphericalCoords(r, phi, theta);
+  object.scale.multiplyScalar(random.range(1, 50))
 });
+
+instancedMesh.computeBVH({ margin: config.marginBVH });
 
 instancedMesh.on('click', (e) => {
   instancedMesh.instances[e.intersection.instanceId].visible = false;

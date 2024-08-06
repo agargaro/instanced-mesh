@@ -14,7 +14,7 @@ export class InstancedMeshBVH {
 
     constructor(target: InstancedMesh2<any, any, any>, margin = 0, highPrecision = false) {
         this.target = target;
-        target.geometry.computeBoundingBox();
+        if (!target.geometry.boundingBox) target.geometry.computeBoundingBox();
         this.geoBoundingBox = target.geometry.boundingBox;
         this._arrayType = highPrecision ? Float64Array : Float32Array;
         this.bvh = new BVH(new HybridBuilder(margin), WebGLCoordinateSystem);
