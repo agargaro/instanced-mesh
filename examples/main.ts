@@ -7,12 +7,15 @@ import {
   CameraHelper,
   DirectionalLight,
   FogExp2,
+  GreaterDepth,
+  LessDepth,
   LoopOnce,
   Mesh,
   MeshDepthMaterial,
   MeshStandardMaterial,
   Object3D,
   PCFSoftShadowMap,
+  PlaneGeometry,
   Raycaster,
   RepeatWrapping,
   RGBADepthPacking,
@@ -22,6 +25,7 @@ import {
   Texture,
   TextureLoader,
   Vector3,
+  Vector4,
 } from "three";
 import { GUI } from "three/examples/jsm/libs/lil-gui.module.min";
 import { GLTF, GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
@@ -29,19 +33,21 @@ import { Sky } from "three/examples/jsm/objects/Sky";
 import { InstancedMesh2 } from "../src";
 import { Terrain } from "./terrain";
 import { MeshSurfaceSampler } from "three/examples/jsm/math/MeshSurfaceSampler";
+import { Grass } from "./objects/grass";
+import { TerrainSurfaceSampler } from "./objects/terrainSurfaceSampler";
 
 const world = new MW.World();
 const octree = new MW.Octree();
 world.add(octree);
 
-const treeNum = 300000;
-const rockNum = 300000;
-const plantNum = 300000;
-const bushesNum = 300000;
+const treeNum = 1000;
+const rockNum = 1500;
+const plantNum = 1500;
+const bushesNum = 1500;
 
-const terrainSize = 100000;
-const terrainSegments = 64;
-const terrainTextureRepeat = terrainSize * 0.025;
+const terrainSize = 1000;
+const terrainSegments = 128;
+const terrainTextureRepeat = terrainSize * 0.075;
 
 const main = new Main({ rendererParameters: { antialias: true } }); // init renderer and other stuff
 main.renderer.toneMapping = ACESFilmicToneMapping;
@@ -49,28 +55,30 @@ main.renderer.toneMappingExposure = 0.5;
 main.renderer.shadowMap.enabled = true;
 main.renderer.shadowMap.type = PCFSoftShadowMap;
 
-const camera = new PerspectiveCameraAuto(70, 0.1, 10000);
-camera.position.set(0, 3, 15);
+const camera = new PerspectiveCameraAuto(70, 0.1, 2000);
+camera.position.set(0, 1, 5);
 const scene = new Scene();
 
 const raycaster = new Raycaster();
 
-const treeGLTF = (await Asset.load<GLTF>(GLTFLoader, "tree.glb")).scene.children[0] as Mesh<BufferGeometry, MeshStandardMaterial>;
-const rockGLTF = (await Asset.load<GLTF>(GLTFLoader, "Rock_3.glb")).scene.children[0] as Mesh<BufferGeometry, MeshStandardMaterial>;
-const plantGLTF = (await Asset.load<GLTF>(GLTFLoader, "Plant_3.glb")).scene.children[0] as Mesh<BufferGeometry, MeshStandardMaterial>;
-const bushGLTF = (await Asset.load<GLTF>(GLTFLoader, "Bush_2.glb")).scene.children[0] as Mesh<BufferGeometry, MeshStandardMaterial>;
+const treeGLTF = (await Asset.load<GLTF>(GLTFLoader, "tree.glb")).scene.children[0].children[0] as Mesh<BufferGeometry, MeshStandardMaterial>;
+const treeLeavesGLTF = (await Asset.load<GLTF>(GLTFLoader, "tree.glb")).scene.children[0].children[1] as Mesh<BufferGeometry, MeshStandardMaterial>;
+const rockGLTF = (await Asset.load<GLTF>(GLTFLoader, "rock.glb")).scene.children[0] as Mesh<BufferGeometry, MeshStandardMaterial>;
+const plantGLTF = (await Asset.load<GLTF>(GLTFLoader, "plant.glb")).scene.children[0] as Mesh<BufferGeometry, MeshStandardMaterial>;
+const bushGLTF = (await Asset.load<GLTF>(GLTFLoader, "bush.glb")).scene.children[0] as Mesh<BufferGeometry, MeshStandardMaterial>;
 const robotGLTF = await Asset.load<GLTF>(GLTFLoader, "Robot.glb");
+robotGLTF.scene.scale.set(0.4, 0.4, 0.4);
 robotGLTF.scene.traverse((o) => {
   if ((o as Mesh).isMesh) {
     o.receiveShadow = true;
     o.castShadow = true;
   }
   if(o.name === 'Head') {
-    const spotLight = new SpotLight(0xfff8cc, 10000, 250, Math.PI / 6, 0.8).translateZ(1.1);
+    const spotLight = new SpotLight(0xfff8cc, 1000, 250, Math.PI / 6, 0.8).translateZ(1.1);
     spotLight.castShadow = true;
     spotLight.shadow.mapSize.set(1024, 1024);
     spotLight.shadow.camera.far = 50000;
-    spotLight.shadow.bias = 0.1;
+    spotLight.shadow.bias = 0.01;
     spotLight.shadow.camera.updateProjectionMatrix();
 
     const target = new Object3D();
@@ -141,15 +149,26 @@ animationController.play("Robot_Jump");
 const trees = new InstancedMesh2(main.renderer, treeNum, treeGLTF.geometry, treeGLTF.material);
 trees.createInstances((obj, index) => {
   sampler.sample(obj.position);
-  obj.scale.setScalar(Math.random() * 0.1 + 0.1);
+  obj.scale.setScalar(Math.random() * 4 + 3);
   obj.rotateY(Math.random() * Math.PI * 2);
 })
 trees.computeBVH();
-trees.cursor = "pointer";
 
-trees.on("click", (e) => {
-  trees.instances[e.intersection.instanceId].visible = false;
-});
+const treesLeaves = new InstancedMesh2(main.renderer, treeNum, treeLeavesGLTF.geometry, treeLeavesGLTF.material);
+treesLeaves.sortObjects = true;
+treeLeavesGLTF.material.transparent = false;
+treeLeavesGLTF.material.alphaTest = 0.2;
+treeLeavesGLTF.material.depthWrite = true;
+for(let i = 0; i < treeNum; i++) {
+  treesLeaves.setMatrixAt(i, trees.getMatrixAt(i));
+}
+treesLeaves.computeBVH();
+
+// trees.cursor = "pointer";
+
+// trees.on("click", (e) => {
+//   trees.instances[e.intersection.instanceId].visible = false;
+// });
 
 const rocks = new InstancedMesh2(main.renderer, rockNum, rockGLTF.geometry, rockGLTF.material);
 rocks.createInstances((obj, index) => {
@@ -160,30 +179,41 @@ rocks.createInstances((obj, index) => {
 rocks.computeBVH();
 
 const plants = new InstancedMesh2(main.renderer, plantNum, plantGLTF.geometry, plantGLTF.material);
+plants.sortObjects = true;
+plantGLTF.material.transparent = false;
+plantGLTF.material.alphaTest = 0.2;
+plantGLTF.material.depthWrite = true;
 plants.createInstances((obj, index) => {
   sampler.sample(obj.position);
-  obj.scale.setScalar(Math.random() * 3 + 1);
+  obj.scale.setScalar(Math.random() + 2);
   obj.rotateY(Math.random() * Math.PI * 2);
 })
 plants.computeBVH();
 
 const bushes = new InstancedMesh2(main.renderer, bushesNum, bushGLTF.geometry, bushGLTF.material);
+bushes.sortObjects = true;
+bushGLTF.material.transparent = false;
+bushGLTF.material.alphaTest = 0.2;
+bushGLTF.material.depthWrite = true;
 bushes.createInstances((obj, index) => {
   sampler.sample(obj.position);
-  obj.scale.setScalar(Math.random() * 5 + 2);
-  obj.rotateY(Math.random() * Math.PI * 2);
+  obj.scale.setScalar(Math.random() * 3 + 2);
+  obj.rotateX(Math.PI / 1.6)
+  obj.translateZ(0.35)
 })
 bushes.computeBVH();
-
 
 ground.castShadow = true;
 ground.receiveShadow = true;
 
 trees.castShadow = true;
+trees.receiveShadow = true;
+
+treesLeaves.castShadow = true;
+treesLeaves.receiveShadow = true;
 
 rocks.castShadow = true;
 rocks.receiveShadow = true;
-
 
 plants.castShadow = true;
 plants.receiveShadow = true;
@@ -203,7 +233,7 @@ sky.on("animate", (e) => {
   uniforms["sunPosition"].value.copy(sun);
 });
 
-scene.fog = new FogExp2("white", 0.0002);
+scene.fog = new FogExp2("white", 0.01);
 scene.on("animate", (e) => {
   scene.fog.color.setHSL(0, 0, sun.y);
   world.fixedUpdate();
@@ -214,12 +244,12 @@ scene.on("animate", (e) => {
 const dirLight = new DirectionalLight();
 dirLight.castShadow = true;
 dirLight.shadow.mapSize.set(4096, 4096);
-dirLight.shadow.camera.left = -1500;
-dirLight.shadow.camera.right = 1500;
-dirLight.shadow.camera.top = 1500;
-dirLight.shadow.camera.bottom = -1500;
+dirLight.shadow.camera.left = -750;
+dirLight.shadow.camera.right = 750;
+dirLight.shadow.camera.top = 750;
+dirLight.shadow.camera.bottom = -750;
 dirLight.shadow.camera.far = 5000;
-dirLight.shadow.bias = 0.1;
+dirLight.shadow.bias = 0.01;
 dirLight.shadow.camera.updateProjectionMatrix();
 
 const sunOffset = new Vector3();
@@ -230,7 +260,45 @@ dirLight.on("animate", (e) => {
   dirLight.target.position.copy(camera.position).sub(sunOffset);
 });
 
-scene.add(sky, trees, rocks, bushes, plants, ground, new AmbientLight(0xffffff, 0.5), dirLight, dirLight.target, playerObjectHolder);
+const xSize = 8;
+const ySize = 8;
+const xSizeHalf = xSize / 2;
+const ySizeHalf = ySize / 2;
+
+const terrainSampler = new TerrainSurfaceSampler(ground).build();
+
+let i = 0;
+const widthSegments = ((ground.geometry as PlaneGeometry).parameters).widthSegments;
+const heightSegments = ((ground.geometry as PlaneGeometry).parameters).heightSegments;
+const rowStart = terrainSegments / 2 - xSize - xSizeHalf;
+const rowCount = xSize * 3;
+const colStart = terrainSegments / 2 - ySize - ySizeHalf;
+const colCount = ySize * 3;
+const tileSize = 1 / (widthSegments * heightSegments * 2);
+
+terrainSampler.randomFunction = () => {
+    if (i++ % 3 === 0) {
+        const row = rowStart + Math.floor(Math.random() * rowCount);
+        const col = colStart + Math.floor(Math.random() * colCount);
+        return tileSize * ((widthSegments * row * 2 + col * 2) + Math.round(Math.random())) + 10e-7;
+    }
+    else return Math.random();
+}
+
+scene.add(
+  sky, ground, new AmbientLight(), dirLight, dirLight.target,
+  new Grass(main.renderer, 250000, 6, ground, new Vector4(terrainSegments / 2 - xSizeHalf, terrainSegments / 2 - ySizeHalf, xSize, ySize)),
+  new Grass(main.renderer, 150000, 1, ground, new Vector4(terrainSegments / 2 - xSizeHalf, terrainSegments / 2 - ySizeHalf + ySize, xSize, ySize)),
+  new Grass(main.renderer, 150000, 1, ground, new Vector4(terrainSegments / 2 - xSizeHalf, terrainSegments / 2 - ySizeHalf - ySize, xSize, ySize)),
+  new Grass(main.renderer, 150000, 1, ground, new Vector4(terrainSegments / 2 - xSizeHalf - xSize, terrainSegments / 2 - ySizeHalf, xSize, ySize)),
+  new Grass(main.renderer, 150000, 1, ground, new Vector4(terrainSegments / 2 - xSizeHalf + xSize, terrainSegments / 2 - ySizeHalf, xSize, ySize)),
+  new Grass(main.renderer, 150000, 1, ground, new Vector4(terrainSegments / 2 - xSizeHalf - xSize, terrainSegments / 2 - ySizeHalf + ySize, xSize, ySize)),
+  new Grass(main.renderer, 150000, 1, ground, new Vector4(terrainSegments / 2 - xSizeHalf - xSize, terrainSegments / 2 - ySizeHalf - ySize, xSize, ySize)),
+  new Grass(main.renderer, 150000, 1, ground, new Vector4(terrainSegments / 2 - xSizeHalf + xSize, terrainSegments / 2 - ySizeHalf + ySize, xSize, ySize)),
+  new Grass(main.renderer, 150000, 1, ground, new Vector4(terrainSegments / 2 - xSizeHalf + xSize, terrainSegments / 2 - ySizeHalf - ySize, xSize, ySize)),
+);
+
+scene.add(sky, trees, treesLeaves, rocks, bushes, plants, ground, new AmbientLight(0xffffff, 0.5), dirLight, dirLight.target, playerObjectHolder);
 
 main.createView({
   scene,

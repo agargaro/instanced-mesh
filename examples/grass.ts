@@ -3,7 +3,7 @@ import { ACESFilmicToneMapping, AmbientLight, BufferGeometry, DirectionalLight, 
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { Sky } from 'three/examples/jsm/objects/Sky';
 import { Grass } from './objects/grass';
-import { Terrain } from './objects/terrain';
+import { Terrain } from './terrain';
 import { GLTF, GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 import { InstancedMesh2 } from '../src';
 import { TerrainSurfaceSampler } from './objects/terrainSurfaceSampler';

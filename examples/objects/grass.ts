@@ -1,6 +1,6 @@
 import { BufferAttribute, BufferGeometry, Color, DoubleSide, MeshPhongMaterial, PlaneGeometry, Vector3, Vector4, WebGLProgramParametersWithUniforms, WebGLRenderer } from 'three';
 import { InstancedMesh2 } from '../../src';
-import { Terrain } from './terrain';
+import { Terrain } from '../terrain';
 import { TerrainSurfaceSampler } from './terrainSurfaceSampler';
 
 function createGeometry(segments: number, width = 0.1, height = 1.5): BufferGeometry {
@@ -159,6 +159,8 @@ export class Grass extends InstancedMesh2<{}, BufferGeometry, MeshPhongMaterial>
 
         this.receiveShadow = true;
         // this.castShadow = true;
+
+        this.frustumCulled = true;
 
         this.on('animate', (e) => {
             this.time.value = Math.sin(e.total * 0.5);
