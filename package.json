@@ -1,7 +1,7 @@
 {
   "name": "@three.ez/instanced-mesh-test",
   "version": "0.0.9",
-  "description": "InstancedMesh easier to use, with frustum culling and fast raycasting.",
+  "description": "Simplified and enhanced InstancedMesh with frustum culling, fast raycasting (using BVH), sorting, visibility management and more.",
   "author": "Andrea Gargaro <devgargaro@gmail.com>",
   "license": "MIT",
   "type": "module",

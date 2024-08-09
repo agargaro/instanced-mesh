@@ -1,4 +1,4 @@
-import { Matrix3, Matrix4, Mesh, Quaternion, Vector2, Vector3, Vector4 } from 'three';
+import { Color, Matrix3, Matrix4, Mesh, Quaternion, Vector2, Vector3, Vector4 } from 'three';
 import { InstancedMesh2 } from './InstancedMesh2';
 
 export type UniformValueNoNumber = Vector2 | Vector3 | Vector4 | Matrix3 | Matrix4;
@@ -15,8 +15,11 @@ export class InstancedEntity {
   public get visible(): boolean { return this.owner.getVisibilityAt(this.id) }
   public set visible(value: boolean) { this.owner.setVisibilityAt(this.id, value) }
 
+  public get color(): Color { return this.owner.getColorAt(this.id) }
+  public set color(value: Color) { this.owner.setColorAt(this.id, value) }
+
   public get matrix(): Matrix4 {
-    return this.owner.getMatrixAt(this.id, _m);
+    return this.owner.getMatrixAt(this.id);
   }
 
   public get matrixWorld(): Matrix4 {
@@ -57,14 +60,14 @@ export class InstancedEntity {
   }
 
   public rotateOnAxis(axis: Vector3, angle: number): this {
-    _q.setFromAxisAngle(axis, angle);
-    this.quaternion.multiply(_q);
+    _quat.setFromAxisAngle(axis, angle);
+    this.quaternion.multiply(_quat);
     return this;
   }
 
   public rotateOnWorldAxis(axis: Vector3, angle: number): this {
-    _q.setFromAxisAngle(axis, angle);
-    this.quaternion.premultiply(_q);
+    _quat.setFromAxisAngle(axis, angle);
+    this.quaternion.premultiply(_quat);
     return this;
   }
 
@@ -81,8 +84,8 @@ export class InstancedEntity {
   }
 
   public translateOnAxis(axis: Vector3, distance: number): this {
-    _v1.copy(axis).applyQuaternion(this.quaternion);
-    this.position.add(_v1.multiplyScalar(distance));
+    _vec3.copy(axis).applyQuaternion(this.quaternion);
+    this.position.add(_vec3.multiplyScalar(distance));
     return this;
   }
 
@@ -102,9 +105,8 @@ export class InstancedEntity {
 
 }
 
-const _q = new Quaternion();
-const _m = new Matrix4();
-const _v1 = new Vector3();
+const _quat = new Quaternion();
+const _vec3 = new Vector3();
 const _xAxis = new Vector3(1, 0, 0);
 const _yAxis = new Vector3(0, 1, 0);
 const _zAxis = new Vector3(0, 0, 1);
