@@ -5,7 +5,7 @@
     <em>Simplify your <b>three.js</b> application development with <b>three.ez</b>!</em>
   </p>
 
-  <img src="public/banner.png" alt="three-ez-banner" height="200px"/> <br />
+  <img src="public/banner.png" alt="three-ez-banner" /> <br />
 
   [![npm](https://img.shields.io/npm/v/@three.ez/instanced-mesh)](https://www.npmjs.com/package/@three.ez/instanced-mesh)
   [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=three-ez_instanced-mesh&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=three-ez_instanced-mesh)
@@ -252,9 +252,9 @@ Or you can import it from CDN:
 
 These examples use `vite`, and some mobile devices may run out of memory.
 
-- [CullingStatic 1kk Forest](https://stackblitz.com/edit/three-ez-instancedmesh2-cullingstatic-1kk-forest?file=src%2Fmain.ts)
-- [CullingDynamic 150k](https://stackblitz.com/edit/three-ez-instancedmesh2-cullingdynamic-150k?file=src%2Fmain.ts)
-<!-- - [CullingStatic Custom Attribute](https://stackblitz.com/edit/three-ez-instancedmesh2-cullingstatic-custom-attribute?file=src%2Fmain.ts) -->
+- [Forest with 1 milion trees](https://stackblitz.com/edit/three-ez-instancedmesh2-cullingstatic-1kk-forest?file=src%2Fmain.ts)
+- [Instances array animation](https://stackblitz.com/edit/three-ez-instancedmesh2-cullingdynamic-150k?file=src%2Fmain.ts)
+- [Custom Material](https://stackblitz.com/edit/three-ez-instancedmesh2-custom-material?file=src%2Fmain.ts)
 
 ## Questions?
 
