@@ -1,22 +1,23 @@
-import { Box3, BufferAttribute, BufferGeometry, Camera, DataTexture, FloatType, Frustum, InstancedBufferAttribute, Intersection, Material, Matrix4, Mesh, MeshDepthMaterial, MeshDistanceMaterial, Object3DEventMap, RGBADepthPacking, RGFormat, Ray, Raycaster, RedFormat, Scene, ShaderMaterial, Sphere, Vector3, WebGLProgramParametersWithUniforms, WebGLRenderer } from "three";
-import { createTexture_mat4 } from "../utils/createTexture";
-import { GLInstancedBufferAttribute } from "./GLInstancedBufferAttribute";
-import { InstancedEntity, UniformValue, UniformValueNoNumber } from "./InstancedEntity";
-import { InstancedMeshBVH } from "./InstancedMeshBVH";
-import { InstancedRenderItem, InstancedRenderList } from "./InstancedRenderList";
+import { Box3, BufferAttribute, BufferGeometry, Camera, Color, DataTexture, FloatType, Frustum, InstancedBufferAttribute, Intersection, Material, Matrix4, Mesh, MeshDepthMaterial, MeshDistanceMaterial, Object3DEventMap, RGBADepthPacking, RGFormat, Ray, Raycaster, RedFormat, Scene, ShaderMaterial, Sphere, Vector3, WebGLProgramParametersWithUniforms, WebGLRenderer } from "three";
+import { createTexture_mat4, createTexture_vec3 } from "../utils/createTexture.js";
+import { GLInstancedBufferAttribute } from "./GLInstancedBufferAttribute.js";
+import { InstancedEntity, UniformValue, UniformValueNoNumber } from "./InstancedEntity.js";
+import { InstancedMeshBVH } from "./InstancedMeshBVH.js";
+import { InstancedRenderItem, InstancedRenderList } from "./InstancedRenderList.js";
 
 // TODO: Add expand and count/maxCount when create?
-// TODO: static scene, avoid culling if no camera move?
+// TODO: autoUpdate (send indexes data to gpu only if changes)
 // TODO: getMorphAt to InstancedEntity
 // TODO: sorting if CullingNone
 // TODO: partial texture update
 // TODO: matrix update optimized if changes only rot, pos or scale.
-// TODO: send indexes data to gpu only if changes
 // TODO: visibility if not culling
 // TODO: Use BVH only for raycasting
+// TODO: composeMatrixInstance can be opt if only move or scale
+// TODO: patchGeometry method
 
 export type Entity<T> = InstancedEntity & T;
-export type CreateEntityCallback<T> = (obj: Entity<T>, index: number) => void;
+export type UpdateEntityCallback<T> = (obj: Entity<T>, index: number) => void;
 
 export interface BVHParams {
   margin?: number;
@@ -34,7 +35,8 @@ export class InstancedMesh2<
   public isInstancedMesh2 = true;
   public instances: Entity<TCustomData>[];
   public instanceIndex: GLInstancedBufferAttribute;
-  public instanceTexture: DataTexture;
+  public matricesTexture: DataTexture;
+  public colorsTexture: DataTexture = null;
   public morphTexture: DataTexture = null;
   public boundingBox: Box3 = null;
   public boundingSphere: Sphere = null;
@@ -46,6 +48,7 @@ export class InstancedMesh2<
   public raycastOnlyFrustum = false;
   public visibilityArray: boolean[];
   /** @internal */ public _matrixArray: Float32Array;
+  /** @internal */ public _colorArray: Float32Array;
   protected _count: number;
   protected _maxCount: number;
   protected _material: TMaterial;
@@ -127,8 +130,8 @@ export class InstancedMesh2<
   }
 
   protected initMatricesTexture(): void {
-    this.instanceTexture = createTexture_mat4(this._maxCount)
-    this._matrixArray = this.instanceTexture.image.data as unknown as Float32Array;
+    this.matricesTexture = createTexture_mat4(this._maxCount);
+    this._matrixArray = this.matricesTexture.image.data as unknown as Float32Array;
   }
 
   protected patchMaterials(material: TMaterial): void {
@@ -149,33 +152,64 @@ export class InstancedMesh2<
 
     const onBeforeCompile = material.onBeforeCompile;
 
-    // use onBuild instead to access to object.. ONBUILD HAS BEEN REMOVED RIP
     material.onBeforeCompile = (shader: WebGLProgramParametersWithUniforms, renderer) => {
       if (onBeforeCompile) onBeforeCompile(shader, renderer);
 
       if (!shader.instancing) return;
 
       shader.instancing = false;
-      shader.instancingColor = false; // TODO
-      shader.uniforms.instanceTexture = { value: this.instanceTexture };
+      shader.instancingColor = false;
+      shader.uniforms.matricesTexture = { value: this.matricesTexture };
 
       if (!shader.defines) shader.defines = {};
       shader.defines["USE_INSTANCING_INDIRECT"] = "";
 
-      shader.vertexShader = shader.vertexShader.replace("#include <batching_vertex>", "#include <batching_vertex>\n#include <instanced_vertex>");
-      shader.vertexShader = shader.vertexShader.replace("#include <batching_pars_vertex>", "#include <batching_pars_vertex>\n#include <instanced_pars_vertex>");
+      if (this.colorsTexture !== null) {
+        shader.uniforms.colorsTexture = { value: this.colorsTexture };
+        shader.defines["USE_INSTANCING_COLOR_INDIRECT"] = "";
+        shader.fragmentShader = shader.fragmentShader.replace("#include <common>", "#define USE_COLOR\n#include <common>");
+      }
     }
 
     material.isInstancedMeshPatched = true;
   }
 
-  public createInstances(onInstanceCreation: CreateEntityCallback<Entity<TCustomData>>): void {
+  public updateInstances(onUpdate: UpdateEntityCallback<Entity<TCustomData>>): void {
+    const count = this.instancesCount;
+    const instances = this.instances;
+
+    if (instances) {
+      const instances = this.instances;
+
+      for (let i = 0; i < count; i++) {
+        const instance = instances[i];
+        onUpdate(instance, i);
+        this.composeMatrixInstance(instance);
+      }
+
+      return;
+    }
+
+    (_instance as any).owner = this;
+
+    for (let i = 0; i < count; i++) {
+      (_instance as any).id = i;
+      _instance.position.set(0, 0, 0);
+      _instance.scale.set(1, 1, 1);
+      _instance.quaternion.set(0, 0, 0, 1);
+
+      onUpdate(_instance as Entity<TCustomData>, i);
+      this.composeMatrixInstance(_instance);
+    }
+  }
+
+  public createInstances(onInstanceCreation?: UpdateEntityCallback<Entity<TCustomData>>): void {
     const count = this._maxCount; // TODO we can create only first N count ?
-    this.instances = new Array(count);
+    const instances = this.instances = new Array(count);
 
     for (let i = 0; i < count; i++) {
       const instance = new InstancedEntity(this, i) as Entity<TCustomData>;
-      this.instances[i] = instance;
+      instances[i] = instance;
 
       if (onInstanceCreation) {
         onInstanceCreation(instance, i);
@@ -187,6 +221,8 @@ export class InstancedMesh2<
   public computeBVH(config: BVHParams = {}): void {
     // TODO reuse same BVH
     this.bvh = new InstancedMeshBVH(this, config.margin, config.highPrecision);
+
+    // TODO check if instances valorized
     this.bvh.create();
   }
 
@@ -198,20 +234,35 @@ export class InstancedMesh2<
       matrix.decompose(instance.position, instance.quaternion, instance.scale);
     }
 
-    this.instanceTexture.needsUpdate = true;
+    this.matricesTexture.needsUpdate = true; // TODO 
     this.bvh?.move(id);
   }
 
-  public getMatrixAt(id: number, target = _tempMat4): Matrix4 {
-    return target.fromArray(this._matrixArray, id * 16);
+  public getMatrixAt(id: number, matrix = _tempMat4): Matrix4 {
+    return matrix.fromArray(this._matrixArray, id * 16);
   }
 
-  public setVisibilityAt(id: number, value: boolean): void {
-    this.visibilityArray[id] = value;
+  public setVisibilityAt(id: number, visible: boolean): void {
+    this.visibilityArray[id] = visible;
   }
 
   public getVisibilityAt(id: number): boolean {
     return this.visibilityArray[id];
+  }
+
+  public setColorAt(id: number, color: Color): void {
+    if (this.colorsTexture === null) {
+      this.colorsTexture = createTexture_vec3(this._maxCount);
+      this._colorArray = this.colorsTexture.image.data as unknown as Float32Array;
+    }
+
+    color.toArray(this._colorArray, id * 4); // even if is vec3, we need 4 because RGB format is removed from three.js
+
+    this.colorsTexture.needsUpdate = true; // TODO 
+  }
+
+  public getColorAt(id: number, color = _tempCol): Color {
+    return color.fromArray(this._colorArray, id * 4);
   }
 
   public setUniformAt(id: number, name: string, value: UniformValue): void { // TODO support multimaterial?
@@ -303,7 +354,7 @@ export class InstancedMesh2<
     te[offset + 14] = position.z;
     te[offset + 15] = 1;
 
-    this.instanceTexture.needsUpdate = true;
+    this.matricesTexture.needsUpdate = true; // TODO 
     this.bvh?.move(id);
   }
 
@@ -321,7 +372,7 @@ export class InstancedMesh2<
 
     _invMatrixWorld.copy(this.matrixWorld).invert();
 
-    extractMatrixScale(this.matrixWorld, _worldScale);
+    _worldScale.setFromMatrixScale(this.matrixWorld);
     _direction.copy(raycaster.ray.direction).multiply(_worldScale);
     const scaleFactor = _direction.length();
 
@@ -505,8 +556,12 @@ export class InstancedMesh2<
     super.copy(source, recursive);
 
     (this.instanceIndex as any).copy(source.instanceIndex); // TODO fix d.ts
-    this.instanceTexture = source.instanceTexture.clone();
+    this.matricesTexture = source.matricesTexture.clone();
 
+    // this._matricesTexture = source._matricesTexture.clone();
+    // this._matricesTexture.image.data = this._matricesTexture.image.data.slice();
+
+    if (source.colorsTexture !== null) this.colorsTexture = source.colorsTexture.clone();
     if (source.morphTexture !== null) this.morphTexture = source.morphTexture.clone();
 
     //TODO copy uniform?
@@ -524,8 +579,15 @@ export class InstancedMesh2<
   public dispose(): this {
     this.dispatchEvent<any>({ type: 'dispose' });
 
-    this.instanceTexture.dispose();
+    this.matricesTexture.dispose();
+    this.matricesTexture = null;
+
     //TODO dispose uniform
+
+    if (this.colorsTexture !== null) {
+      this.colorsTexture.dispose();
+      this.colorsTexture = null;
+    }
 
     if (this.morphTexture !== null) {
       this.morphTexture.dispose();
@@ -554,6 +616,8 @@ const _forward = new Vector3();
 const _cameraPos = new Vector3();
 const _position = new Vector3();
 const _tempMat4 = new Matrix4();
+const _tempCol = new Color();
+const _instance = new InstancedEntity(undefined, -1);
 
 function ascSortIntersection(a: Intersection, b: Intersection): number {
   return a.distance - b.distance;
@@ -565,14 +629,4 @@ function sortOpaque(a: InstancedRenderItem, b: InstancedRenderItem) {
 
 function sortTransparent(a: InstancedRenderItem, b: InstancedRenderItem) {
   return b.depth - a.depth;
-}
-
-// https://github.com/mrdoob/three.js/blob/dev/src/math/Matrix4.js#L732
-// extracting the scale directly is ~3x faster than using "decompose"
-function extractMatrixScale(matrix, target) {
-  const te = matrix.elements;
-  const sx = target.set(te[0], te[1], te[2]).length();
-  const sy = target.set(te[4], te[5], te[6]).length();
-  const sz = target.set(te[8], te[9], te[10]).length();
-  return target.set(sx, sy, sz);
 }

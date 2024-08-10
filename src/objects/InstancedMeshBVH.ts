@@ -1,6 +1,6 @@
-import { BVH, HybridBuilder, WebGLCoordinateSystem, BVHNode, FloatArray } from 'bvh.js';
 import { Box3, Matrix4, Raycaster } from 'three';
-import { InstancedMesh2 } from './InstancedMesh2';
+import { BVH, BVHNode, FloatArray, HybridBuilder, WebGLCoordinateSystem } from 'bvh.js';
+import { InstancedMesh2 } from './InstancedMesh2.js';
 
 type NodeData = {};
 type LeafData = number; // instance id

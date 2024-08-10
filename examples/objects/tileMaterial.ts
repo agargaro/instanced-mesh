@@ -1,5 +1,5 @@
 import { ShaderMaterial, ShaderMaterialParameters, Texture, Vector2 } from 'three';
-import { createTexture_vec2 } from '../src/utils/createTexture';
+import { createTexture_vec2 } from '../../src/index.js';
 
 export class TileMaterial extends ShaderMaterial {
   public override vertexShader = `
@@ -24,7 +24,9 @@ export class TileMaterial extends ShaderMaterial {
     varying vec2 vOffset;
 
     void main() {
-      gl_FragColor = texture2D(map, vUv * tileSize + vOffset * tileSize);
+      vec4 color = texture2D(map, vUv * tileSize + vOffset * tileSize);
+      if (color.w < .9) discard;
+      gl_FragColor = color;
     }`;
 
   constructor(count: number, tilemap: Texture, tileSizeX: number, tileSizeY: number, parameters?: ShaderMaterialParameters) {

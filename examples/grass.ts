@@ -1,12 +1,12 @@
 import { Asset, Main, PerspectiveCameraAuto } from '@three.ez/main';
 import { ACESFilmicToneMapping, AmbientLight, BufferGeometry, DirectionalLight, FogExp2, Mesh, MeshStandardMaterial, PCFSoftShadowMap, PlaneGeometry, RepeatWrapping, Scene, Texture, TextureLoader, Vector3, Vector4 } from 'three';
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
-import { Sky } from 'three/examples/jsm/objects/Sky';
-import { Grass } from './objects/grass';
-import { Terrain } from './terrain';
-import { GLTF, GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
-import { InstancedMesh2 } from '../src';
-import { TerrainSurfaceSampler } from './objects/terrainSurfaceSampler';
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+import { Sky } from 'three/examples/jsm/objects/Sky.js';
+import { Grass } from './objects/grass.js';
+import { Terrain } from './objects/terrain.js';
+import { GLTF, GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { InstancedMesh2 } from '../src/index.js';
+import { TerrainSurfaceSampler } from './objects/terrainSurfaceSampler.js';
 
 const main = new Main();
 main.renderer.toneMapping = ACESFilmicToneMapping;

@@ -1,10 +1,9 @@
-import { radixSort } from "three/examples/jsm/utils/SortUtils";
-import { InstancedMesh2 } from "../objects/InstancedMesh2";
-import { InstancedRenderItem } from "../objects/InstancedRenderList";
+import { radixSort, RadixSortOptions } from "three/examples/jsm/utils/SortUtils.js";
+import { InstancedMesh2 } from "../objects/InstancedMesh2.js";
+import { InstancedRenderItem } from "../objects/InstancedRenderList.js";
 
-export function createRadixSort(target: InstancedMesh2) { // TODO add type
-
-    const options = {
+export function createRadixSort(target: InstancedMesh2): typeof radixSort<InstancedRenderItem> {
+    const options: RadixSortOptions<InstancedRenderItem> = {
         get: el => el.depth,
         aux: new Array(target.maxCount),
         reversed: null
@@ -15,7 +14,7 @@ export function createRadixSort(target: InstancedMesh2) { // TODO add type
         options.reversed = target.material.transparent;
 
         let minZ = Infinity;
-        let maxZ = - Infinity;
+        let maxZ = -Infinity;
 
         for (const { depth } of list) {
             if (depth > maxZ) maxZ = depth;
