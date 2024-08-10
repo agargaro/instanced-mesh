@@ -9,7 +9,7 @@ import {
   Mesh,
   MeshStandardMaterial,
   Object3D,
-  PCFShadowMap,
+  PCFSoftShadowMap,
   PlaneGeometry,
   Raycaster,
   RepeatWrapping,
@@ -19,14 +19,14 @@ import {
   Vector3,
   Vector4
 } from "three";
-import { GLTF, GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
-import { MeshSurfaceSampler } from "three/examples/jsm/math/MeshSurfaceSampler";
-import { Sky } from "three/examples/jsm/objects/Sky";
-import { InstancedMesh2 } from "../src";
-import * as MW from "./meshwalk.module.min";
-import { Grass } from "./objects/grass";
-import { TerrainSurfaceSampler } from "./objects/terrainSurfaceSampler";
-import { Terrain } from "./terrain";
+import { GLTF, GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
+import { MeshSurfaceSampler } from "three/examples/jsm/math/MeshSurfaceSampler.js";
+import { Sky } from "three/examples/jsm/objects/Sky.js";
+import { InstancedMesh2 } from "../src/index.js";
+import * as MW from "./meshwalk.module.min.js";
+import { Grass } from "./objects/grass.js";
+import { TerrainSurfaceSampler } from "./objects/terrainSurfaceSampler.js";
+import { Terrain } from "./terrain.js";
 
 const world = new MW.World();
 const octree = new MW.Octree();
@@ -45,7 +45,7 @@ const main = new Main(); // init renderer and other stuff
 main.renderer.toneMapping = ACESFilmicToneMapping;
 main.renderer.toneMappingExposure = 0.5;
 main.renderer.shadowMap.enabled = true;
-main.renderer.shadowMap.type = PCFShadowMap;
+main.renderer.shadowMap.type = PCFSoftShadowMap;
 
 const camera = new PerspectiveCameraAuto(70, 0.1, 2000);
 camera.position.set(0, 1, 5);

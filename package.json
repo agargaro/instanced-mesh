@@ -45,7 +45,7 @@
   },
   "dependencies": {
     "@three.ez/instanced-mesh-test": "file:",
-    "bvh.js": "^0.0.5",
+    "bvh.js": "^0.0.6",
     "camera-controls": "^2.8.5"
   }
 }
