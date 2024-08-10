@@ -1,5 +1,5 @@
-import { Mesh, PlaneGeometry, MeshStandardMaterial, CanvasTexture, Vector3, ClampToEdgeWrapping, SRGBColorSpace, Texture } from 'three';
-import { ImprovedNoise } from 'three/examples/jsm/math/ImprovedNoise';
+import { Mesh, MeshStandardMaterial, PlaneGeometry, Texture } from 'three';
+import { ImprovedNoise } from 'three/examples/jsm/math/ImprovedNoise.js';
 
 export class Terrain extends Mesh {
   private terrainSize: number;
