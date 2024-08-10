@@ -3,7 +3,7 @@ import { DirectionalLight, MeshLambertMaterial, OctahedronGeometry, Scene, SpotL
 import { MapControls } from 'three/examples/jsm/controls/MapControls.js';
 import { GUI } from 'three/examples/jsm/libs/lil-gui.module.min.js';
 import { InstancedMesh2 } from '../src/index.js';
-import { PRNG } from './random.js';
+import { PRNG } from './objects/random.js';
 
 const config = {
   count: 200000,

@@ -23,10 +23,10 @@ import { GLTF, GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { MeshSurfaceSampler } from "three/examples/jsm/math/MeshSurfaceSampler.js";
 import { Sky } from "three/examples/jsm/objects/Sky.js";
 import { InstancedMesh2 } from "../src/index.js";
-import * as MW from "./meshwalk.module.min.js";
+import * as MW from "./objects/meshwalk.module.min.js";
 import { Grass } from "./objects/grass.js";
 import { TerrainSurfaceSampler } from "./objects/terrainSurfaceSampler.js";
-import { Terrain } from "./terrain.js";
+import { Terrain } from "./objects/terrain.js";
 
 const world = new MW.World();
 const octree = new MW.Octree();

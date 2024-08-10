@@ -1,6 +1,6 @@
 import { BufferAttribute, BufferGeometry, Color, DoubleSide, MeshPhongMaterial, PlaneGeometry, Vector3, Vector4, WebGLProgramParametersWithUniforms, WebGLRenderer } from 'three';
 import { InstancedMesh2 } from '../../src/index.js';
-import { Terrain } from '../terrain.js';
+import { Terrain } from './terrain.js';
 import { TerrainSurfaceSampler } from './terrainSurfaceSampler.js';
 
 function createGeometry(segments: number, width = 0.1, height = 1.5): BufferGeometry {
