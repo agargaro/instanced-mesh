@@ -158,7 +158,8 @@ export class Grass extends InstancedMesh2<{}, BufferGeometry, MeshPhongMaterial>
         this.interceptByRaycaster = false;
 
         this.receiveShadow = true;
-        // this.castShadow = true;
+
+        this.frustumCulled = true;
 
         this.on('animate', (e) => {
             this.time.value = Math.sin(e.total * 0.5);

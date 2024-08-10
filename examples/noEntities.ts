@@ -2,7 +2,7 @@ import { Main, PerspectiveCameraAuto } from '@three.ez/main';
 import { Color, Matrix4, MeshBasicMaterial, OctahedronGeometry, Scene, Vector3 } from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { InstancedMesh2 } from '../src/index.js';
-import { PRNG } from './random.js';
+import { PRNG } from './objects/random.js';
 
 const count = 10;
 const spawnRadius = 10;

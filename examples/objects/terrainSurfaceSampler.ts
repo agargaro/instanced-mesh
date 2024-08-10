@@ -14,7 +14,6 @@ export class TerrainSurfaceSampler {
         this.indexAttribute = this.geometry.index;
         this.positionAttribute = this.geometry.getAttribute('position');
         this.randomFunction = Math.random;
-
     }
 
     public build(): this {

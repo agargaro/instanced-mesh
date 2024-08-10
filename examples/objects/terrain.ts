@@ -5,7 +5,7 @@ export class Terrain extends Mesh {
   private terrainSize: number;
   private terrainSegments: number;
   private data: Uint8Array;
-  constructor(terrainSize: number, terrainSegments: number, terrainTexture?: Texture, normalTexture?: Texture) {
+  constructor(terrainSize: number, terrainSegments: number, terrainTexture: Texture, normalTexture: Texture) {
     super(new PlaneGeometry(terrainSize, terrainSize, terrainSegments - 1, terrainSegments - 1), new MeshStandardMaterial({ map: terrainTexture, normalMap: normalTexture }));
     this.terrainSize = terrainSize;
     this.terrainSegments = terrainSegments;
