@@ -49,7 +49,7 @@ const terrainSize = 1000;
 const terrainSegments = 64;
 const terrainTextureRepeat = terrainSize * 0.075;
 
-const main = new Main({ rendererParameters: { antialias: true } }); // init renderer and other stuff
+const main = new Main({ rendererParameters: { antialias: true } /*showStats: false (Default: true)*/ }); // init renderer and other stuff
 main.renderer.toneMapping = ACESFilmicToneMapping;
 main.renderer.toneMappingExposure = 0.5;
 main.renderer.shadowMap.enabled = true;
@@ -73,21 +73,24 @@ robotGLTF.scene.traverse((o) => {
     o.receiveShadow = true;
     o.castShadow = true;
   }
-  if(o.name === 'Head') {
-    const spotLight = new SpotLight(0xfff8cc, 1000, 250, Math.PI / 6, 0.8).translateZ(1.1);
-    spotLight.castShadow = true;
-    spotLight.shadow.mapSize.set(1024, 1024);
-    spotLight.shadow.camera.far = 50000;
-    spotLight.shadow.bias = 0.01;
-    spotLight.shadow.camera.updateProjectionMatrix();
+  /**
+   * Head light
+   */
+  // if(o.name === 'Head') {
+  //   const spotLight = new SpotLight(0xfff8cc, 1000, 250, Math.PI / 6, 0.8).translateZ(1.1);
+  //   spotLight.castShadow = true;
+  //   spotLight.shadow.mapSize.set(1024, 1024);
+  //   spotLight.shadow.camera.far = 50000;
+  //   spotLight.shadow.bias = 0.01;
+  //   spotLight.shadow.camera.updateProjectionMatrix();
 
-    const target = new Object3D();
-    target.position.set(o.position.x, o.position.y, o.position.z + 100);
-    spotLight.target = target;
+  //   const target = new Object3D();
+  //   target.position.set(o.position.x, o.position.y, o.position.z + 100);
+  //   spotLight.target = target;
 
-    o.add(target)
-    o.add(spotLight);
-  }
+  //   o.add(target)
+  //   o.add(spotLight);
+  // }
 });
 
 const grass: Texture = await Asset.load(TextureLoader, "grass.jpg");
@@ -114,44 +117,53 @@ world.add(playerController);
 
 const tpsCameraControls = new MW.TPSCameraControls(camera, playerObjectHolder, world, main.renderer.domElement);
 
-const keyInputControl = new MW.KeyInputControl();
-keyInputControl.addEventListener("movekeyon", () => (playerController.isRunning = true));
-keyInputControl.addEventListener("movekeyoff", () => (playerController.isRunning = false));
-keyInputControl.addEventListener("jumpkeypress", () => playerController.jump());
+/**
+ * Make charachter move
+ */
+// const keyInputControl = new MW.KeyInputControl();
+// keyInputControl.addEventListener("movekeyon", () => (playerController.isRunning = true));
+// keyInputControl.addEventListener("movekeyoff", () => (playerController.isRunning = false));
+// keyInputControl.addEventListener("jumpkeypress", () => playerController.jump());
 
-keyInputControl.addEventListener("movekeychange", () => {
-  var cameraFrontAngle = tpsCameraControls.frontAngle;
-  var characterFrontAngle = keyInputControl.frontAngle;
-  playerController.direction = cameraFrontAngle + characterFrontAngle;
-});
+// keyInputControl.addEventListener("movekeychange", () => {
+//   var cameraFrontAngle = tpsCameraControls.frontAngle;
+//   var characterFrontAngle = keyInputControl.frontAngle;
+//   playerController.direction = cameraFrontAngle + characterFrontAngle;
+// });
 
 tpsCameraControls.addEventListener("update", () => {
   if (!playerController.isRunning) return;
 
-  const cameraFrontAngle = tpsCameraControls.frontAngle;
-  const characterFrontAngle = keyInputControl.frontAngle;
-  playerController.direction = cameraFrontAngle + characterFrontAngle;
+  // const cameraFrontAngle = tpsCameraControls.frontAngle;
+  // const characterFrontAngle = keyInputControl.frontAngle;
+  // playerController.direction = cameraFrontAngle + characterFrontAngle;
 });
 
 playerObjectHolder.add(robotGLTF.scene);
 
+/**
+ * Character animations
+ */
 const animationController = new MW.AnimationController(robotGLTF.scene, robotGLTF.animations);
 animationController.motion.Robot_Jump.setLoop(LoopOnce, 0);
 animationController.motion.Robot_Jump.clampWhenFinished = true;
 
 playerController.addEventListener("startIdling", () => animationController.play("Robot_Idle"));
-playerController.addEventListener("startWalking", () => animationController.play("Robot_Running"));
-playerController.addEventListener("startJumping", () => animationController.play("Robot_Jump"));
-playerController.addEventListener("startSliding", () => animationController.play("Robot_Jump"));
-playerController.addEventListener("startFalling", () => animationController.play("Robot_Jump"));
+// playerController.addEventListener("startWalking", () => animationController.play("Robot_Running"));
+// playerController.addEventListener("startJumping", () => animationController.play("Robot_Jump"));
+// playerController.addEventListener("startSliding", () => animationController.play("Robot_Jump"));
+// playerController.addEventListener("startFalling", () => animationController.play("Robot_Jump"));
 animationController.play("Robot_Jump");
 
+/**
+ * Create instenced mesh of all the elements present in the scene
+ */
 const trees = new InstancedMesh2(main.renderer, treeNum, treeGLTF.geometry, treeGLTF.material);
 trees.createInstances((obj, index) => {
   sampler.sample(obj.position);
   obj.scale.setScalar(Math.random() * 4 + 3);
   obj.rotateY(Math.random() * Math.PI * 2);
-})
+});
 trees.computeBVH();
 
 const treesLeaves = new InstancedMesh2(main.renderer, treeNum, treeLeavesGLTF.geometry, treeLeavesGLTF.material);
@@ -159,23 +171,17 @@ treesLeaves.sortObjects = true;
 treeLeavesGLTF.material.transparent = false;
 treeLeavesGLTF.material.alphaTest = 0.2;
 treeLeavesGLTF.material.depthWrite = true;
-for(let i = 0; i < treeNum; i++) {
+for (let i = 0; i < treeNum; i++) {
   treesLeaves.setMatrixAt(i, trees.getMatrixAt(i));
 }
 treesLeaves.computeBVH();
-
-// trees.cursor = "pointer";
-
-// trees.on("click", (e) => {
-//   trees.instances[e.intersection.instanceId].visible = false;
-// });
 
 const rocks = new InstancedMesh2(main.renderer, rockNum, rockGLTF.geometry, rockGLTF.material);
 rocks.createInstances((obj, index) => {
   sampler.sample(obj.position);
   obj.scale.setScalar(Math.random() * 2 + 1);
   obj.rotateY(Math.random() * Math.PI * 2);
-})
+});
 rocks.computeBVH();
 
 const plants = new InstancedMesh2(main.renderer, plantNum, plantGLTF.geometry, plantGLTF.material);
@@ -187,7 +193,7 @@ plants.createInstances((obj, index) => {
   sampler.sample(obj.position);
   obj.scale.setScalar(Math.random() + 2);
   obj.rotateY(Math.random() * Math.PI * 2);
-})
+});
 plants.computeBVH();
 
 const bushes = new InstancedMesh2(main.renderer, bushesNum, bushGLTF.geometry, bushGLTF.material);
@@ -198,11 +204,14 @@ bushGLTF.material.depthWrite = true;
 bushes.createInstances((obj, index) => {
   sampler.sample(obj.position);
   obj.scale.setScalar(Math.random() * 3 + 2);
-  obj.rotateX(Math.PI / 1.6)
-  obj.translateZ(0.35)
-})
+  obj.rotateX(Math.PI / 1.6);
+  obj.translateZ(0.35);
+});
 bushes.computeBVH();
 
+/**
+ * Make all of them cast and receive shadows
+ */
 ground.castShadow = true;
 ground.receiveShadow = true;
 
@@ -233,7 +242,7 @@ sky.on("animate", (e) => {
   uniforms["sunPosition"].value.copy(sun);
 });
 
-scene.fog = new FogExp2("white", 0.01);
+scene.fog = new FogExp2("white", 0.005);
 scene.on("animate", (e) => {
   scene.fog.color.setHSL(0, 0, sun.y);
   world.fixedUpdate();
@@ -244,10 +253,10 @@ scene.on("animate", (e) => {
 const dirLight = new DirectionalLight();
 dirLight.castShadow = true;
 dirLight.shadow.mapSize.set(4096, 4096);
-dirLight.shadow.camera.left = -750;
-dirLight.shadow.camera.right = 750;
-dirLight.shadow.camera.top = 750;
-dirLight.shadow.camera.bottom = -750;
+dirLight.shadow.camera.left = -500;
+dirLight.shadow.camera.right = 500;
+dirLight.shadow.camera.top = 500;
+dirLight.shadow.camera.bottom = -500;
 dirLight.shadow.camera.far = 5000;
 dirLight.shadow.bias = 0.01;
 dirLight.shadow.camera.updateProjectionMatrix();
@@ -260,6 +269,9 @@ dirLight.on("animate", (e) => {
   dirLight.target.position.copy(camera.position).sub(sunOffset);
 });
 
+/**
+ * Generate grass using a custom MeshSurfaceSampler
+ */
 const xSize = 8;
 const ySize = 8;
 const xSizeHalf = xSize / 2;
@@ -268,8 +280,8 @@ const ySizeHalf = ySize / 2;
 const terrainSampler = new TerrainSurfaceSampler(ground).build();
 
 let i = 0;
-const widthSegments = ((ground.geometry as PlaneGeometry).parameters).widthSegments;
-const heightSegments = ((ground.geometry as PlaneGeometry).parameters).heightSegments;
+const widthSegments = (ground.geometry as PlaneGeometry).parameters.widthSegments;
+const heightSegments = (ground.geometry as PlaneGeometry).parameters.heightSegments;
 const rowStart = terrainSegments / 2 - xSize - xSizeHalf;
 const rowCount = xSize * 3;
 const colStart = terrainSegments / 2 - ySize - ySizeHalf;
@@ -277,28 +289,46 @@ const colCount = ySize * 3;
 const tileSize = 1 / (widthSegments * heightSegments * 2);
 
 terrainSampler.randomFunction = () => {
-    if (i++ % 3 === 0) {
-        const row = rowStart + Math.floor(Math.random() * rowCount);
-        const col = colStart + Math.floor(Math.random() * colCount);
-        return tileSize * ((widthSegments * row * 2 + col * 2) + Math.round(Math.random())) + 10e-7;
-    }
-    else return Math.random();
-}
+  if (i++ % 3 === 0) {
+    const row = rowStart + Math.floor(Math.random() * rowCount);
+    const col = colStart + Math.floor(Math.random() * colCount);
+    return tileSize * (widthSegments * row * 2 + col * 2 + Math.round(Math.random())) + 10e-7;
+  } else return Math.random();
+};
+
+const grass1 = new Grass(main.renderer, 250000, 6, ground, new Vector4(terrainSegments / 2 - xSizeHalf, terrainSegments / 2 - ySizeHalf, xSize, ySize));
+const grass2_1 = new Grass(main.renderer, 150000, 1, ground, new Vector4(terrainSegments / 2 - xSizeHalf, terrainSegments / 2 - ySizeHalf + ySize, xSize, ySize));
+const grass2_2 = new Grass(main.renderer, 150000, 1, ground, new Vector4(terrainSegments / 2 - xSizeHalf, terrainSegments / 2 - ySizeHalf - ySize, xSize, ySize));
+const grass2_3 = new Grass(main.renderer, 150000, 1, ground, new Vector4(terrainSegments / 2 - xSizeHalf - xSize, terrainSegments / 2 - ySizeHalf, xSize, ySize));
+const grass2_4 = new Grass(main.renderer, 150000, 1, ground, new Vector4(terrainSegments / 2 - xSizeHalf + xSize, terrainSegments / 2 - ySizeHalf, xSize, ySize));
+const grass2_5 = new Grass(main.renderer, 150000, 1, ground, new Vector4(terrainSegments / 2 - xSizeHalf - xSize, terrainSegments / 2 - ySizeHalf + ySize, xSize, ySize));
+const grass2_6 = new Grass(main.renderer, 150000, 1, ground, new Vector4(terrainSegments / 2 - xSizeHalf - xSize, terrainSegments / 2 - ySizeHalf - ySize, xSize, ySize));
+const grass2_7 = new Grass(main.renderer, 150000, 1, ground, new Vector4(terrainSegments / 2 - xSizeHalf + xSize, terrainSegments / 2 - ySizeHalf + ySize, xSize, ySize));
+const grass2_8 = new Grass(main.renderer, 150000, 1, ground, new Vector4(terrainSegments / 2 - xSizeHalf + xSize, terrainSegments / 2 - ySizeHalf - ySize, xSize, ySize));
+const grassTotalCount = {count: grass1.count + grass2_1.count + grass2_2.count + grass2_3.count + grass2_4.count + grass2_5.count + grass2_6.count + grass2_7.count + grass2_8.count};
 
 scene.add(
-  sky, ground, new AmbientLight(), dirLight, dirLight.target,
-  new Grass(main.renderer, 250000, 6, ground, new Vector4(terrainSegments / 2 - xSizeHalf, terrainSegments / 2 - ySizeHalf, xSize, ySize)),
-  new Grass(main.renderer, 150000, 1, ground, new Vector4(terrainSegments / 2 - xSizeHalf, terrainSegments / 2 - ySizeHalf + ySize, xSize, ySize)),
-  new Grass(main.renderer, 150000, 1, ground, new Vector4(terrainSegments / 2 - xSizeHalf, terrainSegments / 2 - ySizeHalf - ySize, xSize, ySize)),
-  new Grass(main.renderer, 150000, 1, ground, new Vector4(terrainSegments / 2 - xSizeHalf - xSize, terrainSegments / 2 - ySizeHalf, xSize, ySize)),
-  new Grass(main.renderer, 150000, 1, ground, new Vector4(terrainSegments / 2 - xSizeHalf + xSize, terrainSegments / 2 - ySizeHalf, xSize, ySize)),
-  new Grass(main.renderer, 150000, 1, ground, new Vector4(terrainSegments / 2 - xSizeHalf - xSize, terrainSegments / 2 - ySizeHalf + ySize, xSize, ySize)),
-  new Grass(main.renderer, 150000, 1, ground, new Vector4(terrainSegments / 2 - xSizeHalf - xSize, terrainSegments / 2 - ySizeHalf - ySize, xSize, ySize)),
-  new Grass(main.renderer, 150000, 1, ground, new Vector4(terrainSegments / 2 - xSizeHalf + xSize, terrainSegments / 2 - ySizeHalf + ySize, xSize, ySize)),
-  new Grass(main.renderer, 150000, 1, ground, new Vector4(terrainSegments / 2 - xSizeHalf + xSize, terrainSegments / 2 - ySizeHalf - ySize, xSize, ySize)),
+  sky,
+  trees,
+  treesLeaves,
+  rocks,
+  bushes,
+  plants,
+  ground,
+  new AmbientLight(0xffffff, 0.5),
+  dirLight,
+  dirLight.target,
+  playerObjectHolder,
+  grass1,
+  grass2_1,
+  grass2_2,
+  grass2_3,
+  grass2_4,
+  grass2_5,
+  grass2_6,
+  grass2_7,
+  grass2_8
 );
-
-scene.add(sky, trees, treesLeaves, rocks, bushes, plants, ground, new AmbientLight(0xffffff, 0.5), dirLight, dirLight.target, playerObjectHolder);
 
 main.createView({
   scene,
@@ -331,11 +361,13 @@ gui
   .add(bushes.instances as any, "length")
   .name("Bushes instances total")
   .disable();
+
+gui
+  .add(grassTotalCount as any, "count")
+  .name("Bushes instances total")
+  .disable();
+
 const treeCount = gui.add(trees, "count").name("Trees instances rendered").disable();
 const rocksCount = gui.add(rocks, "count").name("Rocks instances rendered").disable();
 const plantsCount = gui.add(plants, "count").name("Plants instances rendered").disable();
 const bushesCount = gui.add(bushes, "count").name("Bushes instances rendered").disable();
-gui
-  .add(camera, "far", 2000, 20000, 100)
-  .name("camera far")
-  .onChange(() => camera.updateProjectionMatrix());
