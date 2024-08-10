@@ -158,7 +158,6 @@ export class Grass extends InstancedMesh2<{}, BufferGeometry, MeshPhongMaterial>
         this.interceptByRaycaster = false;
 
         this.receiveShadow = true;
-        // this.castShadow = true;
 
         this.frustumCulled = true;
 

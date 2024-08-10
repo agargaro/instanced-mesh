@@ -1,40 +1,32 @@
-import * as MW from "./meshwalk.module.min";
 import { Asset, Main, PerspectiveCameraAuto } from "@three.ez/main";
 import {
   ACESFilmicToneMapping,
   AmbientLight,
   BufferGeometry,
-  CameraHelper,
   DirectionalLight,
   FogExp2,
-  GreaterDepth,
-  LessDepth,
   LoopOnce,
   Mesh,
-  MeshDepthMaterial,
   MeshStandardMaterial,
   Object3D,
-  PCFSoftShadowMap,
+  PCFShadowMap,
   PlaneGeometry,
   Raycaster,
   RepeatWrapping,
-  RGBADepthPacking,
   Scene,
-  SpotLight,
-  SpotLightHelper,
   Texture,
   TextureLoader,
   Vector3,
-  Vector4,
+  Vector4
 } from "three";
-import { GUI } from "three/examples/jsm/libs/lil-gui.module.min";
 import { GLTF, GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
+import { MeshSurfaceSampler } from "three/examples/jsm/math/MeshSurfaceSampler";
 import { Sky } from "three/examples/jsm/objects/Sky";
 import { InstancedMesh2 } from "../src";
-import { Terrain } from "./terrain";
-import { MeshSurfaceSampler } from "three/examples/jsm/math/MeshSurfaceSampler";
+import * as MW from "./meshwalk.module.min";
 import { Grass } from "./objects/grass";
 import { TerrainSurfaceSampler } from "./objects/terrainSurfaceSampler";
+import { Terrain } from "./terrain";
 
 const world = new MW.World();
 const octree = new MW.Octree();
@@ -49,11 +41,11 @@ const terrainSize = 1000;
 const terrainSegments = 64;
 const terrainTextureRepeat = terrainSize * 0.075;
 
-const main = new Main({ rendererParameters: { antialias: true } /*showStats: false (Default: true)*/ }); // init renderer and other stuff
+const main = new Main(); // init renderer and other stuff
 main.renderer.toneMapping = ACESFilmicToneMapping;
 main.renderer.toneMappingExposure = 0.5;
 main.renderer.shadowMap.enabled = true;
-main.renderer.shadowMap.type = PCFSoftShadowMap;
+main.renderer.shadowMap.type = PCFShadowMap;
 
 const camera = new PerspectiveCameraAuto(70, 0.1, 2000);
 camera.position.set(0, 1, 5);
@@ -63,6 +55,10 @@ const raycaster = new Raycaster();
 
 const treeGLTF = (await Asset.load<GLTF>(GLTFLoader, "tree.glb")).scene.children[0].children[0] as Mesh<BufferGeometry, MeshStandardMaterial>;
 const treeLeavesGLTF = (await Asset.load<GLTF>(GLTFLoader, "tree.glb")).scene.children[0].children[1] as Mesh<BufferGeometry, MeshStandardMaterial>;
+
+const tree2GLTF = (await Asset.load<GLTF>(GLTFLoader, "tree2.glb")).scene.children[0].children[0] as Mesh<BufferGeometry, MeshStandardMaterial>;
+const treeLeaves2GLTF = (await Asset.load<GLTF>(GLTFLoader, "tree2.glb")).scene.children[0].children[1] as Mesh<BufferGeometry, MeshStandardMaterial>;
+
 const rockGLTF = (await Asset.load<GLTF>(GLTFLoader, "rock.glb")).scene.children[0] as Mesh<BufferGeometry, MeshStandardMaterial>;
 const plantGLTF = (await Asset.load<GLTF>(GLTFLoader, "plant.glb")).scene.children[0] as Mesh<BufferGeometry, MeshStandardMaterial>;
 const bushGLTF = (await Asset.load<GLTF>(GLTFLoader, "bush.glb")).scene.children[0] as Mesh<BufferGeometry, MeshStandardMaterial>;
@@ -158,23 +154,41 @@ animationController.play("Robot_Jump");
 /**
  * Create instenced mesh of all the elements present in the scene
  */
-const trees = new InstancedMesh2(main.renderer, treeNum, treeGLTF.geometry, treeGLTF.material);
+const trees = new InstancedMesh2(main.renderer, treeNum / 2, treeGLTF.geometry, treeGLTF.material);
 trees.createInstances((obj, index) => {
   sampler.sample(obj.position);
-  obj.scale.setScalar(Math.random() * 4 + 3);
+  obj.scale.setScalar(Math.random() * 5 + 3);
   obj.rotateY(Math.random() * Math.PI * 2);
 });
 trees.computeBVH();
 
-const treesLeaves = new InstancedMesh2(main.renderer, treeNum, treeLeavesGLTF.geometry, treeLeavesGLTF.material);
-treesLeaves.sortObjects = true;
+const treeLeaves = new InstancedMesh2(main.renderer, treeNum / 2, treeLeavesGLTF.geometry, treeLeavesGLTF.material);
+treeLeaves.sortObjects = true;
 treeLeavesGLTF.material.transparent = false;
 treeLeavesGLTF.material.alphaTest = 0.2;
 treeLeavesGLTF.material.depthWrite = true;
-for (let i = 0; i < treeNum; i++) {
-  treesLeaves.setMatrixAt(i, trees.getMatrixAt(i));
+for (let i = 0; i < treeNum / 2; i++) {
+  treeLeaves.setMatrixAt(i, trees.getMatrixAt(i));
 }
-treesLeaves.computeBVH();
+treeLeaves.computeBVH();
+
+const trees2 = new InstancedMesh2(main.renderer, treeNum / 2, tree2GLTF.geometry, tree2GLTF.material);
+trees2.createInstances((obj, index) => {
+  sampler.sample(obj.position);
+  obj.scale.setScalar(Math.random() * 5 + 3);
+  obj.rotateY(Math.random() * Math.PI * 2);
+});
+trees2.computeBVH();
+
+const treeLeaves2 = new InstancedMesh2(main.renderer, treeNum / 2, treeLeaves2GLTF.geometry, treeLeaves2GLTF.material);
+treeLeaves2.sortObjects = true;
+treeLeaves2GLTF.material.transparent = false;
+treeLeaves2GLTF.material.alphaTest = 0.2;
+treeLeaves2GLTF.material.depthWrite = true;
+for (let i = 0; i < treeNum / 2; i++) {
+  treeLeaves2.setMatrixAt(i, trees2.getMatrixAt(i));
+}
+treeLeaves2.computeBVH();
 
 const rocks = new InstancedMesh2(main.renderer, rockNum, rockGLTF.geometry, rockGLTF.material);
 rocks.createInstances((obj, index) => {
@@ -218,8 +232,14 @@ ground.receiveShadow = true;
 trees.castShadow = true;
 trees.receiveShadow = true;
 
-treesLeaves.castShadow = true;
-treesLeaves.receiveShadow = true;
+treeLeaves.castShadow = true;
+treeLeaves.receiveShadow = true;
+
+trees2.castShadow = true;
+trees2.receiveShadow = true;
+
+treeLeaves2.castShadow = true;
+treeLeaves2.receiveShadow = true;
 
 rocks.castShadow = true;
 rocks.receiveShadow = true;
@@ -270,7 +290,7 @@ dirLight.on("animate", (e) => {
 });
 
 /**
- * Generate grass using a custom MeshSurfaceSampler
+ * Generate grass using a custom MeshSurfaceSampler with a custom random function
  */
 const xSize = 8;
 const ySize = 8;
@@ -296,21 +316,12 @@ terrainSampler.randomFunction = () => {
   } else return Math.random();
 };
 
-const grass1 = new Grass(main.renderer, 250000, 6, ground, new Vector4(terrainSegments / 2 - xSizeHalf, terrainSegments / 2 - ySizeHalf, xSize, ySize));
-const grass2_1 = new Grass(main.renderer, 150000, 1, ground, new Vector4(terrainSegments / 2 - xSizeHalf, terrainSegments / 2 - ySizeHalf + ySize, xSize, ySize));
-const grass2_2 = new Grass(main.renderer, 150000, 1, ground, new Vector4(terrainSegments / 2 - xSizeHalf, terrainSegments / 2 - ySizeHalf - ySize, xSize, ySize));
-const grass2_3 = new Grass(main.renderer, 150000, 1, ground, new Vector4(terrainSegments / 2 - xSizeHalf - xSize, terrainSegments / 2 - ySizeHalf, xSize, ySize));
-const grass2_4 = new Grass(main.renderer, 150000, 1, ground, new Vector4(terrainSegments / 2 - xSizeHalf + xSize, terrainSegments / 2 - ySizeHalf, xSize, ySize));
-const grass2_5 = new Grass(main.renderer, 150000, 1, ground, new Vector4(terrainSegments / 2 - xSizeHalf - xSize, terrainSegments / 2 - ySizeHalf + ySize, xSize, ySize));
-const grass2_6 = new Grass(main.renderer, 150000, 1, ground, new Vector4(terrainSegments / 2 - xSizeHalf - xSize, terrainSegments / 2 - ySizeHalf - ySize, xSize, ySize));
-const grass2_7 = new Grass(main.renderer, 150000, 1, ground, new Vector4(terrainSegments / 2 - xSizeHalf + xSize, terrainSegments / 2 - ySizeHalf + ySize, xSize, ySize));
-const grass2_8 = new Grass(main.renderer, 150000, 1, ground, new Vector4(terrainSegments / 2 - xSizeHalf + xSize, terrainSegments / 2 - ySizeHalf - ySize, xSize, ySize));
-const grassTotalCount = {count: grass1.count + grass2_1.count + grass2_2.count + grass2_3.count + grass2_4.count + grass2_5.count + grass2_6.count + grass2_7.count + grass2_8.count};
-
 scene.add(
   sky,
   trees,
-  treesLeaves,
+  treeLeaves,
+  trees2,
+  treeLeaves2,
   rocks,
   bushes,
   plants,
@@ -319,55 +330,15 @@ scene.add(
   dirLight,
   dirLight.target,
   playerObjectHolder,
-  grass1,
-  grass2_1,
-  grass2_2,
-  grass2_3,
-  grass2_4,
-  grass2_5,
-  grass2_6,
-  grass2_7,
-  grass2_8
+  new Grass(main.renderer, 200000, 5, ground, new Vector4(terrainSegments / 2 - xSizeHalf, terrainSegments / 2 - ySizeHalf, xSize, ySize)),
+  new Grass(main.renderer, 100000, 1, ground, new Vector4(terrainSegments / 2 - xSizeHalf, terrainSegments / 2 - ySizeHalf + ySize, xSize, ySize)),
+  new Grass(main.renderer, 100000, 1, ground, new Vector4(terrainSegments / 2 - xSizeHalf, terrainSegments / 2 - ySizeHalf - ySize, xSize, ySize)),
+  new Grass(main.renderer, 100000, 1, ground, new Vector4(terrainSegments / 2 - xSizeHalf - xSize, terrainSegments / 2 - ySizeHalf, xSize, ySize)),
+  new Grass(main.renderer, 100000, 1, ground, new Vector4(terrainSegments / 2 - xSizeHalf + xSize, terrainSegments / 2 - ySizeHalf, xSize, ySize)),
+  new Grass(main.renderer, 100000, 1, ground, new Vector4(terrainSegments / 2 - xSizeHalf - xSize, terrainSegments / 2 - ySizeHalf + ySize, xSize, ySize)),
+  new Grass(main.renderer, 100000, 1, ground, new Vector4(terrainSegments / 2 - xSizeHalf - xSize, terrainSegments / 2 - ySizeHalf - ySize, xSize, ySize)),
+  new Grass(main.renderer, 100000, 1, ground, new Vector4(terrainSegments / 2 - xSizeHalf + xSize, terrainSegments / 2 - ySizeHalf + ySize, xSize, ySize)),
+  new Grass(main.renderer, 100000, 1, ground, new Vector4(terrainSegments / 2 - xSizeHalf + xSize, terrainSegments / 2 - ySizeHalf - ySize, xSize, ySize))
 );
 
-main.createView({
-  scene,
-  camera,
-  onAfterRender: () => {
-    treeCount.updateDisplay();
-    rocksCount.updateDisplay();
-    plantsCount.updateDisplay();
-    bushesCount.updateDisplay();
-  },
-});
-
-const gui = new GUI();
-gui
-  .add(trees.instances as any, "length")
-  .name("Trees instances total")
-  .disable();
-
-gui
-  .add(rocks.instances as any, "length")
-  .name("Rocks instances total")
-  .disable();
-
-gui
-  .add(plants.instances as any, "length")
-  .name("Plants instances total")
-  .disable();
-
-gui
-  .add(bushes.instances as any, "length")
-  .name("Bushes instances total")
-  .disable();
-
-gui
-  .add(grassTotalCount as any, "count")
-  .name("Bushes instances total")
-  .disable();
-
-const treeCount = gui.add(trees, "count").name("Trees instances rendered").disable();
-const rocksCount = gui.add(rocks, "count").name("Rocks instances rendered").disable();
-const plantsCount = gui.add(plants, "count").name("Plants instances rendered").disable();
-const bushesCount = gui.add(bushes, "count").name("Bushes instances rendered").disable();
+main.createView({ scene, camera });
