@@ -46,7 +46,7 @@ const plantNum = 1500;
 const bushesNum = 1500;
 
 const terrainSize = 1000;
-const terrainSegments = 128;
+const terrainSegments = 64;
 const terrainTextureRepeat = terrainSize * 0.075;
 
 const main = new Main({ rendererParameters: { antialias: true } }); // init renderer and other stuff
