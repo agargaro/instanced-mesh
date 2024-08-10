@@ -1,10 +1,10 @@
 import { Asset, Main, PerspectiveCameraAuto } from '@three.ez/main';
 import { ACESFilmicToneMapping, AmbientLight, BufferGeometry, DirectionalLight, FogExp2, Mesh, MeshLambertMaterial, MeshStandardMaterial, PCFSoftShadowMap, PlaneGeometry, Scene, Vector3 } from 'three';
-import { MapControls } from 'three/examples/jsm/controls/MapControls';
-import { GUI } from 'three/examples/jsm/libs/lil-gui.module.min';
-import { GLTF, GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
-import { Sky } from 'three/examples/jsm/objects/Sky';
-import { InstancedMesh2 } from '../src';
+import { MapControls } from 'three/examples/jsm/controls/MapControls.js';
+import { GUI } from 'three/examples/jsm/libs/lil-gui.module.min.js';
+import { GLTF, GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { Sky } from 'three/examples/jsm/objects/Sky.js';
+import { InstancedMesh2 } from '../src/index.js';
 
 const count = 1000000;
 const terrainSize = 125000;

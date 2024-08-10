@@ -1,9 +1,9 @@
 import { Asset, Main, PerspectiveCameraAuto } from '@three.ez/main';
 import { BoxGeometry, DoubleSide, NearestFilter, PlaneGeometry, Scene, Texture, TextureLoader, Vector2, Vector3 } from 'three';
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
-import { GUI } from 'three/examples/jsm/libs/lil-gui.module.min';
-import { InstancedMesh2 } from '../src';
-import { TileMaterial } from './objects/tileMaterial';
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+import { GUI } from 'three/examples/jsm/libs/lil-gui.module.min.js';
+import { InstancedMesh2 } from '../src/index.js';
+import { TileMaterial } from './objects/tileMaterial.js';
 
 const main = new Main(); // init renderer and other stuff
 const camera = new PerspectiveCameraAuto(70).translateX(-44).translateY(-8).translateZ(-8);

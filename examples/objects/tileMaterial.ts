@@ -1,5 +1,5 @@
 import { ShaderMaterial, ShaderMaterialParameters, Texture, Vector2 } from 'three';
-import { createTexture_vec2 } from '../../src';
+import { createTexture_vec2 } from '../../src/index.js';
 
 export class TileMaterial extends ShaderMaterial {
   public override vertexShader = `

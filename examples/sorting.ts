@@ -1,9 +1,9 @@
 import { Main, PerspectiveCameraAuto } from '@three.ez/main';
 import { BoxGeometry, MeshNormalMaterial, Scene, Vector3 } from 'three';
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
-import { GUI } from 'three/examples/jsm/libs/lil-gui.module.min';
-import { InstancedMesh2 } from '../src';
-import { createRadixSort } from '../src/utils/createRadixSort';
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+import { GUI } from 'three/examples/jsm/libs/lil-gui.module.min.js';
+import { InstancedMesh2 } from '../src/index.js';
+import { createRadixSort } from '../src/utils/createRadixSort.js';
 
 const config = {
   count: 20000,

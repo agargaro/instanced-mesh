@@ -1,6 +1,6 @@
-import { radixSort, RadixSortOptions } from "three/examples/jsm/utils/SortUtils";
-import { InstancedMesh2 } from "../objects/InstancedMesh2";
-import { InstancedRenderItem } from "../objects/InstancedRenderList";
+import { radixSort, RadixSortOptions } from "three/examples/jsm/utils/SortUtils.js";
+import { InstancedMesh2 } from "../objects/InstancedMesh2.js";
+import { InstancedRenderItem } from "../objects/InstancedRenderList.js";
 
 export function createRadixSort(target: InstancedMesh2): typeof radixSort<InstancedRenderItem> {
     const options: RadixSortOptions<InstancedRenderItem> = {

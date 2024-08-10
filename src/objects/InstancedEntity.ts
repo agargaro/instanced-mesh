@@ -1,5 +1,5 @@
 import { Color, Matrix3, Matrix4, Mesh, Quaternion, Vector2, Vector3, Vector4 } from 'three';
-import { InstancedMesh2 } from './InstancedMesh2';
+import { InstancedMesh2 } from './InstancedMesh2.js';
 
 export type UniformValueNoNumber = Vector2 | Vector3 | Vector4 | Matrix3 | Matrix4;
 export type UniformValue = number | UniformValueNoNumber;

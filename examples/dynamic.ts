@@ -1,8 +1,8 @@
 import { Main, PerspectiveCameraAuto } from '@three.ez/main';
 import { MeshNormalMaterial, Scene, SphereGeometry, Vector3 } from 'three';
-import { FlyControls } from 'three/examples/jsm/controls/FlyControls';
-import { GUI } from 'three/examples/jsm/libs/lil-gui.module.min';
-import { InstancedMesh2 } from '../src';
+import { FlyControls } from 'three/examples/jsm/controls/FlyControls.js';
+import { GUI } from 'three/examples/jsm/libs/lil-gui.module.min.js';
+import { InstancedMesh2 } from '../src/index.js';
 
 const count = 150000;
 const worldSize = 20000;

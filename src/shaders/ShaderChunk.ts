@@ -1,7 +1,7 @@
 import { ShaderChunk } from "three";
-import get_from_texture from "./chunks/get_from_texture.glsl";
-import instanced_pars_vertex from "./chunks/instanced_pars_vertex.glsl";
-import instanced_vertex from "./chunks/instanced_vertex.glsl";
+import get_from_texture from "./chunks/get_from_texture.glsl.js";
+import instanced_pars_vertex from "./chunks/instanced_pars_vertex.glsl.js";
+import instanced_vertex from "./chunks/instanced_vertex.glsl.js";
 
 ShaderChunk["get_from_texture"] = get_from_texture;
 ShaderChunk["instanced_pars_vertex"] = instanced_pars_vertex;

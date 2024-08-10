@@ -1,9 +1,9 @@
 import { Box3, BufferAttribute, BufferGeometry, Camera, Color, DataTexture, FloatType, Frustum, InstancedBufferAttribute, Intersection, Material, Matrix4, Mesh, MeshDepthMaterial, MeshDistanceMaterial, Object3DEventMap, RGBADepthPacking, RGFormat, Ray, Raycaster, RedFormat, Scene, ShaderMaterial, Sphere, Vector3, WebGLProgramParametersWithUniforms, WebGLRenderer } from "three";
-import { createTexture_mat4, createTexture_vec3 } from "../utils/createTexture";
-import { GLInstancedBufferAttribute } from "./GLInstancedBufferAttribute";
-import { InstancedEntity, UniformValue, UniformValueNoNumber } from "./InstancedEntity";
-import { InstancedMeshBVH } from "./InstancedMeshBVH";
-import { InstancedRenderItem, InstancedRenderList } from "./InstancedRenderList";
+import { createTexture_mat4, createTexture_vec3 } from "../utils/createTexture.js";
+import { GLInstancedBufferAttribute } from "./GLInstancedBufferAttribute.js";
+import { InstancedEntity, UniformValue, UniformValueNoNumber } from "./InstancedEntity.js";
+import { InstancedMeshBVH } from "./InstancedMeshBVH.js";
+import { InstancedRenderItem, InstancedRenderList } from "./InstancedRenderList.js";
 
 // TODO: Add expand and count/maxCount when create?
 // TODO: autoUpdate (send indexes data to gpu only if changes)
