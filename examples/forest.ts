@@ -341,4 +341,4 @@ scene.add(
   new Grass(main.renderer, 100000, 1, ground, new Vector4(terrainSegments / 2 - xSizeHalf + xSize, terrainSegments / 2 - ySizeHalf - ySize, xSize, ySize))
 );
 
-main.createView({ scene, camera });
+main.createView({ scene, camera, enabled: false });

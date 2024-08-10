@@ -97,7 +97,7 @@ export class InstancedMesh2<
 
     if (this.geometry.getAttribute("instanceIndex")) throw new Error('Cannot reuse already patched geometry.');
 
-    this.frustumCulled = !this.perObjectFrustumCulled;
+    // this.frustumCulled = !this.perObjectFrustumCulled;
     this.instancesCount = count;
     this._maxCount = count;
     this._count = count;
