@@ -41,7 +41,7 @@ This library has only one dependency: `three.js r159+`.
 ## Frustum Culling
 
 Avoiding rendering objects outside the camera frustum can drastically improve performance (especially for complex geometries). <br /> <br />
-***Frustum culling by default is performed by iterating all instances***, [but it is possible to speed up this process by creating a spatial indexing data structure **(BVH)**.](#spatial-indexing-data-structure-dynamic-bvh). <br /> <br />
+***Frustum culling by default is performed by iterating all instances***, [but it is possible to speed up this process by creating a spatial indexing data structure **(BVH)**](#spatial-indexing-data-structure-dynamic-bvh). <br /> <br />
 By default `perObjectFrustumCulled` is **true**.
 
 ## Sorting
@@ -89,16 +89,22 @@ myInstancedMesh.instances[3].updateMatrix(); // necessary after transformations
 
 ## Spatial Indexing Data Structure (Dynamic BVH)
 
-To speed up raycasting and frustum culling, it is possible to create a spatial indexing data structure, in this case a ***dynamic BVH***. <br />
+To speed up raycasting and frustum culling, a spatial indexing data structure can be created to contain the boundingBoxes of all instances. <br />
 This works very well if the instances are mostly static (updating a BVH can be expensive) and scattered in world space.
 
 ```ts
-// calls this function after valuing all instances
+// call this function after all instances have been valued
 myInstancedMesh.computeBVH({ margin: 0, highPrecision: false });
 ```
 
 If all instances are static set the margin to 0. <br /> <br />
 ***Setting a margin makes BVH updating faster***, but may make raycasting and frustum culling slightly slower.
+
+## Raycasting tips
+
+If you are not using a BVH, you can set the `raycastOnlyFrustum` property to **true** to avoid iterating over all instances.
+
+It's also highly recommended to use [three-mesh-bvh](https://github.com/gkjohnson/three-mesh-bvh) to create a geometry BVH.
 
 ## API
 
@@ -223,7 +229,7 @@ If all instances are static set the margin to 0. <br /> <br />
 
 It works similarly to `BatchedMesh`: ***matrices, colors, etc.*** are stored in `Texture` instead of `InstancedAttribute`. <br />
 The only `InstancedAttribute` is used to store the indices of the instances to be rendered. <br /> <br />
-***If you create a custom material, you will need to use `Texture` instead of `InstancedBufferAttribute`.***
+***If you create a custom material, you will need to use `Texture` instead of `InstancedBufferAttribute` (don't worry, there are utility methods).***
 
 ## Installation
 
@@ -256,6 +262,8 @@ These examples use `vite`, and some mobile devices may run out of memory.
 - [Instances array animation](https://stackblitz.com/edit/three-ez-instancedmesh2-cullingdynamic-150k?file=src%2Fmain.ts)
 - [Custom Material](https://stackblitz.com/edit/three-ez-instancedmesh2-custom-material?file=src%2Fmain.ts)
 
+More examples will be added soon...
+
 ## Questions?
 
 If you have questions or need assistance, you can ask on our [discord server](https://discord.gg/MVTwrdX3JM).
@@ -263,7 +271,6 @@ If you have questions or need assistance, you can ask on our [discord server](ht
 ## Future Work
 
 - LOD system
-- New frustum culling using BVH and cached node parameters
 - Remove renderer from constructor parameters
 
 ## Like it?

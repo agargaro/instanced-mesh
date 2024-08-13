@@ -23,10 +23,10 @@ import { GLTF, GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { MeshSurfaceSampler } from "three/examples/jsm/math/MeshSurfaceSampler.js";
 import { Sky } from "three/examples/jsm/objects/Sky.js";
 import { InstancedMesh2 } from "../src/index.js";
-import * as MW from "./objects/meshwalk.module.min.js";
 import { Grass } from "./objects/grass.js";
-import { TerrainSurfaceSampler } from "./objects/terrainSurfaceSampler.js";
+import * as MW from "./objects/meshwalk.module.min.js";
 import { Terrain } from "./objects/terrain.js";
+import { TerrainSurfaceSampler } from "./objects/terrainSurfaceSampler.js";
 
 const world = new MW.World();
 const octree = new MW.Octree();
@@ -47,7 +47,7 @@ main.renderer.toneMappingExposure = 0.5;
 main.renderer.shadowMap.enabled = true;
 main.renderer.shadowMap.type = PCFSoftShadowMap;
 
-const camera = new PerspectiveCameraAuto(70, 0.1, 2000);
+const camera = new PerspectiveCameraAuto(70);
 camera.position.set(0, 1, 5);
 const scene = new Scene();
 
@@ -330,15 +330,15 @@ scene.add(
   dirLight,
   dirLight.target,
   playerObjectHolder,
-  new Grass(main.renderer, 200000, 5, ground, new Vector4(terrainSegments / 2 - xSizeHalf, terrainSegments / 2 - ySizeHalf, xSize, ySize)),
-  new Grass(main.renderer, 100000, 1, ground, new Vector4(terrainSegments / 2 - xSizeHalf, terrainSegments / 2 - ySizeHalf + ySize, xSize, ySize)),
-  new Grass(main.renderer, 100000, 1, ground, new Vector4(terrainSegments / 2 - xSizeHalf, terrainSegments / 2 - ySizeHalf - ySize, xSize, ySize)),
-  new Grass(main.renderer, 100000, 1, ground, new Vector4(terrainSegments / 2 - xSizeHalf - xSize, terrainSegments / 2 - ySizeHalf, xSize, ySize)),
-  new Grass(main.renderer, 100000, 1, ground, new Vector4(terrainSegments / 2 - xSizeHalf + xSize, terrainSegments / 2 - ySizeHalf, xSize, ySize)),
-  new Grass(main.renderer, 100000, 1, ground, new Vector4(terrainSegments / 2 - xSizeHalf - xSize, terrainSegments / 2 - ySizeHalf + ySize, xSize, ySize)),
-  new Grass(main.renderer, 100000, 1, ground, new Vector4(terrainSegments / 2 - xSizeHalf - xSize, terrainSegments / 2 - ySizeHalf - ySize, xSize, ySize)),
-  new Grass(main.renderer, 100000, 1, ground, new Vector4(terrainSegments / 2 - xSizeHalf + xSize, terrainSegments / 2 - ySizeHalf + ySize, xSize, ySize)),
-  new Grass(main.renderer, 100000, 1, ground, new Vector4(terrainSegments / 2 - xSizeHalf + xSize, terrainSegments / 2 - ySizeHalf - ySize, xSize, ySize))
+  new Grass(main.renderer, 150000, 6, ground, new Vector4(terrainSegments / 2 - xSizeHalf, terrainSegments / 2 - ySizeHalf, xSize, ySize), true),
+  new Grass(main.renderer, 75000, 1, ground, new Vector4(terrainSegments / 2 - xSizeHalf, terrainSegments / 2 - ySizeHalf + ySize, xSize, ySize)),
+  new Grass(main.renderer, 75000, 1, ground, new Vector4(terrainSegments / 2 - xSizeHalf, terrainSegments / 2 - ySizeHalf - ySize, xSize, ySize)),
+  new Grass(main.renderer, 75000, 1, ground, new Vector4(terrainSegments / 2 - xSizeHalf - xSize, terrainSegments / 2 - ySizeHalf, xSize, ySize)),
+  new Grass(main.renderer, 75000, 1, ground, new Vector4(terrainSegments / 2 - xSizeHalf + xSize, terrainSegments / 2 - ySizeHalf, xSize, ySize)),
+  new Grass(main.renderer, 75000, 1, ground, new Vector4(terrainSegments / 2 - xSizeHalf - xSize, terrainSegments / 2 - ySizeHalf + ySize, xSize, ySize)),
+  new Grass(main.renderer, 75000, 1, ground, new Vector4(terrainSegments / 2 - xSizeHalf - xSize, terrainSegments / 2 - ySizeHalf - ySize, xSize, ySize)),
+  new Grass(main.renderer, 75000, 1, ground, new Vector4(terrainSegments / 2 - xSizeHalf + xSize, terrainSegments / 2 - ySizeHalf + ySize, xSize, ySize)),
+  new Grass(main.renderer, 75000, 1, ground, new Vector4(terrainSegments / 2 - xSizeHalf + xSize, terrainSegments / 2 - ySizeHalf - ySize, xSize, ySize))
 );
 
 main.createView({ scene, camera, enabled: false });

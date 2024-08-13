@@ -74,7 +74,7 @@ export class Grass extends InstancedMesh2<{}, BufferGeometry, MeshPhongMaterial>
     public bottomColor = { value: new Color(0x6aa120) };
     public occlusionColor = { value: new Color(0x004400) };
 
-    constructor(renderer: WebGLRenderer, count: number, segments: number, terrain: Terrain, rect: Vector4) {
+    constructor(renderer: WebGLRenderer, count: number, segments: number, terrain: Terrain, rect: Vector4, computeBVH = false) {
         const material = new MeshPhongMaterial({ side: DoubleSide });
 
         material.onBeforeCompile = (parameters: WebGLProgramParametersWithUniforms) => {
@@ -153,13 +153,13 @@ export class Grass extends InstancedMesh2<{}, BufferGeometry, MeshPhongMaterial>
             obj.rotateY(Math.random() * Math.PI - Math.PI / 2);
         });
 
-        this.perObjectFrustumCulled = false;
+        this.perObjectFrustumCulled = computeBVH;
+
+        if (computeBVH) this.computeBVH();
 
         this.interceptByRaycaster = false;
 
         this.receiveShadow = true;
-
-        this.frustumCulled = true;
 
         this.on('animate', (e) => {
             this.time.value = Math.sin(e.total * 0.5);
