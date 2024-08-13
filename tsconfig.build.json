@@ -1,16 +1,18 @@
 {
   "compilerOptions": {
-    "module": "ES2022",
-    "target": "ES2022",
+    "target": "ES2020",
+    "module": "Node16",
+    "moduleResolution": "NodeNext",
     "strict": true,
-    "noImplicitOverride": true,
     "declaration": true,
+    "sourceMap": true,
+    "declarationMap": true,
+    "noImplicitOverride": true,
     "strictNullChecks": false,
     "stripInternal": true,
     "outDir": "build",
     "esModuleInterop": true,
     "noImplicitAny": false,
-    "moduleResolution": "node"
   },
   "include": [
     "src/**/*.ts"

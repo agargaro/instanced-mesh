@@ -4,7 +4,8 @@ import { viteStaticCopy } from 'vite-plugin-static-copy';
 import dts from 'vite-plugin-dts';
 import { externalizeDeps } from 'vite-plugin-externalize-deps'
 
-export default defineConfig({
+export default defineConfig(({ command }) => ({
+  publicDir: command === 'build' ? false : 'public',
   build: {
     sourcemap: true,
     lib: {
@@ -33,4 +34,4 @@ export default defineConfig({
       }]
     })
   ]
-})
+}));

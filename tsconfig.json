@@ -1,7 +1,8 @@
 {
   "compilerOptions": {
-    "module": "Node16",
     "target": "ES2020",
+    "module": "Node16",
+    "moduleResolution": "NodeNext",
     "strict": true,
     "declaration": true,
     "sourceMap": true,
@@ -12,6 +13,5 @@
     "outDir": "build",
     "esModuleInterop": true,
     "noImplicitAny": false,
-    "moduleResolution": "NodeNext",
   }
 }
