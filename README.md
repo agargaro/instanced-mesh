@@ -259,9 +259,10 @@ Or you can import it from CDN:
 
 These examples use `vite`, and some mobile devices may run out of memory.
 
-- [Forest with 1 milion trees](https://stackblitz.com/edit/three-ez-instancedmesh2-cullingstatic-1kk-forest?file=src%2Fmain.ts)
-- [Instances array animation](https://stackblitz.com/edit/three-ez-instancedmesh2-cullingdynamic-150k?file=src%2Fmain.ts)
-- [Custom Material](https://stackblitz.com/edit/three-ez-instancedmesh2-custom-material?file=src%2Fmain.ts)
+- [1kk static trees](https://stackblitz.com/edit/three-ezinstancedmesh2-1kk-static-trees?file=src%2Fmain.ts)
+- [Instances array animation](https://stackblitz.com/edit/three-ezinstancedmesh2-instances-array-animation?file=src%2Fmain.ts)
+- [Sorting](https://stackblitz.com/edit/three-ezinstancedmesh2-sorting?file=src%2Fmain.ts)
+- [Custom Material](https://stackblitz.com/edit/three-ezinstancedmesh2-custom-material?file=src%2Fmain.ts)
 
 More examples will be added soon...
 
