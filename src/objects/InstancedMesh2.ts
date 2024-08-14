@@ -226,6 +226,10 @@ export class InstancedMesh2<
     this.bvh.create();
   }
 
+  public disposeBVH(): void {
+    this.bvh = null;
+  }
+
   public setMatrixAt(id: number, matrix: Matrix4): void {
     matrix.toArray(this._matrixArray, id * 16);
 

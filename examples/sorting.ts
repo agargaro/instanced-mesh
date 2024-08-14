@@ -6,15 +6,14 @@ import { InstancedMesh2 } from '../src/index.js';
 import { createRadixSort } from '../src/utils/createRadixSort.js';
 
 const config = {
-  count: 20000,
+  count: 30000,
   animatedCount: 0,
-  marginBVH: 5,
-  customSort: false
+  customSort: true
 }
 
 const main = new Main();
 
-const camera = new PerspectiveCameraAuto(70).translateZ(5);
+const camera = new PerspectiveCameraAuto(70).translateZ(3.5);
 const scene = new Scene();
 
 const geometry = new BoxGeometry(0.1, 0.1, 0.1);
@@ -26,14 +25,15 @@ instancedMesh.createInstances((object) => {
   object.quaternion.random();
 });
 
-instancedMesh.computeBVH({ margin: config.marginBVH });
+instancedMesh.sortObjects = true;
+const radixSort = createRadixSort(instancedMesh);
+instancedMesh.customSort = radixSort;
 
 scene.add(instancedMesh);
 
 const axis = new Vector3(1, 0, 0);
 const controls = new OrbitControls(camera, main.renderer.domElement);
 controls.autoRotate = true;
-controls.autoRotateSpeed = 1.0;
 
 scene.on('animate', (e) => {
   controls.update();
@@ -46,8 +46,6 @@ scene.on('animate', (e) => {
 });
 
 main.createView({ scene, camera, enabled: false, backgroundColor: 'white', onAfterRender: () => spheresCount.updateDisplay() });
-
-const radixSort = createRadixSort(instancedMesh);
 
 const gui = new GUI();
 gui.add(instancedMesh, "maxCount").name('instances max count').disable();

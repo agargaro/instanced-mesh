@@ -148,6 +148,7 @@ It's also highly recommended to use [three-mesh-bvh](https://github.com/gkjohnso
       updateInstances(onUpdate: UpdateEntityCallback<Entity<TCustomData>>): void;
       createInstances(onInstanceCreation?: UpdateEntityCallback<Entity<TCustomData>>): void;
       computeBVH(config?: BVHParams): void;
+      disposeBVH(): void;
       setMatrixAt(id: number, matrix: Matrix4): void;
       getMatrixAt(id: number, matrix?: Matrix4): Matrix4;
       setVisibilityAt(id: number, visible: boolean): void;
