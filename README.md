@@ -166,7 +166,7 @@ It's also highly recommended to use [three-mesh-bvh](https://github.com/gkjohnso
       getMatrixAt(id: number, matrix?: Matrix4): Matrix4;
       setVisibilityAt(id: number, visible: boolean): void;
       getVisibilityAt(id: number): boolean;
-      setColorAt(id: number, color: Color): void;
+      setColorAt(id: number, color: ColorRepresentation): void;
       getColorAt(id: number, color?: Color): Color;
       setUniformAt(id: number, name: string, value: UniformValue): void;
       getMorphAt(index: number, object: Mesh): void;
@@ -198,7 +198,7 @@ It's also highly recommended to use [three-mesh-bvh](https://github.com/gkjohnso
       get visible(): boolean;
       set visible(value: boolean);
       get color(): Color;
-      set color(value: Color);
+      set color(value: ColorRepresentation);
       get matrix(): Matrix4;
       get matrixWorld(): Matrix4;
       constructor(owner: InstancedMesh2<any, any, any>, index: number);
