@@ -7,7 +7,7 @@ import { PRNG } from './objects/random.js';
 
 const config = {
   count: 100000,
-  animatedCount: 10000,
+  animatedCount: 2000,
   spawnRadius: 75000,
   marginBVH: 100
 }

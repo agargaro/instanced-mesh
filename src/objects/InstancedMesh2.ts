@@ -1,4 +1,4 @@
-import { Box3, BufferAttribute, BufferGeometry, Camera, Color, DataTexture, FloatType, Frustum, InstancedBufferAttribute, Intersection, Material, Matrix4, Mesh, MeshDepthMaterial, MeshDistanceMaterial, Object3DEventMap, RGBADepthPacking, RGFormat, Ray, Raycaster, RedFormat, Scene, ShaderMaterial, Sphere, Vector3, WebGLProgramParametersWithUniforms, WebGLRenderer } from "three";
+import { Box3, BufferAttribute, BufferGeometry, Camera, Color, ColorRepresentation, DataTexture, FloatType, Frustum, InstancedBufferAttribute, Intersection, Material, Matrix4, Mesh, MeshDepthMaterial, MeshDistanceMaterial, Object3DEventMap, RGBADepthPacking, RGFormat, Ray, Raycaster, RedFormat, Scene, ShaderMaterial, Sphere, Vector3, WebGLProgramParametersWithUniforms, WebGLRenderer } from "three";
 import { createTexture_mat4, createTexture_vec3 } from "../utils/createTexture.js";
 import { GLInstancedBufferAttribute } from "./GLInstancedBufferAttribute.js";
 import { InstancedEntity, UniformValue, UniformValueNoNumber } from "./InstancedEntity.js";
@@ -254,13 +254,17 @@ export class InstancedMesh2<
     return this.visibilityArray[id];
   }
 
-  public setColorAt(id: number, color: Color): void {
+  public setColorAt(id: number, color: ColorRepresentation): void {
     if (this.colorsTexture === null) {
       this.colorsTexture = createTexture_vec3(this._maxCount);
       this._colorArray = this.colorsTexture.image.data as unknown as Float32Array;
     }
 
-    color.toArray(this._colorArray, id * 4); // even if is vec3, we need 4 because RGB format is removed from three.js
+    if ((color as Color).isColor) {
+      (color as Color).toArray(this._colorArray, id * 4); // even if is vec3, we need 4 because RGB format is removed from three.js
+    } else {
+      _tempCol.set(color).toArray(this._colorArray, id * 4);
+    }
 
     this.colorsTexture.needsUpdate = true; // TODO 
   }
