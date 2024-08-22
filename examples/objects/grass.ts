@@ -1,6 +1,5 @@
-import { BufferAttribute, BufferGeometry, Color, DoubleSide, MeshPhongMaterial, PlaneGeometry, Vector3, Vector4, WebGLProgramParametersWithUniforms, WebGLRenderer } from 'three';
+import { BufferAttribute, BufferGeometry, Color, DoubleSide, MeshPhongMaterial, Vector3, Vector4, WebGLProgramParametersWithUniforms, WebGLRenderer } from 'three';
 import { InstancedMesh2 } from '../../src/index.js';
-import { Terrain } from './terrain.js';
 import { TerrainSurfaceSampler } from './terrainSurfaceSampler.js';
 
 function createGeometry(segments: number, width = 0.1, height = 1.5): BufferGeometry {
@@ -74,7 +73,7 @@ export class Grass extends InstancedMesh2<{}, BufferGeometry, MeshPhongMaterial>
     public bottomColor = { value: new Color(0x6aa120) };
     public occlusionColor = { value: new Color(0x004400) };
 
-    constructor(renderer: WebGLRenderer, count: number, segments: number, terrain: Terrain, rect: Vector4, computeBVH = false) {
+    constructor(renderer: WebGLRenderer, count: number, segments: number, sampler: TerrainSurfaceSampler, area: Vector4) {
         const material = new MeshPhongMaterial({ side: DoubleSide });
 
         material.onBeforeCompile = (parameters: WebGLProgramParametersWithUniforms) => {
@@ -125,40 +124,18 @@ export class Grass extends InstancedMesh2<{}, BufferGeometry, MeshPhongMaterial>
                 diffuseColor = vec4(mix(occlusionColor, mixedColor, occlusionPercent), 1.0);
             `);
         }
-
-        const sampler = new TerrainSurfaceSampler(terrain).build();
-
-        let i = 0;
-        const widthSegments = ((terrain.geometry as PlaneGeometry).parameters).widthSegments;
-        const heightSegments = ((terrain.geometry as PlaneGeometry).parameters).heightSegments;
-        const rowStart = rect.x;
-        const rowCount = rect.z;
-        const colStart = rect.y;
-        const colCount = rect.w;
-        const tileSize = 1 / (widthSegments * heightSegments * 2);
-
-        sampler.randomFunction = () => {
-            if (i++ % 3 === 0) {
-                const row = rowStart + Math.floor(Math.random() * rowCount);
-                const col = colStart + Math.floor(Math.random() * colCount);
-                return tileSize * ((widthSegments * row * 2 + col * 2) + Math.round(Math.random())) + 10e-7;
-            }
-            else return Math.random();
-        }
-
+        
         super(renderer, count, createGeometry(segments), material);
 
-        this.createInstances((obj, index) => {
-            sampler.sample(obj.position);
+        this.updateInstances((obj) => {
+            sampler.sampleTile(area, obj.position);
             obj.rotateY(Math.random() * Math.PI - Math.PI / 2);
         });
 
-        this.perObjectFrustumCulled = computeBVH;
+        this.computeBoundingBox();
 
-        if (computeBVH) this.computeBVH();
-
+        this.perObjectFrustumCulled = false;
         this.interceptByRaycaster = false;
-
         this.receiveShadow = true;
 
         this.on('animate', (e) => {
