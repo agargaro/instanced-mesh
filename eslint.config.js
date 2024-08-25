@@ -1,16 +1,22 @@
-import globals from "globals";
-import pluginJs from "@eslint/js";
-import tseslint from "typescript-eslint";
-
+import js from '@eslint/js';
+import tseslint from 'typescript-eslint';
 
 export default [
-  { files: ["**/*.{js,mjs,cjs,ts}"] },
-  { languageOptions: { globals: globals.browser } },
-  pluginJs.configs.recommended,
-  ...tseslint.configs.recommended,
   {
-    "rules": {
-      "@typescript-eslint/no-explicit-any": "info"
-    }
-  }
+    files: ['**/*.{js,ts}'],
+  },
+  {
+    ignores: ['dist/', 'meshwalk.module.min.js', 'vite.config.js'],
+  },
+  js.configs.recommended,
+  ...tseslint.configs.strict,
+  {
+    rules: {
+      'no-unused-vars': 'warn',
+      'no-undef': 'warn',
+      '@typescript-eslint/no-explicit-any': 'warn',
+      '@typescript-eslint/no-unused-vars': 'warn',
+      '@typescript-eslint/no-empty-object-type': 'warn',
+    },
+  },
 ];
