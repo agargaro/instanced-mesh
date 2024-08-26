@@ -1,5 +1,5 @@
 import { Main, PerspectiveCameraAuto } from '@three.ez/main';
-import { Matrix4, Mesh, MeshBasicMaterial, Scene, Vector3, WebGLProgramParametersWithUniforms } from 'three';
+import { Mesh, MeshBasicMaterial, Scene, WebGLProgramParametersWithUniforms } from 'three';
 import { OrbitControls } from 'three/examples/jsm/Addons.js';
 import { GrassGeometry } from './objects/grassGeometry.js';
 

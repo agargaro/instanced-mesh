@@ -1,8 +1,8 @@
-import { BufferGeometry, Color, DoubleSide, MeshPhongMaterial, Vector4, WebGLProgramParametersWithUniforms, WebGLRenderer } from 'three';
+import { BufferGeometry, Color, Vector4, WebGLRenderer } from 'three';
 import { InstancedMesh2 } from '../../src/index.js';
 import { GrassGeometry } from './grassGeometry.js';
-import { TerrainSurfaceSampler } from './terrainSurfaceSampler.js';
 import { GrassMaterial } from './grassMaterial.js';
+import { TerrainSurfaceSampler } from './terrainSurfaceSampler.js';
 
 export class Grass extends InstancedMesh2<{}, BufferGeometry, GrassMaterial> {
     public topColor = { value: new Color(0x98c064) };
