@@ -313,7 +313,7 @@ export class InstancedMesh2<
     }
 
     const array = this.morphTexture.source.data.data;
-    let morphInfluencesSum = 0; 
+    let morphInfluencesSum = 0;
 
     for (let i = 0; i < objectInfluences.length; i++) {
       morphInfluencesSum += objectInfluences[i];
