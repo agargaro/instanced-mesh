@@ -1,15 +1,12 @@
-import { BVH, BVHNode, FloatArray, HybridBuilder, WebGLCoordinateSystem } from 'bvh.js/src';
+import { BVH, BVHNode, FloatArray, HybridBuilder, WebGLCoordinateSystem } from 'bvh.js';
 import { Box3, Matrix4, Raycaster } from 'three';
 import { InstancedMesh2 } from './InstancedMesh2.js';
-
-type NodeData = {};
-type LeafData = number; // instance id
 
 export class InstancedMeshBVH {
     public target: InstancedMesh2;
     public geoBoundingBox: Box3;
-    public bvh: BVH<NodeData, LeafData>;
-    public map = new Map<number, BVHNode<NodeData, LeafData>>();
+    public bvh: BVH<unknown, number>;
+    public map = new Map<number, BVHNode<unknown, number>>();
     protected _arrayType: typeof Float32Array | typeof Float64Array;
     protected _margin: number;
 
@@ -76,7 +73,7 @@ export class InstancedMeshBVH {
         this.map = new Map();
     }
 
-    public frustumCulling(projScreenMatrix: Matrix4, onFrustumIntersected: (index: LeafData) => void): void {
+    public frustumCulling(projScreenMatrix: Matrix4, onFrustumIntersected: (index: number) => void): void {
         this.bvh.frustumCulling(projScreenMatrix.elements, (node, frustum, mask) => {
             if (frustum.isIntersected(node.box, mask, this._margin)) {
                 onFrustumIntersected(node.object);
