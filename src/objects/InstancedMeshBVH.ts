@@ -1,4 +1,4 @@
-import { BVH, BVHNode, FloatArray, HybridBuilder, WebGLCoordinateSystem } from 'bvh.js';
+import { BVH, BVHNode, FloatArray, HybridBuilder, WebGLCoordinateSystem } from 'bvh.js/src';
 import { Box3, Matrix4, Raycaster } from 'three';
 import { InstancedMesh2 } from './InstancedMesh2.js';
 
@@ -9,6 +9,9 @@ export class InstancedMeshBVH {
     public map = new Map<number, BVHNode<unknown, number>>();
     protected _arrayType: typeof Float32Array | typeof Float64Array;
     protected _margin: number;
+    protected _origin: FloatArray;
+    protected _dir: FloatArray;
+    protected _boxArray: FloatArray;
 
     constructor(target: InstancedMesh2, margin = 0, highPrecision = false) {
         this._margin = margin;
@@ -17,6 +20,8 @@ export class InstancedMeshBVH {
         this.geoBoundingBox = target.geometry.boundingBox;
         this._arrayType = highPrecision ? Float64Array : Float32Array;
         this.bvh = new BVH(new HybridBuilder(highPrecision), WebGLCoordinateSystem);
+        this._origin = new this._arrayType(3);
+        this._dir = new this._arrayType(3);
     }
 
     public create(): void {
@@ -87,16 +92,32 @@ export class InstancedMeshBVH {
 
     public raycast(raycaster: Raycaster, result: number[]): void {
         const ray = raycaster.ray;
+        const origin = this._origin;
+        const dir = this._dir;
 
-        _origin[0] = ray.origin.x;
-        _origin[1] = ray.origin.y;
-        _origin[2] = ray.origin.z;
+        origin[0] = ray.origin.x; // todo check if is worth it
+        origin[1] = ray.origin.y;
+        origin[2] = ray.origin.z;
 
-        _dir[0] = ray.direction.x;
-        _dir[1] = ray.direction.y;
-        _dir[2] = ray.direction.z;
+        dir[0] = ray.direction.x;
+        dir[1] = ray.direction.y;
+        dir[2] = ray.direction.z;
 
-        this.bvh.intersectRay(_dir, _origin, raycaster.near, raycaster.far, result);
+        this.bvh.intersectRay(dir, origin, raycaster.near, raycaster.far, result);
+    }
+
+    public intersectBox(target: Box3): boolean {
+        if (!this._boxArray) this._boxArray = new this._arrayType(6);
+        const array = this._boxArray;
+
+        array[0] = target.min.x;
+        array[1] = target.max.x;
+        array[2] = target.min.y;
+        array[3] = target.max.y;
+        array[4] = target.min.z;
+        array[5] = target.max.z;
+
+        return this.bvh.intersectBox(array);
     }
 
     protected getBox(id: number, array: FloatArray): FloatArray {
@@ -116,6 +137,4 @@ export class InstancedMeshBVH {
     }
 }
 
-const _origin = new Float64Array(3);
-const _dir = new Float64Array(3);
 const _box3 = new Box3();
