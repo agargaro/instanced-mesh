@@ -27,7 +27,7 @@ export interface BVHParams {
 export class InstancedMesh2<
   TCustomData = {},
   TGeometry extends BufferGeometry = BufferGeometry,
-  TMaterial extends Material | Material[] = Material,
+  TMaterial extends Material | Material[] = Material | Material[],
   TEventMap extends Object3DEventMap = Object3DEventMap
 > extends Mesh<TGeometry, TMaterial, TEventMap> {
 
@@ -473,9 +473,7 @@ export class InstancedMesh2<
     const sortObjects = this.sortObjects;
     let count = 0;
 
-    this.bvh.frustumCulling(_projScreenMatrix, _frustumResult);
-
-    for (const index of _frustumResult) {
+    this.bvh.frustumCulling(_projScreenMatrix, (index: number) => {
       if (index < instancesCount && this.getVisibilityAt(index)) {
         if (sortObjects) {
           _position.setFromMatrixPosition(this.getMatrixAt(index))
@@ -485,10 +483,9 @@ export class InstancedMesh2<
           array[count++] = index;
         }
       }
-    }
+    });
 
     this._count = count;
-    _frustumResult.length = 0;
   }
 
   protected linearCulling(): void {
@@ -611,7 +608,6 @@ const _box3 = new Box3();
 const _sphere = new Sphere();
 const _frustum = new Frustum();
 const _projScreenMatrix = new Matrix4();
-const _frustumResult: number[] = [];
 const _instancesIntersected: number[] = [];
 const _intersections: Intersection[] = [];
 const _mesh = new Mesh();
