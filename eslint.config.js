@@ -1,4 +1,4 @@
-import js from '@eslint/js';
+// import js from '@eslint/js';
 import tseslint from 'typescript-eslint';
 
 export default [
@@ -6,9 +6,9 @@ export default [
     files: ['**/*.{js,ts}'],
   },
   {
-    ignores: ['dist/', 'meshwalk.module.min.js', 'vite.config.js'],
+    ignores: ['dist/', 'vite.config.js'],
   },
-  js.configs.recommended,
+  // js.configs.recommended, // this enable also the js 
   ...tseslint.configs.strict,
   {
     rules: {
