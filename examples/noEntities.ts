@@ -38,5 +38,6 @@ instancedMesh.on('click', (e) => {
 scene.add(instancedMesh);
 
 const controls = new OrbitControls(camera, main.renderer.domElement);
+controls.update()
 
 main.createView({ scene, camera });
