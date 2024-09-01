@@ -1,4 +1,3 @@
-// import js from '@eslint/js';
 import tseslint from 'typescript-eslint';
 
 export default [
@@ -8,7 +7,6 @@ export default [
   {
     ignores: ['dist/', 'vite.config.js'],
   },
-  // js.configs.recommended, // this enable also the js 
   ...tseslint.configs.strict,
   {
     rules: {
