@@ -1,23 +1,22 @@
-import { Box3, Matrix4, Raycaster } from 'three';
 import { BVH, BVHNode, FloatArray, HybridBuilder, WebGLCoordinateSystem } from 'bvh.js';
+import { Box3, Matrix4, Raycaster } from 'three';
 import { InstancedMesh2 } from './InstancedMesh2.js';
-
-type NodeData = {};
-type LeafData = number; // instance id
 
 export class InstancedMeshBVH {
     public target: InstancedMesh2;
     public geoBoundingBox: Box3;
-    public bvh: BVH<NodeData, LeafData>;
-    public map = new Map<number, BVHNode<NodeData, LeafData>>();
+    public bvh: BVH<unknown, number>;
+    public map = new Map<number, BVHNode<unknown, number>>();
     protected _arrayType: typeof Float32Array | typeof Float64Array;
+    protected _margin: number;
 
-    constructor(target: InstancedMesh2<any, any, any>, margin = 0, highPrecision = false) {
+    constructor(target: InstancedMesh2, margin = 0, highPrecision = false) {
+        this._margin = margin;
         this.target = target;
         if (!target.geometry.boundingBox) target.geometry.computeBoundingBox();
         this.geoBoundingBox = target.geometry.boundingBox;
         this._arrayType = highPrecision ? Float64Array : Float32Array;
-        this.bvh = new BVH(new HybridBuilder(margin), WebGLCoordinateSystem);
+        this.bvh = new BVH(new HybridBuilder(highPrecision), WebGLCoordinateSystem);
     }
 
     public create(): void {
@@ -38,7 +37,7 @@ export class InstancedMeshBVH {
     }
 
     public insert(id: number): void {
-        const node = this.bvh.insert(id, this.getBox(id, new this._arrayType(6)));
+        const node = this.bvh.insert(id, this.getBox(id, new this._arrayType(6)), this._margin);
         this.map.set(id, node);
     }
 
@@ -50,7 +49,7 @@ export class InstancedMeshBVH {
             boxes[i] = this.getBox(ids[i], new this._arrayType(6));
         }
 
-        this.bvh.insertRange(ids, boxes, (node) => {
+        this.bvh.insertRange(ids, boxes, this._margin, (node) => {
             this.map.set(node.object, node);
         });
     }
@@ -59,7 +58,7 @@ export class InstancedMeshBVH {
         const node = this.map.get(id);
         if (!node) return;
         this.getBox(id, node.box); // this also updates box
-        this.bvh.move(node);
+        this.bvh.move(node, this._margin);
     }
 
     public delete(id: number): void {
@@ -74,8 +73,12 @@ export class InstancedMeshBVH {
         this.map = new Map();
     }
 
-    public frustumCulling(projScreenMatrix: Matrix4, result: number[]): void {
-        this.bvh.frustumCulling(projScreenMatrix.elements, result);
+    public frustumCulling(projScreenMatrix: Matrix4, onFrustumIntersected: (index: number) => void): void {
+        this.bvh.frustumCulling(projScreenMatrix.elements, (node, frustum, mask) => {
+            if (frustum.isIntersected(node.box, mask, this._margin)) {
+                onFrustumIntersected(node.object);
+            }
+        });
     }
 
     public frustumCullingConservative(): void {

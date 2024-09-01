@@ -38,6 +38,19 @@ myInstancedMesh.computeBVH();
 
 This library has only one dependency: `three.js r159+`.
 
+## Live Examples
+
+These examples use `vite`, and some mobile devices may run out of memory.
+
+- [1kk static trees](https://stackblitz.com/edit/three-ezinstancedmesh2-1kk-static-trees?file=src%2Fmain.ts&embed=1&hideDevTools=1&view=preview)
+- [Instances array dynamic](https://stackblitz.com/edit/three-ezinstancedmesh2-instances-array-dynamic?file=src%2Fmain.ts&embed=1&hideDevTools=1&view=preview)
+- [Sorting](https://stackblitz.com/edit/three-ezinstancedmesh2-sorting?file=src%2Fmain.ts&embed=1&hideDevTools=1&view=preview)
+- [Custom material](https://stackblitz.com/edit/three-ezinstancedmesh2-custom-material?file=src%2Fmain.ts&embed=1&hideDevTools=1&view=preview)
+- [Dynamic BVH (no vite)](https://stackblitz.com/edit/three-ezinstancedmesh2-dynamic-bvh?file=index.ts&embed=1&hideDevTools=1&view=preview)
+- [Fast raycasting](https://stackblitz.com/edit/three-ezinstancedmesh2-fast-raycasting?file=src%2Fmain.ts&embed=1&hideDevTools=1&view=preview)
+
+More examples will be added soon...
+
 ## Frustum Culling
 
 Avoiding rendering objects outside the camera frustum can drastically improve performance (especially for complex geometries). <br /> <br />
@@ -148,11 +161,12 @@ It's also highly recommended to use [three-mesh-bvh](https://github.com/gkjohnso
       updateInstances(onUpdate: UpdateEntityCallback<Entity<TCustomData>>): void;
       createInstances(onInstanceCreation?: UpdateEntityCallback<Entity<TCustomData>>): void;
       computeBVH(config?: BVHParams): void;
+      disposeBVH(): void;
       setMatrixAt(id: number, matrix: Matrix4): void;
       getMatrixAt(id: number, matrix?: Matrix4): Matrix4;
       setVisibilityAt(id: number, visible: boolean): void;
       getVisibilityAt(id: number): boolean;
-      setColorAt(id: number, color: Color): void;
+      setColorAt(id: number, color: ColorRepresentation): void;
       getColorAt(id: number, color?: Color): Color;
       setUniformAt(id: number, name: string, value: UniformValue): void;
       getMorphAt(index: number, object: Mesh): void;
@@ -184,7 +198,7 @@ It's also highly recommended to use [three-mesh-bvh](https://github.com/gkjohnso
       get visible(): boolean;
       set visible(value: boolean);
       get color(): Color;
-      set color(value: Color);
+      set color(value: ColorRepresentation);
       get matrix(): Matrix4;
       get matrixWorld(): Matrix4;
       constructor(owner: InstancedMesh2<any, any, any>, index: number);
@@ -253,16 +267,6 @@ Or you can import it from CDN:
 }
 </script>
 ```
-
-## Live Examples
-
-These examples use `vite`, and some mobile devices may run out of memory.
-
-- [Forest with 1 milion trees](https://stackblitz.com/edit/three-ez-instancedmesh2-cullingstatic-1kk-forest?file=src%2Fmain.ts)
-- [Instances array animation](https://stackblitz.com/edit/three-ez-instancedmesh2-cullingdynamic-150k?file=src%2Fmain.ts)
-- [Custom Material](https://stackblitz.com/edit/three-ez-instancedmesh2-custom-material?file=src%2Fmain.ts)
-
-More examples will be added soon...
 
 ## Questions?
 

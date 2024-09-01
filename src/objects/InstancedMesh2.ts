@@ -1,4 +1,4 @@
-import { Box3, BufferAttribute, BufferGeometry, Camera, Color, DataTexture, FloatType, Frustum, InstancedBufferAttribute, Intersection, Material, Matrix4, Mesh, MeshDepthMaterial, MeshDistanceMaterial, Object3DEventMap, RGBADepthPacking, RGFormat, Ray, Raycaster, RedFormat, Scene, ShaderMaterial, Sphere, Vector3, WebGLProgramParametersWithUniforms, WebGLRenderer } from "three";
+import { Box3, BufferAttribute, BufferGeometry, Camera, Color, ColorRepresentation, DataTexture, FloatType, Frustum, InstancedBufferAttribute, Intersection, Material, Matrix4, Mesh, MeshDepthMaterial, MeshDistanceMaterial, Object3DEventMap, RGBADepthPacking, RGFormat, Ray, Raycaster, RedFormat, Scene, ShaderMaterial, Sphere, Vector3, WebGLProgramParametersWithUniforms, WebGLRenderer } from "three";
 import { createTexture_mat4, createTexture_vec3 } from "../utils/createTexture.js";
 import { GLInstancedBufferAttribute } from "./GLInstancedBufferAttribute.js";
 import { InstancedEntity, UniformValue, UniformValueNoNumber } from "./InstancedEntity.js";
@@ -27,7 +27,7 @@ export interface BVHParams {
 export class InstancedMesh2<
   TCustomData = {},
   TGeometry extends BufferGeometry = BufferGeometry,
-  TMaterial extends Material | Material[] = Material,
+  TMaterial extends Material | Material[] = Material | Material[],
   TEventMap extends Object3DEventMap = Object3DEventMap
 > extends Mesh<TGeometry, TMaterial, TEventMap> {
 
@@ -226,6 +226,10 @@ export class InstancedMesh2<
     this.bvh.create();
   }
 
+  public disposeBVH(): void {
+    this.bvh = null;
+  }
+
   public setMatrixAt(id: number, matrix: Matrix4): void {
     matrix.toArray(this._matrixArray, id * 16);
 
@@ -250,13 +254,17 @@ export class InstancedMesh2<
     return this.visibilityArray[id];
   }
 
-  public setColorAt(id: number, color: Color): void {
+  public setColorAt(id: number, color: ColorRepresentation): void {
     if (this.colorsTexture === null) {
       this.colorsTexture = createTexture_vec3(this._maxCount);
       this._colorArray = this.colorsTexture.image.data as unknown as Float32Array;
     }
 
-    color.toArray(this._colorArray, id * 4); // even if is vec3, we need 4 because RGB format is removed from three.js
+    if ((color as Color).isColor) {
+      (color as Color).toArray(this._colorArray, id * 4); // even if is vec3, we need 4 because RGB format is removed from three.js
+    } else {
+      _tempCol.set(color).toArray(this._colorArray, id * 4);
+    }
 
     this.colorsTexture.needsUpdate = true; // TODO 
   }
@@ -465,9 +473,7 @@ export class InstancedMesh2<
     const sortObjects = this.sortObjects;
     let count = 0;
 
-    this.bvh.frustumCulling(_projScreenMatrix, _frustumResult);
-
-    for (const index of _frustumResult) {
+    this.bvh.frustumCulling(_projScreenMatrix, (index: number) => {
       if (index < instancesCount && this.getVisibilityAt(index)) {
         if (sortObjects) {
           _position.setFromMatrixPosition(this.getMatrixAt(index))
@@ -477,10 +483,9 @@ export class InstancedMesh2<
           array[count++] = index;
         }
       }
-    }
+    });
 
     this._count = count;
-    _frustumResult.length = 0;
   }
 
   protected linearCulling(): void {
@@ -603,7 +608,6 @@ const _box3 = new Box3();
 const _sphere = new Sphere();
 const _frustum = new Frustum();
 const _projScreenMatrix = new Matrix4();
-const _frustumResult: number[] = [];
 const _instancesIntersected: number[] = [];
 const _intersections: Intersection[] = [];
 const _mesh = new Mesh();

@@ -1,4 +1,4 @@
-import { Color, Matrix3, Matrix4, Mesh, Quaternion, Vector2, Vector3, Vector4 } from 'three';
+import { Color, ColorRepresentation, Matrix3, Matrix4, Mesh, Quaternion, Vector2, Vector3, Vector4 } from 'three';
 import { InstancedMesh2 } from './InstancedMesh2.js';
 
 export type UniformValueNoNumber = Vector2 | Vector3 | Vector4 | Matrix3 | Matrix4;
@@ -16,7 +16,7 @@ export class InstancedEntity {
   public set visible(value: boolean) { this.owner.setVisibilityAt(this.id, value) }
 
   public get color(): Color { return this.owner.getColorAt(this.id) }
-  public set color(value: Color) { this.owner.setColorAt(this.id, value) }
+  public set color(value: ColorRepresentation) { this.owner.setColorAt(this.id, value) }
 
   public get matrix(): Matrix4 {
     return this.owner.getMatrixAt(this.id);

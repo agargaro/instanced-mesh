@@ -10,8 +10,9 @@ export * from './shaders/chunks/instanced_vertex.glsl.js';
 export * from './utils/createTexture.js';
 export * from './utils/createRadixSort.js';
 
+/** @internal */ 
 declare module 'three' {
   export interface Material {
-    /** @internal */ isInstancedMeshPatched: boolean;
+    isInstancedMeshPatched: boolean;
   }
 }

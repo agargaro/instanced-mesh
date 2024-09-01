@@ -1,6 +1,6 @@
 {
-  "name": "@three.ez/instanced-mesh-test",
-  "version": "0.0.11",
+  "name": "@three.ez/instanced-mesh",
+  "version": "0.2.0",
   "description": "Simplified and enhanced InstancedMesh with frustum culling, fast raycasting (using BVH), sorting, visibility management and more.",
   "author": "Andrea Gargaro <devgargaro@gmail.com>",
   "license": "MIT",
@@ -49,6 +49,6 @@
     "three": ">=0.159.0"
   },
   "dependencies": {
-    "bvh.js": "^0.0.6"
+    "bvh.js": "^0.0.7"
   }
 }
