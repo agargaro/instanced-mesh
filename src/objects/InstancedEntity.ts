@@ -38,6 +38,10 @@ export class InstancedEntity {
     this.owner.composeMatrixInstance(this);
   }
 
+  public updateMatrixPosition(): void {
+    this.owner.setPositionMatrixInstance(this);
+  }
+
   public setUniform(name: string, value: UniformValue): void {
     this.owner.setUniformAt(this.id, name, value);
   }

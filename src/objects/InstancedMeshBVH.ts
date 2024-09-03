@@ -1,12 +1,12 @@
-import { BVH, BVHNode, FloatArray, HybridBuilder, WebGLCoordinateSystem } from 'bvh.js/src';
+import { box3ToArray, BVH, BVHNode, FloatArray, HybridBuilder, onFrustumIntersectionCallback, onIntersectionCallback, onIntersectionRayCallback, vec3ToArray, WebGLCoordinateSystem } from 'bvh.js';
 import { Box3, Matrix4, Raycaster } from 'three';
 import { InstancedMesh2 } from './InstancedMesh2.js';
 
 export class InstancedMeshBVH {
     public target: InstancedMesh2;
     public geoBoundingBox: Box3;
-    public bvh: BVH<unknown, number>;
-    public map = new Map<number, BVHNode<unknown, number>>();
+    public bvh: BVH<{}, number>;
+    public map = new Map<number, BVHNode<{}, number>>();
     protected _arrayType: typeof Float32Array | typeof Float64Array;
     protected _margin: number;
     protected _origin: FloatArray;
@@ -78,61 +78,43 @@ export class InstancedMeshBVH {
         this.map = new Map();
     }
 
-    public frustumCulling(projScreenMatrix: Matrix4, onFrustumIntersected: (index: number) => void): void {
-        this.bvh.frustumCulling(projScreenMatrix.elements, (node, frustum, mask) => {
-            if (frustum.isIntersected(node.box, mask, this._margin)) {
-                onFrustumIntersected(node.object);
-            }
-        });
+    public frustumCulling(projScreenMatrix: Matrix4, onFrustumIntersection: onFrustumIntersectionCallback<{}, number>): void {
+        if (this._margin > 0) {
+
+            this.bvh.frustumCulling(projScreenMatrix.elements, (node, frustum, mask) => {
+                if (frustum.isIntersectedMargin(node.box, mask, this._margin)) {
+                    onFrustumIntersection(node);
+                }
+            });
+
+        } else {
+
+            this.bvh.frustumCulling(projScreenMatrix.elements, onFrustumIntersection);
+
+        }
     }
 
-    public frustumCullingConservative(): void {
-        throw new Error("Not implemented yet.");
-    }
-
-    public raycast(raycaster: Raycaster, result: number[]): void {
+    public raycast(raycaster: Raycaster, onIntersection: onIntersectionRayCallback<number>): void {
         const ray = raycaster.ray;
         const origin = this._origin;
         const dir = this._dir;
 
-        origin[0] = ray.origin.x; // todo check if is worth it
-        origin[1] = ray.origin.y;
-        origin[2] = ray.origin.z;
+        vec3ToArray(ray.origin, origin);
+        vec3ToArray(ray.direction, dir);
 
-        dir[0] = ray.direction.x;
-        dir[1] = ray.direction.y;
-        dir[2] = ray.direction.z;
-
-        this.bvh.intersectRay(dir, origin, raycaster.near, raycaster.far, result);
+        this.bvh.rayIntersections(dir, origin, onIntersection, raycaster.near, raycaster.far);
     }
 
-    public intersectBox(target: Box3): boolean {
+    public intersectBox(target: Box3, onIntersection: onIntersectionCallback<number>): boolean {
         if (!this._boxArray) this._boxArray = new this._arrayType(6);
         const array = this._boxArray;
-
-        array[0] = target.min.x;
-        array[1] = target.max.x;
-        array[2] = target.min.y;
-        array[3] = target.max.y;
-        array[4] = target.min.z;
-        array[5] = target.max.z;
-
-        return this.bvh.intersectBox(array);
+        box3ToArray(target, array);
+        return this.bvh.intersectsBox(array, onIntersection);
     }
 
     protected getBox(id: number, array: FloatArray): FloatArray {
         _box3.copy(this.geoBoundingBox).applyMatrix4(this.target.getMatrixAt(id));
-
-        const min = _box3.min;
-        const max = _box3.max;
-
-        array[0] = min.x;
-        array[1] = max.x;
-        array[2] = min.y;
-        array[3] = max.y;
-        array[4] = min.z;
-        array[5] = max.z;
-
+        box3ToArray(_box3, array);
         return array;
     }
 }
