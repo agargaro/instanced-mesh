@@ -5,13 +5,13 @@ import { InstancedRenderItem } from "../objects/InstancedRenderList.js";
 export function createRadixSort(target: InstancedMesh2): typeof radixSort<InstancedRenderItem> {
     const options: RadixSortOptions<InstancedRenderItem> = {
         get: el => el.depth,
-        aux: new Array(target.maxCount),
+        aux: new Array(target.maxCount), //TODO check array and typed array
         reversed: null
     };
 
     // https://github.com/mrdoob/three.js/blob/master/examples/webgl_mesh_batch.html#L291
     return function sortFunction(list: InstancedRenderItem[]): void {
-        options.reversed = target.material.transparent;
+        options.reversed = target.material.transparent; // TODO support multimaterial?
 
         let minZ = Infinity;
         let maxZ = -Infinity;

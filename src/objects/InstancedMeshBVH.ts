@@ -1,9 +1,10 @@
 import { box3ToArray, BVH, BVHNode, FloatArray, HybridBuilder, onFrustumIntersectionCallback, onIntersectionCallback, onIntersectionRayCallback, vec3ToArray, WebGLCoordinateSystem } from 'bvh.js';
 import { Box3, Matrix4, Raycaster } from 'three';
 import { InstancedMesh2 } from './InstancedMesh2.js';
+import { InstancedMeshLOD } from './InstancedMeshLOD.js';
 
 export class InstancedMeshBVH {
-    public target: InstancedMesh2;
+    public target: InstancedMesh2 | InstancedMeshLOD;
     public geoBoundingBox: Box3;
     public bvh: BVH<{}, number>;
     public map = new Map<number, BVHNode<{}, number>>();
@@ -13,11 +14,16 @@ export class InstancedMeshBVH {
     protected _dir: FloatArray;
     protected _boxArray: FloatArray;
 
-    constructor(target: InstancedMesh2, margin = 0, highPrecision = false) {
+    constructor(target: InstancedMesh2 | InstancedMeshLOD, margin = 0, highPrecision = false) {
         this._margin = margin;
         this.target = target;
-        if (!target.geometry.boundingBox) target.geometry.computeBoundingBox();
-        this.geoBoundingBox = target.geometry.boundingBox;
+
+        const geometry = (target as InstancedMesh2).isInstancedMesh2 ? 
+            (target as InstancedMesh2).geometry : 
+            (target as InstancedMeshLOD).levels[(target as InstancedMeshLOD).levels.length - 1].object.geometry; // suare anche per i bbox
+        if (!geometry.boundingBox) geometry.computeBoundingBox();
+        this.geoBoundingBox = geometry.boundingBox;
+
         this._arrayType = highPrecision ? Float64Array : Float32Array;
         this.bvh = new BVH(new HybridBuilder(highPrecision), WebGLCoordinateSystem);
         this._origin = new this._arrayType(3);
