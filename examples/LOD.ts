@@ -1,34 +1,31 @@
 import { Main, PerspectiveCameraAuto } from '@three.ez/main';
 import { AmbientLight, DirectionalLight, MeshLambertMaterial, Scene, SphereGeometry } from 'three';
 import { OrbitControls } from 'three/examples/jsm/Addons.js';
-import { createRadixSort, InstancedMesh2, InstancedMeshLOD } from '../src/index.js';
+import { InstancedMeshLOD } from '../src/index.js';
+import { PRNG } from './objects/random.js';
+
+const spawnRange = 10000;
 
 const main = new Main();
+const random = new PRNG(10000);
 
-const camera = new PerspectiveCameraAuto(70).translateZ(3.5).translateY(1);
+const camera = new PerspectiveCameraAuto(70, 0.1, 2000).translateZ(100).translateY(20);
 const controls = new OrbitControls(camera, main.renderer.domElement);
 
 const scene = new Scene();
 
-const instancedMeshLOD = new InstancedMeshLOD(main.renderer, 500000);
+const instancedMeshLOD = new InstancedMeshLOD(main.renderer, 1000000);
 
-instancedMeshLOD.addLevel(new SphereGeometry(1, 30, 15), new MeshLambertMaterial({ color: 'yellow' }));
-instancedMeshLOD.addLevel(new SphereGeometry(1, 20, 10), new MeshLambertMaterial({ color: 'orange' }), 15);
-instancedMeshLOD.addLevel(new SphereGeometry(1, 10, 5), new MeshLambertMaterial({ color: 'green' }), 75);
-instancedMeshLOD.addLevel(new SphereGeometry(1, 5, 3), new MeshLambertMaterial({ color: 'red' }), 150);
+instancedMeshLOD.addLevel(new SphereGeometry(5, 30, 15), new MeshLambertMaterial({ color: 'green' }));
+instancedMeshLOD.addLevel(new SphereGeometry(5, 20, 10), new MeshLambertMaterial({ color: 'yellow' }), 50);
+instancedMeshLOD.addLevel(new SphereGeometry(5, 10, 5), new MeshLambertMaterial({ color: 'orange' }), 500);
+instancedMeshLOD.addLevel(new SphereGeometry(5, 5, 3), new MeshLambertMaterial({ color: 'red' }), 1000);
 
-instancedMeshLOD.levels[3].object.geometry.computeBoundingSphere(); // improve
-
-// instancedMeshLOD.sortObjects = true;
-// const radixSort = createRadixSort(instancedMeshLOD.levels[0].object);
-// instancedMeshLOD.customSort = radixSort;
-
-// const instancedMeshLOD = new InstancedMesh2(main.renderer, 7000, new SphereGeometry(1, 32, 16), new MeshLambertMaterial({ color: 'green' }));
-// instancedMeshLOD.perObjectFrustumCulled = false;
+instancedMeshLOD.levels[0].object.geometry.computeBoundingSphere(); // improve
 
 instancedMeshLOD.updateInstances((object, index) => {
-  object.position.z = Math.random() * 5000 - 2500;
-  object.position.x = Math.random() * 5000 - 2500;
+  object.position.x = random.range(-spawnRange, spawnRange);
+  object.position.z = random.range(-spawnRange, spawnRange);
 });
 
 instancedMeshLOD.computeBVH();
@@ -37,4 +34,6 @@ scene.add(instancedMeshLOD, new AmbientLight(), new DirectionalLight().translate
 
 main.createView({ scene, camera, enabled: false });
 
-scene.on('animate', (e) => console.log(`triangles: ${main.renderer.info.render.triangles}, drawCall: ${main.renderer.info.render.calls}`));
+scene.on('animate', (e) => {
+  controls.update(e.delta);
+});

@@ -5,7 +5,7 @@ import { BVHParams, Entity, InstancedMesh2, UpdateEntityCallback } from "./Insta
 import { InstancedMeshBVH } from "./InstancedMeshBVH.js";
 import { InstancedRenderItem, InstancedRenderList } from "./InstancedRenderList.js";
 
-export interface LODLevel<TCustomData> {
+export interface LODLevel<TCustomData = {}> {
   distance: number;
   hysteresis: number;
   object: InstancedMesh2<TCustomData>;
@@ -26,8 +26,8 @@ export class InstancedMeshLOD<TCustomData = {}> extends Object3D {
   /** @internal */ public _colorArray: Float32Array;
   protected _renderer: WebGLRenderer;
   protected _maxCount: number;
-  protected _indexesTemp: FloatArray[] = [];
-  protected _countTemp: number[] = [];
+  protected _indexes: Uint32Array[] = []; // TODO can be also uin16
+  protected _countIndexes: number[] = [];
 
   // HACK TO MAKE IT WORK WITHOUT UPDATE CORE
   private isLOD = true; // spiegare perchè
@@ -66,8 +66,8 @@ export class InstancedMeshLOD<TCustomData = {}> extends Object3D {
 
     levels.splice(index, 0, { distance, hysteresis, object });
 
-    this._countTemp.push(0);
-    this._indexesTemp.splice(index, 0, object.instanceIndex.array as unknown as FloatArray);
+    this._countIndexes.push(0);
+    this._indexes.splice(index, 0, object.instanceIndex.array as Uint32Array);
 
     this.add(object);
     return this;
@@ -91,7 +91,6 @@ export class InstancedMeshLOD<TCustomData = {}> extends Object3D {
 
   public update(camera: Camera): void {
     if (!this.perObjectFrustumCulled) return; // TODO ovviamente bisogna ricalcolare tutte le distanze
-
     this.frustumCulling(camera);
   }
 
@@ -150,7 +149,7 @@ export class InstancedMeshLOD<TCustomData = {}> extends Object3D {
 
   protected frustumCulling(camera: Camera): void {
     const levels = this.levels;
-    const count = this._countTemp; // reuse the same? also uintarray?
+    const count = this._countIndexes;
 
     for (let i = 0; i < levels.length; i++) {
       count[i] = 0;
@@ -166,7 +165,7 @@ export class InstancedMeshLOD<TCustomData = {}> extends Object3D {
     if (this.sortObjects) {
       const customSort = this.customSort;
       const list = _renderList.list;
-      const indexes = this._indexesTemp;
+      const indexes = this._indexes;
       let levelIndex = 0;
       let levelDistance = levels[1].distance;
 
@@ -184,11 +183,9 @@ export class InstancedMeshLOD<TCustomData = {}> extends Object3D {
           levelDistance = levels[levelIndex + 1]?.distance ?? Infinity;
           // for fixa
         }
-      
+
         indexes[levelIndex][count[levelIndex]++] = item.index; // TODO COUNT ARRAY QUI NON SERVE
       }
-
-      debugger;
 
       _renderList.reset();
     }
@@ -202,14 +199,15 @@ export class InstancedMeshLOD<TCustomData = {}> extends Object3D {
 
   protected BVHCulling(): void {
     const instancesCount = this.instancesCount;
-    const count = this._countTemp; // reuse the same? also uintarray?
-    const indexes = this._indexesTemp;
+    const count = this._countIndexes; // reuse the same? also uintarray?
+    const indexes = this._indexes;
+    const visibilityArray = this.visibilityArray;
 
     if (this.sortObjects) { // todo refactor
 
       this.bvh.frustumCulling(_projScreenMatrix, (node: BVHNode<{}, number>) => {
         const index = node.object;
-        if (index < instancesCount && this.visibilityArray[index]) {
+        if (index < instancesCount && visibilityArray[index]) {
           const distance = this.getPositionAt(index).distanceToSquared(_cameraPos);
           _renderList.push(distance, index);
         }
@@ -217,12 +215,16 @@ export class InstancedMeshLOD<TCustomData = {}> extends Object3D {
 
     } else {
 
-      this.bvh.frustumCulling(_projScreenMatrix, (node: BVHNode<{}, number>) => {
+      this.bvh.frustumCullingLOD(_projScreenMatrix, _cameraPos, this.levels, (node: BVHNode<{}, number>, level: number) => {
         const index = node.object;
-        if (index < instancesCount && this.visibilityArray[index]) {
-          const distance = this.getPositionAt(index).distanceToSquared(_cameraPos); // distance can be get by BVH
-          const levelIndex = this.getObjectIndexForDistance(distance);
-          indexes[levelIndex][count[levelIndex]++] = index;
+        if (index < instancesCount && visibilityArray[index]) {
+
+          if (level === null) {
+            const distance = this.getPositionAt(index).distanceToSquared(_cameraPos); // distance can be get by BVH
+            level = this.getObjectIndexForDistance(distance);
+          }
+
+          indexes[level][count[level]++] = index;
         }
       });
 
@@ -239,8 +241,8 @@ export class InstancedMeshLOD<TCustomData = {}> extends Object3D {
 
     _frustum.setFromProjectionMatrix(_projScreenMatrix);
 
-    const count = this._countTemp; // reuse the same? also uintarray?
-    const indexes = this._indexesTemp;
+    const count = this._countIndexes;
+    const indexes = this._indexes;
 
     for (let i = 0; i < instancesCount; i++) {
       if (!this.visibilityArray[i]) continue; // opt anche nell'altra classe
