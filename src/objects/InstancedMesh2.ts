@@ -59,7 +59,7 @@ export class InstancedMesh2<
   protected _maxCount: number;
   protected _material: TMaterial;
   protected _uniformsSetCallback = new Map<string, (id: number, value: UniformValue) => void>();
-  protected _LOD: InstancedMeshLOD;
+  protected _LOD: InstancedMeshLOD = null;
 
   public override customDepthMaterial = new MeshDepthMaterial({ depthPacking: RGBADepthPacking });
   public override customDistanceMaterial = new MeshDistanceMaterial();

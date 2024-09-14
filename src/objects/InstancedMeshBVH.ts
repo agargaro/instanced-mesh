@@ -14,7 +14,7 @@ export class InstancedMeshBVH {
     protected _dir: FloatArray;
     protected _boxArray: FloatArray;
     protected _cameraPos: FloatArray;
-    protected _levels: FloatArray;
+    protected _levels: FloatArray; // TODO improve this
 
     constructor(target: InstancedMesh2 | InstancedMeshLOD, margin = 0, highPrecision = false) {
         this._margin = margin;
@@ -22,8 +22,9 @@ export class InstancedMeshBVH {
 
         const geometry = (target as InstancedMesh2).isInstancedMesh2 ?
             (target as InstancedMesh2).geometry :
-            (target as InstancedMeshLOD).levels[(target as InstancedMeshLOD).levels.length - 1].object.geometry; // suare anche per i bbox
-        if (!geometry.boundingBox) geometry.computeBoundingBox();
+            (target as InstancedMeshLOD).levels[(target as InstancedMeshLOD).levels.length - 1].object.geometry; // TODO improve this
+        
+            if (!geometry.boundingBox) geometry.computeBoundingBox();
         this.geoBoundingBox = geometry.boundingBox;
 
         this._arrayType = highPrecision ? Float64Array : Float32Array;
