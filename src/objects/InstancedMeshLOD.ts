@@ -1,5 +1,5 @@
 import { BVHNode } from "bvh.js";
-import { BufferGeometry, Camera, Color, ColorRepresentation, DataTexture, Frustum, Intersection, Material, Matrix4, Object3D, Sphere, Vector3, WebGLRenderer } from "three";
+import { BufferGeometry, Camera, Color, ColorRepresentation, DataTexture, Frustum, Material, Matrix4, Object3D, Sphere, Vector3, WebGLRenderer } from "three";
 import { createTexture_mat4, createTexture_vec3 } from "../utils/createTexture.js";
 import { BVHParams, Entity, InstancedMesh2, UpdateEntityCallback } from "./InstancedMesh2.js";
 import { InstancedMeshBVH } from "./InstancedMeshBVH.js";
