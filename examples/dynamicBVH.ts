@@ -9,7 +9,7 @@ const config = {
   count: 100000,
   animatedCount: 2000,
   spawnRadius: 75000,
-  marginBVH: 100
+  marginBVH: 200
 }
 
 const main = new Main();
@@ -51,10 +51,12 @@ scene.on('animate', (e) => {
   camera.getWorldDirection(spotLight.target.position).multiplyScalar(100).add(camera.position);
   camera.getWorldDirection(dirLight.target.position).multiplyScalar(100).add(camera.position);
 
-  for (let i = 0; i < config.animatedCount; i++) {
+  const count = Math.min(config.animatedCount, instancedMesh.instancesCount); 
+
+  for (let i = 0; i < count; i++) { // TODO use update Instances?
     const mesh = instancedMesh.instances[i];
     mesh.position.setFromSphericalCoords(mesh.r, mesh.phi + e.total * 0.02, mesh.theta + e.total * 0.02);
-    mesh.updateMatrix();
+    mesh.updateMatrixPosition();
   }
 });
 

@@ -1,9 +1,10 @@
-import { box3ToArray, BVH, BVHNode, FloatArray, HybridBuilder, onFrustumIntersectionCallback, onIntersectionCallback, onIntersectionRayCallback, vec3ToArray, WebGLCoordinateSystem } from 'bvh.js';
-import { Box3, Matrix4, Raycaster } from 'three';
+import { box3ToArray, BVH, BVHNode, FloatArray, HybridBuilder, onFrustumIntersectionCallback, onFrustumIntersectionLODCallback, onIntersectionCallback, onIntersectionRayCallback, vec3ToArray, WebGLCoordinateSystem } from 'bvh.js';
+import { Box3, Matrix4, Raycaster, Vector3 } from 'three';
 import { InstancedMesh2 } from './InstancedMesh2.js';
+import { InstancedMeshLOD, LODLevel } from './InstancedMeshLOD.js';
 
 export class InstancedMeshBVH {
-    public target: InstancedMesh2;
+    public target: InstancedMesh2 | InstancedMeshLOD;
     public geoBoundingBox: Box3;
     public bvh: BVH<{}, number>;
     public map = new Map<number, BVHNode<{}, number>>();
@@ -12,16 +13,25 @@ export class InstancedMeshBVH {
     protected _origin: FloatArray;
     protected _dir: FloatArray;
     protected _boxArray: FloatArray;
+    protected _cameraPos: FloatArray;
+    protected _levels: FloatArray; // TODO improve this
 
-    constructor(target: InstancedMesh2, margin = 0, highPrecision = false) {
+    constructor(target: InstancedMesh2 | InstancedMeshLOD, margin = 0, highPrecision = false) {
         this._margin = margin;
         this.target = target;
-        if (!target.geometry.boundingBox) target.geometry.computeBoundingBox();
-        this.geoBoundingBox = target.geometry.boundingBox;
+
+        const geometry = (target as InstancedMesh2).isInstancedMesh2 ?
+            (target as InstancedMesh2).geometry :
+            (target as InstancedMeshLOD).levels[(target as InstancedMeshLOD).levels.length - 1].object.geometry; // TODO improve this
+        
+            if (!geometry.boundingBox) geometry.computeBoundingBox();
+        this.geoBoundingBox = geometry.boundingBox;
+
         this._arrayType = highPrecision ? Float64Array : Float32Array;
         this.bvh = new BVH(new HybridBuilder(highPrecision), WebGLCoordinateSystem);
         this._origin = new this._arrayType(3);
         this._dir = new this._arrayType(3);
+        this._cameraPos = new this._arrayType(3);
     }
 
     public create(): void {
@@ -90,6 +100,36 @@ export class InstancedMeshBVH {
         } else {
 
             this.bvh.frustumCulling(projScreenMatrix.elements, onFrustumIntersection);
+
+        }
+    }
+
+    public frustumCullingLOD(projScreenMatrix: Matrix4, cameraPosition: Vector3, levels: LODLevel[], onFrustumIntersection: onFrustumIntersectionLODCallback<{}, number>): void {
+        if (this._levels?.length !== levels.length) { // TODO improve
+            this._levels = new this._arrayType(levels.length);
+        }
+        
+        const levelsArray = this._levels;
+        for (let i = 0; i < levels.length; i++) {
+            levelsArray[i] = levels[i].distance;
+        }
+
+        const camera = this._cameraPos;
+        camera[0] = cameraPosition.x;
+        camera[1] = cameraPosition.y;
+        camera[2] = cameraPosition.z;
+
+        if (this._margin > 0) {
+
+            this.bvh.frustumCullingLOD(projScreenMatrix.elements, camera, levelsArray, (node, level, frustum, mask) => {
+                if (frustum.isIntersectedMargin(node.box, mask, this._margin)) {
+                    onFrustumIntersection(node, level);
+                }
+            });
+
+        } else {
+
+            this.bvh.frustumCullingLOD(projScreenMatrix.elements, camera, levelsArray, onFrustumIntersection);
 
         }
     }

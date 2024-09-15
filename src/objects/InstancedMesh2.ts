@@ -5,6 +5,7 @@ import { InstancedEntity, UniformValue, UniformValueNoNumber } from "./Instanced
 import { InstancedMeshBVH } from "./InstancedMeshBVH.js";
 import { InstancedRenderItem, InstancedRenderList } from "./InstancedRenderList.js";
 import { BVHNode } from "bvh.js";
+import { InstancedMeshLOD } from "./InstancedMeshLOD.js";
 
 // TODO: Add expand and count/maxCount when create?
 // TODO: autoUpdate (send indexes data to gpu only if changes)
@@ -16,6 +17,10 @@ import { BVHNode } from "bvh.js";
 // TODO: Use BVH only for raycasting
 // TODO: composeMatrixInstance can be opt if only move or scale
 // TODO: patchGeometry method
+
+// TODO SOON: instancedMeshLOD rendering first nearest levels, look out to transparent
+// TODO SOON: fix shadow
+// TODO SOON: shared matrices and BVH
 
 export type Entity<T> = InstancedEntity & T;
 export type UpdateEntityCallback<T> = (obj: Entity<T>, index: number) => void;
@@ -45,15 +50,16 @@ export class InstancedMesh2<
   public bvh: InstancedMeshBVH;
   public perObjectFrustumCulled = true;
   public sortObjects = false; // TODO should this be true?
-  public customSort = null;
+  public customSort: (list: InstancedRenderItem[]) => void = null;
   public raycastOnlyFrustum = false;
   public visibilityArray: boolean[];
   /** @internal */ public _matrixArray: Float32Array;
   /** @internal */ public _colorArray: Float32Array;
-  protected _count: number;
+  /** @internal */ public _count: number;
   protected _maxCount: number;
   protected _material: TMaterial;
   protected _uniformsSetCallback = new Map<string, (id: number, value: UniformValue) => void>();
+  protected _LOD: InstancedMeshLOD = null;
 
   public override customDepthMaterial = new MeshDepthMaterial({ depthPacking: RGBADepthPacking });
   public override customDistanceMaterial = new MeshDistanceMaterial();
@@ -76,7 +82,7 @@ export class InstancedMesh2<
   public override onBeforeRender(renderer: WebGLRenderer, scene: Scene, camera: Camera, geometry: BufferGeometry, material: Material): void {
     if (!this.perObjectFrustumCulled) return;
 
-    this.frustumCulling(camera);
+    if (!this._LOD) this.frustumCulling(camera);
 
     const gl = renderer.getContext();
     const instanceIndex = this.instanceIndex;
@@ -89,7 +95,7 @@ export class InstancedMesh2<
   }
 
   /** THIS MATERIAL AND GEOMETRY CANNOT BE SHARED */
-  constructor(renderer: WebGLRenderer, count: number, geometry: TGeometry, material?: TMaterial) {
+  constructor(renderer: WebGLRenderer, count: number, geometry: TGeometry, material?: TMaterial, LOD?: InstancedMeshLOD) {
     if (!renderer) throw new Error("'renderer' is mandatory.");
     if (!count || count < 0) throw new Error("'count' must be greater than 0.");
     if (!geometry) throw new Error("'geometry' is mandatory.");
@@ -102,24 +108,24 @@ export class InstancedMesh2<
     this._maxCount = count;
     this._count = count;
     this._material = material;
+    this._LOD = LOD;
+    this.visibilityArray = this._LOD ? LOD.visibilityArray : new Array(count).fill(true);
 
-    this.initIndixesAndVisibility(renderer);
+    this.initIndixes(renderer);
     this.initMatricesTexture();
 
-    this.patchMaterial(this.customDepthMaterial);
+    this.patchMaterial(this.customDepthMaterial); // TODO check if with LOD can reuse it
     this.patchMaterial(this.customDistanceMaterial);
   }
 
-  protected initIndixesAndVisibility(renderer: WebGLRenderer): void {
+  protected initIndixes(renderer: WebGLRenderer): void {
     const count = this._maxCount;
     const gl = renderer.getContext();
     const buffer = gl.createBuffer();
-    const array = new Uint32Array(count);
-    const visibility = this.visibilityArray = new Array(count);
+    const array = new Uint32Array(count); // use uint16 if less 32k
 
     for (let i = 0; i < count; i++) {
       array[i] = i;
-      visibility[i] = true;
     }
 
     gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
@@ -130,7 +136,7 @@ export class InstancedMesh2<
   }
 
   protected initMatricesTexture(): void {
-    this.matricesTexture = createTexture_mat4(this._maxCount);
+    this.matricesTexture = this._LOD ? this._LOD.matricesTexture : createTexture_mat4(this._maxCount);
     this._matrixArray = this.matricesTexture.image.data as unknown as Float32Array;
   }
 
@@ -154,7 +160,7 @@ export class InstancedMesh2<
 
     material.onBeforeCompile = (shader: WebGLProgramParametersWithUniforms, renderer) => {
       if (onBeforeCompile) onBeforeCompile(shader, renderer);
-
+      
       if (!shader.instancing) return;
 
       shader.instancing = false;
@@ -464,7 +470,7 @@ export class InstancedMesh2<
       if (customSort === null) {
         _renderList.list.sort(!(this.material as Material)?.transparent ? sortOpaque : sortTransparent);
       } else {
-        customSort(_renderList.list, camera);
+        customSort(_renderList.list);
       }
 
       const list = _renderList.list;
@@ -594,7 +600,7 @@ export class InstancedMesh2<
   }
 
   public dispose(): this {
-    this.dispatchEvent<any>({ type: 'dispose' });
+    this.dispatchEvent<any>({ type: 'dispose' }); // TODO fix d.ts
 
     this.matricesTexture.dispose();
     this.matricesTexture = null;
