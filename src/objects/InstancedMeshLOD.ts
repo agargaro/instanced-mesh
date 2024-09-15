@@ -1,4 +1,4 @@
-import { BVHNode, FloatArray } from "bvh.js";
+import { BVHNode } from "bvh.js";
 import { BufferGeometry, Camera, Color, ColorRepresentation, DataTexture, Frustum, Intersection, Material, Matrix4, Object3D, Sphere, Vector3, WebGLRenderer } from "three";
 import { createTexture_mat4, createTexture_vec3 } from "../utils/createTexture.js";
 import { BVHParams, Entity, InstancedMesh2, UpdateEntityCallback } from "./InstancedMesh2.js";
@@ -324,10 +324,10 @@ const _tempCol = new Color();
 // const _instance = new InstancedEntity(undefined, -1);
 
 
-// move it and use the same for instancedMesh2
-function ascSortIntersection(a: Intersection, b: Intersection): number {
-  return a.distance - b.distance;
-}
+// // move it and use the same for instancedMesh2
+// function ascSortIntersection(a: Intersection, b: Intersection): number {
+//   return a.distance - b.distance;
+// }
 
 function sortOpaque(a: InstancedRenderItem, b: InstancedRenderItem) {
   return a.depth - b.depth;
