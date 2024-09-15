@@ -66,7 +66,7 @@ export class InstancedMesh2<
   public get count() { return this._count }
   public get maxCount() { return this._maxCount }
 
-  // @ts-ignore
+  // @ts-expect-error it's defined as a property, but is overridden as an accessor.
   public override get material() { return this._material }
   public override set material(value: TMaterial) {
     this._material = value;
