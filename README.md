@@ -36,7 +36,9 @@ myInstancedMesh.updateInstances((obj, index) => {
 myInstancedMesh.computeBVH();
 ```
 
-This library has only one dependency: `three.js r159+`.
+This library has two dependencies: 
+- `three.js r159+`
+- [`bvh.js`](https://github.com/agargaro/BVH.js)
 
 ## Live Examples
 

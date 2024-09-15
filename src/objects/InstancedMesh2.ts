@@ -4,6 +4,7 @@ import { GLInstancedBufferAttribute } from "./GLInstancedBufferAttribute.js";
 import { InstancedEntity, UniformValue, UniformValueNoNumber } from "./InstancedEntity.js";
 import { InstancedMeshBVH } from "./InstancedMeshBVH.js";
 import { InstancedRenderItem, InstancedRenderList } from "./InstancedRenderList.js";
+import { BVHNode } from "bvh.js";
 
 // TODO: Add expand and count/maxCount when create?
 // TODO: autoUpdate (send indexes data to gpu only if changes)
@@ -90,14 +91,13 @@ export class InstancedMesh2<
   /** THIS MATERIAL AND GEOMETRY CANNOT BE SHARED */
   constructor(renderer: WebGLRenderer, count: number, geometry: TGeometry, material?: TMaterial) {
     if (!renderer) throw new Error("'renderer' is mandatory.");
-    if (!(count > 0)) throw new Error("'count' must be greater than 0.");
+    if (!count || count < 0) throw new Error("'count' must be greater than 0.");
     if (!geometry) throw new Error("'geometry' is mandatory.");
 
     super(geometry, material);
 
     if (this.geometry.getAttribute("instanceIndex")) throw new Error('Cannot reuse already patched geometry.');
 
-    // this.frustumCulled = !this.perObjectFrustumCulled;
     this.instancesCount = count;
     this._maxCount = count;
     this._count = count;
@@ -219,10 +219,8 @@ export class InstancedMesh2<
   }
 
   public computeBVH(config: BVHParams = {}): void {
-    // TODO reuse same BVH
-    this.bvh = new InstancedMeshBVH(this, config.margin, config.highPrecision);
-
-    // TODO check if instances valorized
+    if (!this.bvh) this.bvh = new InstancedMeshBVH(this, config.margin, config.highPrecision);
+    this.bvh.clear();
     this.bvh.create();
   }
 
@@ -366,11 +364,25 @@ export class InstancedMesh2<
     this.bvh?.move(id);
   }
 
+  /** @internal */
+  public setPositionMatrixInstance(entity: InstancedEntity): void {
+    const position = entity.position;
+    const te = this._matrixArray;
+    const id = entity.id;
+    const offset = id * 16;
+
+    te[offset + 12] = position.x;
+    te[offset + 13] = position.y;
+    te[offset + 14] = position.z;
+
+    this.matricesTexture.needsUpdate = true; // TODO 
+    this.bvh?.move(id);
+  }
+
   public override raycast(raycaster: Raycaster, result: Intersection[]): void {
     if (this.material === undefined) return;
 
     const raycastFrustum = this.raycastOnlyFrustum && this.perObjectFrustumCulled && !this.bvh;
-    let instancesToCheck: number[] | Uint32Array; // TODO Uint32Array
     _mesh.geometry = this.geometry;
     _mesh.material = this.material;
 
@@ -390,8 +402,8 @@ export class InstancedMesh2<
 
     if (this.bvh) {
 
-      instancesToCheck = _instancesIntersected;
-      this.bvh.raycast(raycaster, _instancesIntersected);
+      this.bvh.raycast(raycaster, (instanceIndex) => this.checkObjectIntersection(raycaster, instanceIndex, result));
+      // TODO test with three-mesh-bvh
 
     } else {
 
@@ -399,38 +411,36 @@ export class InstancedMesh2<
       _sphere.copy(this.boundingSphere);
       if (!raycaster.ray.intersectsSphere(_sphere)) return;
 
-      instancesToCheck = this.instanceIndex.array as Uint32Array;
+      const instancesToCheck = this.instanceIndex.array;
+      const checkCount = raycastFrustum ? this._count : this.instancesCount;
 
-    }
-
-    const instancesCount = this.instancesCount;
-    const checkCount = raycastFrustum ? this._count : Math.min(instancesToCheck.length, instancesCount);
-
-    for (let i = 0; i < checkCount; i++) {
-      const objectIndex = instancesToCheck[i];
-
-      if (objectIndex > instancesCount || !this.getVisibilityAt(objectIndex)) continue;
-
-      this.getMatrixAt(objectIndex, _mesh.matrixWorld);
-
-      _mesh.raycast(raycaster, _intersections);
-
-      for (const intersect of _intersections) {
-        intersect.instanceId = objectIndex;
-        intersect.object = this;
-        result.push(intersect);
+      for (let i = 0; i < checkCount; i++) {
+        this.checkObjectIntersection(raycaster, instancesToCheck[i], result);
       }
 
-      _intersections.length = 0;
     }
-
-    _instancesIntersected.length = 0;
 
     result.sort(ascSortIntersection);
 
     raycaster.ray = originalRay;
     raycaster.near = originalNear;
     raycaster.far = originalFar;
+  }
+
+  protected checkObjectIntersection(raycaster: Raycaster, objectIndex: number, result: Intersection[]): void {
+    if (objectIndex > this.instancesCount || !this.getVisibilityAt(objectIndex)) return;
+
+    this.getMatrixAt(objectIndex, _mesh.matrixWorld);
+
+    _mesh.raycast(raycaster, _intersections);
+
+    for (const intersect of _intersections) {
+      intersect.instanceId = objectIndex;
+      intersect.object = this;
+      result.push(intersect);
+    }
+
+    _intersections.length = 0;
   }
 
   protected frustumCulling(camera: Camera): void {
@@ -473,7 +483,9 @@ export class InstancedMesh2<
     const sortObjects = this.sortObjects;
     let count = 0;
 
-    this.bvh.frustumCulling(_projScreenMatrix, (index: number) => {
+    this.bvh.frustumCulling(_projScreenMatrix, (node: BVHNode<{}, number>) => {
+      const index = node.object;
+
       if (index < instancesCount && this.getVisibilityAt(index)) {
         if (sortObjects) {
           _position.setFromMatrixPosition(this.getMatrixAt(index))
@@ -608,7 +620,6 @@ const _box3 = new Box3();
 const _sphere = new Sphere();
 const _frustum = new Frustum();
 const _projScreenMatrix = new Matrix4();
-const _instancesIntersected: number[] = [];
 const _intersections: Intersection[] = [];
 const _mesh = new Mesh();
 const _ray = new Ray();
