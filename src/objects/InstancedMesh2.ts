@@ -600,7 +600,7 @@ export class InstancedMesh2<
   }
 
   public dispose(): this {
-    this.dispatchEvent<any>({ type: 'dispose' });
+    this.dispatchEvent<any>({ type: 'dispose' }); // TODO fix d.ts
 
     this.matricesTexture.dispose();
     this.matricesTexture = null;

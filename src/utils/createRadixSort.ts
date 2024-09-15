@@ -1,3 +1,4 @@
+import { Material } from "three";
 import { radixSort, RadixSortOptions } from "three/examples/jsm/utils/SortUtils.js";
 import { InstancedMesh2 } from "../objects/InstancedMesh2.js";
 import { InstancedRenderItem } from "../objects/InstancedRenderList.js";
@@ -11,7 +12,7 @@ export function createRadixSort(target: InstancedMesh2): typeof radixSort<Instan
 
     // https://github.com/mrdoob/three.js/blob/master/examples/webgl_mesh_batch.html#L291
     return function sortFunction(list: InstancedRenderItem[]): void {
-        options.reversed = target.material.transparent; // TODO support multimaterial?
+        options.reversed = (target.material as Material).transparent; // TODO support multimaterial?
 
         let minZ = Infinity;
         let maxZ = -Infinity;
@@ -34,14 +35,14 @@ export function createRadixSort(target: InstancedMesh2): typeof radixSort<Instan
 
 export function createRadixSort2(target: InstancedMesh2): typeof radixSort<InstancedRenderItem> {
     const options: RadixSortOptions<InstancedRenderItem> = {
-        get: el => (el as any).depthSort,
+        get: el => (el as any).depthSort, //TODO check any
         aux: new Array(target.maxCount), //TODO check array and typed array
         reversed: null
     };
 
     // https://github.com/mrdoob/three.js/blob/master/examples/webgl_mesh_batch.html#L291
     return function sortFunction(list: InstancedRenderItem[]): void {
-        options.reversed = target.material.transparent; // TODO support multimaterial?
+        options.reversed = (target.material as Material).transparent; // TODO support multimaterial?
 
         let minZ = Infinity;
         let maxZ = -Infinity;
