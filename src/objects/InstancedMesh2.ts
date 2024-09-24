@@ -156,7 +156,7 @@ export class InstancedMesh2<
   protected patchMaterial(material: Material): void {
     if (material.isInstancedMeshPatched) throw new Error('Cannot reuse already patched material.');
 
-    const onBeforeCompile = material.onBeforeCompile;
+    const onBeforeCompile = material.onBeforeCompile.bind(material);
 
     material.onBeforeCompile = (shader: WebGLProgramParametersWithUniforms, renderer) => {
       if (onBeforeCompile) onBeforeCompile(shader, renderer);
