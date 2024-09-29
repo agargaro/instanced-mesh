@@ -38,7 +38,7 @@ export class InstancedMesh2<
 > extends Mesh<TGeometry, TMaterial, TEventMap> {
 
   public override type = 'InstancedMesh2';
-  public isInstancedMesh2 = true;
+  public readonly isInstancedMesh2 = true;
   public instances: Entity<TCustomData>[];
   public instanceIndex: GLInstancedBufferAttribute;
   public matricesTexture: DataTexture;
@@ -65,9 +65,9 @@ export class InstancedMesh2<
   public override customDistanceMaterial = new MeshDistanceMaterial();
 
   // HACK TO MAKE IT WORK WITHOUT UPDATE CORE
-  private isInstancedMesh = true; // must be set to use instancing rendering
-  private instanceMatrix = new InstancedBufferAttribute(new Float32Array(0), 16); // must be init to avoid exception
-  private instanceColor = null; // must be null to avoid exception
+  private readonly isInstancedMesh = true; // must be set to use instancing rendering
+  private readonly instanceMatrix = new InstancedBufferAttribute(new Float32Array(0), 16); // must be init to avoid exception
+  private readonly instanceColor = null; // must be null to avoid exception
 
   public get count() { return this._count }
   public get maxCount() { return this._maxCount }
@@ -160,7 +160,7 @@ export class InstancedMesh2<
 
     material.onBeforeCompile = (shader: WebGLProgramParametersWithUniforms, renderer) => {
       if (onBeforeCompile) onBeforeCompile(shader, renderer);
-      
+
       if (!shader.instancing) return;
 
       shader.instancing = false;
@@ -521,7 +521,7 @@ export class InstancedMesh2<
     for (let i = 0; i < instancesCount; i++) {
       if (!this.getVisibilityAt(i)) continue;
 
-      const matrix = this.getMatrixAt(i);
+      const matrix = this.getMatrixAt(i); // we can optimize this a little avoiding copy? what about using instances if available?
       if (geometryCentered) _sphere.center.copy(_position.setFromMatrixPosition(matrix));
       else _sphere.center.copy(center).applyMatrix4(matrix);
       _sphere.radius = radius * matrix.getMaxScaleOnAxis();

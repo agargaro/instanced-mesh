@@ -1,6 +1,6 @@
 {
   "name": "@three.ez/instanced-mesh",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "Simplified and enhanced InstancedMesh with frustum culling, fast raycasting (using BVH), sorting, visibility management and more.",
   "author": "Andrea Gargaro <devgargaro@gmail.com>",
   "license": "MIT",
@@ -21,7 +21,8 @@
     "performance",
     "BVH",
     "acceleration",
-    "raycasting"
+    "raycasting",
+    "LOD"
   ],
   "scripts": {
     "start": "vite",
@@ -36,7 +37,7 @@
   "devDependencies": {
     "@eslint/js": "^9.10.0",
     "@three.ez/main": "^0.5.7",
-    "@types/three": "^0.168.0",
+    "@types/three": "^0.169.0",
     "eslint": "^9.9.0",
     "typescript": "^5.1.3",
     "typescript-eslint": "^8.1.0",

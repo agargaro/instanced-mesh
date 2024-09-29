@@ -1,7 +1,8 @@
 import { box3ToArray, BVH, BVHNode, FloatArray, HybridBuilder, onFrustumIntersectionCallback, onFrustumIntersectionLODCallback, onIntersectionCallback, onIntersectionRayCallback, vec3ToArray, WebGLCoordinateSystem } from 'bvh.js';
-import { Box3, Matrix4, Raycaster, Vector3 } from 'three';
+import { Box3, Matrix4, Raycaster, Sphere, Vector3 } from 'three';
 import { InstancedMesh2 } from './InstancedMesh2.js';
 import { InstancedMeshLOD, LODLevel } from './InstancedMeshLOD.js';
+import { getSphereFromMatrix, SphereTarget } from '../utils/matrixUtils.js';
 
 export class InstancedMeshBVH {
     public target: InstancedMesh2 | InstancedMeshLOD;
@@ -15,23 +16,33 @@ export class InstancedMeshBVH {
     protected _boxArray: FloatArray;
     protected _cameraPos: FloatArray;
     protected _levels: FloatArray; // TODO improve this
+    protected _getBoxFromSphere: boolean; // works only if geometry is centered for now
+    protected _geoBoundingSphere: Sphere = null;
+    protected _sphereTarget: SphereTarget = null;
 
-    constructor(target: InstancedMesh2 | InstancedMeshLOD, margin = 0, highPrecision = false) {
+    constructor(target: InstancedMesh2 | InstancedMeshLOD, margin = 0, highPrecision = false, getBoxFromSphere = false) {
         this._margin = margin;
         this.target = target;
 
         const geometry = (target as InstancedMesh2).isInstancedMesh2 ?
             (target as InstancedMesh2).geometry :
             (target as InstancedMeshLOD).levels[(target as InstancedMeshLOD).levels.length - 1].object.geometry; // TODO improve this
-        
-            if (!geometry.boundingBox) geometry.computeBoundingBox();
+
+        if (!geometry.boundingBox) geometry.computeBoundingBox();
         this.geoBoundingBox = geometry.boundingBox;
+
+        if (getBoxFromSphere) {
+            if (!geometry.boundingSphere) geometry.computeBoundingSphere();
+            this._geoBoundingSphere = geometry.boundingSphere;
+            this._sphereTarget = { centerX: 0, centerY: 0, centerZ: 0, maxScale: 0 };
+        }
 
         this._arrayType = highPrecision ? Float64Array : Float32Array;
         this.bvh = new BVH(new HybridBuilder(highPrecision), WebGLCoordinateSystem);
         this._origin = new this._arrayType(3);
         this._dir = new this._arrayType(3);
         this._cameraPos = new this._arrayType(3);
+        this._getBoxFromSphere = getBoxFromSphere;
     }
 
     public create(): void {
@@ -108,7 +119,7 @@ export class InstancedMeshBVH {
         if (this._levels?.length !== levels.length) { // TODO improve
             this._levels = new this._arrayType(levels.length);
         }
-        
+
         const levelsArray = this._levels;
         for (let i = 0; i < levels.length; i++) {
             levelsArray[i] = levels[i].distance;
@@ -153,8 +164,21 @@ export class InstancedMeshBVH {
     }
 
     protected getBox(id: number, array: FloatArray): FloatArray {
-        _box3.copy(this.geoBoundingBox).applyMatrix4(this.target.getMatrixAt(id));
-        box3ToArray(_box3, array);
+        // TODO add check if geometry is centered. adjust ref using this._matrixArray insteaad of this.target._matrixArray
+        if (this._getBoxFromSphere) {
+            const { centerX, centerY, centerZ, maxScale } = getSphereFromMatrix(id, this.target._matrixArray, this._sphereTarget);
+            const radius = this._geoBoundingSphere.radius * maxScale;
+            array[0] = centerX - radius;
+            array[1] = centerX + radius;
+            array[2] = centerY - radius;
+            array[3] = centerY + radius;
+            array[4] = centerZ - radius;
+            array[5] = centerZ + radius;
+        } else {
+            _box3.copy(this.geoBoundingBox).applyMatrix4(this.target.getMatrixAt(id));
+            box3ToArray(_box3, array);
+        }
+
         return array;
     }
 }

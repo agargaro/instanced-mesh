@@ -1,9 +1,17 @@
-import { DataTexture, FloatType, RedFormat, RGBAFormat, RGFormat } from "three";
+import { DataTexture, FloatType, RedFormat, RedIntegerFormat, RGBAFormat, RGFormat, UnsignedIntType } from "three";
 
 export function createTexture_float(count: number): DataTexture {
     const size = Math.ceil(Math.sqrt(count));
     const array = new Float32Array(size * size);
     const texture = new DataTexture(array, size, size, RedFormat, FloatType);
+    texture.needsUpdate = true;
+    return texture;
+}
+
+export function createTexture_uint(count: number): DataTexture {
+    const size = Math.ceil(Math.sqrt(count));
+    const array = new Uint32Array(size * size);
+    const texture = new DataTexture(array, size, size, RedIntegerFormat, UnsignedIntType);
     texture.needsUpdate = true;
     return texture;
 }
