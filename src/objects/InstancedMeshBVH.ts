@@ -24,9 +24,9 @@ export class InstancedMeshBVH {
         this._margin = margin;
         this.target = target;
 
-        const geometry = (target as InstancedMesh2).isInstancedMesh2 ?
-            (target as InstancedMesh2).geometry :
-            (target as InstancedMeshLOD).levels[(target as InstancedMeshLOD).levels.length - 1].object.geometry; // TODO improve this
+        const geometry = (target as InstancedMeshLOD).isInstancedMeshLOD ?
+        (target as InstancedMeshLOD).levels[(target as InstancedMeshLOD).levels.length - 1].object.geometry : // TODO improve this
+        (target as InstancedMesh2).geometry;
 
         if (!geometry.boundingBox) geometry.computeBoundingBox();
         this.geoBoundingBox = geometry.boundingBox;
