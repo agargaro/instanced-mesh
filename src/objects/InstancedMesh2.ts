@@ -160,7 +160,7 @@ export class InstancedMesh2<
 
     material.onBeforeCompile = (shader: WebGLProgramParametersWithUniforms, renderer) => {
       if (onBeforeCompile) onBeforeCompile(shader, renderer);
-      
+
       if (!shader.instancing) return;
 
       shader.instancing = false;
@@ -521,7 +521,7 @@ export class InstancedMesh2<
     for (let i = 0; i < instancesCount; i++) {
       if (!this.getVisibilityAt(i)) continue;
 
-      const matrix = this.getMatrixAt(i);
+      const matrix = this.getMatrixAt(i); // we can optimize this a little avoiding copy? what about using instances if available?
       if (geometryCentered) _sphere.center.copy(_position.setFromMatrixPosition(matrix));
       else _sphere.center.copy(center).applyMatrix4(matrix);
       _sphere.radius = radius * matrix.getMaxScaleOnAxis();
