@@ -38,7 +38,7 @@ export class InstancedMesh2<
 > extends Mesh<TGeometry, TMaterial, TEventMap> {
 
   public override type = 'InstancedMesh2';
-  public isInstancedMesh2 = true;
+  public readonly isInstancedMesh2 = true;
   public instances: Entity<TCustomData>[];
   public instanceIndex: GLInstancedBufferAttribute;
   public matricesTexture: DataTexture;
@@ -65,9 +65,9 @@ export class InstancedMesh2<
   public override customDistanceMaterial = new MeshDistanceMaterial();
 
   // HACK TO MAKE IT WORK WITHOUT UPDATE CORE
-  private isInstancedMesh = true; // must be set to use instancing rendering
-  private instanceMatrix = new InstancedBufferAttribute(new Float32Array(0), 16); // must be init to avoid exception
-  private instanceColor = null; // must be null to avoid exception
+  private readonly isInstancedMesh = true; // must be set to use instancing rendering
+  private readonly instanceMatrix = new InstancedBufferAttribute(new Float32Array(0), 16); // must be init to avoid exception
+  private readonly instanceColor = null; // must be null to avoid exception
 
   public get count() { return this._count }
   public get maxCount() { return this._maxCount }
