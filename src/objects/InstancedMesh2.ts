@@ -128,7 +128,7 @@ export class InstancedMesh2<
     gl.bufferData(gl.ARRAY_BUFFER, array, gl.DYNAMIC_DRAW);
 
     this.instanceIndex = new GLInstancedBufferAttribute(buffer, gl.UNSIGNED_INT, 1, 4, array.length, array); // UNSIGNED_SHORT usare anche questo se < 65k
-    this.geometry.setAttribute("instanceIndex", this.instanceIndex as unknown as BufferAttribute); // TODO fix d.ts
+    this.geometry.setAttribute("instanceIndex", this.instanceIndex as unknown as BufferAttribute);
   }
 
   protected initMatricesTexture(): void {
@@ -577,7 +577,7 @@ export class InstancedMesh2<
   public override copy(source: InstancedMesh2, recursive?: boolean): this {
     super.copy(source, recursive);
 
-    (this.instanceIndex as any).copy(source.instanceIndex); // TODO fix d.ts
+    this.instanceIndex.copy(source.instanceIndex);
     this.matricesTexture = source.matricesTexture.clone();
 
     // this._matricesTexture = source._matricesTexture.clone();

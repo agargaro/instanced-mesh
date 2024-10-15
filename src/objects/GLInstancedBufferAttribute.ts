@@ -11,4 +11,8 @@ export class GLInstancedBufferAttribute extends GLBufferAttribute {
         this.meshPerAttribute = meshPerAttribute;
         this.array = array;
     }
+
+    public copy(source: GLInstancedBufferAttribute): this {
+        throw new Error("GLInstancedBufferAttribute.copy not implemented yet."); // TODO
+    }
 }
