@@ -171,9 +171,12 @@ export class InstancedMesh2<
       shader.defines["USE_INSTANCING_INDIRECT"] = "";
 
       if (this.colorsTexture !== null) {
+        if (!shader.fragmentShader.includes("#include <color_pars_fragment>")) return;
+
         shader.uniforms.colorsTexture = { value: this.colorsTexture };
         shader.defines["USE_INSTANCING_COLOR_INDIRECT"] = "";
         shader.fragmentShader = shader.fragmentShader.replace("#include <common>", "#define USE_COLOR\n#include <common>");
+        // NOTE that '#defined USE_COLOR' is defined only in fragment shader to make it work.
       }
     }
 
