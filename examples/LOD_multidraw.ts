@@ -196,3 +196,4 @@ const camera = new PerspectiveCameraAuto(70).translateZ(2);
 const main = new Main();
 main.createView({ scene, camera, enabled: false });
 const controls = new OrbitControls(camera, main.renderer.domElement);
+controls.update();
