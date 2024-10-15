@@ -24,15 +24,6 @@ export function createTexture_vec2(count: number): DataTexture {
     return texture;
 }
 
-export function createTexture_vec3(count: number): DataTexture {
-    const size = Math.ceil(Math.sqrt(count));
-    const array = new Float32Array(size * size * 4);
-    // RGBFormat has been removed https://github.com/mrdoob/three.js/pull/23228
-    const texture = new DataTexture(array, size, size, RGBAFormat, FloatType);
-    texture.needsUpdate = true;
-    return texture;
-}
-
 export function createTexture_vec4(count: number): DataTexture {
     const size = Math.ceil(Math.sqrt(count));
     const array = new Float32Array(size * size * 4);
@@ -60,3 +51,8 @@ export function createTexture_mat4(count: number): DataTexture {
     texture.needsUpdate = true;
     return texture;
 }
+
+/**
+ * 'createTexture_vec3' doesn't exist because of
+ *  https://github.com/mrdoob/three.js/pull/23228
+ */

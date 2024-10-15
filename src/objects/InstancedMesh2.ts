@@ -1,5 +1,5 @@
 import { Box3, BufferAttribute, BufferGeometry, Camera, Color, ColorRepresentation, DataTexture, FloatType, Frustum, InstancedBufferAttribute, Intersection, Material, Matrix4, Mesh, MeshDepthMaterial, MeshDistanceMaterial, Object3DEventMap, RGBADepthPacking, RGFormat, Ray, Raycaster, RedFormat, Scene, ShaderMaterial, Sphere, Vector3, WebGLProgramParametersWithUniforms, WebGLRenderer } from "three";
-import { createTexture_mat4, createTexture_vec3 } from "../utils/createTexture.js";
+import { createTexture_mat4, createTexture_vec4 } from "../utils/createTexture.js";
 import { GLInstancedBufferAttribute } from "./GLInstancedBufferAttribute.js";
 import { InstancedEntity, UniformValue, UniformValueNoNumber } from "./InstancedEntity.js";
 import { InstancedMeshBVH } from "./InstancedMeshBVH.js";
@@ -158,7 +158,7 @@ export class InstancedMesh2<
 
     const onBeforeCompile = material.onBeforeCompile.bind(material);
 
-    material.onBeforeCompile = (shader: WebGLProgramParametersWithUniforms, renderer) => {
+    material.onBeforeCompile = (shader, renderer) => {
       if (onBeforeCompile) onBeforeCompile(shader, renderer);
 
       if (!shader.instancing) return;
@@ -260,7 +260,7 @@ export class InstancedMesh2<
 
   public setColorAt(id: number, color: ColorRepresentation): void {
     if (this.colorsTexture === null) {
-      this.colorsTexture = createTexture_vec3(this._maxCount);
+      this.colorsTexture = createTexture_vec4(this._maxCount); // we use vec4 because createTexture_vec3 doesn't exist
       this._colorArray = this.colorsTexture.image.data as unknown as Float32Array;
     }
 

@@ -1,6 +1,6 @@
 import { BVHNode } from "bvh.js";
 import { BufferGeometry, Camera, Color, ColorRepresentation, DataTexture, Frustum, Material, Matrix4, Object3D, Sphere, Vector3, WebGLRenderer } from "three";
-import { createTexture_mat4, createTexture_vec3 } from "../utils/createTexture.js";
+import { createTexture_mat4, createTexture_vec4 } from "../utils/createTexture.js";
 import { BVHParams, Entity, InstancedMesh2, UpdateEntityCallback } from "./InstancedMesh2.js";
 import { InstancedMeshBVH } from "./InstancedMeshBVH.js";
 import { InstancedRenderItem, InstancedRenderList } from "./InstancedRenderList.js";
@@ -130,7 +130,7 @@ export class InstancedMeshLOD<TCustomData = {}> extends Object3D {
 
   public setColorAt(id: number, color: ColorRepresentation): void {
     if (this.colorsTexture === null) {
-      this.colorsTexture = createTexture_vec3(this._maxCount);
+      this.colorsTexture = createTexture_vec4(this._maxCount); // we use vec4 because createTexture_vec3 doesn't exist
       this._colorArray = this.colorsTexture.image.data as unknown as Float32Array;
     }
 
