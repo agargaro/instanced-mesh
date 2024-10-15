@@ -11,6 +11,10 @@ export interface LODLevel<TCustomData = {}> {
   object: InstancedMesh2<TCustomData>;
 }
 
+// TODO SOON: instancedMeshLOD rendering first nearest levels, look out to transparent
+// TODO SOON: fix shadow
+// TODO SOON: shared matrices and BVH
+
 export class InstancedMeshLOD<TCustomData = {}> extends Object3D {
   public isInstancedMeshLOD = true;
   public instancesCount: number; // TODO handle update from dynamic to static

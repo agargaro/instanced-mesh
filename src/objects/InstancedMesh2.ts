@@ -18,10 +18,6 @@ import { InstancedRenderItem, InstancedRenderList } from "./InstancedRenderList.
 // TODO: composeMatrixInstance can be opt if only move or scale
 // TODO: patchGeometry method
 
-// TODO SOON: instancedMeshLOD rendering first nearest levels, look out to transparent
-// TODO SOON: fix shadow
-// TODO SOON: shared matrices and BVH
-
 export type Entity<T> = InstancedEntity & T;
 export type UpdateEntityCallback<T> = (obj: Entity<T>, index: number) => void;
 
