@@ -11,9 +11,7 @@ import { InstancedRenderItem, InstancedRenderList } from "./InstancedRenderList.
 // TODO: autoUpdate (send indexes data to gpu only if changes)
 // TODO: getMorphAt to InstancedEntity
 // TODO: partial texture update
-// TODO: matrix update optimized if changes only rot, pos or scale.
 // TODO: Use BVH only for raycasting
-// TODO: composeMatrixInstance can be opt if only move or scale
 // TODO: patchGeometry method
 
 export type Entity<T> = InstancedEntity & T;
@@ -74,10 +72,9 @@ export class InstancedMesh2<
   }
 
   public override onBeforeRender(renderer: WebGLRenderer, scene: Scene, camera: Camera, geometry: BufferGeometry, material: Material): void {
-    if (!this.perObjectFrustumCulled) return;
-
     if (!this._LOD) this.frustumCulling(camera);
 
+    // TODO update only if buffer changes
     const gl = renderer.getContext();
     const instanceIndex = this.instanceIndex;
     gl.bindBuffer(gl.ARRAY_BUFFER, instanceIndex.buffer);
@@ -448,18 +445,26 @@ export class InstancedMesh2<
 
   protected frustumCulling(camera: Camera): void {
     const sortObjects = this.sortObjects;
+    const perObjectFrustumCulled = this.perObjectFrustumCulled;
     const array = this.instanceIndex.array;
 
-    _projScreenMatrix.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse).multiply(this.matrixWorld);
+    if (!perObjectFrustumCulled) {
 
-    if (sortObjects) {
-      _invMatrixWorld.copy(this.matrixWorld).invert();
-      _cameraPos.setFromMatrixPosition(camera.matrixWorld).applyMatrix4(_invMatrixWorld);
-      _forward.set(0, 0, -1).transformDirection(camera.matrixWorld).transformDirection(_invMatrixWorld);
+      this.updateIndexArray();
+
+    } else {
+
+      _projScreenMatrix.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse).multiply(this.matrixWorld);
+
+      if (sortObjects) {
+        _invMatrixWorld.copy(this.matrixWorld).invert();
+        _cameraPos.setFromMatrixPosition(camera.matrixWorld).applyMatrix4(_invMatrixWorld);
+        _forward.set(0, 0, -1).transformDirection(camera.matrixWorld).transformDirection(_invMatrixWorld);
+      }
+
+      if (this.bvh) this.BVHCulling();
+      else this.linearCulling();
     }
-
-    if (this.bvh) this.BVHCulling();
-    else this.linearCulling();
 
     if (sortObjects) {
       const customSort = this.customSort;
@@ -477,7 +482,24 @@ export class InstancedMesh2<
 
       this._count = list.length;
       _renderList.reset();
+
     }
+  }
+
+  protected updateIndexArray(): void {
+    // TODO: recompute only if at least one obj visibility changes or if sort is active
+    // TODO: FIX if sorted 
+
+    const array = this.instanceIndex.array;
+    const instancesCount = this.instancesCount;
+    let count = 0;
+
+    for (let i = 0; i < instancesCount; i++) {
+      if (!this.getVisibilityAt(i)) continue;
+      array[count++] = i;
+    }
+
+    this._count = count;
   }
 
   protected BVHCulling(): void {
