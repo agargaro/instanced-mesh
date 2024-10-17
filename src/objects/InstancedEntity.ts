@@ -46,7 +46,7 @@ export class InstancedEntity {
     this.owner.setUniformAt(this.id, name, value);
   }
 
-  public copyTo(target: Mesh): void {
+  public copyTo(target: Mesh | InstancedEntity): void {
     target.position.copy(this.position);
     target.scale.copy(this.scale);
     target.quaternion.copy(this.quaternion);

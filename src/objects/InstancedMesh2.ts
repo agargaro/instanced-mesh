@@ -37,6 +37,7 @@ export class InstancedMesh2<
   public readonly isInstancedMesh2 = true;
   public instances: Entity<TCustomData>[];
   public instanceIndex: GLInstancedBufferAttribute;
+  public numEntities = 0;
   public matricesTexture: DataTexture;
   public colorsTexture: DataTexture = null;
   public morphTexture: DataTexture = null;
@@ -326,6 +327,35 @@ export class InstancedMesh2<
     const dataIndex = len * index;
     array[dataIndex] = morphBaseInfluence;
     array.set(objectInfluences, dataIndex + 1);
+  }
+
+  public createInstance(onInstanceCreation?: UpdateEntityCallback<Entity<TCustomData>>): Entity<TCustomData> {
+    if (this.numEntities >= this._maxCount) {
+      throw new Error(`Cannot create more instances than count ${this._maxCount}.`);
+    }
+
+    this.instances ??= new Array(this._maxCount);
+    const instance = new InstancedEntity(this, this.numEntities++) as Entity<TCustomData>;
+    this.instances[instance.id] = instance;
+
+    if (onInstanceCreation) {
+      onInstanceCreation(instance, instance.id);
+      this.composeMatrixInstance(instance);
+    }
+
+    return instance;
+  }
+
+  public removeInstance(instance: Entity<TCustomData>): void {
+    const index = instance.id;
+    
+    const lastIndex = this.numEntities - 1;
+    if (index < lastIndex) {
+      this.instances[lastIndex].copyTo(this.instances[index]);
+    }
+    this.instances[lastIndex] = undefined;
+    this.numEntities--;
+    this.bvh?.delete(lastIndex);
   }
 
   /** @internal */
