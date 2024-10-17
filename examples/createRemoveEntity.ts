@@ -3,12 +3,15 @@ import { MeshNormalMaterial, Scene, SphereGeometry, Vector3 } from 'three';
 import { GUI } from 'three/examples/jsm/libs/lil-gui.module.min.js';
 import { InstancedMesh2 } from '../src/index.js';
 import { OrbitControls } from 'three/examples/jsm/Addons.js';
+import { PRNG } from './objects/random.js';
 
 const count = 100000;
 const worldSize = 500;
 const startInstances = 25;
 
 const main = new Main({ rendererParameters: { antialias: true } }); // init renderer and other stuff
+const random = new PRNG(10000);
+
 
 const camera = new PerspectiveCameraAuto(70, 0.1, 5000).translateZ(500).translateY(20);
 const controls = new OrbitControls(camera, main.renderer.domElement);
@@ -16,7 +19,7 @@ const controls = new OrbitControls(camera, main.renderer.domElement);
 const scene = new Scene();
 
 function afterCreation (obj, index) {
-  obj.position.randomDirection().multiplyScalar(((Math.random() * 0.99 + 0.01) * worldSize) / 2);
+  obj.position.randomDirection().multiplyScalar(((random.range(0, 0.99) + 0.01) * worldSize) / 2);
   obj.dir = new Vector3().randomDirection();
 }
 
@@ -31,7 +34,7 @@ setInterval(() => {
 }, 400);
 
 setInterval(() => {
-    const index = Math.floor(Math.random() * spheres.numEntities); 
+    const index = Math.floor(random.range(0, spheres.numEntities)); 
     spheres.removeInstance(spheres.instances[index]);
   }, 500);
 
