@@ -10,10 +10,8 @@ import { InstancedRenderItem, InstancedRenderList } from "./InstancedRenderList.
 // TODO: Add expand and count/maxCount when create?
 // TODO: autoUpdate (send indexes data to gpu only if changes)
 // TODO: getMorphAt to InstancedEntity
-// TODO: sorting if CullingNone
 // TODO: partial texture update
 // TODO: matrix update optimized if changes only rot, pos or scale.
-// TODO: visibility if not culling
 // TODO: Use BVH only for raycasting
 // TODO: composeMatrixInstance can be opt if only move or scale
 // TODO: patchGeometry method
@@ -45,7 +43,7 @@ export class InstancedMesh2<
   public instancesCount: number; // TODO handle update from dynamic to static
   public bvh: InstancedMeshBVH;
   public perObjectFrustumCulled = true;
-  public sortObjects = false; // TODO should this be true?
+  public sortObjects = false;
   public customSort: (list: InstancedRenderItem[]) => void = null;
   public raycastOnlyFrustum = false;
   public visibilityArray: boolean[];
@@ -281,12 +279,12 @@ export class InstancedMesh2<
 
     if (!setCallback) {
       const texture = (this.material as ShaderMaterial).uniforms[name].value as DataTexture;
-      const size = texture.format === RedFormat ? 1 : (texture.format === RGFormat ? 2 : 4); // 3 is not supported
       const array = texture.image.data;
 
-      if (size === 1) {
+      if (texture.format === RedFormat) {
         setCallback = (id: number, value: UniformValue) => { array[id] = value as number };
       } else {
+        const size = texture.format === RGFormat ? 2 : 4; // 3 is not supported
         setCallback = (id: number, value: UniformValue) => { (value as UniformValueNoNumber).toArray(array, id * size) };
       }
 
