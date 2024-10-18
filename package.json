@@ -29,6 +29,7 @@
     "build": "vite build",
     "clean": "npx rimraf dist",
     "lint": "npx eslint --fix",
+    "test": "echo todo add tests",
     "publish-patch": "npm version patch --git-tag-version false && npm run build && cd dist && npm publish --access public",
     "publish-minor": "npm version minor --git-tag-version false && npm run build && cd dist && npm publish --access public",
     "publish-major": "npm version major --git-tag-version false && npm run build && cd dist && npm publish --access public"
