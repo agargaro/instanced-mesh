@@ -1,4 +1,11 @@
 export default /* glsl */`
+	uint getUIntFromTexture( usampler2D texture, const in int i ) {
+		int size = textureSize( texture, 0 ).x;
+		int x = i % size;
+		int y = i / size;
+		return uint( texelFetch( texture, ivec2( x, y ), 0 ).r );
+	}
+
 	float getFloatFromTexture( sampler2D texture, const in uint i ) {
 		int size = textureSize( texture, 0 ).x;
 		int j = int( i );

@@ -1,7 +1,6 @@
 import { BVHNode } from "bvh.js";
-import { Box3, BufferAttribute, BufferGeometry, Camera, Color, ColorManagement, ColorRepresentation, DataTexture, FloatType, Frustum, InstancedBufferAttribute, Intersection, Material, Matrix4, Mesh, MeshDepthMaterial, MeshDistanceMaterial, Object3DEventMap, RGBADepthPacking, RGFormat, Ray, Raycaster, RedFormat, Scene, ShaderMaterial, Sphere, Vector3, WebGLRenderer } from "three";
-import { createTexture_mat4, createTexture_vec4 } from "../utils/createTexture.js";
-import { GLInstancedBufferAttribute } from "./GLInstancedBufferAttribute.js";
+import { Box3, BufferGeometry, Camera, Color, ColorManagement, ColorRepresentation, DataTexture, FloatType, Frustum, Group, InstancedBufferAttribute, Intersection, Material, Matrix4, Mesh, MeshDepthMaterial, MeshDistanceMaterial, Object3DEventMap, RGBADepthPacking, RGFormat, Ray, Raycaster, RedFormat, Scene, ShaderMaterial, Sphere, Vector3, WebGLRenderer } from "three";
+import { createTexture_mat4, createTexture_uint, createTexture_vec4 } from "../utils/createTexture.js";
 import { InstancedEntity, UniformValue, UniformValueNoNumber } from "./InstancedEntity.js";
 import { InstancedMeshBVH } from "./InstancedMeshBVH.js";
 import { InstancedMeshLOD } from "./InstancedMeshLOD.js";
@@ -11,7 +10,6 @@ import { InstancedRenderItem, InstancedRenderList } from "./InstancedRenderList.
 // TODO: autoUpdate (send indexes data to gpu only if changes)
 // TODO: partial texture update
 // TODO: Use BVH only for raycasting
-// TODO: patchGeometry method
 
 export type Entity<T> = InstancedEntity & T;
 export type UpdateEntityCallback<T> = (obj: Entity<T>, index: number) => void;
@@ -31,8 +29,8 @@ export class InstancedMesh2<
   public override type = 'InstancedMesh2';
   public readonly isInstancedMesh2 = true;
   public instances: Entity<TCustomData>[];
-  public instanceIndex: GLInstancedBufferAttribute;
-  public matricesTexture: DataTexture;
+  public indexTexture: DataTexture;
+  public matricesTexture: DataTexture; // fix name
   public colorsTexture: DataTexture = null;
   public morphTexture: DataTexture = null;
   public boundingBox: Box3 = null;
@@ -44,6 +42,7 @@ export class InstancedMesh2<
   public customSort: (list: InstancedRenderItem[]) => void = null;
   public raycastOnlyFrustum = false;
   public visibilityArray: boolean[];
+  /** @internal */ public _indexArray: Uint32Array;
   /** @internal */ public _matrixArray: Float32Array;
   /** @internal */ public _colorArray: Float32Array;
   /** @internal */ public _count: number;
@@ -70,29 +69,22 @@ export class InstancedMesh2<
     this.patchMaterials(value);
   }
 
-  public override onBeforeRender(renderer: WebGLRenderer, scene: Scene, camera: Camera, geometry: BufferGeometry, material: Material): void {
+  public override onBeforeRender(renderer: WebGLRenderer, scene: Scene, camera: Camera, geometry: BufferGeometry, material: Material, group: Group): void {
     if (!this._LOD) this.frustumCulling(camera);
 
-    // TODO update only if buffer changes
-    const gl = renderer.getContext();
-    const instanceIndex = this.instanceIndex;
-    gl.bindBuffer(gl.ARRAY_BUFFER, instanceIndex.buffer);
-    gl.bufferSubData(gl.ARRAY_BUFFER, 0, instanceIndex.array, 0, this._count);
+    this.indexTexture.needsUpdate = true; // TODO improve this
   }
 
-  override onBeforeShadow(renderer: WebGLRenderer, scene: Scene, camera: Camera, shadowCamera: Camera, geometry: BufferGeometry, depthMaterial: Material): void {
-    this.onBeforeRender(renderer, null, shadowCamera, geometry, depthMaterial);
+  override onBeforeShadow(renderer: WebGLRenderer, scene: Scene, camera: Camera, shadowCamera: Camera, geometry: BufferGeometry, depthMaterial: Material, group: Group): void {
+    this.onBeforeRender(renderer, null, shadowCamera, geometry, depthMaterial, group);
   }
 
-  /** THIS MATERIAL AND GEOMETRY CANNOT BE SHARED */
-  constructor(renderer: WebGLRenderer, count: number, geometry: TGeometry, material?: TMaterial, LOD?: InstancedMeshLOD) {
-    if (!renderer) throw new Error("'renderer' is mandatory.");
+  /** THIS MATERIAL CANNOT BE SHARED */
+  constructor(count: number, geometry: TGeometry, material?: TMaterial, LOD?: InstancedMeshLOD) {
     if (!count || count < 0) throw new Error("'count' must be greater than 0.");
     if (!geometry) throw new Error("'geometry' is mandatory.");
 
     super(geometry, material);
-
-    if (this.geometry.getAttribute("instanceIndex")) throw new Error('Cannot reuse already patched geometry.');
 
     this.instancesCount = count;
     this._maxCount = count;
@@ -101,28 +93,22 @@ export class InstancedMesh2<
     this._LOD = LOD;
     this.visibilityArray = this._LOD ? LOD.visibilityArray : new Array(count).fill(true);
 
-    this.initIndixes(renderer);
+    this.initIndixes();
     this.initMatricesTexture();
 
     this.patchMaterial(this.customDepthMaterial); // TODO check if with LOD can reuse it
     this.patchMaterial(this.customDistanceMaterial);
   }
 
-  protected initIndixes(renderer: WebGLRenderer): void {
+  protected initIndixes(): void {
     const count = this._maxCount;
-    const gl = renderer.getContext();
-    const buffer = gl.createBuffer();
-    const array = new Uint32Array(count); // use uint16 if less 32k
+    this.indexTexture = createTexture_uint(count); // TODO check use uint16 if less 32k 
+    const array = this.indexTexture.image.data as unknown as Uint32Array;
+    this._indexArray = array;
 
     for (let i = 0; i < count; i++) {
       array[i] = i;
     }
-
-    gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
-    gl.bufferData(gl.ARRAY_BUFFER, array, gl.DYNAMIC_DRAW);
-
-    this.instanceIndex = new GLInstancedBufferAttribute(buffer, gl.UNSIGNED_INT, 1, 4, array.length, array); // UNSIGNED_SHORT usare anche questo se < 65k
-    this.geometry.setAttribute("instanceIndex", this.instanceIndex as unknown as BufferAttribute);
   }
 
   protected initMatricesTexture(): void {
@@ -155,6 +141,7 @@ export class InstancedMesh2<
 
       shader.instancing = false;
       shader.instancingColor = false;
+      shader.uniforms.indicesTexture = { value: this.indexTexture }; // cambiare nome in singoalre TODO
       shader.uniforms.matricesTexture = { value: this.matricesTexture };
 
       if (!shader.defines) shader.defines = {};
@@ -253,7 +240,7 @@ export class InstancedMesh2<
 
   public setColorAt(id: number, color: ColorRepresentation): void {
     if (this.colorsTexture === null) {
-      this.colorsTexture = createTexture_vec4(this._maxCount); 
+      this.colorsTexture = createTexture_vec4(this._maxCount);
       this.colorsTexture.colorSpace = ColorManagement.workingColorSpace;
       this._colorArray = this.colorsTexture.image.data as unknown as Float32Array;
       this._colorArray.fill(1);
@@ -415,7 +402,7 @@ export class InstancedMesh2<
       _sphere.copy(this.boundingSphere);
       if (!raycaster.ray.intersectsSphere(_sphere)) return;
 
-      const instancesToCheck = this.instanceIndex.array;
+      const instancesToCheck = this._indexArray;
       const checkCount = raycastFrustum ? this._count : this.instancesCount;
 
       for (let i = 0; i < checkCount; i++) {
@@ -450,7 +437,7 @@ export class InstancedMesh2<
   protected frustumCulling(camera: Camera): void {
     const sortObjects = this.sortObjects;
     const perObjectFrustumCulled = this.perObjectFrustumCulled;
-    const array = this.instanceIndex.array;
+    const array = this._indexArray;
 
     if (!perObjectFrustumCulled) {
 
@@ -494,7 +481,7 @@ export class InstancedMesh2<
     // TODO: recompute only if at least one obj visibility changes or if sort is active
     // TODO: FIX if sorted 
 
-    const array = this.instanceIndex.array;
+    const array = this._indexArray;
     const instancesCount = this.instancesCount;
     let count = 0;
 
@@ -507,7 +494,7 @@ export class InstancedMesh2<
   }
 
   protected BVHCulling(): void {
-    const array = this.instanceIndex.array;
+    const array = this._indexArray;
     const instancesCount = this.instancesCount;
     const sortObjects = this.sortObjects;
     let count = 0;
@@ -530,7 +517,7 @@ export class InstancedMesh2<
   }
 
   protected linearCulling(): void {
-    const array = this.instanceIndex.array;
+    const array = this._indexArray;
     const bSphere = this.geometry.boundingSphere;
     const radius = bSphere.radius;
     const center = bSphere.center;
@@ -601,7 +588,7 @@ export class InstancedMesh2<
   public override copy(source: InstancedMesh2, recursive?: boolean): this {
     super.copy(source, recursive);
 
-    this.instanceIndex.copy(source.instanceIndex);
+    this.indexTexture = source.indexTexture.clone();
     this.matricesTexture = source.matricesTexture.clone();
 
     // this._matricesTexture = source._matricesTexture.clone();
