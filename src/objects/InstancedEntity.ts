@@ -1,37 +1,33 @@
-import { Color, ColorRepresentation, Matrix3, Matrix4, Mesh, Quaternion, Vector2, Vector3, Vector4 } from 'three';
+import { ColorRepresentation, Matrix3, Matrix4, Mesh, Object3D, Quaternion, Vector2, Vector3, Vector4 } from 'three';
 import { InstancedMesh2 } from './InstancedMesh2.js';
 
 export type UniformValueNoNumber = Vector2 | Vector3 | Vector4 | Matrix3 | Matrix4;
 export type UniformValue = number | UniformValueNoNumber;
 
 export class InstancedEntity {
-  public isInstanceEntity = true;
+  public readonly isInstanceEntity = true;
   public readonly id: number;
   public readonly owner: InstancedMesh2;
-  public position: Vector3;
-  public scale: Vector3;
-  public quaternion: Quaternion;
+  public parent: Object3D; // TODO implement
+  public position = new Vector3();
+  public scale = new Vector3(1, 1, 1);
+  public quaternion = new Quaternion();
 
-  public get visible(): boolean { return this.owner.getVisibilityAt(this.id) }
+  public get visible() { return this.owner.getVisibilityAt(this.id) }
   public set visible(value: boolean) { this.owner.setVisibilityAt(this.id, value) }
 
-  public get color(): Color { return this.owner.getColorAt(this.id) }
+  public get color() { return this.owner.getColorAt(this.id) }
   public set color(value: ColorRepresentation) { this.owner.setColorAt(this.id, value) }
 
-  public get matrix(): Matrix4 {
-    return this.owner.getMatrixAt(this.id);
-  }
+  public get morph() { return this.owner.getMorphAt(this.id) }
+  public set morph(value: Mesh) { this.owner.setMorphAt(this.id, value) }
 
-  public get matrixWorld(): Matrix4 {
-    return this.matrix.premultiply(this.owner.matrixWorld);
-  }
+  public get matrix() { return this.owner.getMatrixAt(this.id) }
+  public get matrixWorld() { return this.matrix.premultiply(this.owner.matrixWorld) }
 
-  constructor(owner: InstancedMesh2, index: number) {
-    this.id = index;
+  constructor(owner: InstancedMesh2, id: number) {
+    this.id = id;
     this.owner = owner;
-    this.position = new Vector3();
-    this.scale = new Vector3(1, 1, 1);
-    this.quaternion = new Quaternion();
   }
 
   public updateMatrix(): void {
@@ -50,7 +46,6 @@ export class InstancedEntity {
     target.position.copy(this.position);
     target.scale.copy(this.scale);
     target.quaternion.copy(this.quaternion);
-    // target.updateMatrixWorld(true) //TODO consider it
   }
 
   public applyMatrix4(m: Matrix4): this {
@@ -104,9 +99,6 @@ export class InstancedEntity {
   public translateZ(distance: number): this {
     return this.translateOnAxis(_zAxis, distance);
   }
-
-  // TODO copy other Object3D methods
-
 }
 
 const _quat = new Quaternion();

@@ -1,4 +1,4 @@
-export type InstancedRenderItem = { index: number, depth: number };
+export type InstancedRenderItem = { index: number, depth: number, depthSort: number };
 
 export class InstancedRenderList {
     public list: InstancedRenderItem[] = [];
@@ -9,7 +9,7 @@ export class InstancedRenderList {
         const count = this.list.length;
 
         if (count >= pool.length) {
-            pool.push({ depth: null, index: null });
+            pool.push({ depth: null, index: null, depthSort: null });
         }
 
         const item = pool[count];

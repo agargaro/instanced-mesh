@@ -4,15 +4,23 @@ import { InstancedMesh2 } from "../objects/InstancedMesh2.js";
 import { InstancedRenderItem } from "../objects/InstancedRenderList.js";
 
 export function createRadixSort(target: InstancedMesh2): typeof radixSort<InstancedRenderItem> {
+
     const options: RadixSortOptions<InstancedRenderItem> = {
-        get: el => el.depth,
-        aux: new Array(target.maxCount), //TODO check array and typed array
+        get: el => el.depthSort,
+        aux: new Array(target.maxCount),
         reversed: null
     };
 
-    // https://github.com/mrdoob/three.js/blob/master/examples/webgl_mesh_batch.html#L291
     return function sortFunction(list: InstancedRenderItem[]): void {
-        options.reversed = (target.material as Material).transparent; // TODO support multimaterial?
+        const material = (target.material as Material);
+
+        if (!material.isMaterial) throw new Error("Multi material is not supported.");
+
+        options.reversed = material.transparent;
+
+        if (target.maxCount > options.aux.length) {
+            options.aux.length = target.maxCount;
+        }
 
         let minZ = Infinity;
         let maxZ = -Infinity;
@@ -26,39 +34,11 @@ export function createRadixSort(target: InstancedMesh2): typeof radixSort<Instan
         const factor = (2 ** 32 - 1) / depthDelta;
 
         for (const item of list) {
-            item.depth = (item.depth - minZ) * factor;
+            item.depthSort = (item.depth - minZ) * factor;
         }
 
         radixSort(list, options);
     }
 }
 
-export function createRadixSort2(target: InstancedMesh2): typeof radixSort<InstancedRenderItem> {
-    const options: RadixSortOptions<InstancedRenderItem> = {
-        get: el => (el as any).depthSort, //TODO check any
-        aux: new Array(target.maxCount), //TODO check array and typed array
-        reversed: null
-    };
-
-    // https://github.com/mrdoob/three.js/blob/master/examples/webgl_mesh_batch.html#L291
-    return function sortFunction(list: InstancedRenderItem[]): void {
-        options.reversed = (target.material as Material).transparent; // TODO support multimaterial?
-
-        let minZ = Infinity;
-        let maxZ = -Infinity;
-
-        for (const { depth } of list) {
-            if (depth > maxZ) maxZ = depth;
-            if (depth < minZ) minZ = depth;
-        }
-
-        const depthDelta = maxZ - minZ;
-        const factor = (2 ** 32 - 1) / depthDelta;
-
-        for (const item of list) { // replace
-            (item as any).depthSort = (item.depth - minZ) * factor;
-        }
-
-        radixSort(list, options);
-    }
-}
+// REFERENCE: https://github.com/mrdoob/three.js/blob/master/examples/webgl_mesh_batch.html#L291

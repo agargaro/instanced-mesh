@@ -34,7 +34,7 @@ export class InstancedMeshLOD<TCustomData = {}> extends Object3D {
   protected _countIndexes: number[] = [];
 
   // HACK TO MAKE IT WORK WITHOUT UPDATE CORE
-  private isLOD = true; // spiegare perchè
+  private readonly isLOD = true;
   public autoUpdate = true;
   public levels: LODLevel<TCustomData>[] = [];
 

@@ -1,5 +1,5 @@
 import { BVHNode } from "bvh.js";
-import { Box3, BufferAttribute, BufferGeometry, Camera, Color, ColorRepresentation, DataTexture, FloatType, Frustum, InstancedBufferAttribute, Intersection, Material, Matrix4, Mesh, MeshDepthMaterial, MeshDistanceMaterial, Object3DEventMap, RGBADepthPacking, RGFormat, Ray, Raycaster, RedFormat, Scene, ShaderMaterial, Sphere, Vector3, WebGLRenderer } from "three";
+import { Box3, BufferAttribute, BufferGeometry, Camera, Color, ColorManagement, ColorRepresentation, DataTexture, FloatType, Frustum, InstancedBufferAttribute, Intersection, Material, Matrix4, Mesh, MeshDepthMaterial, MeshDistanceMaterial, Object3DEventMap, RGBADepthPacking, RGFormat, Ray, Raycaster, RedFormat, Scene, ShaderMaterial, Sphere, Vector3, WebGLRenderer } from "three";
 import { createTexture_mat4, createTexture_vec4 } from "../utils/createTexture.js";
 import { GLInstancedBufferAttribute } from "./GLInstancedBufferAttribute.js";
 import { InstancedEntity, UniformValue, UniformValueNoNumber } from "./InstancedEntity.js";
@@ -9,7 +9,6 @@ import { InstancedRenderItem, InstancedRenderList } from "./InstancedRenderList.
 
 // TODO: Add expand and count/maxCount when create?
 // TODO: autoUpdate (send indexes data to gpu only if changes)
-// TODO: getMorphAt to InstancedEntity
 // TODO: partial texture update
 // TODO: Use BVH only for raycasting
 // TODO: patchGeometry method
@@ -254,12 +253,14 @@ export class InstancedMesh2<
 
   public setColorAt(id: number, color: ColorRepresentation): void {
     if (this.colorsTexture === null) {
-      this.colorsTexture = createTexture_vec4(this._maxCount); // we use vec4 because createTexture_vec3 doesn't exist
+      this.colorsTexture = createTexture_vec4(this._maxCount); 
+      this.colorsTexture.colorSpace = ColorManagement.workingColorSpace;
       this._colorArray = this.colorsTexture.image.data as unknown as Float32Array;
+      this._colorArray.fill(1);
     }
 
     if ((color as Color).isColor) {
-      (color as Color).toArray(this._colorArray, id * 4); // even if is vec3, we need 4 because RGB format is removed from three.js
+      (color as Color).toArray(this._colorArray, id * 4);
     } else {
       _tempCol.set(color).toArray(this._colorArray, id * 4);
     }
@@ -291,7 +292,7 @@ export class InstancedMesh2<
     setCallback(id, value);
   }
 
-  public getMorphAt(index: number, object: Mesh): void {
+  public getMorphAt(index: number, object = _tempMesh): Mesh {
     const objectInfluences = object.morphTargetInfluences;
     const array = this.morphTexture.source.data.data;
     const len = objectInfluences.length + 1; // All influences + the baseInfluenceSum
@@ -300,6 +301,8 @@ export class InstancedMesh2<
     for (let i = 0; i < objectInfluences.length; i++) {
       objectInfluences[i] = array[dataIndex + i];
     }
+
+    return object;
   }
 
   public setMorphAt(index: number, object: Mesh): void {
@@ -307,14 +310,15 @@ export class InstancedMesh2<
     const len = objectInfluences.length + 1; // morphBaseInfluence + all influences
 
     if (this.morphTexture === null) {
+      // TODO try to use createTexture_float instead?
       this.morphTexture = new DataTexture(new Float32Array(len * this._maxCount), len, this._maxCount, RedFormat, FloatType);
     }
 
     const array = this.morphTexture.source.data.data;
     let morphInfluencesSum = 0;
 
-    for (let i = 0; i < objectInfluences.length; i++) {
-      morphInfluencesSum += objectInfluences[i];
+    for (const objectInfluence of objectInfluences) {
+      morphInfluencesSum += objectInfluence;
     }
 
     const morphBaseInfluence = this.geometry.morphTargetsRelative ? 1 : 1 - morphInfluencesSum;
@@ -657,6 +661,7 @@ const _cameraPos = new Vector3();
 const _position = new Vector3();
 const _tempMat4 = new Matrix4();
 const _tempCol = new Color();
+const _tempMesh = new Mesh();
 const _instance = new InstancedEntity(undefined, -1);
 
 function ascSortIntersection(a: Intersection, b: Intersection): number {

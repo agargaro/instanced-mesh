@@ -53,7 +53,7 @@ scene.on('animate', (e) => {
 
   const count = Math.min(config.animatedCount, instancedMesh.instancesCount); 
 
-  for (let i = 0; i < count; i++) { // TODO use update Instances?
+  for (let i = 0; i < count; i++) {
     const mesh = instancedMesh.instances[i];
     mesh.position.setFromSphericalCoords(mesh.r, mesh.phi + e.total * 0.02, mesh.theta + e.total * 0.02);
     mesh.updateMatrixPosition();
