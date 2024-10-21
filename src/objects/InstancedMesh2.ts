@@ -1,5 +1,5 @@
 import { BVHNode } from "bvh.js";
-import { Box3, BufferAttribute, BufferGeometry, Camera, Color, ColorManagement, ColorRepresentation, DataTexture, FloatType, Frustum, InstancedBufferAttribute, Intersection, Material, Matrix4, Mesh, MeshDepthMaterial, MeshDistanceMaterial, Object3DEventMap, RGBADepthPacking, RGFormat, Ray, Raycaster, RedFormat, Scene, ShaderMaterial, Sphere, Vector3, WebGLRenderer } from "three";
+import { Box3, BufferAttribute, BufferGeometry, Camera, Color, ColorManagement, ColorRepresentation, DataTexture, FloatType, Frustum, InstancedBufferAttribute, Intersection, Material, Matrix4, Mesh, MeshDepthMaterial, MeshDistanceMaterial, Object3D, Object3DEventMap, RGBADepthPacking, RGFormat, Ray, Raycaster, RedFormat, Scene, ShaderMaterial, Sphere, Vector3, WebGLRenderer } from "three";
 import { createTexture_mat4, createTexture_vec4 } from "../utils/createTexture.js";
 import { GLInstancedBufferAttribute } from "./GLInstancedBufferAttribute.js";
 import { InstancedEntity, UniformValue, UniformValueNoNumber } from "./InstancedEntity.js";
@@ -15,6 +15,7 @@ import { InstancedRenderItem, InstancedRenderList } from "./InstancedRenderList.
 
 export type Entity<T> = InstancedEntity & T;
 export type UpdateEntityCallback<T> = (obj: Entity<T>, index: number) => void;
+export type CustomSortCallback = (list: InstancedRenderItem[]) => void;
 
 export interface BVHParams {
   margin?: number;
@@ -30,7 +31,7 @@ export class InstancedMesh2<
 
   public override type = 'InstancedMesh2';
   public readonly isInstancedMesh2 = true;
-  public instances: Entity<TCustomData>[];
+  public instances: Entity<TCustomData>[] = null;
   public instanceIndex: GLInstancedBufferAttribute;
   public matricesTexture: DataTexture;
   public colorsTexture: DataTexture = null;
@@ -38,18 +39,18 @@ export class InstancedMesh2<
   public boundingBox: Box3 = null;
   public boundingSphere: Sphere = null;
   public instancesCount: number; // TODO handle update from dynamic to static
-  public bvh: InstancedMeshBVH;
+  public bvh: InstancedMeshBVH = null;
   public perObjectFrustumCulled = true;
   public sortObjects = false;
-  public customSort: (list: InstancedRenderItem[]) => void = null;
+  public customSort: CustomSortCallback = null;
   public raycastOnlyFrustum = false;
   public visibilityArray: boolean[];
   /** @internal */ public _matrixArray: Float32Array;
-  /** @internal */ public _colorArray: Float32Array;
+  /** @internal */ public _colorArray: Float32Array = null;
   /** @internal */ public _count: number;
   protected _maxCount: number;
   protected _material: TMaterial;
-  protected _uniformsSetCallback = new Map<string, (id: number, value: UniformValue) => void>();
+  protected _uniformsSetCallback = new Map<string, (id: number, value: UniformValue) => void>(); // TODO optional?
   protected _LOD: InstancedMeshLOD = null;
 
   public override customDepthMaterial = new MeshDepthMaterial({ depthPacking: RGBADepthPacking });
@@ -253,7 +254,7 @@ export class InstancedMesh2<
 
   public setColorAt(id: number, color: ColorRepresentation): void {
     if (this.colorsTexture === null) {
-      this.colorsTexture = createTexture_vec4(this._maxCount); 
+      this.colorsTexture = createTexture_vec4(this._maxCount);
       this.colorsTexture.colorSpace = ColorManagement.workingColorSpace;
       this._colorArray = this.colorsTexture.image.data as unknown as Float32Array;
       this._colorArray.fill(1);
@@ -325,6 +326,10 @@ export class InstancedMesh2<
     const dataIndex = len * index;
     array[dataIndex] = morphBaseInfluence;
     array.set(objectInfluences, dataIndex + 1);
+  }
+
+  public copyTo(id: number, target: Object3D): void {
+    this.getMatrixAt(id, target.matrix).decompose(target.position, target.quaternion, target.scale);
   }
 
   /** @internal */

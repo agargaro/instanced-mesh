@@ -8,20 +8,20 @@ export class InstancedEntity {
   public readonly isInstanceEntity = true;
   public readonly id: number;
   public readonly owner: InstancedMesh2;
-  public parent: Object3D; // TODO implement
   public position = new Vector3();
   public scale = new Vector3(1, 1, 1);
   public quaternion = new Quaternion();
-
+  protected _parent: Object3D; // TODO implement
+  
   public get visible() { return this.owner.getVisibilityAt(this.id) }
   public set visible(value: boolean) { this.owner.setVisibilityAt(this.id, value) }
-
+  
   public get color() { return this.owner.getColorAt(this.id) }
   public set color(value: ColorRepresentation) { this.owner.setColorAt(this.id, value) }
-
+  
   public get morph() { return this.owner.getMorphAt(this.id) }
   public set morph(value: Mesh) { this.owner.setMorphAt(this.id, value) }
-
+  
   public get matrix() { return this.owner.getMatrixAt(this.id) }
   public get matrixWorld() { return this.matrix.premultiply(this.owner.matrixWorld) }
 
@@ -42,7 +42,7 @@ export class InstancedEntity {
     this.owner.setUniformAt(this.id, name, value);
   }
 
-  public copyTo(target: Mesh): void {
+  public copyTo(target: Object3D): void {
     target.position.copy(this.position);
     target.scale.copy(this.scale);
     target.quaternion.copy(this.quaternion);
