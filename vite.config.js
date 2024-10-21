@@ -12,7 +12,7 @@ export default defineConfig(({ command }) => ({
       entry: resolve(__dirname, 'src/index.ts'),
       name: 'InstancedMesh',
       fileName: 'index',
-      formats: ['es', 'umd'],
+      formats: ['es', 'cjs'],
     },
   },
   rollupOptions: {

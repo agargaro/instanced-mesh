@@ -1,15 +1,21 @@
 {
   "name": "@three.ez/instanced-mesh",
-  "version": "0.2.5",
-  "description": "Simplified and enhanced InstancedMesh with frustum culling, fast raycasting (using BVH), sorting, visibility management and more.",
+  "version": "0.2.6",
+  "description": "Enhanced InstancedMesh with frustum culling, fast raycasting (using BVH), sorting, visibility management and more.",
   "author": "Andrea Gargaro <devgargaro@gmail.com>",
   "license": "MIT",
   "type": "module",
   "module": "index.js",
-  "main": "index.umd.cjs",
+  "main": "index.cjs",
   "types": "index.d.ts",
   "homepage": "https://github.com/three-ez/instanced-mesh#readme",
   "repository": "https://github.com/three-ez/instanced-mesh",
+  "exports": {
+    ".": {
+      "import": "./index.js",
+      "require": "./index.cjs"
+    }
+  },
   "keywords": [
     "three",
     "three.js",
@@ -50,6 +56,6 @@
     "three": ">=0.159.0"
   },
   "dependencies": {
-    "bvh.js": "^0.0.10"
+    "bvh.js": "^0.0.11"
   }
 }
