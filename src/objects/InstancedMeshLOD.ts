@@ -60,7 +60,7 @@ export class InstancedMeshLOD<TCustomData = {}> extends Object3D {
 
   public addLevel(geometry: BufferGeometry, material: Material, distance = 0, hysteresis = 0): this {
     const levels = this.levels;
-    const object = new InstancedMesh2<TCustomData>(this._renderer, this._maxCount, geometry, material, this);
+    const object = new InstancedMesh2<TCustomData>(this._maxCount, geometry, material, this);
     distance = Math.abs(distance ** 2); // to avoid to use Math.sqrt every time
     let index;
 
@@ -71,7 +71,7 @@ export class InstancedMeshLOD<TCustomData = {}> extends Object3D {
     levels.splice(index, 0, { distance, hysteresis, object });
 
     this._countIndexes.push(0);
-    this._indexes.splice(index, 0, object.instanceIndex.array as Uint32Array);
+    this._indexes.splice(index, 0, object._indexArray);
 
     this.add(object);
     return this;

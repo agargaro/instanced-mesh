@@ -1,6 +1,6 @@
 export default /* glsl */`
 #ifdef USE_INSTANCING_INDIRECT
-	attribute uint instanceIndex;
+	uniform highp usampler2D indicesTexture;
 	uniform highp sampler2D matricesTexture;
 
 	#ifdef USE_INSTANCING_COLOR_INDIRECT

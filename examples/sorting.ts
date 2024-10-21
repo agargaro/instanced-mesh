@@ -20,7 +20,7 @@ const camera = new PerspectiveCameraAuto(70).translateZ(100);
 const scene = new Scene();
 
 const material = new MeshNormalMaterial();
-const instancedMesh = new InstancedMesh2(main.renderer, config.count, geometry, material);
+const instancedMesh = new InstancedMesh2(config.count, geometry, material);
 
 instancedMesh.createInstances((object) => {
   object.position.random().multiplyScalar(100).subScalar(50);
