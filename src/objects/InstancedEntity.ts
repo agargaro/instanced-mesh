@@ -12,16 +12,16 @@ export class InstancedEntity {
   public scale = new Vector3(1, 1, 1);
   public quaternion = new Quaternion();
   protected _parent: Object3D; // TODO implement
-  
+
   public get visible() { return this.owner.getVisibilityAt(this.id) }
   public set visible(value: boolean) { this.owner.setVisibilityAt(this.id, value) }
-  
+
   public get color() { return this.owner.getColorAt(this.id) }
   public set color(value: ColorRepresentation) { this.owner.setColorAt(this.id, value) }
-  
+
   public get morph() { return this.owner.getMorphAt(this.id) }
   public set morph(value: Mesh) { this.owner.setMorphAt(this.id, value) }
-  
+
   public get matrix() { return this.owner.getMatrixAt(this.id) }
   public get matrixWorld() { return this.matrix.premultiply(this.owner.matrixWorld) }
 
@@ -31,11 +31,59 @@ export class InstancedEntity {
   }
 
   public updateMatrix(): void {
-    this.owner.composeMatrixInstance(this);
+    const owner = this.owner;
+    const position = this.position;
+    const quaternion = this.quaternion as any;
+    const scale = this.scale;
+    const te = owner._matrixArray;
+    const id = this.id;
+    const offset = id * 16;
+
+    const x = quaternion._x, y = quaternion._y, z = quaternion._z, w = quaternion._w;
+    const x2 = x + x, y2 = y + y, z2 = z + z;
+    const xx = x * x2, xy = x * y2, xz = x * z2;
+    const yy = y * y2, yz = y * z2, zz = z * z2;
+    const wx = w * x2, wy = w * y2, wz = w * z2;
+
+    const sx = scale.x, sy = scale.y, sz = scale.z;
+
+    te[offset + 0] = (1 - (yy + zz)) * sx;
+    te[offset + 1] = (xy + wz) * sx;
+    te[offset + 2] = (xz - wy) * sx;
+    te[offset + 3] = 0;
+
+    te[offset + 4] = (xy - wz) * sy;
+    te[offset + 5] = (1 - (xx + zz)) * sy;
+    te[offset + 6] = (yz + wx) * sy;
+    te[offset + 7] = 0;
+
+    te[offset + 8] = (xz + wy) * sz;
+    te[offset + 9] = (yz - wx) * sz;
+    te[offset + 10] = (1 - (xx + yy)) * sz;
+    te[offset + 11] = 0;
+
+    te[offset + 12] = position.x;
+    te[offset + 13] = position.y;
+    te[offset + 14] = position.z;
+    te[offset + 15] = 1;
+
+    owner.matricesTexture.needsUpdate = true;
+    owner.bvh?.move(id);
   }
 
   public updateMatrixPosition(): void {
-    this.owner.setPositionMatrixInstance(this);
+    const owner = this.owner;
+    const position = this.position;
+    const te = owner._matrixArray;
+    const id = this.id;
+    const offset = id * 16;
+
+    te[offset + 12] = position.x;
+    te[offset + 13] = position.y;
+    te[offset + 14] = position.z;
+
+    owner.matricesTexture.needsUpdate = true; 
+    owner.bvh?.move(id);
   }
 
   public setUniform(name: string, value: UniformValue): void {

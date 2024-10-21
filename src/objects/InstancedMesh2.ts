@@ -50,7 +50,7 @@ export class InstancedMesh2<
   /** @internal */ public _count: number;
   protected _maxCount: number;
   protected _material: TMaterial;
-  protected _uniformsSetCallback = new Map<string, (id: number, value: UniformValue) => void>(); // TODO optional?
+  protected _uniformsSetCallback = new Map<string, (id: number, value: UniformValue) => void>();
   protected _LOD: InstancedMeshLOD = null;
 
   public override customDepthMaterial = new MeshDepthMaterial({ depthPacking: RGBADepthPacking });
@@ -184,7 +184,7 @@ export class InstancedMesh2<
       for (let i = 0; i < count; i++) {
         const instance = instances[i];
         onUpdate(instance, i);
-        this.composeMatrixInstance(instance);
+        instance.updateMatrix();
       }
 
       return;
@@ -199,7 +199,7 @@ export class InstancedMesh2<
       _instance.quaternion.set(0, 0, 0, 1);
 
       onUpdate(_instance as Entity<TCustomData>, i);
-      this.composeMatrixInstance(_instance);
+      _instance.updateMatrix();
     }
   }
 
@@ -213,7 +213,7 @@ export class InstancedMesh2<
 
       if (onInstanceCreation) {
         onInstanceCreation(instance, i);
-        this.composeMatrixInstance(instance);
+        instance.updateMatrix();
       }
     }
   }
@@ -330,62 +330,6 @@ export class InstancedMesh2<
 
   public copyTo(id: number, target: Object3D): void {
     this.getMatrixAt(id, target.matrix).decompose(target.position, target.quaternion, target.scale);
-  }
-
-  /** @internal */
-  public composeMatrixInstance(entity: InstancedEntity): void {
-    const position = entity.position;
-    const quaternion = entity.quaternion as any;
-    const scale = entity.scale;
-    const te = this._matrixArray;
-    const id = entity.id;
-    const offset = id * 16;
-
-    const x = quaternion._x, y = quaternion._y, z = quaternion._z, w = quaternion._w;
-    const x2 = x + x, y2 = y + y, z2 = z + z;
-    const xx = x * x2, xy = x * y2, xz = x * z2;
-    const yy = y * y2, yz = y * z2, zz = z * z2;
-    const wx = w * x2, wy = w * y2, wz = w * z2;
-
-    const sx = scale.x, sy = scale.y, sz = scale.z;
-
-    te[offset + 0] = (1 - (yy + zz)) * sx;
-    te[offset + 1] = (xy + wz) * sx;
-    te[offset + 2] = (xz - wy) * sx;
-    te[offset + 3] = 0;
-
-    te[offset + 4] = (xy - wz) * sy;
-    te[offset + 5] = (1 - (xx + zz)) * sy;
-    te[offset + 6] = (yz + wx) * sy;
-    te[offset + 7] = 0;
-
-    te[offset + 8] = (xz + wy) * sz;
-    te[offset + 9] = (yz - wx) * sz;
-    te[offset + 10] = (1 - (xx + yy)) * sz;
-    te[offset + 11] = 0;
-
-    te[offset + 12] = position.x;
-    te[offset + 13] = position.y;
-    te[offset + 14] = position.z;
-    te[offset + 15] = 1;
-
-    this.matricesTexture.needsUpdate = true; // TODO 
-    this.bvh?.move(id);
-  }
-
-  /** @internal */
-  public setPositionMatrixInstance(entity: InstancedEntity): void {
-    const position = entity.position;
-    const te = this._matrixArray;
-    const id = entity.id;
-    const offset = id * 16;
-
-    te[offset + 12] = position.x;
-    te[offset + 13] = position.y;
-    te[offset + 14] = position.z;
-
-    this.matricesTexture.needsUpdate = true; // TODO 
-    this.bvh?.move(id);
   }
 
   public override raycast(raycaster: Raycaster, result: Intersection[]): void {

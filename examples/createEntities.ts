@@ -21,13 +21,13 @@ spheres.createInstances((obj, index) => {
 spheres.on('animate', (e) => {
   for (const mesh of spheres.instances) {
     mesh.position.add(mesh.dir.setLength((e.delta || 0.01) * 2));
-    mesh.updateMatrix();
+    mesh.updateMatrixPosition();
   }
 });
 
 scene.add(spheres);
 
-main.createView({scene, camera, enabled: false, onAfterRender: () => spheresCount.updateDisplay() });
+main.createView({ scene, camera, enabled: false, onAfterRender: () => spheresCount.updateDisplay() });
 
 const controls = new FlyControls(camera, main.renderer.domElement);
 controls.rollSpeed = Math.PI / 10;
