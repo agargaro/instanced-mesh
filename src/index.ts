@@ -1,4 +1,3 @@
-export * from './objects/GLInstancedBufferAttribute.js';
 export * from './objects/InstancedEntity.js';
 export * from './objects/InstancedMesh2.js';
 export * from './objects/InstancedMeshBVH.js';
