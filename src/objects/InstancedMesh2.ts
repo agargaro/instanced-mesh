@@ -1,5 +1,5 @@
 import { BVHNode } from "bvh.js";
-import { Box3, BufferAttribute, BufferGeometry, Camera, Color, ColorManagement, ColorRepresentation, DataTexture, FloatType, Frustum, InstancedBufferAttribute, Intersection, Material, Matrix4, Mesh, MeshDepthMaterial, MeshDistanceMaterial, Object3D, Object3DEventMap, RGBADepthPacking, RGFormat, Ray, Raycaster, RedFormat, Scene, ShaderMaterial, Sphere, Vector3, WebGLRenderer } from "three";
+import { Box3, BufferAttribute, BufferGeometry, Camera, Color, ColorManagement, ColorRepresentation, DataTexture, FloatType, Frustum, Group, InstancedBufferAttribute, Intersection, Material, Matrix4, Mesh, MeshDepthMaterial, MeshDistanceMaterial, Object3D, Object3DEventMap, RGBADepthPacking, RGFormat, Ray, Raycaster, RedFormat, Scene, ShaderMaterial, Sphere, Vector3, WebGLRenderer } from "three";
 import { createTexture_mat4, createTexture_vec4 } from "../utils/createTexture.js";
 import { GLInstancedBufferAttribute } from "./GLInstancedBufferAttribute.js";
 import { InstancedEntity, UniformValue, UniformValueNoNumber } from "./InstancedEntity.js";
@@ -8,7 +8,6 @@ import { InstancedMeshLOD } from "./InstancedMeshLOD.js";
 import { InstancedRenderItem, InstancedRenderList } from "./InstancedRenderList.js";
 
 // TODO: Add expand and count/maxCount when create?
-// TODO: autoUpdate (send indexes data to gpu only if changes)
 // TODO: partial texture update
 // TODO: Use BVH only for raycasting
 // TODO: patchGeometry method
@@ -45,6 +44,7 @@ export class InstancedMesh2<
   public customSort: CustomSortCallback = null;
   public raycastOnlyFrustum = false;
   public visibilityArray: boolean[];
+  /** @internal */ public _indexArray: Uint16Array | Uint32Array;
   /** @internal */ public _matrixArray: Float32Array;
   /** @internal */ public _colorArray: Float32Array = null;
   /** @internal */ public _count: number;
@@ -71,23 +71,22 @@ export class InstancedMesh2<
     this.patchMaterials(value);
   }
 
-  public override onBeforeRender(renderer: WebGLRenderer, scene: Scene, camera: Camera, geometry: BufferGeometry, material: Material): void {
+  public override onBeforeRender(renderer: WebGLRenderer, scene: Scene, camera: Camera, geometry: BufferGeometry, material: Material, group: Group): void {
+    if (!this.instanceIndex) return;
     if (!this._LOD) this.frustumCulling(camera);
-
-    // TODO update only if buffer changes
-    const gl = renderer.getContext();
-    const instanceIndex = this.instanceIndex;
-    gl.bindBuffer(gl.ARRAY_BUFFER, instanceIndex.buffer);
-    gl.bufferSubData(gl.ARRAY_BUFFER, 0, instanceIndex.array, 0, this._count);
+    this.instanceIndex.update(renderer, this._count);
   }
 
-  override onBeforeShadow(renderer: WebGLRenderer, scene: Scene, camera: Camera, shadowCamera: Camera, geometry: BufferGeometry, depthMaterial: Material): void {
-    this.onBeforeRender(renderer, null, shadowCamera, geometry, depthMaterial);
+  public override onAfterRender(renderer: WebGLRenderer, scene: Scene, camera: Camera, geometry: BufferGeometry, material: Material, group: Group): void {
+    if (!this.instanceIndex) this.initIndexAttribute(renderer);
+  }
+
+  override onBeforeShadow(renderer: WebGLRenderer, scene: Scene, camera: Camera, shadowCamera: Camera, geometry: BufferGeometry, depthMaterial: Material, group: Group): void {
+    this.onBeforeRender(renderer, null, shadowCamera, geometry, depthMaterial, group);
   }
 
   /** THIS MATERIAL AND GEOMETRY CANNOT BE SHARED */
   constructor(renderer: WebGLRenderer, count: number, geometry: TGeometry, material?: TMaterial, LOD?: InstancedMeshLOD) {
-    if (!renderer) throw new Error("'renderer' is mandatory.");
     if (!count || count < 0) throw new Error("'count' must be greater than 0.");
     if (!geometry) throw new Error("'geometry' is mandatory.");
 
@@ -102,27 +101,37 @@ export class InstancedMesh2<
     this._LOD = LOD;
     this.visibilityArray = this._LOD ? LOD.visibilityArray : new Array(count).fill(true);
 
-    this.initIndixes(renderer);
+    this.initIndexArray();
+    this.initIndexAttribute(renderer);
     this.initMatricesTexture();
 
     this.patchMaterial(this.customDepthMaterial); // TODO check if with LOD can reuse it
     this.patchMaterial(this.customDistanceMaterial);
   }
 
-  protected initIndixes(renderer: WebGLRenderer): void {
+  protected initIndexArray(): void {
     const count = this._maxCount;
-    const gl = renderer.getContext();
-    const buffer = gl.createBuffer();
     const array = new Uint32Array(count); // use uint16 if less 32k
 
     for (let i = 0; i < count; i++) {
       array[i] = i;
     }
 
-    gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
-    gl.bufferData(gl.ARRAY_BUFFER, array, gl.DYNAMIC_DRAW);
+    this._indexArray = array;
+  }
 
-    this.instanceIndex = new GLInstancedBufferAttribute(buffer, gl.UNSIGNED_INT, 1, 4, array.length, array); // UNSIGNED_SHORT usare anche questo se < 65k
+  protected initIndexAttribute(renderer: WebGLRenderer): void {
+    if (!renderer) {
+      const tempAttribute = new InstancedBufferAttribute(new Uint32Array(0), 1); // UNSIGNED_SHORT usare anche questo se < 65k
+      this.geometry.setAttribute("instanceIndex", tempAttribute);
+      this._count = 0;
+      return;
+    }
+
+    const array = this._indexArray;
+    const gl = renderer.getContext() as WebGL2RenderingContext;
+
+    this.instanceIndex = new GLInstancedBufferAttribute(gl, gl.UNSIGNED_INT, 1, 4, array); // UNSIGNED_SHORT usare anche questo se < 65k
     this.geometry.setAttribute("instanceIndex", this.instanceIndex as unknown as BufferAttribute);
   }
 
@@ -355,7 +364,7 @@ export class InstancedMesh2<
 
     if (this.bvh) {
 
-      this.bvh.raycast(raycaster, (instanceIndex) => this.checkObjectIntersection(raycaster, instanceIndex, result));
+      this.bvh.raycast(raycaster, (instanceId) => this.checkObjectIntersection(raycaster, instanceId, result));
       // TODO test with three-mesh-bvh
 
     } else {
@@ -364,7 +373,7 @@ export class InstancedMesh2<
       _sphere.copy(this.boundingSphere);
       if (!raycaster.ray.intersectsSphere(_sphere)) return;
 
-      const instancesToCheck = this.instanceIndex.array;
+      const instancesToCheck = this._indexArray;
       const checkCount = raycastFrustum ? this._count : this.instancesCount;
 
       for (let i = 0; i < checkCount; i++) {
@@ -399,7 +408,9 @@ export class InstancedMesh2<
   protected frustumCulling(camera: Camera): void {
     const sortObjects = this.sortObjects;
     const perObjectFrustumCulled = this.perObjectFrustumCulled;
-    const array = this.instanceIndex.array;
+    const array = this._indexArray;
+
+    this.instanceIndex._needsUpdate = true; // TODO improve
 
     if (!perObjectFrustumCulled) {
 
@@ -443,7 +454,7 @@ export class InstancedMesh2<
     // TODO: recompute only if at least one obj visibility changes or if sort is active
     // TODO: FIX if sorted 
 
-    const array = this.instanceIndex.array;
+    const array = this._indexArray;
     const instancesCount = this.instancesCount;
     let count = 0;
 
@@ -456,7 +467,7 @@ export class InstancedMesh2<
   }
 
   protected BVHCulling(): void {
-    const array = this.instanceIndex.array;
+    const array = this._indexArray;
     const instancesCount = this.instancesCount;
     const sortObjects = this.sortObjects;
     let count = 0;
@@ -479,7 +490,7 @@ export class InstancedMesh2<
   }
 
   protected linearCulling(): void {
-    const array = this.instanceIndex.array;
+    const array = this._indexArray;
     const bSphere = this.geometry.boundingSphere;
     const radius = bSphere.radius;
     const center = bSphere.center;
