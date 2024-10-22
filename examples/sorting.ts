@@ -53,7 +53,7 @@ const gui = new GUI();
 gui.add(instancedMesh, "maxCount").name('instances max count').disable();
 const spheresCount = gui.add(instancedMesh, 'count').name('instances rendered').disable();
 gui.add(config, "count", 0, instancedMesh.maxCount).name('instances count').onChange((v) => instancedMesh.instancesCount = v);
-gui.add(config, "animatedCount", 0, 30000).name('instances animated');
+gui.add(config, "animatedCount", 0, 10000).name('instances animated');
 gui.add(instancedMesh, "perObjectFrustumCulled");
 gui.add(instancedMesh, "sortObjects");
 gui.add(instancedMesh.material, "opacity", 0, 1).onChange((v) => {
