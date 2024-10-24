@@ -1,4 +1,4 @@
-import { ColorRepresentation, Matrix3, Matrix4, Mesh, Object3D, Quaternion, Vector2, Vector3, Vector4 } from 'three';
+import { ColorRepresentation, Euler, Matrix3, Matrix4, Mesh, Object3D, Quaternion, Vector2, Vector3, Vector4 } from 'three';
 import { InstancedMesh2 } from './InstancedMesh2.js';
 
 export type UniformValueNoNumber = Vector2 | Vector3 | Vector4 | Matrix3 | Matrix4;
@@ -10,7 +10,8 @@ export class InstancedEntity {
   public readonly owner: InstancedMesh2;
   public position = new Vector3();
   public scale = new Vector3(1, 1, 1);
-  public quaternion = new Quaternion();
+  public quaternion: Quaternion;
+  public rotation: Euler;
   protected _parent: Object3D; // TODO implement
 
   public get visible() { return this.owner.getVisibilityAt(this.id) }
@@ -25,9 +26,17 @@ export class InstancedEntity {
   public get matrix() { return this.owner.getMatrixAt(this.id) }
   public get matrixWorld() { return this.matrix.premultiply(this.owner.matrixWorld) }
 
-  constructor(owner: InstancedMesh2, id: number) {
+  constructor(owner: InstancedMesh2, id: number, useEuler: boolean) {
     this.id = id;
     this.owner = owner;
+    const quaternion = this.quaternion = new Quaternion();
+
+    if (useEuler) {
+      const rotation = this.rotation = new Euler();
+
+      rotation._onChange(() => quaternion.setFromEuler(rotation, false));
+      quaternion._onChange(() => rotation.setFromQuaternion(quaternion, undefined, false));
+    }
   }
 
   public updateMatrix(): void {
@@ -82,7 +91,7 @@ export class InstancedEntity {
     te[offset + 13] = position.y;
     te[offset + 14] = position.z;
 
-    owner.matricesTexture.needsUpdate = true; 
+    owner.matricesTexture.needsUpdate = true;
     owner.bvh?.move(id);
   }
 
@@ -94,6 +103,7 @@ export class InstancedEntity {
     target.position.copy(this.position);
     target.scale.copy(this.scale);
     target.quaternion.copy(this.quaternion);
+    if (this.rotation) target.rotation.copy(this.rotation);
   }
 
   public applyMatrix4(m: Matrix4): this {
@@ -147,6 +157,8 @@ export class InstancedEntity {
   public translateZ(distance: number): this {
     return this.translateOnAxis(_zAxis, distance);
   }
+
+  // TODO add other object3D methods
 }
 
 const _quat = new Quaternion();

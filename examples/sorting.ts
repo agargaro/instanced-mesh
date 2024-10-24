@@ -16,11 +16,11 @@ const geometry = await Asset.load<BufferGeometry>(BufferGeometryLoader, modelPat
 geometry.computeVertexNormals();
 
 const main = new Main();
-const camera = new PerspectiveCameraAuto(70).translateZ(100);
+const camera = new PerspectiveCameraAuto().translateZ(100);
 const scene = new Scene();
 
 const material = new MeshNormalMaterial();
-const instancedMesh = new InstancedMesh2(main.renderer, config.count, geometry, material);
+const instancedMesh = new InstancedMesh2(main.renderer, config.count, geometry, material, undefined, true);
 
 instancedMesh.createInstances((object) => {
   object.position.random().multiplyScalar(100).subScalar(50);
@@ -43,6 +43,7 @@ scene.on('animate', e => {
   for (let i = 0; i < config.animatedCount; i++) {
     const mesh = instancedMesh.instances[i];
     mesh.rotateOnAxis(axis, e.delta);
+    // mesh.rotation.x += e.delta;
     mesh.updateMatrix();
   }
 });
