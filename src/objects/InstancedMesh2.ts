@@ -211,7 +211,7 @@ export class InstancedMesh2<
       instance.position.set(0, 0, 0);
       instance.scale.set(1, 1, 1);
       instance.quaternion.set(0, 0, 0, 1);
-      instance?.rotation.set(0, 0, 0, undefined);
+      instance.rotation?.set(0, 0, 0);
 
       onUpdate(instance as Entity<TCustomData>, i);
       instance.updateMatrix();

@@ -8,7 +8,7 @@ const camera = new PerspectiveCameraAuto().translateZ(2);
 
 const planes = new InstancedMesh2(main.renderer, 20, new PlaneGeometry(), new MeshBasicMaterial(), undefined, true);
 
-const tempColor = new Color();
+// const tempColor = new Color();
 
 planes.createInstances((obj, index) => {
   obj.scale.multiplyScalar(1 - index * 0.05);
