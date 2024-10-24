@@ -52,6 +52,9 @@ export class InstancedMesh2<
   protected _material: TMaterial;
   protected _uniformsSetCallback = new Map<string, (id: number, value: UniformValue) => void>();
   protected _LOD: InstancedMeshLOD = null;
+  protected readonly _instancesUseEuler: boolean;
+  protected readonly _instance: InstancedEntity;
+
 
   public override customDepthMaterial = new MeshDepthMaterial({ depthPacking: RGBADepthPacking });
   public override customDistanceMaterial = new MeshDistanceMaterial();
@@ -86,7 +89,7 @@ export class InstancedMesh2<
   }
 
   /** THIS MATERIAL AND GEOMETRY CANNOT BE SHARED */
-  constructor(renderer: WebGLRenderer, count: number, geometry: TGeometry, material?: TMaterial, LOD?: InstancedMeshLOD) {
+  constructor(renderer: WebGLRenderer, count: number, geometry: TGeometry, material?: TMaterial, LOD?: InstancedMeshLOD, instancesUseEuler = false) {
     if (!count || count < 0) throw new Error("'count' must be greater than 0.");
     if (!geometry) throw new Error("'geometry' is mandatory.");
 
@@ -94,6 +97,8 @@ export class InstancedMesh2<
 
     if (this.geometry.getAttribute("instanceIndex")) throw new Error('Cannot reuse already patched geometry.');
 
+    this._instancesUseEuler = instancesUseEuler;
+    this._instance = new InstancedEntity(this, -1, instancesUseEuler);
     this.instancesCount = count;
     this._maxCount = count;
     this._count = count;
@@ -199,25 +204,27 @@ export class InstancedMesh2<
       return;
     }
 
-    (_instance as any).owner = this;
+    const instance = this._instance;
 
     for (let i = 0; i < count; i++) {
-      (_instance as any).id = i;
-      _instance.position.set(0, 0, 0);
-      _instance.scale.set(1, 1, 1);
-      _instance.quaternion.set(0, 0, 0, 1);
+      (instance as any).id = i;
+      instance.position.set(0, 0, 0);
+      instance.scale.set(1, 1, 1);
+      instance.quaternion.set(0, 0, 0, 1);
+      instance?.rotation.set(0, 0, 0, undefined);
 
-      onUpdate(_instance as Entity<TCustomData>, i);
-      _instance.updateMatrix();
+      onUpdate(instance as Entity<TCustomData>, i);
+      instance.updateMatrix();
     }
   }
 
   public createInstances(onInstanceCreation?: UpdateEntityCallback<Entity<TCustomData>>): void {
     const count = this._maxCount; // TODO we can create only first N count ?
+    const instancesUseEuler = this._instancesUseEuler;
     const instances = this.instances = new Array(count);
 
     for (let i = 0; i < count; i++) {
-      const instance = new InstancedEntity(this, i) as Entity<TCustomData>;
+      const instance = new InstancedEntity(this, i, instancesUseEuler) as Entity<TCustomData>;
       instances[i] = instance;
 
       if (onInstanceCreation) {
@@ -622,7 +629,6 @@ const _position = new Vector3();
 const _tempMat4 = new Matrix4();
 const _tempCol = new Color();
 const _tempMesh = new Mesh();
-const _instance = new InstancedEntity(undefined, -1);
 
 function ascSortIntersection(a: Intersection, b: Intersection): number {
   return a.distance - b.distance;
