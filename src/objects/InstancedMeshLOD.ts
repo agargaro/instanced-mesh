@@ -4,6 +4,7 @@ import { createTexture_mat4, createTexture_vec4 } from "../utils/createTexture.j
 import { BVHParams, Entity, InstancedMesh2, UpdateEntityCallback } from "./InstancedMesh2.js";
 import { InstancedMeshBVH } from "./InstancedMeshBVH.js";
 import { InstancedRenderItem, InstancedRenderList } from "./InstancedRenderList.js";
+import { getMaxScaleOnAxisAt, getPositionAt } from "../utils/matrixUtils.js";
 
 export interface LODLevel<TCustomData = {}> {
   distance: number;
@@ -202,6 +203,7 @@ export class InstancedMeshLOD<TCustomData = {}> extends Object3D {
   }
 
   protected BVHCulling(): void {
+    const matrixArray = this._matrixArray;
     const instancesCount = this.instancesCount;
     const count = this._countIndexes; // reuse the same? also uintarray?
     const indexes = this._indexes;
@@ -212,7 +214,7 @@ export class InstancedMeshLOD<TCustomData = {}> extends Object3D {
       this.bvh.frustumCulling(_projScreenMatrix, (node: BVHNode<{}, number>) => {
         const index = node.object;
         if (index < instancesCount && visibilityArray[index]) {
-          const distance = this.getPositionAt(index).distanceToSquared(_cameraPos);
+          const distance = getPositionAt(index, matrixArray, _position).distanceToSquared(_cameraPos);
           _renderList.push(distance, index);
         }
       });
@@ -224,7 +226,7 @@ export class InstancedMeshLOD<TCustomData = {}> extends Object3D {
         if (index < instancesCount && visibilityArray[index]) {
 
           if (level === null) {
-            const distance = this.getPositionAt(index).distanceToSquared(_cameraPos); // distance can be get by BVH
+            const distance = getPositionAt(index, matrixArray, _position).distanceToSquared(_cameraPos); // distance can be get by BVH
             level = this.getObjectIndexForDistance(distance);
           }
 
@@ -237,6 +239,7 @@ export class InstancedMeshLOD<TCustomData = {}> extends Object3D {
 
   protected linearCulling(): void {
     const sortObjects = this.sortObjects;
+    const matrixArray = this._matrixArray;
     const bSphere = this.levels[this.levels.length - 1].object.geometry.boundingSphere; // TODO check se esiste?
     const radius = bSphere.radius;
     const center = bSphere.center;
@@ -251,9 +254,9 @@ export class InstancedMeshLOD<TCustomData = {}> extends Object3D {
     for (let i = 0; i < instancesCount; i++) {
       if (!this.visibilityArray[i]) continue; // opt anche nell'altra classe
 
-      if (geometryCentered) { //TODO try to use custom sphere implementation
-        _sphere.center.copy(this.getPositionAt(i));
-        _sphere.radius = radius * this.getMaxScaleOnAxisAt(i);
+      if (geometryCentered) {
+        getPositionAt(i, matrixArray, _sphere.center);
+        _sphere.radius = radius * getMaxScaleOnAxisAt(i, matrixArray);
       } else {
         const matrix = this.getMatrixAt(i); // opt this getting only pos and scale
         _sphere.center.copy(center).applyMatrix4(matrix);
@@ -273,40 +276,7 @@ export class InstancedMeshLOD<TCustomData = {}> extends Object3D {
     }
   }
 
-  protected getPositionAt(index: number): Vector3 {
-    const array = this._matrixArray;
-    const offset = index * 16;
-    _position.x = array[offset + 12];
-    _position.y = array[offset + 13];
-    _position.z = array[offset + 14];
-    return _position;
-  }
-
-  protected getMaxScaleOnAxisAt(index: number): number {
-    const te = this._matrixArray;
-    const offset = index * 16;
-
-    const te0 = te[offset + 0];
-    const te1 = te[offset + 1];
-    const te2 = te[offset + 2];
-
-    const scaleXSq = te0 * te0 + te1 * te1 + te2 * te2;
-    const te4 = te[offset + 4];
-    const te5 = te[offset + 5];
-    const te6 = te[offset + 6];
-
-    const scaleYSq = te4 * te4 + te5 * te5 + te6 * te6;
-    const te8 = te[offset + 8];
-    const te9 = te[offset + 9];
-    const te10 = te[offset + 10];
-    const scaleZSq = te8 * te8 + te9 * te9 + te10 * te10;
-
-    return Math.sqrt(Math.max(scaleXSq, scaleYSq, scaleZSq)); // can be improved?
-
-  }
-
   // TODO edit raycast
-
 }
 
 // const _box3 = new Box3();

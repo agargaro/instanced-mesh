@@ -2,7 +2,7 @@ import { box3ToArray, BVH, BVHNode, FloatArray, HybridBuilder, onFrustumIntersec
 import { Box3, Matrix4, Raycaster, Sphere, Vector3 } from 'three';
 import { InstancedMesh2 } from './InstancedMesh2.js';
 import { InstancedMeshLOD, LODLevel } from './InstancedMeshLOD.js';
-import { getSphereFromMatrix, SphereTarget } from '../utils/matrixUtils.js';
+import { getSphereFromMatrix_centeredGeometry, SphereTarget } from '../utils/matrixUtils.js';
 
 export class InstancedMeshBVH {
     public target: InstancedMesh2 | InstancedMeshLOD;
@@ -166,7 +166,7 @@ export class InstancedMeshBVH {
     protected getBox(id: number, array: FloatArray): FloatArray {
         // TODO add check if geometry is centered. adjust ref using this._matrixArray insteaad of this.target._matrixArray
         if (this._getBoxFromSphere) {
-            const { centerX, centerY, centerZ, maxScale } = getSphereFromMatrix(id, this.target._matrixArray, this._sphereTarget);
+            const { centerX, centerY, centerZ, maxScale } = getSphereFromMatrix_centeredGeometry(id, this.target._matrixArray, this._sphereTarget);
             const radius = this._geoBoundingSphere.radius * maxScale;
             array[0] = centerX - radius;
             array[1] = centerX + radius;

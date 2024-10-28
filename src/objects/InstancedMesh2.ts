@@ -6,6 +6,7 @@ import { InstancedEntity, UniformValue, UniformValueNoNumber } from "./Instanced
 import { InstancedMeshBVH } from "./InstancedMeshBVH.js";
 import { InstancedMeshLOD } from "./InstancedMeshLOD.js";
 import { InstancedRenderItem, InstancedRenderList } from "./InstancedRenderList.js";
+import { getMaxScaleOnAxisAt, getPositionAt } from "../utils/matrixUtils.js";
 
 // TODO: Add expand and count/maxCount when create?
 // TODO: partial texture update
@@ -453,7 +454,7 @@ export class InstancedMesh2<
 
       if (this.bvh) this.BVHCulling();
       else this.linearCulling();
-      
+
     }
 
     if (sortObjects) {
@@ -480,12 +481,11 @@ export class InstancedMesh2<
     if (!this._visibilityChanged) return;
 
     const array = this._indexArray;
-    const visibilityArray = this.visibilityArray;
     const instancesCount = this.instancesCount;
     let count = 0;
 
     for (let i = 0; i < instancesCount; i++) {
-      if (visibilityArray[i]) {
+      if (this.getVisibilityAt(i)) {
         array[count++] = i;
       }
     }
@@ -496,10 +496,9 @@ export class InstancedMesh2<
 
   protected updateRenderList(): void {
     const instancesCount = this.instancesCount;
-    const visibilityArray = this.visibilityArray;
 
     for (let i = 0; i < instancesCount; i++) {
-      if (visibilityArray[i]) {
+      if (this.getVisibilityAt(i)) {
         const matrix = this.getMatrixAt(i); // TODO improve avoiding copy
         const depth = _position.setFromMatrixPosition(matrix).sub(_cameraPos).dot(_forward);
         _renderList.push(depth, i);
@@ -532,6 +531,7 @@ export class InstancedMesh2<
 
   protected linearCulling(): void {
     const array = this._indexArray;
+    const matrixArray = this._matrixArray;
     const bSphere = this.geometry.boundingSphere;
     const radius = bSphere.radius;
     const center = bSphere.center;
@@ -545,10 +545,14 @@ export class InstancedMesh2<
     for (let i = 0; i < instancesCount; i++) {
       if (!this.getVisibilityAt(i)) continue;
 
-      const matrix = this.getMatrixAt(i); // we can optimize this a little avoiding copy? what about using instances if available?
-      if (geometryCentered) _sphere.center.copy(_position.setFromMatrixPosition(matrix));
-      else _sphere.center.copy(center).applyMatrix4(matrix);
-      _sphere.radius = radius * matrix.getMaxScaleOnAxis();
+      if (geometryCentered) {
+        getPositionAt(i, matrixArray, _sphere.center);
+        _sphere.radius = radius * getMaxScaleOnAxisAt(i, matrixArray);
+      } else {
+        const matrix = this.getMatrixAt(i); // TODO: can be a little improved
+        _sphere.center.copy(center).applyMatrix4(matrix);
+        _sphere.radius = radius * matrix.getMaxScaleOnAxis();
+      }
 
       if (_frustum.intersectsSphere(_sphere)) {
         if (sortObjects) {
@@ -643,7 +647,6 @@ export class InstancedMesh2<
 
     return this;
   }
-
 }
 
 const _box3 = new Box3();

@@ -1,26 +1,22 @@
-import { Asset, Main, PerspectiveCameraAuto } from '@three.ez/main';
-import { BufferGeometry, BufferGeometryLoader, MeshNormalMaterial, Scene, Vector3 } from 'three';
+import { Main, PerspectiveCameraAuto } from '@three.ez/main';
+import { BoxGeometry, MeshNormalMaterial, Scene, Vector3 } from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { GUI } from 'three/examples/jsm/libs/lil-gui.module.min.js';
 import { InstancedMesh2 } from '../src/index.js';
 import { createRadixSort } from '../src/utils/createRadixSort.js';
 
 const config = {
-  count: 10000,
+  count: 100000,
   animatedCount: 0,
   customSort: true
 }
-
-const modelPath = 'https://threejs.org/examples/models/json/suzanne_buffergeometry.json';
-const geometry = await Asset.load<BufferGeometry>(BufferGeometryLoader, modelPath);
-geometry.computeVertexNormals();
 
 const main = new Main();
 const camera = new PerspectiveCameraAuto().translateZ(100);
 const scene = new Scene();
 
 const material = new MeshNormalMaterial();
-const instancedMesh = new InstancedMesh2(main.renderer, config.count, geometry, material, undefined, true);
+const instancedMesh = new InstancedMesh2(main.renderer, config.count, new BoxGeometry(), material);
 
 instancedMesh.createInstances((object) => {
   object.position.random().multiplyScalar(100).subScalar(50);
@@ -43,7 +39,6 @@ scene.on('animate', e => {
   for (let i = 0; i < config.animatedCount; i++) {
     const mesh = instancedMesh.instances[i];
     mesh.rotateOnAxis(axis, e.delta);
-    // mesh.rotation.x += e.delta;
     mesh.updateMatrix();
   }
 });
