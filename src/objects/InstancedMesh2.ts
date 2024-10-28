@@ -662,13 +662,13 @@ export class InstancedMesh2<
     const te0 = te[offset + 0];
     const te1 = te[offset + 1];
     const te2 = te[offset + 2];
-
     const scaleXSq = te0 * te0 + te1 * te1 + te2 * te2;
+
     const te4 = te[offset + 4];
     const te5 = te[offset + 5];
     const te6 = te[offset + 6];
-
     const scaleYSq = te4 * te4 + te5 * te5 + te6 * te6;
+    
     const te8 = te[offset + 8];
     const te9 = te[offset + 9];
     const te10 = te[offset + 10];
