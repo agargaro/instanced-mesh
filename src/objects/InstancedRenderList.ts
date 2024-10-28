@@ -4,9 +4,10 @@ export class InstancedRenderList {
     public list: InstancedRenderItem[] = [];
     protected pool: InstancedRenderItem[] = [];
 
-    public push(depth: number, index: number) {
+    public push(depth: number, index: number): void {
         const pool = this.pool;
-        const count = this.list.length;
+        const list = this.list;
+        const count = list.length;
 
         if (count >= pool.length) {
             pool.push({ depth: null, index: null, depthSort: null });
@@ -16,7 +17,7 @@ export class InstancedRenderList {
         item.depth = depth;
         item.index = index;
 
-        this.list.push(item);
+        list.push(item);
     }
 
     public reset(): void {
