@@ -39,8 +39,6 @@ export class InstancedMesh2<
   public boundingSphere: Sphere = null;
   public instancesCount: number; // TODO handle update from dynamic to static
   public bvh: InstancedMeshBVH = null;
-  public perObjectFrustumCulled = true;
-  public sortObjects = false;
   public customSort: CustomSortCallback = null;
   public raycastOnlyFrustum = false;
   public visibilityArray: boolean[];
@@ -48,13 +46,15 @@ export class InstancedMesh2<
   /** @internal */ public _matrixArray: Float32Array;
   /** @internal */ public _colorArray: Float32Array = null;
   /** @internal */ public _count: number;
+  protected _perObjectFrustumCulled = true;
+  protected _sortObjects = false;
   protected _maxCount: number;
   protected _material: TMaterial;
   protected _uniformsSetCallback = new Map<string, (id: number, value: UniformValue) => void>();
   protected _LOD: InstancedMeshLOD = null;
   protected readonly _instancesUseEuler: boolean;
   protected readonly _instance: InstancedEntity;
-
+  protected _visibilityChanged = false;
 
   public override customDepthMaterial = new MeshDepthMaterial({ depthPacking: RGBADepthPacking });
   public override customDistanceMaterial = new MeshDistanceMaterial();
@@ -66,6 +66,18 @@ export class InstancedMesh2<
 
   public get count() { return this._count }
   public get maxCount() { return this._maxCount }
+
+  public get perObjectFrustumCulled() { return this._perObjectFrustumCulled }
+  public set perObjectFrustumCulled(value: boolean) {
+    this._perObjectFrustumCulled = value;
+    this._visibilityChanged = true;
+  }
+
+  public get sortObjects() { return this._sortObjects }
+  public set sortObjects(value: boolean) {
+    this._sortObjects = value;
+    this._visibilityChanged = true;
+  }
 
   // @ts-expect-error it's defined as a property, but is overridden as an accessor.
   public override get material() { return this._material }
@@ -262,6 +274,7 @@ export class InstancedMesh2<
 
   public setVisibilityAt(id: number, visible: boolean): void {
     this.visibilityArray[id] = visible;
+    this._visibilityChanged = true;
   }
 
   public getVisibilityAt(id: number): boolean {
@@ -351,7 +364,7 @@ export class InstancedMesh2<
   public override raycast(raycaster: Raycaster, result: Intersection[]): void {
     if (this.material === undefined) return;
 
-    const raycastFrustum = this.raycastOnlyFrustum && this.perObjectFrustumCulled && !this.bvh;
+    const raycastFrustum = this.raycastOnlyFrustum && this._perObjectFrustumCulled && !this.bvh;
     _mesh.geometry = this.geometry;
     _mesh.material = this.material;
 
@@ -413,28 +426,34 @@ export class InstancedMesh2<
   }
 
   protected frustumCulling(camera: Camera): void {
-    const sortObjects = this.sortObjects;
-    const perObjectFrustumCulled = this.perObjectFrustumCulled;
+    const sortObjects = this._sortObjects;
+    const perObjectFrustumCulled = this._perObjectFrustumCulled;
     const array = this._indexArray;
 
     this.instanceIndex._needsUpdate = true; // TODO improve
 
+    if (!perObjectFrustumCulled && !sortObjects) {
+      this.updateIndexArray();
+      return;
+    }
+
+    if (sortObjects) {
+      _invMatrixWorld.copy(this.matrixWorld).invert();
+      _cameraPos.setFromMatrixPosition(camera.matrixWorld).applyMatrix4(_invMatrixWorld);
+      _forward.set(0, 0, -1).transformDirection(camera.matrixWorld).transformDirection(_invMatrixWorld);
+    }
+
     if (!perObjectFrustumCulled) {
 
-      this.updateIndexArray();
+      this.updateRenderList();
 
     } else {
 
       _projScreenMatrix.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse).multiply(this.matrixWorld);
 
-      if (sortObjects) {
-        _invMatrixWorld.copy(this.matrixWorld).invert();
-        _cameraPos.setFromMatrixPosition(camera.matrixWorld).applyMatrix4(_invMatrixWorld);
-        _forward.set(0, 0, -1).transformDirection(camera.matrixWorld).transformDirection(_invMatrixWorld);
-      }
-
       if (this.bvh) this.BVHCulling();
       else this.linearCulling();
+      
     }
 
     if (sortObjects) {
@@ -447,36 +466,51 @@ export class InstancedMesh2<
       }
 
       const list = _renderList.list;
-      for (let i = 0, l = list.length; i < l; i++) {
+      const count = list.length;
+      for (let i = 0; i < count; i++) {
         array[i] = list[i].index;
       }
 
-      this._count = list.length;
+      this._count = count;
       _renderList.reset();
-
     }
   }
 
   protected updateIndexArray(): void {
-    // TODO: recompute only if at least one obj visibility changes or if sort is active
-    // TODO: FIX if sorted 
+    if (!this._visibilityChanged) return;
 
     const array = this._indexArray;
+    const visibilityArray = this.visibilityArray;
     const instancesCount = this.instancesCount;
     let count = 0;
 
     for (let i = 0; i < instancesCount; i++) {
-      if (!this.getVisibilityAt(i)) continue;
-      array[count++] = i;
+      if (visibilityArray[i]) {
+        array[count++] = i;
+      }
     }
 
     this._count = count;
+    this._visibilityChanged = false;
+  }
+
+  protected updateRenderList(): void {
+    const instancesCount = this.instancesCount;
+    const visibilityArray = this.visibilityArray;
+
+    for (let i = 0; i < instancesCount; i++) {
+      if (visibilityArray[i]) {
+        const matrix = this.getMatrixAt(i); // TODO improve avoiding copy
+        const depth = _position.setFromMatrixPosition(matrix).sub(_cameraPos).dot(_forward);
+        _renderList.push(depth, i);
+      }
+    }
   }
 
   protected BVHCulling(): void {
     const array = this._indexArray;
     const instancesCount = this.instancesCount;
-    const sortObjects = this.sortObjects;
+    const sortObjects = this._sortObjects;
     let count = 0;
 
     this.bvh.frustumCulling(_projScreenMatrix, (node: BVHNode<{}, number>) => {
@@ -503,7 +537,7 @@ export class InstancedMesh2<
     const center = bSphere.center;
     const instancesCount = this.instancesCount;
     const geometryCentered = center.x === 0 && center.y === 0 && center.z === 0;
-    const sortObjects = this.sortObjects;
+    const sortObjects = this._sortObjects;
     let count = 0;
 
     _frustum.setFromProjectionMatrix(_projScreenMatrix);
