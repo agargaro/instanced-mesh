@@ -6,7 +6,6 @@ import { InstancedEntity, UniformValue, UniformValueNoNumber } from "./Instanced
 import { InstancedMeshBVH } from "./InstancedMeshBVH.js";
 import { InstancedMeshLOD } from "./InstancedMeshLOD.js";
 import { InstancedRenderItem, InstancedRenderList } from "./InstancedRenderList.js";
-import { getSphereFromArray_centeredGeometry } from "../utils/matrixUtils.js";
 
 // TODO: Add expand and count/maxCount when create?
 // TODO: partial texture update
@@ -546,7 +545,8 @@ export class InstancedMesh2<
       if (!this.getVisibilityAt(i)) continue;
 
       if (geometryCentered) {
-        getSphereFromArray_centeredGeometry(i, matrixArray, _sphere, radius);
+        this.getPositionAt(i, _sphere.center);
+        _sphere.radius = radius * this.getMaxScaleOnAxisAt(i);
       } else {
         const matrix = this.getMatrixAt(i); // TODO: can be a little improved
         _sphere.center.copy(center).applyMatrix4(matrix);
