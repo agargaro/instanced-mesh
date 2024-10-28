@@ -6,6 +6,7 @@ import { InstancedEntity, UniformValue, UniformValueNoNumber } from "./Instanced
 import { InstancedMeshBVH } from "./InstancedMeshBVH.js";
 import { InstancedMeshLOD } from "./InstancedMeshLOD.js";
 import { InstancedRenderItem, InstancedRenderList } from "./InstancedRenderList.js";
+import { getMaxScaleOnAxisAt, getPositionAt } from "../utils/matrixUtils.js";
 
 // TODO: Add expand and count/maxCount when create?
 // TODO: partial texture update
@@ -545,8 +546,8 @@ export class InstancedMesh2<
       if (!this.getVisibilityAt(i)) continue;
 
       if (geometryCentered) {
-        this.getPositionAt(i, _sphere.center);
-        _sphere.radius = radius * this.getMaxScaleOnAxisAt(i);
+        getPositionAt(i, matrixArray, _sphere.center);
+        _sphere.radius = radius * getMaxScaleOnAxisAt(i, matrixArray);
       } else {
         const matrix = this.getMatrixAt(i); // TODO: can be a little improved
         _sphere.center.copy(center).applyMatrix4(matrix);
@@ -645,36 +646,6 @@ export class InstancedMesh2<
     }
 
     return this;
-  }
-
-  protected getPositionAt(index: number, target: Vector3): void {
-    const array = this._matrixArray;
-    const offset = index * 16;
-    target.x = array[offset + 12];
-    target.y = array[offset + 13];
-    target.z = array[offset + 14];
-  }
-
-  protected getMaxScaleOnAxisAt(index: number): number {
-    const te = this._matrixArray;
-    const offset = index * 16;
-
-    const te0 = te[offset + 0];
-    const te1 = te[offset + 1];
-    const te2 = te[offset + 2];
-    const scaleXSq = te0 * te0 + te1 * te1 + te2 * te2;
-
-    const te4 = te[offset + 4];
-    const te5 = te[offset + 5];
-    const te6 = te[offset + 6];
-    const scaleYSq = te4 * te4 + te5 * te5 + te6 * te6;
-    
-    const te8 = te[offset + 8];
-    const te9 = te[offset + 9];
-    const te10 = te[offset + 10];
-    const scaleZSq = te8 * te8 + te9 * te9 + te10 * te10;
-
-    return Math.sqrt(Math.max(scaleXSq, scaleYSq, scaleZSq));
   }
 }
 
