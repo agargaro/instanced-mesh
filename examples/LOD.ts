@@ -1,7 +1,7 @@
 import { Main, PerspectiveCameraAuto } from '@three.ez/main';
 import { AmbientLight, DirectionalLight, MeshLambertMaterial, Scene, SphereGeometry } from 'three';
 import { OrbitControls } from 'three/examples/jsm/Addons.js';
-import { InstancedMeshLOD } from '../src/index.js';
+import { InstancedMesh2 } from '../src/index.js';
 import { PRNG } from './objects/random.js';
 
 const spawnRange = 10000;
@@ -14,14 +14,14 @@ const controls = new OrbitControls(camera, main.renderer.domElement);
 
 const scene = new Scene();
 
-const instancedMeshLOD = new InstancedMeshLOD(main.renderer, 1000000);
+const instancedMeshLOD = new InstancedMesh2(main.renderer, 1000000, new SphereGeometry(5, 30, 15), new MeshLambertMaterial({ color: 'green' }));
 
 instancedMeshLOD.addLevel(new SphereGeometry(5, 30, 15), new MeshLambertMaterial({ color: 'green' }));
 instancedMeshLOD.addLevel(new SphereGeometry(5, 20, 10), new MeshLambertMaterial({ color: 'yellow' }), 50);
 instancedMeshLOD.addLevel(new SphereGeometry(5, 10, 5), new MeshLambertMaterial({ color: 'orange' }), 500);
 instancedMeshLOD.addLevel(new SphereGeometry(5, 5, 3), new MeshLambertMaterial({ color: 'red' }), 1000);
 
-instancedMeshLOD.levels[0].object.geometry.computeBoundingSphere(); // improve
+instancedMeshLOD._levels[0].object.geometry.computeBoundingSphere(); // improve
 
 instancedMeshLOD.updateInstances((object, index) => {
   object.position.x = random.range(-spawnRange, spawnRange);

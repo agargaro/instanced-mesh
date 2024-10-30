@@ -1,101 +1,47 @@
 import { Asset, Main, PerspectiveCameraAuto } from '@three.ez/main';
-import { ACESFilmicToneMapping, AmbientLight, BufferGeometry, DirectionalLight, FogExp2, Mesh, MeshLambertMaterial, MeshStandardMaterial, PCFSoftShadowMap, PlaneGeometry, Scene, Vector3 } from 'three';
+import { ACESFilmicToneMapping, AmbientLight, BoxGeometry, BufferGeometry, DirectionalLight, FogExp2, Mesh, MeshLambertMaterial, MeshStandardMaterial, PCFSoftShadowMap, PlaneGeometry, Scene, Vector3 } from 'three';
 import { MapControls } from 'three/examples/jsm/controls/MapControls.js';
 import { GUI } from 'three/examples/jsm/libs/lil-gui.module.min.js';
 import { GLTF, GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { Sky } from 'three/examples/jsm/objects/Sky.js';
-import { InstancedMeshLOD } from '../src/index.js';
-import { PRNG } from './objects/random.js';
+import { InstancedMesh2 } from '../src/index.js';
 
 const count = 1000000;
-const terrainSize = 50000;
-const random = new PRNG(10000);
+const terrainSize = 125000;
 
-const main = new Main({ rendererParameters: { antialias: true } }); // init renderer and other stuff
+const main = new Main(); // init renderer and other stuff
 main.renderer.toneMapping = ACESFilmicToneMapping;
 main.renderer.toneMappingExposure = 0.5;
 main.renderer.shadowMap.enabled = true;
 main.renderer.shadowMap.type = PCFSoftShadowMap;
 
-const camera = new PerspectiveCameraAuto(70, 0.1, 2000);
+const camera = new PerspectiveCameraAuto(50, 0.1, 1000).translateY(1);
 const scene = new Scene();
 
-// const treeGLTF = (await Asset.load<GLTF>(GLTFLoader, 'tree.glb')).scene.children[0] as Mesh<BufferGeometry, MeshStandardMaterial>;
+const treeGLTF = (await Asset.load<GLTF>(GLTFLoader, 'tree.glb')).scene.children[0] as Mesh<BufferGeometry, MeshStandardMaterial>;
 
-// const trees = new InstancedMesh2(main.renderer, count, treeGLTF.geometry, treeGLTF.material);
-// trees.castShadow = true;
-// trees.cursor = 'pointer';
+const trees = new InstancedMesh2(main.renderer, count, treeGLTF.geometry, treeGLTF.material);
+trees.castShadow = true;
+trees.cursor = 'pointer';
 
-// trees.createInstances((obj, index) => {
-//   obj.position.setX(Math.random() * terrainSize - terrainSize / 2).setZ(Math.random() * terrainSize - terrainSize / 2);
-//   obj.scale.setScalar(Math.random() * 0.1 + 0.1);
-//   obj.rotateY(Math.random() * Math.PI * 2).rotateZ(Math.random() * 0.3 - 0.15);
-// });
+trees.addLevel(new BoxGeometry(100, 1000, 100), new MeshLambertMaterial(), 100);
+trees._levels[0].object.geometry.computeBoundingSphere(); // improve
+trees._levels[1].object.castShadow = true;
 
-// trees.computeBVH();
-
-// trees.on('click', (e) => {
-//   trees.instances[e.intersection.instanceId].visible = false;
-// });
-
-
-
-const treeHigh = (await Asset.load<GLTF>(GLTFLoader, 'tree.glb')).scene.children[0];
-const treeMid = (await Asset.load<GLTF>(GLTFLoader, 'tree_mid.glb')).scene.children[0];
-const treeLow = (await Asset.load<GLTF>(GLTFLoader, 'tree_far.glb')).scene.children[0];
-
-const trunkHigh = treeHigh.children[0] as Mesh<BufferGeometry, MeshStandardMaterial>;
-const trunkMid = treeMid.children[0] as Mesh<BufferGeometry, MeshStandardMaterial>;
-const trunkLow = treeLow.children[0] as Mesh<BufferGeometry, MeshStandardMaterial>;
-
-const leavesHigh = treeHigh.children[1] as Mesh<BufferGeometry, MeshStandardMaterial>;
-const leavesMid = treeMid.children[1] as Mesh<BufferGeometry, MeshStandardMaterial>;
-const leavesLow = treeLow.children[1] as Mesh<BufferGeometry, MeshStandardMaterial>;
-
-leavesHigh.material.transparent = leavesMid.material.transparent = leavesLow.material.transparent = false;
-leavesHigh.material.alphaTest = leavesMid.material.alphaTest = leavesLow.material.alphaTest = 0.2;
-leavesHigh.material.depthWrite = leavesMid.material.depthWrite = leavesLow.material.depthWrite = true;
-
-const trunkLOD = new InstancedMeshLOD(main.renderer, count);
-trunkLOD.addLevel(trunkHigh.geometry, trunkHigh.material);
-trunkLOD.addLevel(trunkMid.geometry, trunkMid.material, 100);
-trunkLOD.addLevel(trunkLow.geometry, trunkLow.material, 200);
-trunkLOD.levels[0].object.geometry.computeBoundingSphere(); // improve
-
-const leavesLOD = new InstancedMeshLOD(main.renderer, count);
-leavesLOD.addLevel(leavesHigh.geometry, leavesHigh.material);
-// leavesLOD.addLevel(leavesMid.geometry, leavesMid.material, 500);
-leavesLOD.addLevel(leavesLow.geometry, leavesLow.material, 500);
-leavesLOD.levels[0].object.geometry.computeBoundingSphere(); // improve
-
-trunkLOD.levels[0].object.castShadow = true;
-trunkLOD.levels[1].object.castShadow = true;
-trunkLOD.levels[2].object.castShadow = true;
-leavesLOD.levels[0].object.castShadow = true;
-leavesLOD.levels[1].object.castShadow = true;
-// leavesLOD.levels[2].object.castShadow = true;
-
-
-
-trunkLOD.updateInstances((obj, index) => {
-  obj.position.x = random.range(-terrainSize / 2, terrainSize / 2);
-  obj.position.z = random.range(-terrainSize / 2, terrainSize / 2);
-  obj.scale.multiplyScalar(random.range(5, 10));
-  obj.rotateY(random.range(0, Math.PI * 2)).rotateZ(random.range(-0.1, 0.1));
+trees.createInstances((obj, index) => {
+  obj.position.setX(Math.random() * terrainSize - terrainSize / 2).setZ(Math.random() * terrainSize - terrainSize / 2);
+  obj.scale.setScalar(Math.random() * 0.01 + 0.01);
+  obj.rotateY(Math.random() * Math.PI * 2).rotateZ(Math.random() * 0.3 - 0.15);
 });
 
-for (let i = 0; i < leavesLOD.maxCount; i++) {
-  leavesLOD.setMatrixAt(i, trunkLOD.getMatrixAt(i))
-}
+trees.computeBVH();
 
-trunkLOD.computeBVH();
-leavesLOD.computeBVH(); // it would be better use only one BVH
-
-
-
+trees.on('click', (e) => {
+  trees.instances[e.intersection.instanceId].visible = false;
+});
 
 const ground = new Mesh(new PlaneGeometry(terrainSize, terrainSize, 10, 10), new MeshLambertMaterial({ color: 0x004622 }));
-// ground.interceptByRaycaster = false;
+ground.interceptByRaycaster = false;
 ground.receiveShadow = true;
 ground.rotateX(Math.PI / -2);
 
@@ -132,20 +78,19 @@ dirLight.on('animate', (e) => {
   dirLight.target.position.copy(camera.position).sub(sunOffset);
 });
 
-scene.add(sky, trunkLOD, leavesLOD, ground, new AmbientLight(), dirLight, dirLight.target);
+scene.add(sky, trees, ground, new AmbientLight(), dirLight, dirLight.target);
 
-// main.createView({ scene, camera, onAfterRender: () => treeCount.updateDisplay() });
-main.createView({ scene, camera, enabled: false });
+main.createView({ scene, camera, enabled: false, onAfterRender: () => treeCount.updateDisplay() });
 
 const controls = new MapControls(camera, main.renderer.domElement);
 controls.maxPolarAngle = Math.PI / 2.1;
 controls.minDistance = 10;
 controls.maxDistance = 100;
 controls.panSpeed = 10;
-controls.target.set(-5, 20, 20);
+controls.target.set(-25, 10, 10);
 controls.update();
 
 const gui = new GUI();
-// gui.add(trees.instances as any, 'length').name('instances total').disable();
-// const treeCount = gui.add(trees, 'count').name('instances rendered').disable();
-gui.add(camera, 'far', 500, 10000, 100).name('camera far').onChange(() => camera.updateProjectionMatrix());
+gui.add(trees.instances as any, 'length').name('instances total').disable();
+const treeCount = gui.add(trees, 'count').name('instances rendered').disable();
+gui.add(camera, 'far', 2000, 10000, 100).name('camera far').onChange(() => camera.updateProjectionMatrix());

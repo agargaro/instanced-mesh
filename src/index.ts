@@ -9,7 +9,6 @@ export * from './shaders/chunks/instanced_pars_vertex.glsl.js';
 export * from './shaders/chunks/instanced_vertex.glsl.js';
 export * from './utils/createTexture.js';
 export * from './utils/createRadixSort.js';
-export * from './objects/InstancedMeshLOD.js';
 
 /** @internal */ 
 declare module 'three' {

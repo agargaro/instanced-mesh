@@ -1,21 +1,37 @@
 import { BVHNode } from "bvh.js";
 import { Box3, BufferAttribute, BufferGeometry, Camera, Color, ColorManagement, ColorRepresentation, DataTexture, FloatType, Frustum, Group, InstancedBufferAttribute, Intersection, Material, Matrix4, Mesh, MeshDepthMaterial, MeshDistanceMaterial, Object3D, Object3DEventMap, RGBADepthPacking, RGFormat, Ray, Raycaster, RedFormat, Scene, ShaderMaterial, Sphere, Vector3, WebGLRenderer } from "three";
 import { createTexture_mat4, createTexture_vec4 } from "../utils/createTexture.js";
+import { getMaxScaleOnAxisAt, getPositionAt } from "../utils/matrixUtils.js";
 import { GLInstancedBufferAttribute } from "./GLInstancedBufferAttribute.js";
 import { InstancedEntity, UniformValue, UniformValueNoNumber } from "./InstancedEntity.js";
 import { InstancedMeshBVH } from "./InstancedMeshBVH.js";
-import { InstancedMeshLOD } from "./InstancedMeshLOD.js";
 import { InstancedRenderItem, InstancedRenderList } from "./InstancedRenderList.js";
-import { getMaxScaleOnAxisAt, getPositionAt } from "../utils/matrixUtils.js";
 
 // TODO: Add expand and count/maxCount when create?
 // TODO: partial texture update
 // TODO: Use BVH only for raycasting
 // TODO: patchGeometry method
 
+// TODO SOON: sync all textures
+
+
+// TODO SOON: instancedMeshLOD rendering first nearest levels, look out to transparent
+// TODO SOON: fix shadow
+// TODO SOON: shared matrices and BVH
+// public raycastOnlyFrustum = false;
+// public override customDepthMaterial = new MeshDepthMaterial({ depthPacking: RGBADepthPacking });
+// public override customDistanceMaterial = new MeshDistanceMaterial();
+
+
 export type Entity<T> = InstancedEntity & T;
 export type UpdateEntityCallback<T> = (obj: Entity<T>, index: number) => void;
 export type CustomSortCallback = (list: InstancedRenderItem[]) => void;
+
+export interface LODLevel<TCustomData = {}> {
+  distance: number;
+  hysteresis: number;
+  object: InstancedMesh2<TCustomData>;
+}
 
 export interface BVHParams {
   margin?: number;
@@ -52,10 +68,14 @@ export class InstancedMesh2<
   protected _maxCount: number;
   protected _material: TMaterial;
   protected _uniformsSetCallback = new Map<string, (id: number, value: UniformValue) => void>();
-  protected _LOD: InstancedMeshLOD = null;
+  protected _LOD: InstancedMesh2;
   protected readonly _instancesUseEuler: boolean;
   protected readonly _instance: InstancedEntity;
   protected _visibilityChanged = false;
+
+  protected _levels: LODLevel<TCustomData>[] = null;
+  protected _indexes: (Uint16Array | Uint32Array)[] = null; // TODO can be also uin16
+  protected _countIndexes: number[] = null;
 
   public override customDepthMaterial = new MeshDepthMaterial({ depthPacking: RGBADepthPacking });
   public override customDistanceMaterial = new MeshDistanceMaterial();
@@ -89,7 +109,10 @@ export class InstancedMesh2<
 
   public override onBeforeRender(renderer: WebGLRenderer, scene: Scene, camera: Camera, geometry: BufferGeometry, material: Material, group: Group): void {
     if (!this.instanceIndex) return;
-    if (!this._LOD) this.frustumCulling(camera);
+
+    if (this._levels?.length > 0) this.frustumCullingLOD(camera);
+    else if (!this._LOD) this.frustumCulling(camera);
+
     this.instanceIndex.update(renderer, this._count);
   }
 
@@ -102,7 +125,7 @@ export class InstancedMesh2<
   }
 
   /** THIS MATERIAL AND GEOMETRY CANNOT BE SHARED */
-  constructor(renderer: WebGLRenderer, count: number, geometry: TGeometry, material?: TMaterial, LOD?: InstancedMeshLOD, instancesUseEuler = false) {
+  constructor(renderer: WebGLRenderer, count: number, geometry: TGeometry, material?: TMaterial, LOD?: InstancedMesh2, instancesUseEuler = false) {
     if (!count || count < 0) throw new Error("'count' must be greater than 0.");
     if (!geometry) throw new Error("'geometry' is mandatory.");
 
@@ -117,7 +140,7 @@ export class InstancedMesh2<
     this._count = count;
     this._material = material;
     this._LOD = LOD;
-    this.visibilityArray = this._LOD ? LOD.visibilityArray : new Array(count).fill(true);
+    this.visibilityArray = LOD?.visibilityArray ?? new Array(count).fill(true);
 
     this.initIndexArray();
     this.initIndexAttribute(renderer);
@@ -341,7 +364,6 @@ export class InstancedMesh2<
     const len = objectInfluences.length + 1; // morphBaseInfluence + all influences
 
     if (this.morphTexture === null) {
-      // TODO try to use createTexture_float instead?
       this.morphTexture = new DataTexture(new Float32Array(len * this._maxCount), len, this._maxCount, RedFormat, FloatType);
     }
 
@@ -508,6 +530,7 @@ export class InstancedMesh2<
 
   protected BVHCulling(): void {
     const array = this._indexArray;
+    const matrixArray = this._matrixArray;
     const instancesCount = this.instancesCount;
     const sortObjects = this._sortObjects;
     let count = 0;
@@ -517,7 +540,7 @@ export class InstancedMesh2<
 
       if (index < instancesCount && this.getVisibilityAt(index)) {
         if (sortObjects) {
-          _position.setFromMatrixPosition(this.getMatrixAt(index))
+          getPositionAt(index, matrixArray, _position);
           const depth = _position.sub(_cameraPos).dot(_forward); // this can be less precise than sphere.center
           _renderList.push(depth, index);
         } else {
@@ -646,6 +669,177 @@ export class InstancedMesh2<
     }
 
     return this;
+  }
+
+  public addLevel(geometry: BufferGeometry, material: Material, distance = 0, hysteresis = 0): this {
+    if (this._LOD) {
+      console.error("Cannot create LOD for this InstancedMesh2.");
+      return;
+    }
+
+    if (!this._levels) {
+      this._levels = [{ distance: 0, hysteresis, object: this }];
+      this._countIndexes = [0];
+      this._indexes = [this._indexArray];
+    }
+
+    const levels = this._levels;
+    // TODO fix renderer param
+    const object = new InstancedMesh2<TCustomData>(undefined, this._maxCount, geometry, material, this);
+    distance = Math.abs(distance ** 2); // to avoid to use Math.sqrt every time
+    let index;
+
+    for (index = 0; index < levels.length; index++) {
+      if (distance < levels[index].distance) break;
+    }
+
+    levels.splice(index, 0, { distance, hysteresis, object });
+
+    this._countIndexes.push(0);
+    this._indexes.splice(index, 0, object._indexArray);
+
+    this.add(object); // TODO handle render order
+    return this;
+  }
+
+  public getObjectLODIndexForDistance(distance: number): number {
+    const levels = this._levels;
+
+    for (let i = levels.length - 1; i > 0; i--) {
+      const level = levels[i];
+      const levelDistance = level.distance - (level.distance * level.hysteresis);
+      if (distance >= levelDistance) return i;
+    }
+
+    return 0;
+  }
+
+  protected frustumCullingLOD(camera: Camera): void {
+    const levels = this._levels;
+    const count = this._countIndexes;
+
+    for (let i = 0; i < levels.length; i++) {
+      count[i] = 0;
+
+      if (levels[i].object.instanceIndex) {
+        levels[i].object.instanceIndex._needsUpdate = true; // TODO improve
+      }
+    }
+
+    _projScreenMatrix.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse).multiply(this.matrixWorld);
+    _invMatrixWorld.copy(this.matrixWorld).invert();
+    _cameraPos.setFromMatrixPosition(camera.matrixWorld).applyMatrix4(_invMatrixWorld);
+
+    if (this.bvh) this.BVHCullingLOD();
+    else this.linearCullingLOD();
+
+    if (this.sortObjects) {
+      const customSort = this.customSort;
+      const list = _renderList.list;
+      const indexes = this._indexes;
+      let levelIndex = 0;
+      let levelDistance = levels[1].distance;
+
+      if (customSort === null) {
+        list.sort(!(levels[0].object.material as Material)?.transparent ? sortOpaque : sortTransparent);
+      } else {
+        customSort(list);
+      }
+
+      for (let i = 0, l = list.length; i < l; i++) {
+        const item = list[i];
+
+        if (item.depth > levelDistance) { // > or >= ? capire in base all'altro algoritmo
+          levelIndex++;
+          levelDistance = levels[levelIndex + 1]?.distance ?? Infinity;
+          // for fixa
+        }
+
+        indexes[levelIndex][count[levelIndex]++] = item.index; // TODO COUNT ARRAY QUI NON SERVE
+      }
+
+      _renderList.reset();
+    }
+
+    for (let i = 0; i < levels.length; i++) {
+      const object = levels[i].object;
+      object.visible = i === 0 || count[i] > 0;
+      object._count = count[i];
+    }
+  }
+
+  protected BVHCullingLOD(): void {
+    const matrixArray = this._matrixArray;
+    const instancesCount = this.instancesCount;
+    const count = this._countIndexes; // reuse the same? also uintarray?
+    const indexes = this._indexes;
+    const visibilityArray = this.visibilityArray;
+
+    if (this.sortObjects) { // todo refactor
+
+      this.bvh.frustumCulling(_projScreenMatrix, (node: BVHNode<{}, number>) => {
+        const index = node.object;
+        if (index < instancesCount && visibilityArray[index]) {
+          const distance = getPositionAt(index, matrixArray, _position).distanceToSquared(_cameraPos);
+          _renderList.push(distance, index);
+        }
+      });
+
+    } else {
+
+      this.bvh.frustumCullingLOD(_projScreenMatrix, _cameraPos, this._levels, (node: BVHNode<{}, number>, level: number) => {
+        const index = node.object;
+        if (index < instancesCount && visibilityArray[index]) {
+
+          if (level === null) {
+            const distance = getPositionAt(index, matrixArray, _position).distanceToSquared(_cameraPos); // distance can be get by BVH
+            level = this.getObjectLODIndexForDistance(distance);
+          }
+
+          indexes[level][count[level]++] = index;
+        }
+      });
+
+    }
+  }
+
+  protected linearCullingLOD(): void {
+    const sortObjects = this.sortObjects;
+    const matrixArray = this._matrixArray;
+    const bSphere = this._levels[this._levels.length - 1].object.geometry.boundingSphere; // TODO check se esiste?
+    const radius = bSphere.radius;
+    const center = bSphere.center;
+    const instancesCount = this.instancesCount;
+    const geometryCentered = center.x === 0 && center.y === 0 && center.z === 0;
+
+    _frustum.setFromProjectionMatrix(_projScreenMatrix);
+
+    const count = this._countIndexes;
+    const indexes = this._indexes;
+
+    for (let i = 0; i < instancesCount; i++) {
+      if (!this.visibilityArray[i]) continue; // opt anche nell'altra classe
+
+      if (geometryCentered) {
+        getPositionAt(i, matrixArray, _sphere.center);
+        _sphere.radius = radius * getMaxScaleOnAxisAt(i, matrixArray);
+      } else {
+        const matrix = this.getMatrixAt(i); // opt this getting only pos and scale
+        _sphere.center.copy(center).applyMatrix4(matrix);
+        _sphere.radius = radius * matrix.getMaxScaleOnAxis();
+      }
+
+      if (_frustum.intersectsSphere(_sphere)) {
+        const distance = _sphere.center.distanceToSquared(_cameraPos);
+
+        if (sortObjects) {
+          _renderList.push(distance, i);
+        } else {
+          const levelIndex = this.getObjectLODIndexForDistance(distance);
+          indexes[levelIndex][count[levelIndex]++] = i;
+        }
+      }
+    }
   }
 }
 
