@@ -12,7 +12,7 @@ import { InstancedRenderItem } from "./utils/InstancedRenderList.js";
 
 // TODO SOON: sync all textures
 // TODO SOON: instancedMeshLOD rendering first nearest levels, look out to transparent
-// TODO SOON: fix shadow
+
 // public raycastOnlyFrustum = false;
 // public override customDepthMaterial = new MeshDepthMaterial({ depthPacking: RGBADepthPacking });
 // public override customDistanceMaterial = new MeshDistanceMaterial();
@@ -53,6 +53,7 @@ export class InstancedMesh2<
   public customSort: CustomSortCallback = null;
   public raycastOnlyFrustum = false;
   public visibilityArray: boolean[];
+  public levels: LODLevel<TCustomData>[] = null;
   /** @internal */ public _indexArray: Uint16Array | Uint32Array;
   /** @internal */ public _matrixArray: Float32Array;
   /** @internal */ public _colorArray: Float32Array = null;
@@ -67,7 +68,6 @@ export class InstancedMesh2<
   protected readonly _instance: InstancedEntity;
   /** @internal */ public _visibilityChanged = false;
 
-  protected _levels: LODLevel<TCustomData>[] = null;
   protected _indexes: (Uint16Array | Uint32Array)[] = null; // TODO can be also uin16
   protected _countIndexes: number[] = null;
 
@@ -104,7 +104,7 @@ export class InstancedMesh2<
   public override onBeforeRender(renderer: WebGLRenderer, scene: Scene, camera: Camera, geometry: BufferGeometry, material: Material, group: Group): void {
     if (!this.instanceIndex) return;
 
-    if (this._levels?.length > 0) this.frustumCullingLOD(camera);
+    if (this.levels?.length > 0) this.frustumCullingLOD(camera);
     else if (!this._LOD) this.frustumCulling(camera);
 
     this.instanceIndex.update(renderer, this._count);
@@ -457,49 +457,6 @@ export class InstancedMesh2<
     }
 
     return this;
-  }
-
-  public addLevel(geometry: BufferGeometry, material: Material, distance = 0, hysteresis = 0): this {
-    if (this._LOD) {
-      console.error("Cannot create LOD for this InstancedMesh2.");
-      return;
-    }
-
-    if (!this._levels) {
-      this._levels = [{ distance: 0, hysteresis, object: this }];
-      this._countIndexes = [0];
-      this._indexes = [this._indexArray];
-    }
-
-    const levels = this._levels;
-    // TODO fix renderer param
-    const object = new InstancedMesh2<TCustomData>(undefined, this._maxCount, geometry, material, this);
-    distance = Math.abs(distance ** 2); // to avoid to use Math.sqrt every time
-    let index;
-
-    for (index = 0; index < levels.length; index++) {
-      if (distance < levels[index].distance) break;
-    }
-
-    levels.splice(index, 0, { distance, hysteresis, object });
-
-    this._countIndexes.push(0);
-    this._indexes.splice(index, 0, object._indexArray);
-
-    this.add(object); // TODO handle render order
-    return this;
-  }
-
-  public getObjectLODIndexForDistance(distance: number): number {
-    const levels = this._levels;
-
-    for (let i = levels.length - 1; i > 0; i--) {
-      const level = levels[i];
-      const levelDistance = level.distance - (level.distance * level.hysteresis);
-      if (distance >= levelDistance) return i;
-    }
-
-    return 0;
   }
 }
 

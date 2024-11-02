@@ -28,7 +28,7 @@ const _cameraPos = new Vector3();
 const _position = new Vector3();
 const _sphere = new Sphere();
 
-InstancedMesh2.prototype.frustumCulling = function (camera: Camera): void {
+InstancedMesh2.prototype.frustumCulling = function(camera: Camera): void {
   const sortObjects = this._sortObjects;
   const perObjectFrustumCulled = this._perObjectFrustumCulled;
   const array = this._indexArray;
@@ -79,7 +79,7 @@ InstancedMesh2.prototype.frustumCulling = function (camera: Camera): void {
   }
 }
 
-InstancedMesh2.prototype.updateIndexArray = function (): void {
+InstancedMesh2.prototype.updateIndexArray = function(): void {
   if (!this._visibilityChanged) return;
 
   const array = this._indexArray;
@@ -96,7 +96,7 @@ InstancedMesh2.prototype.updateIndexArray = function (): void {
   this._visibilityChanged = false;
 }
 
-InstancedMesh2.prototype.updateRenderList = function (): void {
+InstancedMesh2.prototype.updateRenderList = function(): void {
   const instancesCount = this.instancesCount;
 
   for (let i = 0; i < instancesCount; i++) {
@@ -108,7 +108,7 @@ InstancedMesh2.prototype.updateRenderList = function (): void {
   }
 }
 
-InstancedMesh2.prototype.BVHCulling = function (): void {
+InstancedMesh2.prototype.BVHCulling = function(): void {
   const array = this._indexArray;
   const matrixArray = this._matrixArray;
   const instancesCount = this.instancesCount;
@@ -132,7 +132,7 @@ InstancedMesh2.prototype.BVHCulling = function (): void {
   this._count = count;
 }
 
-InstancedMesh2.prototype.linearCulling = function (): void {
+InstancedMesh2.prototype.linearCulling = function(): void {
   const array = this._indexArray;
   const matrixArray = this._matrixArray;
   const bSphere = this.geometry.boundingSphere;
@@ -170,8 +170,8 @@ InstancedMesh2.prototype.linearCulling = function (): void {
   this._count = count;
 }
 
-InstancedMesh2.prototype.frustumCullingLOD = function (camera: Camera): void {
-  const levels = this._levels;
+InstancedMesh2.prototype.frustumCullingLOD = function(camera: Camera): void {
+  const levels = this.levels;
   const count = this._countIndexes;
 
   for (let i = 0; i < levels.length; i++) {
@@ -224,7 +224,7 @@ InstancedMesh2.prototype.frustumCullingLOD = function (camera: Camera): void {
   }
 }
 
-InstancedMesh2.prototype.BVHCullingLOD = function (): void {
+InstancedMesh2.prototype.BVHCullingLOD = function(): void {
   const matrixArray = this._matrixArray;
   const instancesCount = this.instancesCount;
   const count = this._countIndexes; // reuse the same? also uintarray?
@@ -243,7 +243,7 @@ InstancedMesh2.prototype.BVHCullingLOD = function (): void {
 
   } else {
 
-    this.bvh.frustumCullingLOD(_projScreenMatrix, _cameraPos, this._levels, (node: BVHNode<{}, number>, level: number) => {
+    this.bvh.frustumCullingLOD(_projScreenMatrix, _cameraPos, this.levels, (node: BVHNode<{}, number>, level: number) => {
       const index = node.object;
       if (index < instancesCount && visibilityArray[index]) {
 
@@ -259,10 +259,10 @@ InstancedMesh2.prototype.BVHCullingLOD = function (): void {
   }
 }
 
-InstancedMesh2.prototype.linearCullingLOD = function (): void {
+InstancedMesh2.prototype.linearCullingLOD = function(): void {
   const sortObjects = this.sortObjects;
   const matrixArray = this._matrixArray;
-  const bSphere = this._levels[this._levels.length - 1].object.geometry.boundingSphere; // TODO check se esiste?
+  const bSphere = this.levels[this.levels.length - 1].object.geometry.boundingSphere; // TODO check se esiste?
   const radius = bSphere.radius;
   const center = bSphere.center;
   const instancesCount = this.instancesCount;
