@@ -1,9 +1,9 @@
 import { BVHNode } from "bvh.js";
 import { Camera, Frustum, Material, Matrix4, Sphere, Vector3 } from "three";
-import { getMaxScaleOnAxisAt, getPositionAt } from "../utils/matrixUtils.js";
-import { sortOpaque, sortTransparent } from "../utils/sortingUtils.js";
+import { getMaxScaleOnAxisAt, getPositionAt } from "../utils/MatrixUtils.js";
+import { sortOpaque, sortTransparent } from "../utils/SortingUtils.js";
 import { InstancedMesh2 } from "./InstancedMesh2.js";
-import { InstancedRenderList } from "./InstancedRenderList.js";
+import { InstancedRenderList } from "../utils/InstancedRenderList.js";
 
 declare module './InstancedMesh2.js' {
   interface InstancedMesh2 {

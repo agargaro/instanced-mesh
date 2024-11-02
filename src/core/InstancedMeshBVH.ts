@@ -1,7 +1,7 @@
 import { box3ToArray, BVH, BVHNode, FloatArray, HybridBuilder, onFrustumIntersectionCallback, onFrustumIntersectionLODCallback, onIntersectionCallback, onIntersectionRayCallback, vec3ToArray, WebGLCoordinateSystem } from 'bvh.js';
 import { Box3, Matrix4, Raycaster, Sphere, Vector3 } from 'three';
 import { InstancedMesh2, LODLevel } from './InstancedMesh2.js';
-import { getSphereFromMatrix_centeredGeometry, SphereTarget } from '../utils/matrixUtils.js';
+import { getSphereFromMatrix_centeredGeometry, SphereTarget } from '../utils/MatrixUtils.js';
 
 export class InstancedMeshBVH {
     public target: InstancedMesh2;
