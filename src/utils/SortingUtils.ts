@@ -1,5 +1,5 @@
 import { Intersection, Material } from "three";
-import { InstancedRenderItem } from "./InstancedRenderList.js";
+import { InstancedRenderItem } from "../core/utils/InstancedRenderList.js";
 import { radixSort, RadixSortOptions } from "three/examples/jsm/utils/SortUtils.js";
 import { InstancedMesh2 } from "../core/InstancedMesh2.js";
 

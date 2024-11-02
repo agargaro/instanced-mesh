@@ -1,8 +1,8 @@
 import { Intersection, Matrix4, Mesh, Ray, Raycaster, Sphere, Vector3 } from "three";
-import { InstancedMesh2 } from "./InstancedMesh2.js";
-import { ascSortIntersection } from "../utils/SortingUtils.js";
+import { InstancedMesh2 } from "../InstancedMesh2.js";
+import { ascSortIntersection } from "../../utils/SortingUtils.js";
 
-declare module './InstancedMesh2.js' {
+declare module '../InstancedMesh2.js' {
     interface InstancedMesh2 {
       /** @internal */ checkObjectIntersection(raycaster: Raycaster, objectIndex: number, result: Intersection[]): void;
     }

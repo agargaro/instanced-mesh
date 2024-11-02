@@ -1,9 +1,9 @@
 import { Box3, BufferAttribute, BufferGeometry, Camera, Color, ColorManagement, ColorRepresentation, DataTexture, FloatType, Group, InstancedBufferAttribute, Material, Matrix4, Mesh, MeshDepthMaterial, MeshDistanceMaterial, Object3D, Object3DEventMap, RGBADepthPacking, RGFormat, RedFormat, Scene, ShaderMaterial, Sphere, WebGLRenderer } from "three";
-import { createTexture_mat4, createTexture_vec4 } from "../utils/CreateTextureUtils.js";
-import { GLInstancedBufferAttribute } from "../utils/GLInstancedBufferAttribute.js";
+import { createTexture_mat4, createTexture_vec4 } from "../utils/CreateTexture.js";
+import { GLInstancedBufferAttribute } from "./utils/GLInstancedBufferAttribute.js";
 import { InstancedEntity, UniformValue, UniformValueNoNumber } from "./InstancedEntity.js";
 import { InstancedMeshBVH } from "./InstancedMeshBVH.js";
-import { InstancedRenderItem } from "../utils/InstancedRenderList.js";
+import { InstancedRenderItem } from "./utils/InstancedRenderList.js";
 
 // TODO: Add expand and count/maxCount when create?
 // TODO: partial texture update
