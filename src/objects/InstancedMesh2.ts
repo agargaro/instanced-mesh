@@ -1,11 +1,9 @@
-import { BVHNode } from "bvh.js";
-import { Box3, BufferAttribute, BufferGeometry, Camera, Color, ColorManagement, ColorRepresentation, DataTexture, FloatType, Frustum, Group, InstancedBufferAttribute, Intersection, Material, Matrix4, Mesh, MeshDepthMaterial, MeshDistanceMaterial, Object3D, Object3DEventMap, RGBADepthPacking, RGFormat, Ray, Raycaster, RedFormat, Scene, ShaderMaterial, Sphere, Vector3, WebGLRenderer } from "three";
+import { Box3, BufferAttribute, BufferGeometry, Camera, Color, ColorManagement, ColorRepresentation, DataTexture, FloatType, Group, InstancedBufferAttribute, Material, Matrix4, Mesh, MeshDepthMaterial, MeshDistanceMaterial, Object3D, Object3DEventMap, RGBADepthPacking, RGFormat, RedFormat, Scene, ShaderMaterial, Sphere, WebGLRenderer } from "three";
 import { createTexture_mat4, createTexture_vec4 } from "../utils/createTexture.js";
-import { getMaxScaleOnAxisAt, getPositionAt } from "../utils/matrixUtils.js";
 import { GLInstancedBufferAttribute } from "./GLInstancedBufferAttribute.js";
 import { InstancedEntity, UniformValue, UniformValueNoNumber } from "./InstancedEntity.js";
 import { InstancedMeshBVH } from "./InstancedMeshBVH.js";
-import { InstancedRenderItem, InstancedRenderList } from "./InstancedRenderList.js";
+import { InstancedRenderItem } from "./InstancedRenderList.js";
 
 // TODO: Add expand and count/maxCount when create?
 // TODO: partial texture update
@@ -13,15 +11,11 @@ import { InstancedRenderItem, InstancedRenderList } from "./InstancedRenderList.
 // TODO: patchGeometry method
 
 // TODO SOON: sync all textures
-
-
 // TODO SOON: instancedMeshLOD rendering first nearest levels, look out to transparent
 // TODO SOON: fix shadow
-// TODO SOON: shared matrices and BVH
 // public raycastOnlyFrustum = false;
 // public override customDepthMaterial = new MeshDepthMaterial({ depthPacking: RGBADepthPacking });
 // public override customDistanceMaterial = new MeshDistanceMaterial();
-
 
 export type Entity<T> = InstancedEntity & T;
 export type UpdateEntityCallback<T> = (obj: Entity<T>, index: number) => void;
@@ -63,15 +57,15 @@ export class InstancedMesh2<
   /** @internal */ public _matrixArray: Float32Array;
   /** @internal */ public _colorArray: Float32Array = null;
   /** @internal */ public _count: number;
-  protected _perObjectFrustumCulled = true;
-  protected _sortObjects = false;
-  protected _maxCount: number;
+  /** @internal */ public _perObjectFrustumCulled = true;
+  /** @internal */ public _sortObjects = false;
+  /** @internal */ public _maxCount: number;
   protected _material: TMaterial;
   protected _uniformsSetCallback = new Map<string, (id: number, value: UniformValue) => void>();
   protected _LOD: InstancedMesh2;
   protected readonly _instancesUseEuler: boolean;
   protected readonly _instance: InstancedEntity;
-  protected _visibilityChanged = false;
+  /** @internal */ public _visibilityChanged = false;
 
   protected _levels: LODLevel<TCustomData>[] = null;
   protected _indexes: (Uint16Array | Uint32Array)[] = null; // TODO can be also uin16
@@ -384,212 +378,6 @@ export class InstancedMesh2<
     this.getMatrixAt(id, target.matrix).decompose(target.position, target.quaternion, target.scale);
   }
 
-  public override raycast(raycaster: Raycaster, result: Intersection[]): void {
-    if (this.material === undefined) return;
-
-    const raycastFrustum = this.raycastOnlyFrustum && this._perObjectFrustumCulled && !this.bvh;
-    _mesh.geometry = this.geometry;
-    _mesh.material = this.material;
-
-    const originalRay = raycaster.ray;
-    const originalNear = raycaster.near;
-    const originalFar = raycaster.far;
-
-    _invMatrixWorld.copy(this.matrixWorld).invert();
-
-    _worldScale.setFromMatrixScale(this.matrixWorld);
-    _direction.copy(raycaster.ray.direction).multiply(_worldScale);
-    const scaleFactor = _direction.length();
-
-    raycaster.ray = _ray.copy(raycaster.ray).applyMatrix4(_invMatrixWorld);
-    raycaster.near /= scaleFactor;
-    raycaster.far /= scaleFactor;
-
-    if (this.bvh) {
-
-      this.bvh.raycast(raycaster, (instanceId) => this.checkObjectIntersection(raycaster, instanceId, result));
-      // TODO test with three-mesh-bvh
-
-    } else {
-
-      if (this.boundingSphere === null) this.computeBoundingSphere();
-      _sphere.copy(this.boundingSphere);
-      if (!raycaster.ray.intersectsSphere(_sphere)) return;
-
-      const instancesToCheck = this._indexArray;
-      const checkCount = raycastFrustum ? this._count : this.instancesCount;
-
-      for (let i = 0; i < checkCount; i++) {
-        this.checkObjectIntersection(raycaster, instancesToCheck[i], result);
-      }
-
-    }
-
-    result.sort(ascSortIntersection);
-
-    raycaster.ray = originalRay;
-    raycaster.near = originalNear;
-    raycaster.far = originalFar;
-  }
-
-  protected checkObjectIntersection(raycaster: Raycaster, objectIndex: number, result: Intersection[]): void {
-    if (objectIndex > this.instancesCount || !this.getVisibilityAt(objectIndex)) return;
-
-    this.getMatrixAt(objectIndex, _mesh.matrixWorld);
-
-    _mesh.raycast(raycaster, _intersections);
-
-    for (const intersect of _intersections) {
-      intersect.instanceId = objectIndex;
-      intersect.object = this;
-      result.push(intersect);
-    }
-
-    _intersections.length = 0;
-  }
-
-  protected frustumCulling(camera: Camera): void {
-    const sortObjects = this._sortObjects;
-    const perObjectFrustumCulled = this._perObjectFrustumCulled;
-    const array = this._indexArray;
-
-    this.instanceIndex._needsUpdate = true; // TODO improve
-
-    if (!perObjectFrustumCulled && !sortObjects) {
-      this.updateIndexArray();
-      return;
-    }
-
-    if (sortObjects) {
-      _invMatrixWorld.copy(this.matrixWorld).invert();
-      _cameraPos.setFromMatrixPosition(camera.matrixWorld).applyMatrix4(_invMatrixWorld);
-      _forward.set(0, 0, -1).transformDirection(camera.matrixWorld).transformDirection(_invMatrixWorld);
-    }
-
-    if (!perObjectFrustumCulled) {
-
-      this.updateRenderList();
-
-    } else {
-
-      _projScreenMatrix.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse).multiply(this.matrixWorld);
-
-      if (this.bvh) this.BVHCulling();
-      else this.linearCulling();
-
-    }
-
-    if (sortObjects) {
-      const customSort = this.customSort;
-
-      if (customSort === null) {
-        _renderList.list.sort(!(this.material as Material)?.transparent ? sortOpaque : sortTransparent);
-      } else {
-        customSort(_renderList.list);
-      }
-
-      const list = _renderList.list;
-      const count = list.length;
-      for (let i = 0; i < count; i++) {
-        array[i] = list[i].index;
-      }
-
-      this._count = count;
-      _renderList.reset();
-    }
-  }
-
-  protected updateIndexArray(): void {
-    if (!this._visibilityChanged) return;
-
-    const array = this._indexArray;
-    const instancesCount = this.instancesCount;
-    let count = 0;
-
-    for (let i = 0; i < instancesCount; i++) {
-      if (this.getVisibilityAt(i)) {
-        array[count++] = i;
-      }
-    }
-
-    this._count = count;
-    this._visibilityChanged = false;
-  }
-
-  protected updateRenderList(): void {
-    const instancesCount = this.instancesCount;
-
-    for (let i = 0; i < instancesCount; i++) {
-      if (this.getVisibilityAt(i)) {
-        const matrix = this.getMatrixAt(i); // TODO improve avoiding copy
-        const depth = _position.setFromMatrixPosition(matrix).sub(_cameraPos).dot(_forward);
-        _renderList.push(depth, i);
-      }
-    }
-  }
-
-  protected BVHCulling(): void {
-    const array = this._indexArray;
-    const matrixArray = this._matrixArray;
-    const instancesCount = this.instancesCount;
-    const sortObjects = this._sortObjects;
-    let count = 0;
-
-    this.bvh.frustumCulling(_projScreenMatrix, (node: BVHNode<{}, number>) => {
-      const index = node.object;
-
-      if (index < instancesCount && this.getVisibilityAt(index)) {
-        if (sortObjects) {
-          getPositionAt(index, matrixArray, _position);
-          const depth = _position.sub(_cameraPos).dot(_forward); // this can be less precise than sphere.center
-          _renderList.push(depth, index);
-        } else {
-          array[count++] = index;
-        }
-      }
-    });
-
-    this._count = count;
-  }
-
-  protected linearCulling(): void {
-    const array = this._indexArray;
-    const matrixArray = this._matrixArray;
-    const bSphere = this.geometry.boundingSphere;
-    const radius = bSphere.radius;
-    const center = bSphere.center;
-    const instancesCount = this.instancesCount;
-    const geometryCentered = center.x === 0 && center.y === 0 && center.z === 0;
-    const sortObjects = this._sortObjects;
-    let count = 0;
-
-    _frustum.setFromProjectionMatrix(_projScreenMatrix);
-
-    for (let i = 0; i < instancesCount; i++) {
-      if (!this.getVisibilityAt(i)) continue;
-
-      if (geometryCentered) {
-        getPositionAt(i, matrixArray, _sphere.center);
-        _sphere.radius = radius * getMaxScaleOnAxisAt(i, matrixArray);
-      } else {
-        const matrix = this.getMatrixAt(i); // TODO: can be a little improved
-        _sphere.center.copy(center).applyMatrix4(matrix);
-        _sphere.radius = radius * matrix.getMaxScaleOnAxis();
-      }
-
-      if (_frustum.intersectsSphere(_sphere)) {
-        if (sortObjects) {
-          const depth = _position.subVectors(_sphere.center, _cameraPos).dot(_forward);
-          _renderList.push(depth, i);
-        } else {
-          array[count++] = i;
-        }
-      }
-    }
-
-    this._count = count;
-  }
-
   public computeBoundingBox(): void { // if bvh present, can override? TODO
     const geometry = this.geometry;
     const count = this.instancesCount;
@@ -713,162 +501,10 @@ export class InstancedMesh2<
 
     return 0;
   }
-
-  protected frustumCullingLOD(camera: Camera): void {
-    const levels = this._levels;
-    const count = this._countIndexes;
-
-    for (let i = 0; i < levels.length; i++) {
-      count[i] = 0;
-
-      if (levels[i].object.instanceIndex) {
-        levels[i].object.instanceIndex._needsUpdate = true; // TODO improve
-      }
-    }
-
-    _projScreenMatrix.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse).multiply(this.matrixWorld);
-    _invMatrixWorld.copy(this.matrixWorld).invert();
-    _cameraPos.setFromMatrixPosition(camera.matrixWorld).applyMatrix4(_invMatrixWorld);
-
-    if (this.bvh) this.BVHCullingLOD();
-    else this.linearCullingLOD();
-
-    if (this.sortObjects) {
-      const customSort = this.customSort;
-      const list = _renderList.list;
-      const indexes = this._indexes;
-      let levelIndex = 0;
-      let levelDistance = levels[1].distance;
-
-      if (customSort === null) {
-        list.sort(!(levels[0].object.material as Material)?.transparent ? sortOpaque : sortTransparent);
-      } else {
-        customSort(list);
-      }
-
-      for (let i = 0, l = list.length; i < l; i++) {
-        const item = list[i];
-
-        if (item.depth > levelDistance) { // > or >= ? capire in base all'altro algoritmo
-          levelIndex++;
-          levelDistance = levels[levelIndex + 1]?.distance ?? Infinity;
-          // for fixa
-        }
-
-        indexes[levelIndex][count[levelIndex]++] = item.index; // TODO COUNT ARRAY QUI NON SERVE
-      }
-
-      _renderList.reset();
-    }
-
-    for (let i = 0; i < levels.length; i++) {
-      const object = levels[i].object;
-      object.visible = i === 0 || count[i] > 0;
-      object._count = count[i];
-    }
-  }
-
-  protected BVHCullingLOD(): void {
-    const matrixArray = this._matrixArray;
-    const instancesCount = this.instancesCount;
-    const count = this._countIndexes; // reuse the same? also uintarray?
-    const indexes = this._indexes;
-    const visibilityArray = this.visibilityArray;
-
-    if (this.sortObjects) { // todo refactor
-
-      this.bvh.frustumCulling(_projScreenMatrix, (node: BVHNode<{}, number>) => {
-        const index = node.object;
-        if (index < instancesCount && visibilityArray[index]) {
-          const distance = getPositionAt(index, matrixArray, _position).distanceToSquared(_cameraPos);
-          _renderList.push(distance, index);
-        }
-      });
-
-    } else {
-
-      this.bvh.frustumCullingLOD(_projScreenMatrix, _cameraPos, this._levels, (node: BVHNode<{}, number>, level: number) => {
-        const index = node.object;
-        if (index < instancesCount && visibilityArray[index]) {
-
-          if (level === null) {
-            const distance = getPositionAt(index, matrixArray, _position).distanceToSquared(_cameraPos); // distance can be get by BVH
-            level = this.getObjectLODIndexForDistance(distance);
-          }
-
-          indexes[level][count[level]++] = index;
-        }
-      });
-
-    }
-  }
-
-  protected linearCullingLOD(): void {
-    const sortObjects = this.sortObjects;
-    const matrixArray = this._matrixArray;
-    const bSphere = this._levels[this._levels.length - 1].object.geometry.boundingSphere; // TODO check se esiste?
-    const radius = bSphere.radius;
-    const center = bSphere.center;
-    const instancesCount = this.instancesCount;
-    const geometryCentered = center.x === 0 && center.y === 0 && center.z === 0;
-
-    _frustum.setFromProjectionMatrix(_projScreenMatrix);
-
-    const count = this._countIndexes;
-    const indexes = this._indexes;
-
-    for (let i = 0; i < instancesCount; i++) {
-      if (!this.visibilityArray[i]) continue; // opt anche nell'altra classe
-
-      if (geometryCentered) {
-        getPositionAt(i, matrixArray, _sphere.center);
-        _sphere.radius = radius * getMaxScaleOnAxisAt(i, matrixArray);
-      } else {
-        const matrix = this.getMatrixAt(i); // opt this getting only pos and scale
-        _sphere.center.copy(center).applyMatrix4(matrix);
-        _sphere.radius = radius * matrix.getMaxScaleOnAxis();
-      }
-
-      if (_frustum.intersectsSphere(_sphere)) {
-        const distance = _sphere.center.distanceToSquared(_cameraPos);
-
-        if (sortObjects) {
-          _renderList.push(distance, i);
-        } else {
-          const levelIndex = this.getObjectLODIndexForDistance(distance);
-          indexes[levelIndex][count[levelIndex]++] = i;
-        }
-      }
-    }
-  }
 }
 
 const _box3 = new Box3();
 const _sphere = new Sphere();
-const _frustum = new Frustum();
-const _projScreenMatrix = new Matrix4();
-const _intersections: Intersection[] = [];
-const _mesh = new Mesh();
-const _ray = new Ray();
-const _direction = new Vector3();
-const _worldScale = new Vector3();
-const _invMatrixWorld = new Matrix4();
-const _renderList = new InstancedRenderList();
-const _forward = new Vector3();
-const _cameraPos = new Vector3();
-const _position = new Vector3();
 const _tempMat4 = new Matrix4();
 const _tempCol = new Color();
 const _tempMesh = new Mesh();
-
-function ascSortIntersection(a: Intersection, b: Intersection): number {
-  return a.distance - b.distance;
-}
-
-function sortOpaque(a: InstancedRenderItem, b: InstancedRenderItem) {
-  return a.depth - b.depth;
-}
-
-function sortTransparent(a: InstancedRenderItem, b: InstancedRenderItem) {
-  return b.depth - a.depth;
-}

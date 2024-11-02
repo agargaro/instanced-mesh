@@ -1,4 +1,6 @@
 export * from './objects/GLInstancedBufferAttribute.js';
+export * from './objects/FrustumCulling.js';
+export * from './objects/Raycasting.js';
 export * from './objects/InstancedEntity.js';
 export * from './objects/InstancedMesh2.js';
 export * from './objects/InstancedMeshBVH.js';

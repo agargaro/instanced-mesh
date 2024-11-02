@@ -1,11 +1,10 @@
 import { box3ToArray, BVH, BVHNode, FloatArray, HybridBuilder, onFrustumIntersectionCallback, onFrustumIntersectionLODCallback, onIntersectionCallback, onIntersectionRayCallback, vec3ToArray, WebGLCoordinateSystem } from 'bvh.js';
 import { Box3, Matrix4, Raycaster, Sphere, Vector3 } from 'three';
-import { InstancedMesh2 } from './InstancedMesh2.js';
-import { InstancedMeshLOD, LODLevel } from './InstancedMeshLOD.js';
+import { InstancedMesh2, LODLevel } from './InstancedMesh2.js';
 import { getSphereFromMatrix_centeredGeometry, SphereTarget } from '../utils/matrixUtils.js';
 
 export class InstancedMeshBVH {
-    public target: InstancedMesh2 | InstancedMeshLOD;
+    public target: InstancedMesh2;
     public geoBoundingBox: Box3;
     public bvh: BVH<{}, number>;
     public map = new Map<number, BVHNode<{}, number>>();
@@ -20,13 +19,11 @@ export class InstancedMeshBVH {
     protected _geoBoundingSphere: Sphere = null;
     protected _sphereTarget: SphereTarget = null;
 
-    constructor(target: InstancedMesh2 | InstancedMeshLOD, margin = 0, highPrecision = false, getBoxFromSphere = false) {
+    constructor(target: InstancedMesh2, margin = 0, highPrecision = false, getBoxFromSphere = false) {
         this._margin = margin;
         this.target = target;
 
-        const geometry = (target as InstancedMeshLOD).isInstancedMeshLOD ?
-        (target as InstancedMeshLOD).levels[(target as InstancedMeshLOD).levels.length - 1].object.geometry : // TODO improve this
-        (target as InstancedMesh2).geometry;
+        const geometry = target.geometry;
 
         if (!geometry.boundingBox) geometry.computeBoundingBox();
         this.geoBoundingBox = geometry.boundingBox;
