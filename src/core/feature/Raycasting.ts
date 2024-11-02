@@ -16,7 +16,7 @@ const _worldScale = new Vector3();
 const _invMatrixWorld = new Matrix4();
 const _sphere = new Sphere();
 
-InstancedMesh2.prototype.raycast = function (raycaster: Raycaster, result: Intersection[]): void {
+InstancedMesh2.prototype.raycast = function(raycaster: Raycaster, result: Intersection[]): void {
     if (this.material === undefined) return;
 
     const raycastFrustum = this.raycastOnlyFrustum && this._perObjectFrustumCulled && !this.bvh;
@@ -64,7 +64,7 @@ InstancedMesh2.prototype.raycast = function (raycaster: Raycaster, result: Inter
     raycaster.far = originalFar;
 }
 
-InstancedMesh2.prototype.checkObjectIntersection = function (raycaster: Raycaster, objectIndex: number, result: Intersection[]): void {
+InstancedMesh2.prototype.checkObjectIntersection = function(raycaster: Raycaster, objectIndex: number, result: Intersection[]): void {
     if (objectIndex > this.instancesCount || !this.getVisibilityAt(objectIndex)) return;
 
     this.getMatrixAt(objectIndex, _mesh.matrixWorld);
