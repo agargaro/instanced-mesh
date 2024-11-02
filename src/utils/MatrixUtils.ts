@@ -34,6 +34,7 @@ export function getSphereFromMatrix_centeredGeometry(id: number, array: FloatArr
     return target;
 }
 
+// TODO move it
 export function getPositionAt(index: number, array: FloatArray, target: Vector3): Vector3 {
     const offset = index * 16;
     target.x = array[offset + 12];

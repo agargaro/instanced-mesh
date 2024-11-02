@@ -1,7 +1,9 @@
-import { Material } from "three";
+import { Intersection, Material } from "three";
+import { InstancedRenderItem } from "../core/utils/InstancedRenderList.js";
 import { radixSort, RadixSortOptions } from "three/examples/jsm/utils/SortUtils.js";
-import { InstancedMesh2 } from "../objects/InstancedMesh2.js";
-import { InstancedRenderItem } from "../objects/InstancedRenderList.js";
+import { InstancedMesh2 } from "../core/InstancedMesh2.js";
+
+// REFERENCE: https://github.com/mrdoob/three.js/blob/master/examples/webgl_mesh_batch.html#L291
 
 export function createRadixSort(target: InstancedMesh2): typeof radixSort<InstancedRenderItem> {
 
@@ -41,4 +43,17 @@ export function createRadixSort(target: InstancedMesh2): typeof radixSort<Instan
     }
 }
 
-// REFERENCE: https://github.com/mrdoob/three.js/blob/master/examples/webgl_mesh_batch.html#L291
+/** @internal */
+export function sortOpaque(a: InstancedRenderItem, b: InstancedRenderItem) {
+    return a.depth - b.depth;
+}
+
+/** @internal */
+export function sortTransparent(a: InstancedRenderItem, b: InstancedRenderItem) {
+    return b.depth - a.depth;
+}
+
+/** @internal */
+export function ascSortIntersection(a: Intersection, b: Intersection): number {
+    return a.distance - b.distance;
+}
