@@ -7,7 +7,7 @@ import { Sky } from 'three/examples/jsm/objects/Sky.js';
 import { InstancedMesh2 } from '../src/index.js';
 
 const count = 1000000;
-const terrainSize = 50000;
+const terrainSize = 20000;
 
 const main = new Main(); // init renderer and other stuff
 main.renderer.toneMapping = ACESFilmicToneMapping;
@@ -63,10 +63,10 @@ scene.on('animate', (e) => scene.fog.color.setHSL(0, 0, sun.y));
 const dirLight = new DirectionalLight();
 dirLight.castShadow = true;
 dirLight.shadow.mapSize.set(1024, 1024);
-dirLight.shadow.camera.left = -500;
-dirLight.shadow.camera.right = 500;
-dirLight.shadow.camera.top = 500;
-dirLight.shadow.camera.bottom = -500;
+dirLight.shadow.camera.left = -300;
+dirLight.shadow.camera.right = 300;
+dirLight.shadow.camera.top = 300;
+dirLight.shadow.camera.bottom = -300;
 dirLight.shadow.camera.far = 2000;
 dirLight.shadow.camera.updateProjectionMatrix();
 

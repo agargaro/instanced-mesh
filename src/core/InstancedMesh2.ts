@@ -101,23 +101,6 @@ export class InstancedMesh2<
     this.patchMaterials(value);
   }
 
-  public override onBeforeRender(renderer: WebGLRenderer, scene: Scene, camera: Camera, geometry: BufferGeometry, material: Material, group: Group): void {
-    if (!this.instanceIndex) return;
-
-    if (this.levels?.length > 0) this.frustumCullingLOD(camera);
-    else if (!this._LOD) this.frustumCulling(camera);
-
-    this.instanceIndex.update(renderer, this._count);
-  }
-
-  public override onAfterRender(renderer: WebGLRenderer, scene: Scene, camera: Camera, geometry: BufferGeometry, material: Material, group: Group): void {
-    if (!this.instanceIndex) this.initIndexAttribute(renderer);
-  }
-
-  override onBeforeShadow(renderer: WebGLRenderer, scene: Scene, camera: Camera, shadowCamera: Camera, geometry: BufferGeometry, depthMaterial: Material, group: Group): void {
-    this.onBeforeRender(renderer, null, shadowCamera, geometry, depthMaterial, group);
-  }
-
   /** THIS MATERIAL AND GEOMETRY CANNOT BE SHARED */
   constructor(renderer: WebGLRenderer, count: number, geometry: TGeometry, material?: TMaterial, LOD?: InstancedMesh2, instancesUseEuler = false) {
     if (!count || count < 0) throw new Error("'count' must be greater than 0.");
@@ -142,6 +125,18 @@ export class InstancedMesh2<
 
     this.patchMaterial(this.customDepthMaterial); // TODO check if with LOD can reuse it
     this.patchMaterial(this.customDistanceMaterial);
+  }
+
+  public override onBeforeShadow(renderer: WebGLRenderer, scene: Scene, camera: Camera, shadowCamera: Camera, geometry: BufferGeometry, depthMaterial: Material, group: Group): void {
+    if (this.instanceIndex) this.performFrustumCulling(renderer, shadowCamera, camera);
+  }
+
+  public override onBeforeRender(renderer: WebGLRenderer, scene: Scene, camera: Camera, geometry: BufferGeometry, material: Material, group: Group): void {
+    if (this.instanceIndex) this.performFrustumCulling(renderer, camera);
+  }
+
+  public override onAfterRender(renderer: WebGLRenderer, scene: Scene, camera: Camera, geometry: BufferGeometry, material: Material, group: Group): void {
+    if (!this.instanceIndex) this.initIndexAttribute(renderer);
   }
 
   protected initIndexArray(): void {
