@@ -24,7 +24,7 @@ const trees = new InstancedMesh2(main.renderer, count, treeGLTF.geometry, treeGL
 trees.castShadow = true;
 trees.cursor = 'pointer';
 
-trees.addLevel(new BoxGeometry(100, 1000, 100), new MeshLambertMaterial(), 100);
+trees.addLOD(new BoxGeometry(100, 1000, 100), new MeshLambertMaterial(), 100);
 trees.levels[0].object.geometry.computeBoundingSphere(); // improve
 trees.levels[1].object.castShadow = true;
 

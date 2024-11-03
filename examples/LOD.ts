@@ -16,10 +16,10 @@ const scene = new Scene();
 
 const instancedMeshLOD = new InstancedMesh2(main.renderer, 1000000, new SphereGeometry(5, 30, 15), new MeshLambertMaterial({ color: 'green' }));
 
-instancedMeshLOD.addLevel(new SphereGeometry(5, 30, 15), new MeshLambertMaterial({ color: 'green' }));
-instancedMeshLOD.addLevel(new SphereGeometry(5, 20, 10), new MeshLambertMaterial({ color: 'yellow' }), 50);
-instancedMeshLOD.addLevel(new SphereGeometry(5, 10, 5), new MeshLambertMaterial({ color: 'orange' }), 500);
-instancedMeshLOD.addLevel(new SphereGeometry(5, 5, 3), new MeshLambertMaterial({ color: 'red' }), 1000);
+instancedMeshLOD.addLOD(new SphereGeometry(5, 30, 15), new MeshLambertMaterial({ color: 'green' }));
+instancedMeshLOD.addLOD(new SphereGeometry(5, 20, 10), new MeshLambertMaterial({ color: 'yellow' }), 50);
+instancedMeshLOD.addLOD(new SphereGeometry(5, 10, 5), new MeshLambertMaterial({ color: 'orange' }), 500);
+instancedMeshLOD.addLOD(new SphereGeometry(5, 5, 3), new MeshLambertMaterial({ color: 'red' }), 1000);
 
 instancedMeshLOD.levels[0].object.geometry.computeBoundingSphere(); // improve
 

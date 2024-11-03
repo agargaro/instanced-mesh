@@ -54,6 +54,7 @@ export class InstancedMesh2<
   public raycastOnlyFrustum = false;
   public visibilityArray: boolean[];
   public levels: LODLevel<TCustomData>[] = null;
+  public shadowLevels: LODLevel<TCustomData>[] = null;
   /** @internal */ public _indexArray: Uint16Array | Uint32Array;
   /** @internal */ public _matrixArray: Float32Array;
   /** @internal */ public _colorArray: Float32Array = null;

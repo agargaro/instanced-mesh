@@ -2,10 +2,11 @@ import { BVHNode } from "bvh.js";
 import { Camera, Frustum, Material, Matrix4, Sphere, Vector3, WebGLRenderer } from "three";
 import { getMaxScaleOnAxisAt, getPositionAt } from "../../utils/MatrixUtils.js";
 import { sortOpaque, sortTransparent } from "../../utils/SortingUtils.js";
-import { InstancedMesh2 } from "../InstancedMesh2.js";
+import { InstancedMesh2, LODLevel } from "../InstancedMesh2.js";
 import { InstancedRenderList } from "../utils/InstancedRenderList.js";
 
 // TODO: fix shadowMap LOD sorting objects?
+// TODO SOON: set all visibility to false before compputing... if shadowLOD has different geometries is important.
 
 declare module '../InstancedMesh2.js' {
   interface InstancedMesh2 {
@@ -17,9 +18,9 @@ declare module '../InstancedMesh2.js' {
     /** @internal */ BVHCulling(): void;
     /** @internal */ linearCulling(): void;
 
-    /** @internal */ frustumCullingLOD(camera: Camera, cameraLOD?: Camera): void;
-    /** @internal */ BVHCullingLOD(sortObjects: boolean): void;
-    /** @internal */ linearCullingLOD(sortObjects: boolean): void;
+    /** @internal */ frustumCullingLOD(levels: LODLevel[], camera: Camera, cameraLOD: Camera): void;
+    /** @internal */ BVHCullingLOD(levels: LODLevel[], sortObjects: boolean): void;
+    /** @internal */ linearCullingLOD(levels: LODLevel[], sortObjects: boolean): void;
   }
 }
 
@@ -34,9 +35,12 @@ const _position = new Vector3();
 const _sphere = new Sphere();
 
 InstancedMesh2.prototype.performFrustumCulling = function (renderer: WebGLRenderer, camera: Camera, cameraLOD = camera): void {
-  if (this.levels?.length > 0) this.frustumCullingLOD(camera, cameraLOD);
+  const isShadowRendering = camera !== cameraLOD;
+  const levels = !isShadowRendering ? this.levels : (this.shadowLevels ?? this.levels);
+
+  if (levels?.length > 0) this.frustumCullingLOD(levels, camera, cameraLOD);
   else if (!this._LOD) this.frustumCulling(camera);
-  
+
   this.instanceIndex.update(renderer, this._count);
 }
 
@@ -182,8 +186,7 @@ InstancedMesh2.prototype.linearCulling = function (): void {
   this._count = count;
 }
 
-InstancedMesh2.prototype.frustumCullingLOD = function (camera: Camera, cameraLOD = camera): void {
-  const levels = this.levels;
+InstancedMesh2.prototype.frustumCullingLOD = function (levels: LODLevel[], camera: Camera, cameraLOD: Camera): void {
   const count = this._countIndexes;
   const isShadowRendering = camera !== cameraLOD;
   const sortObjects = !isShadowRendering && this._sortObjects;
@@ -201,8 +204,8 @@ InstancedMesh2.prototype.frustumCullingLOD = function (camera: Camera, cameraLOD
   _cameraPos.setFromMatrixPosition(camera.matrixWorld).applyMatrix4(_invMatrixWorld);
   _cameraLODPos.setFromMatrixPosition(cameraLOD.matrixWorld).applyMatrix4(_invMatrixWorld);
 
-  if (this.bvh) this.BVHCullingLOD(sortObjects);
-  else this.linearCullingLOD(sortObjects);
+  if (this.bvh) this.BVHCullingLOD(levels, sortObjects);
+  else this.linearCullingLOD(levels, sortObjects);
 
   if (sortObjects) {
     const customSort = this.customSort;
@@ -239,7 +242,7 @@ InstancedMesh2.prototype.frustumCullingLOD = function (camera: Camera, cameraLOD
   }
 }
 
-InstancedMesh2.prototype.BVHCullingLOD = function (sortObjects: boolean): void {
+InstancedMesh2.prototype.BVHCullingLOD = function (levels: LODLevel[], sortObjects: boolean): void {
   const matrixArray = this._matrixArray;
   const instancesCount = this.instancesCount;
   const count = this._countIndexes; // reuse the same? also uintarray?
@@ -258,13 +261,13 @@ InstancedMesh2.prototype.BVHCullingLOD = function (sortObjects: boolean): void {
 
   } else {
 
-    this.bvh.frustumCullingLOD(_projScreenMatrix, _cameraLODPos, this.levels, (node: BVHNode<{}, number>, level: number) => {
+    this.bvh.frustumCullingLOD(_projScreenMatrix, _cameraLODPos, levels, (node: BVHNode<{}, number>, level: number) => {
       const index = node.object;
       if (index < instancesCount && visibilityArray[index]) {
 
         if (level === null) {
           const distance = getPositionAt(index, matrixArray, _position).distanceToSquared(_cameraLODPos); // distance can be get by BVH
-          level = this.getObjectLODIndexForDistance(distance);
+          level = this.getObjectLODIndexForDistance(levels, distance);
         }
 
         indexes[level][count[level]++] = index;
@@ -274,9 +277,9 @@ InstancedMesh2.prototype.BVHCullingLOD = function (sortObjects: boolean): void {
   }
 }
 
-InstancedMesh2.prototype.linearCullingLOD = function (sortObjects: boolean): void {
+InstancedMesh2.prototype.linearCullingLOD = function (levels: LODLevel[], sortObjects: boolean): void {
   const matrixArray = this._matrixArray;
-  const bSphere = this.levels[this.levels.length - 1].object.geometry.boundingSphere; // TODO check se esiste?
+  const bSphere = this.geometry.boundingSphere; // TODO check se esiste?
   const radius = bSphere.radius;
   const center = bSphere.center;
   const instancesCount = this.instancesCount;
@@ -305,7 +308,7 @@ InstancedMesh2.prototype.linearCullingLOD = function (sortObjects: boolean): voi
       if (sortObjects) {
         _renderList.push(distance, i);
       } else {
-        const levelIndex = this.getObjectLODIndexForDistance(distance);
+        const levelIndex = this.getObjectLODIndexForDistance(levels, distance);
         indexes[levelIndex][count[levelIndex]++] = i;
       }
     }
