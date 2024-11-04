@@ -1,7 +1,8 @@
 import { box3ToArray, BVH, BVHNode, FloatArray, HybridBuilder, onFrustumIntersectionCallback, onFrustumIntersectionLODCallback, onIntersectionCallback, onIntersectionRayCallback, vec3ToArray, WebGLCoordinateSystem } from 'bvh.js';
 import { Box3, Matrix4, Raycaster, Sphere, Vector3 } from 'three';
-import { InstancedMesh2, LODLevel } from './InstancedMesh2.js';
 import { getSphereFromMatrix_centeredGeometry, SphereTarget } from '../utils/MatrixUtils.js';
+import { LODLevel } from './feature/LOD.js';
+import { InstancedMesh2 } from './InstancedMesh2.js';
 
 export class InstancedMeshBVH {
     public target: InstancedMesh2;
@@ -23,7 +24,7 @@ export class InstancedMeshBVH {
         this._margin = margin;
         this.target = target;
 
-        const geometry = target.geometry;
+        const geometry = target._geometry;
 
         if (!geometry.boundingBox) geometry.computeBoundingBox();
         this.geoBoundingBox = geometry.boundingBox;

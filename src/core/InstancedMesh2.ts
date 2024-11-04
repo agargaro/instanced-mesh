@@ -9,7 +9,6 @@ import { LODInfo } from "./feature/LOD.js";
 // TODO: Add expand and count/maxCount when create?
 // TODO: partial texture update
 // TODO: Use BVH only for raycasting
-// TODO: patchGeometry method
 
 // TODO SOON: sync all textures
 // TODO SOON: instancedMeshLOD rendering first nearest levels, look out to transparent
@@ -34,7 +33,7 @@ export class InstancedMesh2<
   TEventMap extends Object3DEventMap = Object3DEventMap
 > extends Mesh<TGeometry, TMaterial, TEventMap> {
 
-  public override type = 'InstancedMesh2';
+  public override readonly type = 'InstancedMesh2';
   public readonly isInstancedMesh2 = true;
   public instances: Entity<TCustomData>[] = null;
   public instanceIndex: GLInstancedBufferAttribute;
@@ -57,7 +56,8 @@ export class InstancedMesh2<
   /** @internal */ public _sortObjects = false;
   /** @internal */ public _maxCount: number;
   /** @internal */ public _visibilityChanged = false;
-  protected _material: TMaterial;
+  /** @internal */  _geometry: TGeometry;
+  /** @internal */  _material: TMaterial;
   protected _uniformsSetCallback = new Map<string, (id: number, value: UniformValue) => void>();
   protected _LOD: InstancedMesh2;
   protected readonly _instancesUseEuler: boolean;
@@ -87,31 +87,35 @@ export class InstancedMesh2<
   }
 
   // @ts-expect-error it's defined as a property, but is overridden as an accessor.
+  public override get geometry() { return this._geometry }
+  public override set geometry(value: TGeometry) {
+    this._geometry = value;
+    this.patchGeometry(value);
+  }
+
+  // @ts-expect-error it's defined as a property, but is overridden as an accessor.
   public override get material() { return this._material }
   public override set material(value: TMaterial) {
     this._material = value;
     this.patchMaterials(value);
   }
 
-  /** THIS MATERIAL AND GEOMETRY CANNOT BE SHARED */
-  constructor(renderer: WebGLRenderer, count: number, geometry: TGeometry, material?: TMaterial, LOD?: InstancedMesh2, instancesUseEuler = false) {
+  /** MATERIAL CANNOT BE SHARED AND GEOMETRY IS CLONED IF ALREADY PATCHED */
+  constructor(renderer: WebGLRenderer, count: number, geometry?: TGeometry, material?: TMaterial, LOD?: InstancedMesh2, instancesUseEuler = false) {
     if (!count || count < 0) throw new Error("'count' must be greater than 0.");
-    if (!geometry) throw new Error("'geometry' is mandatory.");
 
     super(geometry, material);
-
-    if (this.geometry.getAttribute("instanceIndex")) throw new Error('Cannot reuse already patched geometry.');
 
     this._instancesUseEuler = instancesUseEuler;
     this._instance = new InstancedEntity(this, -1, instancesUseEuler);
     this.instancesCount = count;
     this._maxCount = count;
     this._count = count;
+    this._geometry = geometry;
     this._material = material;
     this._LOD = LOD;
     this.visibilityArray = LOD?.visibilityArray ?? new Array(count).fill(true);
 
-    this.initIndexArray();
     this.initIndexAttribute(renderer);
     this.initMatricesTexture();
 
@@ -143,9 +147,11 @@ export class InstancedMesh2<
   }
 
   protected initIndexAttribute(renderer: WebGLRenderer): void {
+    if (!this._indexArray) {
+      this.initIndexArray();
+    }
+
     if (!renderer) {
-      const tempAttribute = new InstancedBufferAttribute(new Uint32Array(0), 1); // UNSIGNED_SHORT usare anche questo se < 65k
-      this.geometry.setAttribute("instanceIndex", tempAttribute);
       this._count = 0;
       return;
     }
@@ -154,12 +160,23 @@ export class InstancedMesh2<
     const gl = renderer.getContext() as WebGL2RenderingContext;
 
     this.instanceIndex = new GLInstancedBufferAttribute(gl, gl.UNSIGNED_INT, 1, 4, array); // UNSIGNED_SHORT usare anche questo se < 65k
-    this.geometry.setAttribute("instanceIndex", this.instanceIndex as unknown as BufferAttribute);
+    this._geometry?.setAttribute("instanceIndex", this.instanceIndex as unknown as BufferAttribute);
   }
 
   protected initMatricesTexture(): void {
     this.matricesTexture = this._LOD ? this._LOD.matricesTexture : createTexture_mat4(this._maxCount);
     this._matrixArray = this.matricesTexture.image.data as unknown as Float32Array;
+  }
+
+  protected patchGeometry(geometry: TGeometry): void {
+    if (geometry.hasAttribute("instanceIndex")) {
+      geometry = geometry.clone();
+      geometry.deleteAttribute("instanceIndex");
+    }
+
+    if (this.instanceIndex) {
+      geometry.setAttribute("instanceIndex", this.instanceIndex as unknown as BufferAttribute);
+    }
   }
 
   protected patchMaterials(material: TMaterial): void {
@@ -311,7 +328,7 @@ export class InstancedMesh2<
     let setCallback = this._uniformsSetCallback.get(name);
 
     if (!setCallback) {
-      const texture = (this.material as ShaderMaterial).uniforms[name].value as DataTexture;
+      const texture = (this._material as ShaderMaterial).uniforms[name].value as DataTexture;
       const array = texture.image.data;
 
       if (texture.format === RedFormat) {
@@ -355,7 +372,7 @@ export class InstancedMesh2<
       morphInfluencesSum += objectInfluence;
     }
 
-    const morphBaseInfluence = this.geometry.morphTargetsRelative ? 1 : 1 - morphInfluencesSum;
+    const morphBaseInfluence = this._geometry.morphTargetsRelative ? 1 : 1 - morphInfluencesSum;
     const dataIndex = len * index;
     array[dataIndex] = morphBaseInfluence;
     array.set(objectInfluences, dataIndex + 1);
@@ -366,7 +383,7 @@ export class InstancedMesh2<
   }
 
   public computeBoundingBox(): void { // if bvh present, can override? TODO
-    const geometry = this.geometry;
+    const geometry = this._geometry;
     const count = this.instancesCount;
 
     if (this.boundingBox === null) this.boundingBox = new Box3();
@@ -384,7 +401,7 @@ export class InstancedMesh2<
   }
 
   public computeBoundingSphere(): void {
-    const geometry = this.geometry;
+    const geometry = this._geometry;
     const count = this.instancesCount;
 
     if (this.boundingSphere === null) this.boundingSphere = new Sphere();
@@ -404,7 +421,7 @@ export class InstancedMesh2<
   public override copy(source: InstancedMesh2, recursive?: boolean): this {
     super.copy(source, recursive);
 
-    this.instanceIndex.copy(source.instanceIndex);
+    // this.instanceIndex.copy(source.instanceIndex);
     this.matricesTexture = source.matricesTexture.clone();
 
     // this._matricesTexture = source._matricesTexture.clone();

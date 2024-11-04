@@ -17,11 +17,11 @@ const _invMatrixWorld = new Matrix4();
 const _sphere = new Sphere();
 
 InstancedMesh2.prototype.raycast = function (raycaster: Raycaster, result: Intersection[]): void {
-    if (this.material === undefined) return;
+    if (this._material === undefined) return;
 
     const raycastFrustum = this.raycastOnlyFrustum && this._perObjectFrustumCulled && !this.bvh;
-    _mesh.geometry = this.geometry;
-    _mesh.material = this.material;
+    _mesh.geometry = this._geometry;
+    _mesh.material = this._material;
 
     const originalRay = raycaster.ray;
     const originalNear = raycaster.near;
