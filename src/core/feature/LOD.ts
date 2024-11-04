@@ -88,13 +88,45 @@ InstancedMesh2.prototype.addLOD = function (geometry: BufferGeometry, material: 
 	renderList.count.push(0);
 	renderList.indexes.splice(index, 0, object._indexArray);
 
-	if (objectsList.indexOf(object) === -1) objectsList.push(object); 
+	if (objectsList.indexOf(object) === -1) objectsList.push(object);
 
 	this.add(object); // TODO handle render order?
 	return this;
 }
 
 InstancedMesh2.prototype.addShadowLOD = function (geometry: BufferGeometry, material: Material, distance = 0, hysteresis = 0): InstancedMesh2 {
-	console.error("work in progress");
+	if (this._LOD) {
+		console.error("Cannot create LOD for this InstancedMesh2.");
+		return;
+	}
+
+	if (!this.levels) {
+		this.levels = { render: null, shadowRender: null, objects: [] };
+	}
+
+	const info = this.levels;
+
+	if (!info.shadowRender) {
+		info.shadowRender = { levels: [], indexes: [], count: [] };
+	}
+
+	const objectsList = info.objects;
+	const renderList = info.shadowRender;
+	const levels = renderList.levels;
+	const object = new InstancedMesh2(undefined, this._maxCount, geometry, material, this); // TODO fix renderer param
+	let index;
+	distance = distance ** 2; // to avoid to use Math.sqrt every time
+
+	for (index = 0; index < levels.length; index++) {
+		if (distance < levels[index].distance) break;
+	}
+
+	levels.splice(index, 0, { distance, hysteresis, object });
+	renderList.count.push(0);
+	renderList.indexes.splice(index, 0, object._indexArray);
+
+	if (objectsList.indexOf(object) === -1) objectsList.push(object);
+
+	this.add(object); // TODO handle render order?
 	return this;
 }
