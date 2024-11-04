@@ -28,7 +28,7 @@ export class GLInstancedBufferAttribute extends GLBufferAttribute {
         this._needsUpdate = false;
     }
 
-    public copy(source: GLInstancedBufferAttribute): this {
-        throw new Error("GLInstancedBufferAttribute.copy not implemented yet."); // TODO
+    public clone(): this {
+        return this;
     }
 }
