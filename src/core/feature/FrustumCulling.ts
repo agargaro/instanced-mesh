@@ -2,11 +2,11 @@ import { BVHNode } from "bvh.js";
 import { Camera, Frustum, Material, Matrix4, Sphere, Vector3, WebGLRenderer } from "three";
 import { getMaxScaleOnAxisAt, getPositionAt } from "../../utils/MatrixUtils.js";
 import { sortOpaque, sortTransparent } from "../../utils/SortingUtils.js";
-import { InstancedMesh2, LODLevel } from "../InstancedMesh2.js";
+import { InstancedMesh2 } from "../InstancedMesh2.js";
 import { InstancedRenderList } from "../utils/InstancedRenderList.js";
+import { LODRenderList } from "./LOD.js";
 
 // TODO: fix shadowMap LOD sorting objects?
-// TODO SOON: set all visibility to false before compputing... if shadowLOD has different geometries is important.
 
 declare module '../InstancedMesh2.js' {
   interface InstancedMesh2 {
@@ -18,9 +18,9 @@ declare module '../InstancedMesh2.js' {
     /** @internal */ BVHCulling(): void;
     /** @internal */ linearCulling(): void;
 
-    /** @internal */ frustumCullingLOD(levels: LODLevel[], camera: Camera, cameraLOD: Camera): void;
-    /** @internal */ BVHCullingLOD(levels: LODLevel[], sortObjects: boolean): void;
-    /** @internal */ linearCullingLOD(levels: LODLevel[], sortObjects: boolean): void;
+    /** @internal */ frustumCullingLOD(renderList: LODRenderList, objects: InstancedMesh2[], camera: Camera, cameraLOD: Camera): void;
+    /** @internal */ BVHCullingLOD(renderList: LODRenderList, sortObjects: boolean): void;
+    /** @internal */ linearCullingLOD(renderList: LODRenderList, sortObjects: boolean): void;
   }
 }
 
@@ -35,10 +35,11 @@ const _position = new Vector3();
 const _sphere = new Sphere();
 
 InstancedMesh2.prototype.performFrustumCulling = function (renderer: WebGLRenderer, camera: Camera, cameraLOD = camera): void {
+  const info = this.levels;
   const isShadowRendering = camera !== cameraLOD;
-  const levels = !isShadowRendering ? this.levels : (this.shadowLevels ?? this.levels);
+  const renderList = !isShadowRendering ? info?.render : (info?.shadowRender ?? info?.render);
 
-  if (levels?.length > 0) this.frustumCullingLOD(levels, camera, cameraLOD);
+  if (renderList?.levels.length > 0) this.frustumCullingLOD(renderList, info.objects, camera, cameraLOD);
   else if (!this._LOD) this.frustumCulling(camera);
 
   this.instanceIndex.update(renderer, this._count);
@@ -186,10 +187,10 @@ InstancedMesh2.prototype.linearCulling = function (): void {
   this._count = count;
 }
 
-InstancedMesh2.prototype.frustumCullingLOD = function (levels: LODLevel[], camera: Camera, cameraLOD: Camera): void {
-  const count = this._countIndexes;
+InstancedMesh2.prototype.frustumCullingLOD = function (renderList: LODRenderList, objects: InstancedMesh2[], camera: Camera, cameraLOD: Camera): void {
+  const { count, levels } = renderList;
   const isShadowRendering = camera !== cameraLOD;
-  const sortObjects = !isShadowRendering && this._sortObjects;
+  const sortObjects = !isShadowRendering && this._sortObjects; // sort is disabled when render shadows
 
   for (let i = 0; i < levels.length; i++) {
     count[i] = 0;
@@ -199,18 +200,25 @@ InstancedMesh2.prototype.frustumCullingLOD = function (levels: LODLevel[], camer
     }
   }
 
+  for (let i = 0; i < objects.length; i++) {
+    const object = objects[i];
+
+    if (object === this) object._count = 0;
+    else object.visible = false;
+  }
+
   _projScreenMatrix.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse).multiply(this.matrixWorld);
   _invMatrixWorld.copy(this.matrixWorld).invert();
   _cameraPos.setFromMatrixPosition(camera.matrixWorld).applyMatrix4(_invMatrixWorld);
   _cameraLODPos.setFromMatrixPosition(cameraLOD.matrixWorld).applyMatrix4(_invMatrixWorld);
 
-  if (this.bvh) this.BVHCullingLOD(levels, sortObjects);
-  else this.linearCullingLOD(levels, sortObjects);
+  if (this.bvh) this.BVHCullingLOD(renderList, sortObjects);
+  else this.linearCullingLOD(renderList, sortObjects);
 
   if (sortObjects) {
     const customSort = this.customSort;
-    const list = _renderList.list;
-    const indexes = this._indexes;
+    const list = _renderList.list; // TODO better name...
+    const indexes = renderList.indexes;
     let levelIndex = 0;
     let levelDistance = levels[1].distance;
 
@@ -229,7 +237,7 @@ InstancedMesh2.prototype.frustumCullingLOD = function (levels: LODLevel[], camer
         // for fixa
       }
 
-      indexes[levelIndex][count[levelIndex]++] = item.index; // TODO COUNT ARRAY QUI NON SERVE
+      indexes[levelIndex][count[levelIndex]++] = item.index;
     }
 
     _renderList.reset();
@@ -237,16 +245,15 @@ InstancedMesh2.prototype.frustumCullingLOD = function (levels: LODLevel[], camer
 
   for (let i = 0; i < levels.length; i++) {
     const object = levels[i].object;
-    object.visible = i === 0 || count[i] > 0;
+    object.visible = object === this || count[i] > 0;
     object._count = count[i];
   }
 }
 
-InstancedMesh2.prototype.BVHCullingLOD = function (levels: LODLevel[], sortObjects: boolean): void {
+InstancedMesh2.prototype.BVHCullingLOD = function (renderList: LODRenderList, sortObjects: boolean): void {
+  const { count, indexes, levels } = renderList;
   const matrixArray = this._matrixArray;
   const instancesCount = this.instancesCount;
-  const count = this._countIndexes; // reuse the same? also uintarray?
-  const indexes = this._indexes;
   const visibilityArray = this.visibilityArray;
 
   if (sortObjects) { // todo refactor
@@ -277,7 +284,8 @@ InstancedMesh2.prototype.BVHCullingLOD = function (levels: LODLevel[], sortObjec
   }
 }
 
-InstancedMesh2.prototype.linearCullingLOD = function (levels: LODLevel[], sortObjects: boolean): void {
+InstancedMesh2.prototype.linearCullingLOD = function (renderList: LODRenderList, sortObjects: boolean): void {
+  const { count, indexes, levels } = renderList;
   const matrixArray = this._matrixArray;
   const bSphere = this.geometry.boundingSphere; // TODO check se esiste?
   const radius = bSphere.radius;
@@ -286,9 +294,6 @@ InstancedMesh2.prototype.linearCullingLOD = function (levels: LODLevel[], sortOb
   const geometryCentered = center.x === 0 && center.y === 0 && center.z === 0;
 
   _frustum.setFromProjectionMatrix(_projScreenMatrix);
-
-  const count = this._countIndexes;
-  const indexes = this._indexes;
 
   for (let i = 0; i < instancesCount; i++) {
     if (!this.visibilityArray[i]) continue; // opt anche nell'altra classe

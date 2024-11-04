@@ -6,8 +6,8 @@ import { GLTF, GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { Sky } from 'three/examples/jsm/objects/Sky.js';
 import { InstancedMesh2 } from '../src/index.js';
 
-const count = 1000000;
-const terrainSize = 20000;
+const count = 10;
+const terrainSize = 100;
 
 const main = new Main(); // init renderer and other stuff
 main.renderer.toneMapping = ACESFilmicToneMapping;
@@ -25,8 +25,8 @@ trees.castShadow = true;
 trees.cursor = 'pointer';
 
 trees.addLOD(new BoxGeometry(100, 1000, 100), new MeshLambertMaterial(), 100);
-trees.levels[0].object.geometry.computeBoundingSphere(); // improve
-trees.levels[1].object.castShadow = true;
+// trees.addShadowLOD(new BoxGeometry(100, 1000, 100), undefined, 100);
+trees.levels.render.levels[1].object.castShadow = true; // TODO create utility methods
 
 trees.createInstances((obj, index) => {
   obj.position.setX(Math.random() * terrainSize - terrainSize / 2).setZ(Math.random() * terrainSize - terrainSize / 2);
@@ -62,11 +62,11 @@ scene.on('animate', (e) => scene.fog.color.setHSL(0, 0, sun.y));
 
 const dirLight = new DirectionalLight();
 dirLight.castShadow = true;
-dirLight.shadow.mapSize.set(1024, 1024);
-dirLight.shadow.camera.left = -300;
-dirLight.shadow.camera.right = 300;
-dirLight.shadow.camera.top = 300;
-dirLight.shadow.camera.bottom = -300;
+dirLight.shadow.mapSize.set(2048, 2048);
+dirLight.shadow.camera.left = -200;
+dirLight.shadow.camera.right = 200;
+dirLight.shadow.camera.top = 200;
+dirLight.shadow.camera.bottom = -200;
 dirLight.shadow.camera.far = 2000;
 dirLight.shadow.camera.updateProjectionMatrix();
 

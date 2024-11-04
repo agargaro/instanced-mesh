@@ -4,6 +4,7 @@ import { GLInstancedBufferAttribute } from "./utils/GLInstancedBufferAttribute.j
 import { InstancedEntity, UniformValue, UniformValueNoNumber } from "./InstancedEntity.js";
 import { InstancedMeshBVH } from "./InstancedMeshBVH.js";
 import { InstancedRenderItem } from "./utils/InstancedRenderList.js";
+import { LODInfo } from "./feature/LOD.js";
 
 // TODO: Add expand and count/maxCount when create?
 // TODO: partial texture update
@@ -20,12 +21,6 @@ import { InstancedRenderItem } from "./utils/InstancedRenderList.js";
 export type Entity<T> = InstancedEntity & T;
 export type UpdateEntityCallback<T> = (obj: Entity<T>, index: number) => void;
 export type CustomSortCallback = (list: InstancedRenderItem[]) => void;
-
-export interface LODLevel<TCustomData = {}> {
-  distance: number;
-  hysteresis: number;
-  object: InstancedMesh2<TCustomData>;
-}
 
 export interface BVHParams {
   margin?: number;
@@ -53,8 +48,7 @@ export class InstancedMesh2<
   public customSort: CustomSortCallback = null;
   public raycastOnlyFrustum = false;
   public visibilityArray: boolean[];
-  public levels: LODLevel<TCustomData>[] = null;
-  public shadowLevels: LODLevel<TCustomData>[] = null;
+  public levels: LODInfo<TCustomData> = null; // TODO rename
   /** @internal */ public _indexArray: Uint16Array | Uint32Array;
   /** @internal */ public _matrixArray: Float32Array;
   /** @internal */ public _colorArray: Float32Array = null;
@@ -62,15 +56,12 @@ export class InstancedMesh2<
   /** @internal */ public _perObjectFrustumCulled = true;
   /** @internal */ public _sortObjects = false;
   /** @internal */ public _maxCount: number;
+  /** @internal */ public _visibilityChanged = false;
   protected _material: TMaterial;
   protected _uniformsSetCallback = new Map<string, (id: number, value: UniformValue) => void>();
   protected _LOD: InstancedMesh2;
   protected readonly _instancesUseEuler: boolean;
   protected readonly _instance: InstancedEntity;
-  /** @internal */ public _visibilityChanged = false;
-
-  protected _indexes: (Uint16Array | Uint32Array)[] = null; // TODO can be also uin16
-  protected _countIndexes: number[] = null;
 
   public override customDepthMaterial = new MeshDepthMaterial({ depthPacking: RGBADepthPacking });
   public override customDistanceMaterial = new MeshDistanceMaterial();
