@@ -200,9 +200,7 @@ InstancedMesh2.prototype.frustumCullingLOD = function (renderList: LODRenderList
     }
   }
 
-  for (let i = 0; i < objects.length; i++) {
-    const object = objects[i];
-
+  for (const object of objects) {
     if (object === this) object._count = 0;
     else object.visible = false;
   }
