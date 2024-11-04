@@ -7,6 +7,7 @@ declare module '../InstancedMesh2.js' {
 		setFirstLODDistance(distance?: number, hysteresis?: number): this;
 		addLOD(geometry: BufferGeometry, material: Material, distance?: number, hysteresis?: number): this;
 		addShadowLOD(geometry: BufferGeometry, material: Material, distance?: number, hysteresis?: number): this;
+		/** @internal */ addLevel(renderList: LODRenderList, geometry: BufferGeometry, material: Material, distance: number, hysteresis: number): void;
 	}
 }
 
@@ -72,25 +73,7 @@ InstancedMesh2.prototype.addLOD = function (geometry: BufferGeometry, material: 
 		this.setFirstLODDistance(0, hysteresis);
 	}
 
-	const info = this.levels;
-	const objectsList = info.objects;
-	const renderList = info.render;
-	const levels = renderList.levels;
-	const object = new InstancedMesh2(undefined, this._maxCount, geometry, material, this); // TODO fix renderer param
-	let index;
-	distance = distance ** 2; // to avoid to use Math.sqrt every time
-
-	for (index = 0; index < levels.length; index++) {
-		if (distance < levels[index].distance) break;
-	}
-
-	levels.splice(index, 0, { distance, hysteresis, object });
-	renderList.count.push(0);
-	renderList.indexes.splice(index, 0, object._indexArray);
-
-	if (objectsList.indexOf(object) === -1) objectsList.push(object);
-
-	this.add(object); // TODO handle render order?
+	this.addLevel(this.levels.render, geometry, material, distance, hysteresis);
 	return this;
 }
 
@@ -104,14 +87,16 @@ InstancedMesh2.prototype.addShadowLOD = function (geometry: BufferGeometry, mate
 		this.levels = { render: null, shadowRender: null, objects: [] };
 	}
 
-	const info = this.levels;
-
-	if (!info.shadowRender) {
-		info.shadowRender = { levels: [], indexes: [], count: [] };
+	if (!this.levels.shadowRender) {
+		this.levels.shadowRender = { levels: [], indexes: [], count: [] };
 	}
 
-	const objectsList = info.objects;
-	const renderList = info.shadowRender;
+	this.addLevel(this.levels.shadowRender, geometry, material, distance, hysteresis);
+	return this;
+}
+
+InstancedMesh2.prototype.addLevel = function (renderList: LODRenderList, geometry: BufferGeometry, material: Material, distance: number, hysteresis: number): void {
+	const objectsList = this.levels.objects;
 	const levels = renderList.levels;
 	const object = new InstancedMesh2(undefined, this._maxCount, geometry, material, this); // TODO fix renderer param
 	let index;
@@ -128,5 +113,4 @@ InstancedMesh2.prototype.addShadowLOD = function (geometry: BufferGeometry, mate
 	if (objectsList.indexOf(object) === -1) objectsList.push(object);
 
 	this.add(object); // TODO handle render order?
-	return this;
 }
