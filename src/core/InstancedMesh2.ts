@@ -116,6 +116,7 @@ export class InstancedMesh2<
     this._LOD = LOD;
     this.visibilityArray = LOD?.visibilityArray ?? new Array(count).fill(true);
 
+    this.initIndexArray();
     this.initIndexAttribute(renderer);
     this.initMatricesTexture();
 
@@ -147,10 +148,6 @@ export class InstancedMesh2<
   }
 
   protected initIndexAttribute(renderer: WebGLRenderer): void {
-    if (!this._indexArray) {
-      this.initIndexArray();
-    }
-
     if (!renderer) {
       this._count = 0;
       return;
