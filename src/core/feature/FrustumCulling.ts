@@ -80,7 +80,7 @@ InstancedMesh2.prototype.frustumCulling = function (camera: Camera): void {
     const customSort = this.customSort;
 
     if (customSort === null) {
-      _renderList.list.sort(!(this.material as Material)?.transparent ? sortOpaque : sortTransparent);
+      _renderList.list.sort(!(this._material as Material)?.transparent ? sortOpaque : sortTransparent);
     } else {
       customSort(_renderList.list);
     }
@@ -152,7 +152,7 @@ InstancedMesh2.prototype.BVHCulling = function (): void {
 InstancedMesh2.prototype.linearCulling = function (): void {
   const array = this._indexArray;
   const matrixArray = this._matrixArray;
-  const bSphere = this.geometry.boundingSphere;
+  const bSphere = this._geometry.boundingSphere;
   const radius = bSphere.radius;
   const center = bSphere.center;
   const instancesCount = this.instancesCount;
@@ -221,7 +221,7 @@ InstancedMesh2.prototype.frustumCullingLOD = function (renderList: LODRenderList
     let levelDistance = levels[1].distance;
 
     if (customSort === null) {
-      list.sort(!(levels[0].object.material as Material)?.transparent ? sortOpaque : sortTransparent);
+      list.sort(!(levels[0].object._material as Material)?.transparent ? sortOpaque : sortTransparent); // todo IMPROVE
     } else {
       customSort(list);
     }
@@ -285,7 +285,7 @@ InstancedMesh2.prototype.BVHCullingLOD = function (renderList: LODRenderList, so
 InstancedMesh2.prototype.linearCullingLOD = function (renderList: LODRenderList, sortObjects: boolean): void {
   const { count, indexes, levels } = renderList;
   const matrixArray = this._matrixArray;
-  const bSphere = this.geometry.boundingSphere; // TODO check se esiste?
+  const bSphere = this._geometry.boundingSphere; // TODO check se esiste?
   const radius = bSphere.radius;
   const center = bSphere.center;
   const instancesCount = this.instancesCount;

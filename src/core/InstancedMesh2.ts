@@ -56,8 +56,8 @@ export class InstancedMesh2<
   /** @internal */ public _sortObjects = false;
   /** @internal */ public _maxCount: number;
   /** @internal */ public _visibilityChanged = false;
-  protected _geometry: TGeometry;
-  protected _material: TMaterial;
+  /** @internal */  _geometry: TGeometry;
+  /** @internal */  _material: TMaterial;
   protected _uniformsSetCallback = new Map<string, (id: number, value: UniformValue) => void>();
   protected _LOD: InstancedMesh2;
   protected readonly _instancesUseEuler: boolean;
@@ -328,7 +328,7 @@ export class InstancedMesh2<
     let setCallback = this._uniformsSetCallback.get(name);
 
     if (!setCallback) {
-      const texture = (this.material as ShaderMaterial).uniforms[name].value as DataTexture;
+      const texture = (this._material as ShaderMaterial).uniforms[name].value as DataTexture;
       const array = texture.image.data;
 
       if (texture.format === RedFormat) {
