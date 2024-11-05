@@ -52,6 +52,8 @@ These examples use `vite`, and some mobile devices may run out of memory.
 - [Custom material](https://stackblitz.com/edit/three-ezinstancedmesh2-custom-material?file=src%2Fmain.ts&embed=1&hideDevTools=1&view=preview)
 - [Dynamic BVH (no vite)](https://stackblitz.com/edit/three-ezinstancedmesh2-dynamic-bvh?file=index.ts&embed=1&hideDevTools=1&view=preview)
 - [Fast raycasting](https://stackblitz.com/edit/three-ezinstancedmesh2-fast-raycasting?file=src%2Fmain.ts&embed=1&hideDevTools=1&view=preview)
+- [LOD](https://stackblitz.com/edit/three-ezinstancedmesh2-instancedmeshlod?file=src%2Fmain.ts&embed=1&hideDevTools=1&view=preview)
+- Shadow LOD (soon)
 
 More examples will be added soon...
 
@@ -116,6 +118,14 @@ myInstancedMesh.computeBVH({ margin: 0, highPrecision: false });
 
 If all instances are static set the margin to 0. <br /> <br />
 ***Setting a margin makes BVH updating faster***, but may make raycasting and frustum culling slightly slower.
+
+## LOD 
+
+Work in progress...
+
+## Shadow LOD 
+
+Work in progress...
 
 ## Raycasting tips
 
@@ -263,8 +273,8 @@ Or you can import it from CDN:
 <script type="importmap">
 {
   "imports": {
-    "three": "https://cdn.jsdelivr.net/npm/three@0.167.0/build/three.module.js",
-    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.167.0/examples/jsm/",
+    "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/",
     "@three.ez/instanced-mesh": "https://cdn.jsdelivr.net/npm/@three.ez/instanced-mesh/index.js",
     "bvh.js": "https://cdn.jsdelivr.net/npm/bvh.js/index.js"
   }
@@ -278,8 +288,7 @@ If you have questions or need assistance, you can ask on our [discord server](ht
 
 ## Future Work
 
-- LOD system
-- Remove renderer from constructor parameters
+- Dynamic count
 
 ## Like it?
 
