@@ -15,7 +15,7 @@ export class InstancedMeshBVH {
     protected _dir: FloatArray;
     protected _boxArray: FloatArray;
     protected _cameraPos: FloatArray;
-    protected _levels: FloatArray; // TODO improve this
+    protected _LOD: FloatArray; // TODO improve this
     protected _getBoxFromSphere: boolean; // works only if geometry is centered for now
     protected _geoBoundingSphere: Sphere = null;
     protected _sphereTarget: SphereTarget = null;
@@ -114,11 +114,11 @@ export class InstancedMeshBVH {
     }
 
     public frustumCullingLOD(projScreenMatrix: Matrix4, cameraPosition: Vector3, levels: LODLevel[], onFrustumIntersection: onFrustumIntersectionLODCallback<{}, number>): void {
-        if (this._levels?.length !== levels.length) { // TODO improve
-            this._levels = new this._arrayType(levels.length);
+        if (this._LOD?.length !== levels.length) { // TODO improve
+            this._LOD = new this._arrayType(levels.length);
         }
 
-        const levelsArray = this._levels;
+        const levelsArray = this._LOD;
         for (let i = 0; i < levels.length; i++) {
             levelsArray[i] = levels[i].distance;
         }

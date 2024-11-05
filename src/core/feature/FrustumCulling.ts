@@ -35,7 +35,7 @@ const _position = new Vector3();
 const _sphere = new Sphere();
 
 InstancedMesh2.prototype.performFrustumCulling = function (renderer: WebGLRenderer, camera: Camera, cameraLOD = camera): void {
-  const info = this.levels;
+  const info = this.infoLOD;
   const isShadowRendering = camera !== cameraLOD;
   let renderList: LODRenderList;
 
@@ -50,7 +50,7 @@ InstancedMesh2.prototype.performFrustumCulling = function (renderer: WebGLRender
   }
 
   if (renderList?.levels.length > 0) this.frustumCullingLOD(renderList, info.objects, camera, cameraLOD);
-  else if (!this._LOD) this.frustumCulling(camera);
+  else if (!this._parentLOD) this.frustumCulling(camera);
 
   this.instanceIndex.update(renderer, this._count);
 }
@@ -236,8 +236,7 @@ InstancedMesh2.prototype.frustumCullingLOD = function (renderList: LODRenderList
 
       if (item.depth > levelDistance) { // > or >= ? capire in base all'altro algoritmo
         levelIndex++;
-        levelDistance = levels[levelIndex + 1]?.distance ?? Infinity;
-        // for fixa
+        levelDistance = levels[levelIndex + 1]?.distance ?? Infinity; // improve this condition and use for of instead
       }
 
       indexes[levelIndex][count[levelIndex]++] = item.index;

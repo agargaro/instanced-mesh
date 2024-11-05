@@ -47,7 +47,7 @@ export class InstancedMesh2<
   public customSort: CustomSortCallback = null;
   public raycastOnlyFrustum = false;
   public visibilityArray: boolean[];
-  public levels: LODInfo<TCustomData> = null; // TODO rename
+  public infoLOD: LODInfo<TCustomData> = null; // TODO rename
   /** @internal */ public _indexArray: Uint16Array | Uint32Array;
   /** @internal */ public _matrixArray: Float32Array;
   /** @internal */ public _colorArray: Float32Array = null;
@@ -59,7 +59,7 @@ export class InstancedMesh2<
   /** @internal */  _geometry: TGeometry;
   /** @internal */  _material: TMaterial;
   protected _uniformsSetCallback = new Map<string, (id: number, value: UniformValue) => void>();
-  protected _LOD: InstancedMesh2;
+  protected _parentLOD: InstancedMesh2;
   protected readonly _instancesUseEuler: boolean;
   protected readonly _instance: InstancedEntity;
 
@@ -113,7 +113,7 @@ export class InstancedMesh2<
     this._count = count;
     this._geometry = geometry;
     this._material = material;
-    this._LOD = LOD;
+    this._parentLOD = LOD;
     this.visibilityArray = LOD?.visibilityArray ?? new Array(count).fill(true);
 
     this.initIndexArray();
@@ -161,7 +161,7 @@ export class InstancedMesh2<
   }
 
   protected initMatricesTexture(): void {
-    this.matricesTexture = this._LOD ? this._LOD.matricesTexture : createTexture_mat4(this._maxCount);
+    this.matricesTexture = this._parentLOD ? this._parentLOD.matricesTexture : createTexture_mat4(this._maxCount);
     this._matrixArray = this.matricesTexture.image.data as unknown as Float32Array;
   }
 
