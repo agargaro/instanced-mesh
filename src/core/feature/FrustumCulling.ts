@@ -37,7 +37,17 @@ const _sphere = new Sphere();
 InstancedMesh2.prototype.performFrustumCulling = function (renderer: WebGLRenderer, camera: Camera, cameraLOD = camera): void {
   const info = this.levels;
   const isShadowRendering = camera !== cameraLOD;
-  const renderList = !isShadowRendering ? info?.render : (info?.shadowRender ?? info?.render);
+  let renderList: LODRenderList;
+
+  if (info) {
+    renderList = !isShadowRendering ? info.render : (info.shadowRender ?? info.render);
+
+    // Hide all LODs except this one. They will be shown after frustum culling if at least one instance is visible.
+    for (const object of info.objects) {
+      if (object === this) object._count = 0;
+      else object.visible = false;
+    }
+  }
 
   if (renderList?.levels.length > 0) this.frustumCullingLOD(renderList, info.objects, camera, cameraLOD);
   else if (!this._LOD) this.frustumCulling(camera);
@@ -198,11 +208,6 @@ InstancedMesh2.prototype.frustumCullingLOD = function (renderList: LODRenderList
     if (levels[i].object.instanceIndex) {
       levels[i].object.instanceIndex._needsUpdate = true; // TODO improve
     }
-  }
-
-  for (const object of objects) {
-    if (object === this) object._count = 0;
-    else object.visible = false;
   }
 
   _projScreenMatrix.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse).multiply(this.matrixWorld);

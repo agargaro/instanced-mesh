@@ -85,7 +85,7 @@ InstancedMesh2.prototype.addShadowLOD = function (geometry: BufferGeometry, mate
   }
 
   if (!this.levels) {
-    this.levels = { render: null, shadowRender: null, objects: [] };
+    this.levels = { render: null, shadowRender: null, objects: [this] };
   }
 
   if (!this.levels.shadowRender) {
