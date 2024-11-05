@@ -22,6 +22,8 @@
 - *visibility for each instance*
 - *each instance can have an object similar to `Object3D` to simplify its use*
 - *spatial indexing [(*BVH*)](https://en.wikipedia.org/wiki/Bounding_volume_hierarchy) for fast raycasting and frustum culling*
+- *LOD*
+- *shadow LOD*
 
 ```ts
 import { InstancedMesh2 } from '@three.ez/instanced-mesh';
