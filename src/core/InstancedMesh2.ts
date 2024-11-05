@@ -24,6 +24,8 @@ export type CustomSortCallback = (list: InstancedRenderItem[]) => void;
 export interface BVHParams {
   margin?: number;
   highPrecision?: boolean;
+  getBBoxFromBSphere?: boolean;
+  multiplier?: number; 
 }
 
 export class InstancedMesh2<
@@ -266,7 +268,7 @@ export class InstancedMesh2<
   }
 
   public computeBVH(config: BVHParams = {}): void {
-    if (!this.bvh) this.bvh = new InstancedMeshBVH(this, config.margin, config.highPrecision);
+    if (!this.bvh) this.bvh = new InstancedMeshBVH(this, config.margin, config.highPrecision, config.getBBoxFromBSphere);
     this.bvh.clear();
     this.bvh.create();
   }
@@ -283,7 +285,7 @@ export class InstancedMesh2<
       matrix.decompose(instance.position, instance.quaternion, instance.scale);
     }
 
-    this.matricesTexture.needsUpdate = true; // TODO 
+    this.matricesTexture.needsUpdate = true;
     this.bvh?.move(id);
   }
 
@@ -314,7 +316,7 @@ export class InstancedMesh2<
       _tempCol.set(color).toArray(this._colorArray, id * 4);
     }
 
-    this.colorsTexture.needsUpdate = true; // TODO 
+    this.colorsTexture.needsUpdate = true; 
   }
 
   public getColorAt(id: number, color = _tempCol): Color {

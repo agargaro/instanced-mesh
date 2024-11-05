@@ -4,6 +4,9 @@ import { getSphereFromMatrix_centeredGeometry, SphereTarget } from '../utils/Mat
 import { LODLevel } from './feature/LOD.js';
 import { InstancedMesh2 } from './InstancedMesh2.js';
 
+// TODO handle multiplier parameter
+// TODO getBoxFromSphere updated if change geometry (and create accessor)
+
 export class InstancedMeshBVH {
     public target: InstancedMesh2;
     public geoBoundingBox: Box3;
@@ -15,8 +18,8 @@ export class InstancedMeshBVH {
     protected _dir: FloatArray;
     protected _boxArray: FloatArray;
     protected _cameraPos: FloatArray;
-    protected _LOD: FloatArray; // TODO improve this
-    protected _getBoxFromSphere: boolean; // works only if geometry is centered for now
+    protected _LOD: FloatArray; 
+    protected _getBoxFromSphere: boolean;
     protected _geoBoundingSphere: Sphere = null;
     protected _sphereTarget: SphereTarget = null;
 
@@ -31,8 +34,15 @@ export class InstancedMeshBVH {
 
         if (getBoxFromSphere) {
             if (!geometry.boundingSphere) geometry.computeBoundingSphere();
-            this._geoBoundingSphere = geometry.boundingSphere;
-            this._sphereTarget = { centerX: 0, centerY: 0, centerZ: 0, maxScale: 0 };
+
+            const center = geometry.boundingSphere.center;
+            if (center.x === 0 && center.y === 0 && center.z === 0)  {
+                this._geoBoundingSphere = geometry.boundingSphere;
+                this._sphereTarget = { centerX: 0, centerY: 0, centerZ: 0, maxScale: 0 };
+            } else {
+                console.warn("'getBoxFromSphere' is ignored because geometry is not centered.");
+                getBoxFromSphere = false;
+            }
         }
 
         this._arrayType = highPrecision ? Float64Array : Float32Array;
@@ -45,7 +55,7 @@ export class InstancedMeshBVH {
 
     public create(): void {
         const count = this.target.instancesCount;
-        const boxes: FloatArray[] = new Array(count);
+        const boxes: FloatArray[] = new Array(count); // test if single array and recreation inside node creation is faster due to memory location
         const objects: Uint32Array = new Uint32Array(count); // TODO could be opt if instances are less than 65k
 
         this.clear();

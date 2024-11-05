@@ -298,7 +298,7 @@ InstancedMesh2.prototype.linearCullingLOD = function (renderList: LODRenderList,
   _frustum.setFromProjectionMatrix(_projScreenMatrix);
 
   for (let i = 0; i < instancesCount; i++) {
-    if (!this.visibilityArray[i]) continue; // opt anche nell'altra classe
+    if (!this.getVisibilityAt(i)) continue; // opt anche nell'altra classe
 
     if (geometryCentered) {
       getPositionAt(i, matrixArray, _sphere.center);
