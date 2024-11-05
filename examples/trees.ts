@@ -1,5 +1,5 @@
 import { Asset, Main, PerspectiveCameraAuto } from '@three.ez/main';
-import { ACESFilmicToneMapping, AmbientLight, BoxGeometry, BufferGeometry, DirectionalLight, FogExp2, Mesh, MeshBasicMaterial, MeshLambertMaterial, MeshStandardMaterial, PCFSoftShadowMap, PlaneGeometry, Scene, Vector3 } from 'three';
+import { ACESFilmicToneMapping, AmbientLight, BoxGeometry, BufferGeometry, DirectionalLight, FogExp2, Mesh, MeshLambertMaterial, MeshStandardMaterial, PCFSoftShadowMap, PlaneGeometry, Scene, Vector3 } from 'three';
 import { MapControls } from 'three/examples/jsm/controls/MapControls.js';
 import { GUI } from 'three/examples/jsm/libs/lil-gui.module.min.js';
 import { GLTF, GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
@@ -25,8 +25,8 @@ trees.castShadow = true;
 trees.cursor = 'pointer';
 
 trees.addLOD(new BoxGeometry(100, 1000, 100), new MeshLambertMaterial(), 100);
-trees.addShadowLOD(trees.geometry, new MeshBasicMaterial());
-trees.addShadowLOD(new BoxGeometry(100, 1000, 100), new MeshBasicMaterial(), 50);
+trees.addShadowLOD(trees.geometry);
+trees.addShadowLOD(new BoxGeometry(100, 1000, 100), 50);
 // trees.levels.shadowRender.levels[0].object.castShadow = true; // TODO create utility methods
 
 trees.createInstances((obj, index) => {

@@ -1,4 +1,4 @@
-import { BufferGeometry, Material } from "three";
+import { BufferGeometry, Material, RawShaderMaterial } from "three";
 import { InstancedMesh2 } from "../InstancedMesh2.js";
 
 declare module '../InstancedMesh2.js' {
@@ -6,7 +6,7 @@ declare module '../InstancedMesh2.js' {
     getObjectLODIndexForDistance(levels: LODLevel[], distance: number): number;
     setFirstLODDistance(distance?: number, hysteresis?: number): this;
     addLOD(geometry: BufferGeometry, material: Material, distance?: number, hysteresis?: number): this;
-    addShadowLOD(geometry: BufferGeometry, material: Material, distance?: number, hysteresis?: number): this;
+    addShadowLOD(geometry: BufferGeometry, distance?: number, hysteresis?: number): this;
 		/** @internal */ addLevel(renderList: LODRenderList, geometry: BufferGeometry, material: Material, distance: number, hysteresis: number): InstancedMesh2;
   }
 }
@@ -78,7 +78,7 @@ InstancedMesh2.prototype.addLOD = function (geometry: BufferGeometry, material: 
   return this;
 }
 
-InstancedMesh2.prototype.addShadowLOD = function (geometry: BufferGeometry, material: Material, distance = 0, hysteresis = 0): InstancedMesh2 {
+InstancedMesh2.prototype.addShadowLOD = function (geometry: BufferGeometry, distance = 0, hysteresis = 0): InstancedMesh2 {
   if (this._parentLOD) {
     console.error("Cannot create LOD for this InstancedMesh2.");
     return;
@@ -92,7 +92,7 @@ InstancedMesh2.prototype.addShadowLOD = function (geometry: BufferGeometry, mate
     this.infoLOD.shadowRender = { levels: [], indexes: [], count: [] };
   }
 
-  const object = this.addLevel(this.infoLOD.shadowRender, geometry, material, distance, hysteresis);
+  const object = this.addLevel(this.infoLOD.shadowRender, geometry, null, distance, hysteresis);
   object.castShadow = true;
 
   return this;
@@ -107,11 +107,13 @@ InstancedMesh2.prototype.addLevel = function (renderList: LODRenderList, geometr
 
   const objIndex = objectsList.findIndex((e) => e.geometry === geometry);
   if (objIndex === -1) {
-    object = new InstancedMesh2(undefined, this._maxCount, geometry, material, this); // TODO fix renderer param
+    // check if MeshBasicMaterial is better than RawShaderMaterial
+    object = new InstancedMesh2(undefined, this._maxCount, geometry, material ?? new RawShaderMaterial(), this); // TODO fix renderer param
     objectsList.push(object);
     this.add(object); // TODO handle render order?
   } else {
     object = objectsList[objIndex];
+    if (material) object.material = material;
   }
 
   for (index = 0; index < levels.length; index++) {
