@@ -11,14 +11,14 @@ export class InstancedMeshBVH {
     public target: InstancedMesh2;
     public geoBoundingBox: Box3;
     public bvh: BVH<{}, number>;
-    public map = new Map<number, BVHNode<{}, number>>();
+    public nodesMap = new Map<number, BVHNode<{}, number>>();
+    protected LODsMap = new Map<LODLevel[], FloatArray>();
     protected _arrayType: typeof Float32Array | typeof Float64Array;
     protected _margin: number;
     protected _origin: FloatArray;
     protected _dir: FloatArray;
     protected _boxArray: FloatArray;
     protected _cameraPos: FloatArray;
-    protected _LOD: FloatArray; 
     protected _getBoxFromSphere: boolean;
     protected _geoBoundingSphere: Sphere = null;
     protected _sphereTarget: SphereTarget = null;
@@ -36,7 +36,7 @@ export class InstancedMeshBVH {
             if (!geometry.boundingSphere) geometry.computeBoundingSphere();
 
             const center = geometry.boundingSphere.center;
-            if (center.x === 0 && center.y === 0 && center.z === 0)  {
+            if (center.x === 0 && center.y === 0 && center.z === 0) {
                 this._geoBoundingSphere = geometry.boundingSphere;
                 this._sphereTarget = { centerX: 0, centerY: 0, centerZ: 0, maxScale: 0 };
             } else {
@@ -66,13 +66,13 @@ export class InstancedMeshBVH {
         }
 
         this.bvh.createFromArray(objects as unknown as number[], boxes, (node) => {
-            this.map.set(node.object, node);
+            this.nodesMap.set(node.object, node);
         });
     }
 
     public insert(id: number): void {
         const node = this.bvh.insert(id, this.getBox(id, new this._arrayType(6)), this._margin);
-        this.map.set(id, node);
+        this.nodesMap.set(id, node);
     }
 
     public insertRange(ids: number[]): void {
@@ -84,27 +84,27 @@ export class InstancedMeshBVH {
         }
 
         this.bvh.insertRange(ids, boxes, this._margin, (node) => {
-            this.map.set(node.object, node);
+            this.nodesMap.set(node.object, node);
         });
     }
 
     public move(id: number): void {
-        const node = this.map.get(id);
+        const node = this.nodesMap.get(id);
         if (!node) return;
         this.getBox(id, node.box); // this also updates box
         this.bvh.move(node, this._margin);
     }
 
     public delete(id: number): void {
-        const node = this.map.get(id);
+        const node = this.nodesMap.get(id);
         if (!node) return;
         this.bvh.delete(node);
-        this.map.delete(id);
+        this.nodesMap.delete(id);
     }
 
     public clear(): void {
         this.bvh.clear();
-        this.map = new Map();
+        this.nodesMap = new Map();
     }
 
     public frustumCulling(projScreenMatrix: Matrix4, onFrustumIntersection: onFrustumIntersectionCallback<{}, number>): void {
@@ -124,11 +124,11 @@ export class InstancedMeshBVH {
     }
 
     public frustumCullingLOD(projScreenMatrix: Matrix4, cameraPosition: Vector3, levels: LODLevel[], onFrustumIntersection: onFrustumIntersectionLODCallback<{}, number>): void {
-        if (this._LOD?.length !== levels.length) { // TODO improve
-            this._LOD = new this._arrayType(levels.length);
+        if (!this.LODsMap.has(levels)) {
+            this.LODsMap.set(levels, new this._arrayType(levels.length));
         }
 
-        const levelsArray = this._LOD;
+        const levelsArray = this.LODsMap.get(levels);
         for (let i = 0; i < levels.length; i++) {
             levelsArray[i] = levels[i].distance;
         }
