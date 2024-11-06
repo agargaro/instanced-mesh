@@ -324,10 +324,10 @@ export class InstancedMesh2<
   }
 
   public setUniformAt(id: number, name: string, value: UniformValue): void { // TODO support multimaterial?
+    const texture = (this._material as ShaderMaterial).uniforms[name].value as DataTexture; // TODO fix type
     let setCallback = this._uniformsSetCallback.get(name);
 
     if (!setCallback) {
-      const texture = (this._material as ShaderMaterial).uniforms[name].value as DataTexture;
       const array = texture.image.data;
 
       if (texture.format === RedFormat) {
@@ -341,6 +341,7 @@ export class InstancedMesh2<
     }
 
     setCallback(id, value);
+    texture.needsUpdate = true;
   }
 
   public getMorphAt(index: number, object = _tempMesh): Mesh {
