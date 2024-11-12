@@ -10,7 +10,6 @@ export default defineConfig(({ command }) => ({
     sourcemap: true,
     lib: {
       entry: resolve(__dirname, 'src/index.ts'),
-      name: 'InstancedMesh',
       fileName: 'index',
       formats: ['es', 'cjs'],
     },
