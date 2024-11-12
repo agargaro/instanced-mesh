@@ -6,7 +6,7 @@ export default [
     files: ['**/*.{js,ts}'],
   },
   {
-    ignores: ['dist/', 'vite.config.js', 'examples'],
+    ignores: ['dist', 'vite.config.js', 'examples'],
   },
   js.configs.recommended,
   ...tseslint.configs.strict,

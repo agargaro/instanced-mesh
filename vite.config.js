@@ -15,21 +15,12 @@ export default defineConfig(({ command }) => ({
       formats: ['es', 'cjs'],
     },
   },
-  rollupOptions: {
-    external: ['three', 'bvh.js'],
-    output: {
-      globals: {
-        three: 'three',
-        'bvh.js': 'bvh.js'
-      }
-    }
-  },
   plugins: [
     externalizeDeps(),
     dts({ tsconfigPath: 'tsconfig.build.json' }),
     viteStaticCopy({
       targets: [{
-        src: ['LICENSE', 'package.json', 'README.md'],
+        src: ['LICENSE', 'package.json', 'package-lock.json', 'README.md'],
         dest: './'
       }]
     })
