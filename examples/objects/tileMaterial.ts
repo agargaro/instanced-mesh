@@ -21,7 +21,7 @@ export class TileMaterial extends ShaderMaterial {
   public override fragmentShader = `
     #include <get_from_texture>
 
-	  uniform highp sampler2D offsetTexture;
+    uniform highp sampler2D offsetTexture;
     uniform sampler2D map;
     uniform vec2 tileSize;
     varying vec2 vUv;

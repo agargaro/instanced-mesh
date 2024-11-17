@@ -1,4 +1,4 @@
-import { ColorRepresentation, Euler, Matrix3, Matrix4, Mesh, Object3D, Quaternion, Vector2, Vector3, Vector4 } from 'three';
+import { Color, ColorRepresentation, Euler, Matrix3, Matrix4, Mesh, Object3D, Quaternion, Vector2, Vector3, Vector4 } from 'three';
 import { InstancedMesh2 } from './InstancedMesh2.js';
 
 export type UniformValueNoNumber = Vector2 | Vector3 | Vector4 | Matrix3 | Matrix4;
@@ -14,17 +14,17 @@ export class InstancedEntity {
   public rotation: Euler;
   protected _parent: Object3D; // TODO implement
 
-  public get visible() { return this.owner.getVisibilityAt(this.id) }
-  public set visible(value: boolean) { this.owner.setVisibilityAt(this.id, value) }
+  public get visible(): boolean { return this.owner.getVisibilityAt(this.id); }
+  public set visible(value: boolean) { this.owner.setVisibilityAt(this.id, value); }
 
-  public get color() { return this.owner.getColorAt(this.id) }
-  public set color(value: ColorRepresentation) { this.owner.setColorAt(this.id, value) }
+  public get color(): Color { return this.owner.getColorAt(this.id); }
+  public set color(value: ColorRepresentation) { this.owner.setColorAt(this.id, value); }
 
-  public get morph() { return this.owner.getMorphAt(this.id) }
-  public set morph(value: Mesh) { this.owner.setMorphAt(this.id, value) }
+  public get morph(): Mesh { return this.owner.getMorphAt(this.id); }
+  public set morph(value: Mesh) { this.owner.setMorphAt(this.id, value); }
 
-  public get matrix() { return this.owner.getMatrixAt(this.id) }
-  public get matrixWorld() { return this.matrix.premultiply(this.owner.matrixWorld) }
+  public get matrix(): Matrix4 { return this.owner.getMatrixAt(this.id); }
+  public get matrixWorld(): Matrix4 { return this.matrix.premultiply(this.owner.matrixWorld); }
 
   constructor(owner: InstancedMesh2, id: number, useEuler: boolean) {
     this.id = id;

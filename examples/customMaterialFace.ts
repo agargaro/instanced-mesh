@@ -24,7 +24,7 @@ export class TileMaterial extends ShaderMaterial {
   public override fragmentShader = `
     #include <get_from_texture>
 
-	  uniform highp sampler2D dataTexture;
+    uniform highp sampler2D dataTexture;
     uniform sampler2D map;
     varying vec2 vUv;
     flat varying uint vInstanceIndex;
@@ -52,12 +52,12 @@ const scene = new Scene();
 const texture = await Asset.load<Texture>(TextureLoader, 'texture.png');
 texture.magFilter = NearestFilter;
 
-const grass = new Vector4(0, 15, 1/16, 1/16),
-  flower1 = new Vector4(12, 15, 1/16, 1/16),
-  flower2 = new Vector4(13, 15, 1/16, 1/16),
-  stone = new Vector4(1, 15, 2/16, 1/16),
-  snow = new Vector4(2, 11, 1/16, 1/16),
-  plant = new Vector4(14, 10, 1/16, 1/16);
+const grass = new Vector4(0, 15, 1 / 16, 1 / 16),
+  flower1 = new Vector4(12, 15, 1 / 16, 1 / 16),
+  flower2 = new Vector4(13, 15, 1 / 16, 1 / 16),
+  stone = new Vector4(1, 15, 2 / 16, 1 / 16),
+  snow = new Vector4(2, 11, 1 / 16, 1 / 16),
+  plant = new Vector4(14, 10, 1 / 16, 1 / 16);
 
 const faces = 6;
 const count = 6;
@@ -82,5 +82,5 @@ scene.add(boxes);
 
 main.createView({ scene, camera, enabled: false });
 
-const controls = new OrbitControls(camera, main.renderer.domElement); 
+const controls = new OrbitControls(camera, main.renderer.domElement);
 controls.update();

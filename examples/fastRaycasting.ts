@@ -50,8 +50,8 @@ main.createView({ scene, camera, backgroundColor: 'white', onAfterRender: () => 
 const bvh = instancedMesh.bvh;
 
 const gui = new GUI();
-gui.add(instancedMesh, "maxCount").disable();
+gui.add(instancedMesh, 'maxCount').disable();
 const spheresCount = gui.add(instancedMesh, 'count').name('instances rendered').disable();
-gui.add(instancedMesh, "instancesCount", 0, instancedMesh.maxCount);
-gui.add(config, "useBVH").name('use BVH').onChange((value) => { instancedMesh.bvh = value ? bvh : null });
-gui.add(instancedMesh, "raycastOnlyFrustum").name('raycastOnlyFrustum (if no BVH)');
+gui.add(instancedMesh, 'instancesCount', 0, instancedMesh.maxCount);
+gui.add(config, 'useBVH').name('use BVH').onChange((value) => instancedMesh.bvh = value ? bvh : null);
+gui.add(instancedMesh, 'raycastOnlyFrustum').name('raycastOnlyFrustum (if no BVH)');
