@@ -22,7 +22,7 @@ planes.createInstances((obj, index) => {
     .to(5000, { rotation, position, color }, {
       onUpdate: () => obj.updateMatrix(),
       onProgress: (t, k, s, e, a) => {
-        if (k === 'color') obj.color = tempColor.lerpColors(s as Color, e as Color, a)
+        if (k === 'color') obj.color = tempColor.lerpColors(s as Color, e as Color, a);
       }
     })
     .yoyoForever()

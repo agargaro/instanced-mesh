@@ -16,7 +16,7 @@ export * from './utils/CreateTexture.js';
 export * from './utils/MatrixUtils.js';
 export * from './utils/SortingUtils.js';
 
-/** @internal */ 
+/** @internal */
 declare module 'three' {
   export interface Material {
     isInstancedMeshPatched: boolean;

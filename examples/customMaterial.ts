@@ -42,7 +42,7 @@ boxes.computeBVH();
 
 const plantsCount = plantsPos.length * 2;
 
-const plants = new InstancedMesh2(main.renderer, plantsCount, new PlaneGeometry(),  new TileMaterial(plantsCount, texture, 32, 32, { side: DoubleSide })); // alphaTest doesnt' work
+const plants = new InstancedMesh2(main.renderer, plantsCount, new PlaneGeometry(), new TileMaterial(plantsCount, texture, 32, 32, { side: DoubleSide })); // alphaTest doesnt' work
 
 plants.createInstances((obj, index) => {
   obj.position.copy(plantsPos[Math.floor(index / 2)]);
@@ -59,9 +59,9 @@ plants.computeBVH();
 scene.add(boxes, plants);
 
 main.createView({ scene, camera, enabled: false, backgroundColor: 0xbdddf1, onAfterRender: () => {
-    boxesRenderedCount.updateDisplay();
-    plantsRenderedCount.updateDisplay();
-  }
+  boxesRenderedCount.updateDisplay();
+  plantsRenderedCount.updateDisplay();
+}
 });
 
 const controls = new OrbitControls(camera, main.renderer.domElement);

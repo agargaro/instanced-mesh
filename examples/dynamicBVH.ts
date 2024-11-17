@@ -10,7 +10,7 @@ const config = {
   animatedCount: 2000,
   spawnRadius: 75000,
   marginBVH: 200
-}
+};
 
 const main = new Main();
 const random = new PRNG(config.count);
@@ -20,16 +20,15 @@ const scene = new Scene();
 
 // scene.continuousRaycasting = true;
 
-const instancedMesh = new InstancedMesh2<{ r: number, phi: number, theta: number }>(main.renderer, config.count, new OctahedronGeometry(1, 2), new MeshLambertMaterial({ flatShading: true }));
+const instancedMesh = new InstancedMesh2<{ r: number; phi: number; theta: number }>(main.renderer, config.count, new OctahedronGeometry(1, 2), new MeshLambertMaterial({ flatShading: true }));
 
 instancedMesh.createInstances((object) => {
   const r = object.r = random.range(config.spawnRadius * 0.05, config.spawnRadius);
   const phi = object.phi = random.range(0, Math.PI * 2);
   const theta = object.theta = random.range(0, Math.PI * 2);
   object.position.setFromSphericalCoords(r, phi, theta);
-  object.scale.multiplyScalar(random.range(1, 50))
+  object.scale.multiplyScalar(random.range(1, 50));
 });
-
 
 instancedMesh.computeBVH({ margin: config.marginBVH });
 
@@ -51,7 +50,7 @@ scene.on('animate', (e) => {
   camera.getWorldDirection(spotLight.target.position).multiplyScalar(100).add(camera.position);
   camera.getWorldDirection(dirLight.target.position).multiplyScalar(100).add(camera.position);
 
-  const count = Math.min(config.animatedCount, instancedMesh.instancesCount); 
+  const count = Math.min(config.animatedCount, instancedMesh.instancesCount);
 
   for (let i = 0; i < count; i++) {
     const mesh = instancedMesh.instances[i];
@@ -66,8 +65,8 @@ controls.panSpeed = 1000;
 main.createView({ scene, camera, onAfterRender: () => spheresCount.updateDisplay() });
 
 const gui = new GUI();
-gui.add(instancedMesh, "maxCount").name('instances max count').disable();
+gui.add(instancedMesh, 'maxCount').name('instances max count').disable();
 const spheresCount = gui.add(instancedMesh, 'count').name('instances rendered').disable();
-gui.add(config, "count", 0, instancedMesh.maxCount).name('instances count').onChange((v) => instancedMesh.instancesCount = v);
-gui.add(config, "animatedCount", 0, 10000).name('instances animated');
+gui.add(config, 'count', 0, instancedMesh.maxCount).name('instances count').onChange((v) => instancedMesh.instancesCount = v);
+gui.add(config, 'animatedCount', 0, 10000).name('instances animated');
 gui.add(camera, 'far', 100, config.spawnRadius, 20).name('camera far').onChange(() => camera.updateProjectionMatrix());

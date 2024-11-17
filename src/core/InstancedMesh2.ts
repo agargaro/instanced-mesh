@@ -1,10 +1,10 @@
-import { Box3, BufferAttribute, BufferGeometry, Camera, Color, ColorManagement, ColorRepresentation, DataTexture, FloatType, Group, InstancedBufferAttribute, Material, Matrix4, Mesh, MeshDepthMaterial, MeshDistanceMaterial, Object3D, Object3DEventMap, RGBADepthPacking, RGFormat, RedFormat, Scene, ShaderMaterial, Sphere, WebGLRenderer } from "three";
-import { createTexture_mat4, createTexture_vec4 } from "../utils/CreateTexture.js";
-import { GLInstancedBufferAttribute } from "./utils/GLInstancedBufferAttribute.js";
-import { InstancedEntity, UniformValue, UniformValueNoNumber } from "./InstancedEntity.js";
-import { InstancedMeshBVH } from "./InstancedMeshBVH.js";
-import { InstancedRenderItem } from "./utils/InstancedRenderList.js";
-import { LODInfo } from "./feature/LOD.js";
+import { Box3, BufferAttribute, BufferGeometry, Camera, Color, ColorManagement, ColorRepresentation, DataTexture, FloatType, Group, InstancedBufferAttribute, Material, Matrix4, Mesh, MeshDepthMaterial, MeshDistanceMaterial, Object3D, Object3DEventMap, RGBADepthPacking, RGFormat, RedFormat, Scene, ShaderMaterial, Sphere, WebGLRenderer } from 'three';
+import { createTexture_mat4, createTexture_vec4 } from '../utils/CreateTexture.js';
+import { GLInstancedBufferAttribute } from './utils/GLInstancedBufferAttribute.js';
+import { InstancedEntity, UniformValue, UniformValueNoNumber } from './InstancedEntity.js';
+import { InstancedMeshBVH } from './InstancedMeshBVH.js';
+import { InstancedRenderItem } from './utils/InstancedRenderList.js';
+import { LODInfo } from './feature/LOD.js';
 
 // TODO: Add expand and count/maxCount when create?
 // TODO: partial texture update
@@ -25,7 +25,7 @@ export interface BVHParams {
   margin?: number;
   highPrecision?: boolean;
   getBBoxFromBSphere?: boolean;
-  multiplier?: number; 
+  multiplier?: number;
 }
 
 export class InstancedMesh2<
@@ -34,7 +34,6 @@ export class InstancedMesh2<
   TMaterial extends Material | Material[] = Material | Material[],
   TEventMap extends Object3DEventMap = Object3DEventMap
 > extends Mesh<TGeometry, TMaterial, TEventMap> {
-
   public override readonly type = 'InstancedMesh2';
   public readonly isInstancedMesh2 = true;
   public instances: Entity<TCustomData>[] = null;
@@ -58,8 +57,8 @@ export class InstancedMesh2<
   /** @internal */ public _sortObjects = false;
   /** @internal */ public _maxCount: number;
   /** @internal */ public _visibilityChanged = false;
-  /** @internal */  _geometry: TGeometry;
-  /** @internal */  _material: TMaterial;
+  /** @internal */ _geometry: TGeometry;
+  /** @internal */ _material: TMaterial;
   protected _uniformsSetCallback = new Map<string, (id: number, value: UniformValue) => void>();
   protected _parentLOD: InstancedMesh2;
   protected readonly _instancesUseEuler: boolean;
@@ -73,30 +72,30 @@ export class InstancedMesh2<
   private readonly instanceMatrix = new InstancedBufferAttribute(new Float32Array(0), 16); // must be init to avoid exception
   private readonly instanceColor = null; // must be null to avoid exception
 
-  public get count() { return this._count }
-  public get maxCount() { return this._maxCount }
+  public get count(): number { return this._count; }
+  public get maxCount(): number { return this._maxCount; }
 
-  public get perObjectFrustumCulled() { return this._perObjectFrustumCulled }
+  public get perObjectFrustumCulled(): boolean { return this._perObjectFrustumCulled; }
   public set perObjectFrustumCulled(value: boolean) {
     this._perObjectFrustumCulled = value;
     this._visibilityChanged = true;
   }
 
-  public get sortObjects() { return this._sortObjects }
+  public get sortObjects(): boolean { return this._sortObjects; }
   public set sortObjects(value: boolean) {
     this._sortObjects = value;
     this._visibilityChanged = true;
   }
 
   // @ts-expect-error it's defined as a property, but is overridden as an accessor.
-  public override get geometry() { return this._geometry }
+  public override get geometry(): TGeometry { return this._geometry; }
   public override set geometry(value: TGeometry) {
     this._geometry = value;
     this.patchGeometry(value);
   }
 
   // @ts-expect-error it's defined as a property, but is overridden as an accessor.
-  public override get material() { return this._material }
+  public override get material(): TMaterial { return this._material; }
   public override set material(value: TMaterial) {
     this._material = value;
     this.patchMaterials(value);
@@ -104,7 +103,7 @@ export class InstancedMesh2<
 
   /** MATERIAL CANNOT BE SHARED AND GEOMETRY IS CLONED IF ALREADY PATCHED */
   constructor(renderer: WebGLRenderer, count: number, geometry?: TGeometry, material?: TMaterial, LOD?: InstancedMesh2, instancesUseEuler = false) {
-    if (!count || count < 0) throw new Error("'count' must be greater than 0.");
+    if (!count || count < 0) throw new Error('"count" must be greater than 0.');
 
     super(geometry, material);
 
@@ -159,7 +158,7 @@ export class InstancedMesh2<
     const gl = renderer.getContext() as WebGL2RenderingContext;
 
     this.instanceIndex = new GLInstancedBufferAttribute(gl, gl.UNSIGNED_INT, 1, 4, array); // UNSIGNED_SHORT usare anche questo se < 65k
-    this._geometry?.setAttribute("instanceIndex", this.instanceIndex as unknown as BufferAttribute);
+    this._geometry?.setAttribute('instanceIndex', this.instanceIndex as unknown as BufferAttribute);
   }
 
   protected initMatricesTexture(): void {
@@ -168,13 +167,13 @@ export class InstancedMesh2<
   }
 
   protected patchGeometry(geometry: TGeometry): void {
-    if (geometry.hasAttribute("instanceIndex")) {
+    if (geometry.hasAttribute('instanceIndex')) {
       geometry = geometry.clone();
-      geometry.deleteAttribute("instanceIndex");
+      geometry.deleteAttribute('instanceIndex');
     }
 
     if (this.instanceIndex) {
-      geometry.setAttribute("instanceIndex", this.instanceIndex as unknown as BufferAttribute);
+      geometry.setAttribute('instanceIndex', this.instanceIndex as unknown as BufferAttribute);
     }
   }
 
@@ -206,17 +205,17 @@ export class InstancedMesh2<
       shader.uniforms.matricesTexture = { value: this.matricesTexture };
 
       if (!shader.defines) shader.defines = {};
-      shader.defines["USE_INSTANCING_INDIRECT"] = "";
+      shader.defines['USE_INSTANCING_INDIRECT'] = '';
 
       if (this.colorsTexture !== null) {
-        if (!shader.fragmentShader.includes("#include <color_pars_fragment>")) return;
+        if (!shader.fragmentShader.includes('#include <color_pars_fragment>')) return;
 
         shader.uniforms.colorsTexture = { value: this.colorsTexture };
-        shader.defines["USE_INSTANCING_COLOR_INDIRECT"] = "";
-        shader.fragmentShader = shader.fragmentShader.replace("#include <common>", "#define USE_COLOR\n#include <common>");
+        shader.defines['USE_INSTANCING_COLOR_INDIRECT'] = '';
+        shader.fragmentShader = shader.fragmentShader.replace('#include <common>', '#define USE_COLOR\n#include <common>');
         // NOTE that '#defined USE_COLOR' is defined only in fragment shader to make it work.
       }
-    }
+    };
 
     material.isInstancedMeshPatched = true;
   }
@@ -316,7 +315,7 @@ export class InstancedMesh2<
       _tempCol.set(color).toArray(this._colorArray, id * 4);
     }
 
-    this.colorsTexture.needsUpdate = true; 
+    this.colorsTexture.needsUpdate = true;
   }
 
   public getColorAt(id: number, color = _tempCol): Color {
@@ -331,10 +330,10 @@ export class InstancedMesh2<
       const array = texture.image.data;
 
       if (texture.format === RedFormat) {
-        setCallback = (id: number, value: UniformValue) => { array[id] = value as number };
+        setCallback = (id: number, value: UniformValue) => array[id] = value as number;
       } else {
         const size = texture.format === RGFormat ? 2 : 4; // 3 is not supported
-        setCallback = (id: number, value: UniformValue) => { (value as UniformValueNoNumber).toArray(array, id * size) };
+        setCallback = (id: number, value: UniformValue) => (value as UniformValueNoNumber).toArray(array, id * size);
       }
 
       this._uniformsSetCallback.set(name, setCallback);
@@ -430,7 +429,7 @@ export class InstancedMesh2<
     if (source.colorsTexture !== null) this.colorsTexture = source.colorsTexture.clone();
     if (source.morphTexture !== null) this.morphTexture = source.morphTexture.clone();
 
-    //TODO copy uniform?
+    // TODO copy uniform?
 
     this.instancesCount = source.instancesCount;
     this._count = source._maxCount;
@@ -448,7 +447,7 @@ export class InstancedMesh2<
     this.matricesTexture.dispose();
     this.matricesTexture = null;
 
-    //TODO dispose uniform
+    // TODO dispose uniform
 
     if (this.colorsTexture !== null) {
       this.colorsTexture.dispose();

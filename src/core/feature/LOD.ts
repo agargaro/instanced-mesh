@@ -1,5 +1,5 @@
-import { BufferGeometry, Material, RawShaderMaterial } from "three";
-import { InstancedMesh2 } from "../InstancedMesh2.js";
+import { BufferGeometry, Material, RawShaderMaterial } from 'three';
+import { InstancedMesh2 } from '../InstancedMesh2.js';
 
 declare module '../InstancedMesh2.js' {
   interface InstancedMesh2 {
@@ -7,7 +7,7 @@ declare module '../InstancedMesh2.js' {
     setFirstLODDistance(distance?: number, hysteresis?: number): this;
     addLOD(geometry: BufferGeometry, material: Material, distance?: number, hysteresis?: number): this;
     addShadowLOD(geometry: BufferGeometry, distance?: number, hysteresis?: number): this;
-		/** @internal */ addLevel(renderList: LODRenderList, geometry: BufferGeometry, material: Material, distance: number, hysteresis: number): InstancedMesh2;
+    /** @internal */ addLevel(renderList: LODRenderList, geometry: BufferGeometry, material: Material, distance: number, hysteresis: number): InstancedMesh2;
   }
 }
 
@@ -37,11 +37,11 @@ InstancedMesh2.prototype.getObjectLODIndexForDistance = function (levels: LODLev
   }
 
   return 0;
-}
+};
 
 InstancedMesh2.prototype.setFirstLODDistance = function (distance = 0, hysteresis = 0): InstancedMesh2 {
   if (this._parentLOD) {
-    console.error("Cannot create LOD for this InstancedMesh2.");
+    console.error('Cannot create LOD for this InstancedMesh2.');
     return;
   }
 
@@ -58,16 +58,16 @@ InstancedMesh2.prototype.setFirstLODDistance = function (distance = 0, hysteresi
   }
 
   return this;
-}
+};
 
 InstancedMesh2.prototype.addLOD = function (geometry: BufferGeometry, material: Material, distance = 0, hysteresis = 0): InstancedMesh2 {
   if (this._parentLOD) {
-    console.error("Cannot create LOD for this InstancedMesh2.");
+    console.error('Cannot create LOD for this InstancedMesh2.');
     return;
   }
 
   if (!this.infoLOD?.render && distance === 0) {
-    console.error("Cannot set distance to 0 for the first LOD. Use 'setFirstLODDistance' before use 'addLOD'.");
+    console.error('Cannot set distance to 0 for the first LOD. Use "setFirstLODDistance" before use "addLOD".');
     return;
   } else {
     this.setFirstLODDistance(0, hysteresis);
@@ -76,11 +76,11 @@ InstancedMesh2.prototype.addLOD = function (geometry: BufferGeometry, material: 
   this.addLevel(this.infoLOD.render, geometry, material, distance, hysteresis);
 
   return this;
-}
+};
 
 InstancedMesh2.prototype.addShadowLOD = function (geometry: BufferGeometry, distance = 0, hysteresis = 0): InstancedMesh2 {
   if (this._parentLOD) {
-    console.error("Cannot create LOD for this InstancedMesh2.");
+    console.error('Cannot create LOD for this InstancedMesh2.');
     return;
   }
 
@@ -96,7 +96,7 @@ InstancedMesh2.prototype.addShadowLOD = function (geometry: BufferGeometry, dist
   object.castShadow = true;
 
   return this;
-}
+};
 
 InstancedMesh2.prototype.addLevel = function (renderList: LODRenderList, geometry: BufferGeometry, material: Material, distance: number, hysteresis: number): InstancedMesh2 {
   const objectsList = this.infoLOD.objects;
@@ -125,4 +125,4 @@ InstancedMesh2.prototype.addLevel = function (renderList: LODRenderList, geometr
   renderList.indexes.splice(index, 0, object._indexArray);
 
   return object;
-}
+};

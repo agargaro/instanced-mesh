@@ -2,7 +2,7 @@ import { resolve } from 'path';
 import { defineConfig } from 'vite';
 import { viteStaticCopy } from 'vite-plugin-static-copy';
 import dts from 'vite-plugin-dts';
-import { externalizeDeps } from 'vite-plugin-externalize-deps'
+import { externalizeDeps } from 'vite-plugin-externalize-deps';
 
 export default defineConfig(({ command }) => ({
   publicDir: command === 'build' ? false : 'public',
@@ -11,8 +11,8 @@ export default defineConfig(({ command }) => ({
     lib: {
       entry: resolve(__dirname, 'src/index.ts'),
       fileName: 'index',
-      formats: ['es', 'cjs'],
-    },
+      formats: ['es', 'cjs']
+    }
   },
   plugins: [
     externalizeDeps(),

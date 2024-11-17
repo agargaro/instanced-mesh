@@ -1,6 +1,6 @@
-import { Main, PerspectiveCameraAuto } from "@three.ez/main";
-import { DirectionalLight, MeshPhongMaterial, Scene, SphereGeometry } from "three";
-import { InstancedMesh2 } from "../src/index.js";
+import { Main, PerspectiveCameraAuto } from '@three.ez/main';
+import { DirectionalLight, MeshPhongMaterial, Scene, SphereGeometry } from 'three';
+import { InstancedMesh2 } from '../src/index.js';
 
 const main = new Main();
 
@@ -8,8 +8,8 @@ const spheres = new InstancedMesh2(main.renderer, 99 * 99, new SphereGeometry(0.
 spheres.perObjectFrustumCulled = false;
 
 spheres.updateInstances((obj, index) => {
-    obj.position.x = index % 99 - 49;
-    obj.position.y = Math.trunc(index / 99) - 49;
+  obj.position.x = index % 99 - 49;
+  obj.position.y = Math.trunc(index / 99) - 49;
 });
 
 spheres.on('click', (e) => spheres.setVisibilityAt(e.intersection.instanceId, false));
