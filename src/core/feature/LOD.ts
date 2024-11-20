@@ -1,4 +1,4 @@
-import { BufferGeometry, Material, RawShaderMaterial } from 'three';
+import { BufferGeometry, Material, ShaderMaterial } from 'three';
 import { InstancedMesh2 } from '../InstancedMesh2.js';
 
 declare module '../InstancedMesh2.js' {
@@ -94,6 +94,7 @@ InstancedMesh2.prototype.addShadowLOD = function (geometry: BufferGeometry, dist
 
   const object = this.addLevel(this.infoLOD.shadowRender, geometry, null, distance, hysteresis);
   object.castShadow = true;
+  this.castShadow = true;
 
   return this;
 };
@@ -107,8 +108,7 @@ InstancedMesh2.prototype.addLevel = function (renderList: LODRenderList, geometr
 
   const objIndex = objectsList.findIndex((e) => e.geometry === geometry);
   if (objIndex === -1) {
-    // check if MeshBasicMaterial is better than RawShaderMaterial
-    object = new InstancedMesh2(undefined, this._maxCount, geometry, material ?? new RawShaderMaterial(), this); // TODO fix renderer param
+    object = new InstancedMesh2(this._renderer, this._maxCount, geometry, material ?? new ShaderMaterial(), this);
     objectsList.push(object);
     this.add(object); // TODO handle render order?
   } else {

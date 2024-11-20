@@ -1,5 +1,5 @@
 import { BVHNode } from 'bvh.js';
-import { Camera, Frustum, Material, Matrix4, Sphere, Vector3, WebGLRenderer } from 'three';
+import { Camera, Frustum, Material, Matrix4, Sphere, Vector3 } from 'three';
 import { getMaxScaleOnAxisAt, getPositionAt } from '../../utils/MatrixUtils.js';
 import { sortOpaque, sortTransparent } from '../../utils/SortingUtils.js';
 import { InstancedMesh2 } from '../InstancedMesh2.js';
@@ -10,7 +10,7 @@ import { LODRenderList } from './LOD.js';
 
 declare module '../InstancedMesh2.js' {
   interface InstancedMesh2 {
-    performFrustumCulling(renderer: WebGLRenderer, camera: Camera, cameraLOD?: Camera): void;
+    performFrustumCulling(camera: Camera, cameraLOD?: Camera): void;
 
     /** @internal */ frustumCulling(camera: Camera): void;
     /** @internal */ updateIndexArray(): void;
@@ -34,7 +34,7 @@ const _cameraLODPos = new Vector3();
 const _position = new Vector3();
 const _sphere = new Sphere();
 
-InstancedMesh2.prototype.performFrustumCulling = function (renderer: WebGLRenderer, camera: Camera, cameraLOD = camera): void {
+InstancedMesh2.prototype.performFrustumCulling = function (camera: Camera, cameraLOD = camera): void {
   const info = this.infoLOD;
   const isShadowRendering = camera !== cameraLOD;
   let renderList: LODRenderList;
@@ -52,7 +52,7 @@ InstancedMesh2.prototype.performFrustumCulling = function (renderer: WebGLRender
   if (renderList?.levels.length > 0) this.frustumCullingLOD(renderList, info.objects, camera, cameraLOD);
   else if (!this._parentLOD) this.frustumCulling(camera);
 
-  this.instanceIndex.update(renderer, this._count);
+  this.instanceIndex.update(this._renderer, this._count);
 };
 
 InstancedMesh2.prototype.frustumCulling = function (camera: Camera): void {

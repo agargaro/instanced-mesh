@@ -5,7 +5,7 @@ export class GLInstancedBufferAttribute extends GLBufferAttribute {
   public isGLInstancedBufferAttribute = true;
   public meshPerAttribute: number;
   public array: TypedArray;
-  /** @internal */ public _needsUpdate = false;
+  /** @internal */ _needsUpdate = false;
 
   constructor(gl: WebGL2RenderingContext, type: GLenum, itemSize: number, elementSize: 1 | 2 | 4, array: TypedArray, meshPerAttribute = 1) {
     const buffer = gl.createBuffer();
@@ -21,7 +21,7 @@ export class GLInstancedBufferAttribute extends GLBufferAttribute {
   public update(renderer: WebGLRenderer, count: number): void {
     if (!this._needsUpdate) return;
 
-    const gl = renderer.getContext();
+    const gl = renderer.getContext(); // TODO check performance or cache it
     gl.bindBuffer(gl.ARRAY_BUFFER, this.buffer);
     gl.bufferSubData(gl.ARRAY_BUFFER, 0, this.array, 0, count);
 

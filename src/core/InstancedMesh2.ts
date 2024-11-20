@@ -49,17 +49,18 @@ export class InstancedMesh2<
   public raycastOnlyFrustum = false;
   public visibilityArray: boolean[];
   public infoLOD: LODInfo<TCustomData> = null; // TODO rename
-  /** @internal */ public _indexArray: Uint16Array | Uint32Array;
-  /** @internal */ public _matrixArray: Float32Array;
-  /** @internal */ public _colorArray: Float32Array = null;
-  /** @internal */ public _count: number;
-  /** @internal */ public _perObjectFrustumCulled = true;
-  /** @internal */ public _sortObjects = false;
-  /** @internal */ public _maxCount: number;
-  /** @internal */ public _visibilityChanged = false;
+  /** @internal */ _renderer: WebGLRenderer = null;
+  /** @internal */ _indexArray: Uint16Array | Uint32Array;
+  /** @internal */ _matrixArray: Float32Array;
+  /** @internal */ _colorArray: Float32Array = null;
+  /** @internal */ _count: number;
+  /** @internal */ _perObjectFrustumCulled = true;
+  /** @internal */ _sortObjects = false;
+  /** @internal */ _maxCount: number;
+  /** @internal */ _visibilityChanged = false;
   /** @internal */ _geometry: TGeometry;
   /** @internal */ _material: TMaterial;
-  /** @internal */ public _parentLOD: InstancedMesh2;
+  /** @internal */ _parentLOD: InstancedMesh2;
   protected _uniformsSetCallback = new Map<string, (id: number, value: UniformValue) => void>();
   protected readonly _instancesUseEuler: boolean;
   protected readonly _instance: InstancedEntity;
@@ -107,6 +108,7 @@ export class InstancedMesh2<
 
     super(geometry, material);
 
+    this._renderer = renderer;
     this._instancesUseEuler = instancesUseEuler;
     this._instance = new InstancedEntity(this, -1, instancesUseEuler);
     this.instancesCount = count;
@@ -118,7 +120,7 @@ export class InstancedMesh2<
     this.visibilityArray = LOD?.visibilityArray ?? new Array(count).fill(true);
 
     this.initIndexArray();
-    this.initIndexAttribute(renderer);
+    this.initIndexAttribute();
     this.initMatricesTexture();
 
     this.patchMaterial(this.customDepthMaterial); // TODO check if with LOD can reuse it
@@ -126,15 +128,16 @@ export class InstancedMesh2<
   }
 
   public override onBeforeShadow(renderer: WebGLRenderer, scene: Scene, camera: Camera, shadowCamera: Camera, geometry: BufferGeometry, depthMaterial: Material, group: Group): void {
-    if (this.instanceIndex) this.performFrustumCulling(renderer, shadowCamera, camera);
+    if (this.instanceIndex) this.performFrustumCulling(shadowCamera, camera);
   }
 
   public override onBeforeRender(renderer: WebGLRenderer, scene: Scene, camera: Camera, geometry: BufferGeometry, material: Material, group: Group): void {
-    if (this.instanceIndex) this.performFrustumCulling(renderer, camera);
+    if (this.instanceIndex) this.performFrustumCulling(camera);
+    else this._renderer = renderer;
   }
 
   public override onAfterRender(renderer: WebGLRenderer, scene: Scene, camera: Camera, geometry: BufferGeometry, material: Material, group: Group): void {
-    if (!this.instanceIndex) this.initIndexAttribute(renderer);
+    if (!this.instanceIndex) this.initIndexAttribute();
   }
 
   protected initIndexArray(): void {
@@ -148,14 +151,14 @@ export class InstancedMesh2<
     this._indexArray = array;
   }
 
-  protected initIndexAttribute(renderer: WebGLRenderer): void {
-    if (!renderer) {
+  protected initIndexAttribute(): void {
+    if (!this._renderer) {
       this._count = 0;
       return;
     }
 
     const array = this._indexArray;
-    const gl = renderer.getContext() as WebGL2RenderingContext;
+    const gl = this._renderer.getContext() as WebGL2RenderingContext;
 
     this.instanceIndex = new GLInstancedBufferAttribute(gl, gl.UNSIGNED_INT, 1, 4, array); // UNSIGNED_SHORT usare anche questo se < 65k
     this._geometry?.setAttribute('instanceIndex', this.instanceIndex as unknown as BufferAttribute);
