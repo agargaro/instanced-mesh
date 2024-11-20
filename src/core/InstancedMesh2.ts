@@ -59,8 +59,8 @@ export class InstancedMesh2<
   /** @internal */ public _visibilityChanged = false;
   /** @internal */ _geometry: TGeometry;
   /** @internal */ _material: TMaterial;
+  /** @internal */ public _parentLOD: InstancedMesh2;
   protected _uniformsSetCallback = new Map<string, (id: number, value: UniformValue) => void>();
-  protected _parentLOD: InstancedMesh2;
   protected readonly _instancesUseEuler: boolean;
   protected readonly _instance: InstancedEntity;
 

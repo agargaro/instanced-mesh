@@ -10,7 +10,7 @@
     "noImplicitOverride": true,
     "strictNullChecks": false,
     "stripInternal": true,
-    "outDir": "build",
+    "outDir": "dist/src",
     "esModuleInterop": true,
     "noImplicitAny": false,
     "skipLibCheck": true
