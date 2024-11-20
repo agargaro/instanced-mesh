@@ -1,6 +1,6 @@
 {
   "name": "@three.ez/instanced-mesh",
-  "version": "0.2.8",
+  "version": "0.2.9",
   "description": "Enhanced InstancedMesh with frustum culling, fast raycasting (using BVH), sorting, visibility management and more.",
   "author": "Andrea Gargaro <devgargaro@gmail.com>",
   "license": "MIT",
@@ -39,12 +39,11 @@
   "scripts": {
     "start": "vite",
     "build": "vite build && tsc --build tsconfig.build.json",
-    "clean": "npx rimraf dist",
     "lint": "npx eslint --fix",
     "test": "echo todo add tests",
-    "publish-patch": "npm version patch --git-tag-version false && npm run build && cd dist && npm publish --access public && npm run clean",
-    "publish-minor": "npm version minor --git-tag-version false && npm run build && cd dist && npm publish --access public && npm run clean",
-    "publish-major": "npm version major --git-tag-version false && npm run build && cd dist && npm publish --access public && npm run clean"
+    "publish-patch": "npm version patch --git-tag-version false && npm run build && cd dist && npm publish --access public",
+    "publish-minor": "npm version minor --git-tag-version false && npm run build && cd dist && npm publish --access public",
+    "publish-major": "npm version major --git-tag-version false && npm run build && cd dist && npm publish --access public"
   },
   "devDependencies": {
     "@eslint/js": "^9.10.0",
