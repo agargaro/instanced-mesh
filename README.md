@@ -53,7 +53,7 @@ These examples use `vite`, and some mobile devices may run out of memory.
 - [Dynamic BVH (no vite)](https://stackblitz.com/edit/three-ezinstancedmesh2-dynamic-bvh?file=index.ts&embed=1&hideDevTools=1&view=preview)
 - [Fast raycasting](https://stackblitz.com/edit/three-ezinstancedmesh2-fast-raycasting?file=src%2Fmain.ts&embed=1&hideDevTools=1&view=preview)
 - [LOD](https://stackblitz.com/edit/three-ezinstancedmesh2-instancedmeshlod?file=src%2Fmain.ts&embed=1&hideDevTools=1&view=preview)
-- Shadow LOD (soon)
+- [Shadow LOD](https://stackblitz.com/edit/three-ezinstancedmesh2-shadow-lod?file=src%2Fmain.ts&embed=1&hideDevTools=1&view=preview)
 
 More examples will be added soon...
 
@@ -289,6 +289,7 @@ If you have questions or need assistance, you can ask on our [discord server](ht
 ## Future Work
 
 - Dynamic count
+- Simplify `SetUniformAt`
 
 ## Like it?
 
