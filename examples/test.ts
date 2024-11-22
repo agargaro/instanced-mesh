@@ -1,20 +1,40 @@
-import { Main, PerspectiveCameraAuto } from '@three.ez/main';
-import { DirectionalLight, MeshPhongMaterial, Scene, SphereGeometry } from 'three';
-import { InstancedMesh2 } from '../src/index.js';
+// import { Main, PerspectiveCameraAuto } from '@three.ez/main';
+// import { MeshNormalMaterial, Scene, SphereGeometry } from 'three';
+// import { createTexture_mat4, InstancedMesh2 } from '../src/index.js';
 
-const main = new Main();
+// const count = 2;
+// const worldSize = 10;
 
-const spheres = new InstancedMesh2(main.renderer, 99 * 99, new SphereGeometry(0.4), new MeshPhongMaterial({ color: 'cyan' }));
-spheres.perObjectFrustumCulled = false;
+// const main = new Main(); // init renderer and other stuff
+// const camera = new PerspectiveCameraAuto(70, 0.1, 500).translateZ(10);
+// const scene = new Scene();
 
-spheres.updateInstances((obj, index) => {
-  obj.position.x = index % 99 - 49;
-  obj.position.y = Math.trunc(index / 99) - 49;
-});
+// const spheres = new InstancedMesh2(main.renderer, count, new SphereGeometry(), new MeshNormalMaterial());
+// spheres.createInstances((obj, index) => {
+//   obj.position.randomDirection().multiplyScalar(((Math.random() * 0.99 + 0.01) * worldSize) / 2);
+// });
 
-spheres.on('click', (e) => spheres.setVisibilityAt(e.intersection.instanceId, false));
+// scene.add(spheres);
 
-const camera = new PerspectiveCameraAuto(70).translateZ(5);
-const dirLight = new DirectionalLight().translateZ(5);
-const scene = new Scene().add(spheres, dirLight);
-main.createView({ scene, camera, backgroundColor: 'white' });
+// main.createView({ scene, camera, enabled: false });
+
+// setTimeout(() => {
+//   const newCount = 8;
+
+//   spheres._maxCount = newCount;
+//   spheres.instancesCount = newCount;
+
+//   spheres.instanceIndex.array = new Uint32Array(newCount);
+//   spheres._indexArray = spheres.instanceIndex.array;
+
+//   spheres.visibilityArray = new Array(newCount).fill(true);
+
+//   const kek = createTexture_mat4(newCount); // fix creating only image and not texture
+//   spheres.matricesTexture.image = kek.image;
+//   spheres.matricesTexture.needsUpdate = true;
+//   spheres._matrixArray = kek.image.data as unknown as Float32Array;
+
+//   spheres.createInstances((obj, index) => {
+//     obj.position.randomDirection().multiplyScalar(((Math.random() * 0.99 + 0.01) * worldSize) / 2);
+//   });
+// }, 1000);

@@ -34,7 +34,8 @@
     "BVH",
     "acceleration",
     "raycasting",
-    "LOD"
+    "LOD",
+    "InstancedMesh2"
   ],
   "scripts": {
     "start": "vite",

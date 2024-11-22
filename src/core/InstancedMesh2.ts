@@ -223,7 +223,7 @@ export class InstancedMesh2<
     material.isInstancedMeshPatched = true;
   }
 
-  public updateInstances(onUpdate: UpdateEntityCallback<Entity<TCustomData>>): void {
+  public updateInstances(onUpdate: UpdateEntityCallback<Entity<TCustomData>>): this {
     const count = this.instancesCount;
     const instances = this.instances;
 
@@ -236,7 +236,7 @@ export class InstancedMesh2<
         instance.updateMatrix();
       }
 
-      return;
+      return this;
     }
 
     const instance = this._instance;
@@ -251,9 +251,11 @@ export class InstancedMesh2<
       onUpdate(instance as Entity<TCustomData>, i);
       instance.updateMatrix();
     }
+
+    return this;
   }
 
-  public createInstances(onInstanceCreation?: UpdateEntityCallback<Entity<TCustomData>>): void {
+  public createInstances(onInstanceCreation?: UpdateEntityCallback<Entity<TCustomData>>): this {
     const count = this._maxCount; // TODO we can create only first N count ?
     const instancesUseEuler = this._instancesUseEuler;
     const instances = this.instances = new Array(count);
@@ -267,6 +269,8 @@ export class InstancedMesh2<
         instance.updateMatrix();
       }
     }
+
+    return this;
   }
 
   public computeBVH(config: BVHParams = {}): void {

@@ -5,6 +5,7 @@ export class GLInstancedBufferAttribute extends GLBufferAttribute {
   public isGLInstancedBufferAttribute = true;
   public meshPerAttribute: number;
   public array: TypedArray;
+  protected _cacheArray: TypedArray;
   /** @internal */ _needsUpdate = false;
 
   constructor(gl: WebGL2RenderingContext, type: GLenum, itemSize: number, elementSize: 1 | 2 | 4, array: TypedArray, meshPerAttribute = 1) {
@@ -13,6 +14,7 @@ export class GLInstancedBufferAttribute extends GLBufferAttribute {
 
     this.meshPerAttribute = meshPerAttribute;
     this.array = array;
+    this._cacheArray = array;
 
     gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
     gl.bufferData(gl.ARRAY_BUFFER, array, gl.DYNAMIC_DRAW);
@@ -23,12 +25,19 @@ export class GLInstancedBufferAttribute extends GLBufferAttribute {
 
     const gl = renderer.getContext(); // TODO check performance or cache it
     gl.bindBuffer(gl.ARRAY_BUFFER, this.buffer);
-    gl.bufferSubData(gl.ARRAY_BUFFER, 0, this.array, 0, count);
+
+    if (this.array === this._cacheArray) {
+      gl.bufferSubData(gl.ARRAY_BUFFER, 0, this.array, 0, count);
+    } else {
+      gl.bufferData(gl.ARRAY_BUFFER, this.array, gl.DYNAMIC_DRAW);
+      this._cacheArray = this.array;
+    }
 
     this._needsUpdate = false;
   }
 
   public clone(): this {
+    // empty but necessary to avoid exception when clone geometry
     return this;
   }
 }
