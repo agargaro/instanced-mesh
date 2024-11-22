@@ -1,10 +1,10 @@
 import { Box3, BufferAttribute, BufferGeometry, Camera, Color, ColorManagement, ColorRepresentation, DataTexture, FloatType, Group, InstancedBufferAttribute, Material, Matrix4, Mesh, MeshDepthMaterial, MeshDistanceMaterial, Object3D, Object3DEventMap, RGBADepthPacking, RGFormat, RedFormat, Scene, ShaderMaterial, Sphere, WebGLRenderer } from 'three';
-import { createTexture_mat4, createTexture_vec4 } from '../utils/CreateTexture.js';
-import { GLInstancedBufferAttribute } from './utils/GLInstancedBufferAttribute.js';
+import { createSquareTexture_mat4, createSquareTexture_vec4 } from '../utils/CreateTexture.js';
+import { LODInfo } from './feature/LOD.js';
 import { InstancedEntity, UniformValue, UniformValueNoNumber } from './InstancedEntity.js';
 import { InstancedMeshBVH } from './InstancedMeshBVH.js';
+import { GLInstancedBufferAttribute } from './utils/GLInstancedBufferAttribute.js';
 import { InstancedRenderItem } from './utils/InstancedRenderList.js';
-import { LODInfo } from './feature/LOD.js';
 
 // TODO: Add expand and count/maxCount when create?
 // TODO: partial texture update
@@ -165,7 +165,7 @@ export class InstancedMesh2<
   }
 
   protected initMatricesTexture(): void {
-    this.matricesTexture = this._parentLOD ? this._parentLOD.matricesTexture : createTexture_mat4(this._maxCount);
+    this.matricesTexture = this._parentLOD ? this._parentLOD.matricesTexture : createSquareTexture_mat4(this._maxCount);
     this._matrixArray = this.matricesTexture.image.data as unknown as Float32Array;
   }
 
@@ -310,7 +310,7 @@ export class InstancedMesh2<
 
   public setColorAt(id: number, color: ColorRepresentation): void {
     if (this.colorsTexture === null) {
-      this.colorsTexture = createTexture_vec4(this._maxCount);
+      this.colorsTexture = createSquareTexture_vec4(this._maxCount);
       this.colorsTexture.colorSpace = ColorManagement.workingColorSpace;
       this._colorArray = this.colorsTexture.image.data as unknown as Float32Array;
       this._colorArray.fill(1);
