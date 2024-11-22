@@ -14,7 +14,7 @@ export default defineConfig({
           typeDoc: {
             skipErrorChecking: true
           },
-          tsconfig: '../tsconfig.doc.json'
+          tsconfig: '../tsconfig.json'
         })
       ],
       title: 'Instanced Mesh Docs',
