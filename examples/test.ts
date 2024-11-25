@@ -1,40 +1,33 @@
-// import { Main, PerspectiveCameraAuto } from '@three.ez/main';
-// import { MeshNormalMaterial, Scene, SphereGeometry } from 'three';
-// import { createTexture_mat4, InstancedMesh2 } from '../src/index.js';
+import { Main, PerspectiveCameraAuto } from '@three.ez/main';
+import { MeshNormalMaterial, Scene, SphereGeometry } from 'three';
+import { InstancedMesh2 } from '../src/index.js';
 
-// const count = 2;
-// const worldSize = 10;
+let count = 1; // test 0 even if doesn't make any sense
+const worldSize = 100;
 
-// const main = new Main(); // init renderer and other stuff
-// const camera = new PerspectiveCameraAuto(70, 0.1, 500).translateZ(10);
-// const scene = new Scene();
+const main = new Main(); // init renderer and other stuff
+const camera = new PerspectiveCameraAuto(70, 0.1, 500).translateZ(100);
+const scene = new Scene();
 
-// const spheres = new InstancedMesh2(main.renderer, count, new SphereGeometry(), new MeshNormalMaterial());
-// spheres.createInstances((obj, index) => {
-//   obj.position.randomDirection().multiplyScalar(((Math.random() * 0.99 + 0.01) * worldSize) / 2);
-// });
+const instancedMesh = new InstancedMesh2(null, count, new SphereGeometry(), new MeshNormalMaterial());
+instancedMesh.createInstances((obj, index) => {
+  obj.position.randomDirection().multiplyScalar(((Math.random() * 0.99 + 0.01) * worldSize) / 2);
+});
 
-// scene.add(spheres);
+// instancedMesh.computeBVH(); // FIX
 
-// main.createView({ scene, camera, enabled: false });
+scene.add(instancedMesh);
 
-// setTimeout(() => {
-//   const newCount = 8;
+main.createView({ scene, camera, enabled: false });
 
-//   spheres._maxCount = newCount;
-//   spheres.instancesCount = newCount;
+setInterval(() => {
+  instancedMesh.resize(++count);
+  instancedMesh.instancesCount++;
 
-//   spheres.instanceIndex.array = new Uint32Array(newCount);
-//   spheres._indexArray = spheres.instanceIndex.array;
+  instancedMesh.instances[count - 1].position.randomDirection().multiplyScalar(((Math.random() * 0.99 + 0.01) * worldSize) / 2);
+  instancedMesh.instances[count - 1].updateMatrix();
 
-//   spheres.visibilityArray = new Array(newCount).fill(true);
-
-//   const kek = createTexture_mat4(newCount); // fix creating only image and not texture
-//   spheres.matricesTexture.image = kek.image;
-//   spheres.matricesTexture.needsUpdate = true;
-//   spheres._matrixArray = kek.image.data as unknown as Float32Array;
-
-//   spheres.createInstances((obj, index) => {
-//     obj.position.randomDirection().multiplyScalar(((Math.random() * 0.99 + 0.01) * worldSize) / 2);
-//   });
-// }, 1000);
+  // instancedMesh.updateInstances((obj, index) => {
+  //   obj.position.randomDirection().multiplyScalar(((Math.random() * 0.99 + 0.01) * worldSize) / 2);
+  // }, count - 1);
+}, 100);

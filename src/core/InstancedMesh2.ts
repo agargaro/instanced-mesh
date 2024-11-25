@@ -223,14 +223,14 @@ export class InstancedMesh2<
     material.isInstancedMeshPatched = true;
   }
 
-  public updateInstances(onUpdate: UpdateEntityCallback<Entity<TCustomData>>): this {
-    const count = this.instancesCount;
+  public updateInstances(onUpdate: UpdateEntityCallback<Entity<TCustomData>>, start = 0, count = this.instancesCount): this {
     const instances = this.instances;
+    const end = start + count;
 
     if (instances) {
       const instances = this.instances;
 
-      for (let i = 0; i < count; i++) {
+      for (let i = start; i < end; i++) {
         const instance = instances[i];
         onUpdate(instance, i);
         instance.updateMatrix();
@@ -241,7 +241,7 @@ export class InstancedMesh2<
 
     const instance = this._instance;
 
-    for (let i = 0; i < count; i++) {
+    for (let i = start; i < end; i++) {
       (instance as any).id = i;
       instance.position.set(0, 0, 0);
       instance.scale.set(1, 1, 1);
@@ -255,12 +255,12 @@ export class InstancedMesh2<
     return this;
   }
 
-  public createInstances(onInstanceCreation?: UpdateEntityCallback<Entity<TCustomData>>): this {
-    const count = this._maxCount; // TODO we can create only first N count ?
+  public createInstances(onInstanceCreation?: UpdateEntityCallback<Entity<TCustomData>>, start = 0, count = this.instancesCount): this {
+    const end = start + count;
     const instancesUseEuler = this._instancesUseEuler;
     const instances = this.instances = new Array(count);
 
-    for (let i = 0; i < count; i++) {
+    for (let i = start; i < end; i++) {
       const instance = new InstancedEntity(this, i, instancesUseEuler) as Entity<TCustomData>;
       instances[i] = instance;
 
