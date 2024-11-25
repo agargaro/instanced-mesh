@@ -4,6 +4,7 @@ export * from './core/InstancedMeshBVH.js';
 export * from './core/feature/FrustumCulling.js';
 export * from './core/feature/LOD.js';
 export * from './core/feature/Raycasting.js';
+export * from './core/feature/Resize.js';
 export * from './core/utils/GLInstancedBufferAttribute.js';
 export * from './core/utils/InstancedRenderList.js';
 
