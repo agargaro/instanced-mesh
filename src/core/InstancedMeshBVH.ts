@@ -67,7 +67,7 @@ export class InstancedMeshBVH {
 
     this.bvh.createFromArray(objects as unknown as number[], boxes, (node) => {
       this.nodesMap.set(node.object, node);
-    });
+    }, this._margin);
   }
 
   public insert(id: number): void {
