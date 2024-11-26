@@ -1,15 +1,17 @@
+import { DataTexture, FloatType, RedFormat } from 'three';
 import { resizeSquareTextureArray_mat4, resizeSquareTextureArray_vec4 } from '../../utils/ResizeSquareTextureArray.js';
 import { InstancedMesh2 } from '../InstancedMesh2.js';
 
 declare module '../InstancedMesh2.js' {
-  interface InstancedMesh2 {
-    resize(count: number): void;
-    // addInstances(count: number): void;
+  interface InstancedMesh2<TCustomData = {}> {
+    resizeBuffers(count: number): this;
+    // addInstances(count: number, onInstanceCreation?: UpdateEntityCallback<Entity<TCustomData>>): this;
     // removeInstances(count: number): void;
   }
 }
 
-InstancedMesh2.prototype.resize = function (count: number): void {
+InstancedMesh2.prototype.resizeBuffers = function (count: number): InstancedMesh2 {
+  const oldCount = this._maxCount;
   this._maxCount = count;
 
   if (this.instanceIndex) {
@@ -18,10 +20,9 @@ InstancedMesh2.prototype.resize = function (count: number): void {
     this._indexArray = this.instanceIndex.array = indexArray;
   }
 
-  const oldVisibilityCount = this.visibilityArray.length;
   this.visibilityArray.length = count;
-  if (count > oldVisibilityCount) {
-    this.visibilityArray.fill(true, oldVisibilityCount);
+  if (count > oldCount) {
+    this.visibilityArray.fill(true, oldCount);
   }
 
   this.matricesTexture.dispose();
@@ -34,10 +35,23 @@ InstancedMesh2.prototype.resize = function (count: number): void {
     this._colorArray = this.colorsTexture.image.data as unknown as Float32Array;
   }
 
+  if (this.morphTexture) { // test it
+    const oldArray = this.morphTexture.image.data;
+    const size = oldArray.length / oldCount;
+    this.morphTexture.dispose();
+    this.morphTexture = new DataTexture(new Float32Array(size * count), size, count, RedFormat, FloatType);
+    this.morphTexture.image.data.set(oldArray);
+  }
+
   // TODO custom uniform texture
 
-  if (this.instances) {
-    const currentCount = this.instances.length;
-    this.createInstances(null, currentCount, count - currentCount);
+  if (this.instances) { // capire meglio se le vogliamo già creare
+    this.createInstances(null, oldCount, count - oldCount);
   }
+
+  return this;
 };
+
+// InstancedMesh2.prototype.addInstances = function (count: number, onInstanceCreation?: UpdateEntityCallback<Entity<any>>): InstancedMesh2 {
+//   return this;
+// };

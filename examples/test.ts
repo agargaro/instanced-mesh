@@ -21,7 +21,7 @@ scene.add(instancedMesh);
 main.createView({ scene, camera, enabled: false });
 
 setInterval(() => {
-  instancedMesh.resize(++count);
+  instancedMesh.resizeBuffers(++count);
   instancedMesh.instancesCount++;
 
   instancedMesh.instances[count - 1].position.randomDirection().multiplyScalar(((Math.random() * 0.99 + 0.01) * worldSize) / 2);
