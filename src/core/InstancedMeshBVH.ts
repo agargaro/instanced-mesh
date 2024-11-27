@@ -12,6 +12,7 @@ export class InstancedMeshBVH {
   public geoBoundingBox: Box3;
   public bvh: BVH<{}, number>;
   public nodesMap = new Map<number, BVHNode<{}, number>>();
+  public accurateCulling: boolean;
   protected LODsMap = new Map<LODLevel[], FloatArray>();
   protected _arrayType: typeof Float32Array | typeof Float64Array;
   protected _margin: number;
@@ -23,9 +24,10 @@ export class InstancedMeshBVH {
   protected _geoBoundingSphere: Sphere = null;
   protected _sphereTarget: SphereTarget = null;
 
-  constructor(target: InstancedMesh2, margin = 0, highPrecision = false, getBoxFromSphere = false) {
-    this._margin = margin;
+  constructor(target: InstancedMesh2, margin = 0, highPrecision = false, getBoxFromSphere = false, accurateCulling = true) {
     this.target = target;
+    this.accurateCulling = accurateCulling;
+    this._margin = margin;
 
     const geometry = target._geometry;
 
@@ -108,7 +110,7 @@ export class InstancedMeshBVH {
   }
 
   public frustumCulling(projScreenMatrix: Matrix4, onFrustumIntersection: onFrustumIntersectionCallback<{}, number>): void {
-    if (this._margin > 0) {
+    if (this._margin > 0 && this.accurateCulling) {
       this.bvh.frustumCulling(projScreenMatrix.elements, (node, frustum, mask) => {
         if (frustum.isIntersectedMargin(node.box, mask, this._margin)) {
           onFrustumIntersection(node);
@@ -134,7 +136,7 @@ export class InstancedMeshBVH {
     camera[1] = cameraPosition.y;
     camera[2] = cameraPosition.z;
 
-    if (this._margin > 0) {
+    if (this._margin > 0 && this.accurateCulling) {
       this.bvh.frustumCullingLOD(projScreenMatrix.elements, camera, levelsArray, (node, level, frustum, mask) => {
         if (frustum.isIntersectedMargin(node.box, mask, this._margin)) {
           onFrustumIntersection(node, level);
@@ -153,6 +155,7 @@ export class InstancedMeshBVH {
     vec3ToArray(ray.origin, origin);
     vec3ToArray(ray.direction, dir);
 
+    // should we add margin check? maybe is not worth it
     this.bvh.rayIntersections(dir, origin, onIntersection, raycaster.near, raycaster.far);
   }
 
@@ -164,7 +167,6 @@ export class InstancedMeshBVH {
   }
 
   protected getBox(id: number, array: FloatArray): FloatArray {
-    // TODO add check if geometry is centered. adjust ref using this._matrixArray insteaad of this.target._matrixArray
     if (this._getBoxFromSphere) {
       const { centerX, centerY, centerZ, maxScale } = getSphereFromMatrix_centeredGeometry(id, this.target._matrixArray, this._sphereTarget);
       const radius = this._geoBoundingSphere.radius * maxScale;

@@ -9,13 +9,9 @@ import { InstancedRenderItem } from './utils/InstancedRenderList.js';
 // TODO: Add expand and count/maxCount when create?
 // TODO: partial texture update
 // TODO: Use BVH only for raycasting
-
-// TODO SOON: sync all textures
-// TODO SOON: instancedMeshLOD rendering first nearest levels, look out to transparent
-
-// public raycastOnlyFrustum = false;
-// public override customDepthMaterial = new MeshDepthMaterial({ depthPacking: RGBADepthPacking });
-// public override customDistanceMaterial = new MeshDistanceMaterial();
+// TODO LOD: instancedMeshLOD rendering first nearest levels, look out to transparent
+// TODO LOD: shared customDepthMaterial and customDistanceMaterial?
+// TODO LOD: BVH and handle raycastOnlyFrustum?;
 
 export type Entity<T> = InstancedEntity & T;
 export type UpdateEntityCallback<T> = (obj: Entity<T>, index: number) => void;
@@ -26,6 +22,7 @@ export interface BVHParams {
   highPrecision?: boolean;
   getBBoxFromBSphere?: boolean;
   multiplier?: number;
+  accurateCulling?: boolean;
 }
 
 export class InstancedMesh2<
@@ -274,8 +271,9 @@ export class InstancedMesh2<
   }
 
   public computeBVH(config: BVHParams = {}): void {
-    if (!this.bvh) this.bvh = new InstancedMeshBVH(this, config.margin, config.highPrecision, config.getBBoxFromBSphere);
+    if (!this.bvh) this.bvh = new InstancedMeshBVH(this, config.margin, config.highPrecision, config.getBBoxFromBSphere, config.accurateCulling);
     this.bvh.clear();
+    // TODO set conf
     this.bvh.create();
   }
 
@@ -382,6 +380,7 @@ export class InstancedMesh2<
     const dataIndex = len * index;
     array[dataIndex] = morphBaseInfluence;
     array.set(objectInfluences, dataIndex + 1);
+    this.morphTexture.needsUpdate = true;
   }
 
   public copyTo(id: number, target: Object3D): void {
