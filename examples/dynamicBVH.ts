@@ -1,7 +1,7 @@
 import { Main, PerspectiveCameraAuto } from '@three.ez/main';
 import { DirectionalLight, MeshLambertMaterial, OctahedronGeometry, Scene, SpotLight, Vector3 } from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
-import { GUI } from 'three/examples/jsm/libs/lil-gui.module.min.js';
+import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
 import { InstancedMesh2 } from '../src/index.js';
 import { PRNG } from './objects/random.js';
 
@@ -21,9 +21,9 @@ scene.continuousRaycasting = true;
 
 const geometry = new OctahedronGeometry(1, 2);
 const material = new MeshLambertMaterial({ flatShading: true });
-const instancedMesh = new InstancedMesh2<{ dir: Vector3 }>({ geometry, material, capacity: config.count });
+const instancedMesh = new InstancedMesh2<{ dir: Vector3 }>(geometry, material, { count: config.count, createInstances: true });
 
-instancedMesh.createInstances((object) => {
+instancedMesh.updateInstances((object) => {
   object.dir = new Vector3().randomDirection();
   object.position.randomDirection().multiplyScalar(random.range(0.05, 1) * config.spawnRadius);
   object.scale.multiplyScalar(random.range(1, 5));

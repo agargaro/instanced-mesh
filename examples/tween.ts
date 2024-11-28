@@ -4,15 +4,15 @@ import { InstancedMesh2 } from '../src/index.js';
 
 const main = new Main();
 const scene = new Scene();
-const camera = new PerspectiveCameraAuto().translateZ(2);
-
-const planes = new InstancedMesh2(main.renderer, 20, new PlaneGeometry(), new MeshBasicMaterial(), undefined, true);
-
+main.createView({ scene, camera: new PerspectiveCameraAuto().translateZ(2), enabled: false });
 const tempColor = new Color();
 
-planes.createInstances((obj, index) => {
+const planes = new InstancedMesh2(new PlaneGeometry(), new MeshBasicMaterial(), { createInstances: true, instancesUseEuler: true });
+scene.add(planes);
+
+planes.addInstances(20, (obj, index) => {
   obj.scale.multiplyScalar(1 - index * 0.05);
-  obj.color = index % 2 === 0 ? 'white' : 'black';
+  obj.color = index % 2 === 0 ? 'red' : 'blue';
 
   const rotation = new Euler(0, 0, (Math.PI / 2) * index);
   const position = new Vector3(0, 0, 0.1 * index);
@@ -28,8 +28,5 @@ planes.createInstances((obj, index) => {
     .yoyoForever()
     .start();
 });
-
-scene.add(planes);
-main.createView({ scene, camera, enabled: false });
 
 // TODO: FIX COLOR AND TWEEN TIME 0

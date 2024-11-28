@@ -1,64 +1,60 @@
-import { Box3, BufferAttribute, BufferGeometry, Camera, Color, ColorManagement, ColorRepresentation, DataTexture, FloatType, Group, InstancedBufferAttribute, Material, Matrix4, Mesh, MeshDepthMaterial, MeshDistanceMaterial, Object3D, Object3DEventMap, RGBADepthPacking, RGFormat, RedFormat, Scene, ShaderMaterial, Sphere, WebGLRenderer } from 'three';
+import { Box3, BufferAttribute, BufferGeometry, Camera, Color, ColorManagement, ColorRepresentation, FloatType, Group, InstancedBufferAttribute, Material, Matrix4, Mesh, MeshDepthMaterial, MeshDistanceMaterial, Object3D, Object3DEventMap, RGBADepthPacking, RGFormat, RedFormat, Scene, ShaderMaterial, Sphere, WebGLRenderer } from 'three';
 import { createSquareTexture_mat4, createSquareTexture_vec4 } from '../utils/CreateTexture.js';
+import { Entity } from './feature/Instances.js';
 import { LODInfo } from './feature/LOD.js';
 import { InstancedEntity, UniformValue, UniformValueNoNumber } from './InstancedEntity.js';
 import { InstancedMeshBVH } from './InstancedMeshBVH.js';
+import { DataTexture2 } from './utils/DataTexture2.js';
 import { GLInstancedBufferAttribute } from './utils/GLInstancedBufferAttribute.js';
 import { InstancedRenderItem } from './utils/InstancedRenderList.js';
 
-// TODO: partial texture update
 // TODO: Use BVH only for raycasting
 // TODO LOD: instancedMeshLOD rendering first nearest levels, look out to transparent
 // TODO LOD: shared customDepthMaterial and customDistanceMaterial?
 // TODO LOD: BVH and handle raycastOnlyFrustum?;
 // TODO LOD: sync all textures private property (colorsArray, colorsTexture, etc) to prevent to create unnecesary textures
 
-// TODO fix createInstances and add flag.
-// TODO fix computeBVH with dynamic count.
-
-export type Entity<T> = InstancedEntity & T;
-export type UpdateEntityCallback<T> = (obj: Entity<T>, index: number) => void;
 export type CustomSortCallback = (list: InstancedRenderItem[]) => void;
+
+export interface InstancedMesh2Params {
+  count?: number;
+  renderer?: WebGLRenderer;
+  createInstances?: boolean;
+  instancesUseEuler?: boolean;
+}
 
 export interface BVHParams {
   margin?: number;
   highPrecision?: boolean;
   getBBoxFromBSphere?: boolean;
-  multiplier?: number;
   accurateCulling?: boolean;
 }
 
-export interface InstancedMesh2Params {
-  capacity?: number;
-  renderer?: WebGLRenderer;
-  instancesUseEuler?: boolean;
-}
-
 export class InstancedMesh2<
-  TCustomData = {},
+  TData = {},
   TGeometry extends BufferGeometry = BufferGeometry,
   TMaterial extends Material | Material[] = Material | Material[],
   TEventMap extends Object3DEventMap = Object3DEventMap
 > extends Mesh<TGeometry, TMaterial, TEventMap> {
   public override readonly type = 'InstancedMesh2';
   public readonly isInstancedMesh2 = true;
-  public instances: Entity<TCustomData>[] = null;
+  public instances: Entity<TData>[] = null;
   public instanceIndex: GLInstancedBufferAttribute;
-  public matricesTexture: DataTexture;
-  public colorsTexture: DataTexture = null;
-  public morphTexture: DataTexture = null;
+  public matricesTexture: DataTexture2;
+  public colorsTexture: DataTexture2 = null;
+  public morphTexture: DataTexture2 = null;
   public boundingBox: Box3 = null;
   public boundingSphere: Sphere = null;
-  public _instancesCount: number; // TODO handle update from dynamic to static
   public bvh: InstancedMeshBVH = null;
   public customSort: CustomSortCallback = null;
   public raycastOnlyFrustum = false;
   public visibilityArray: boolean[];
-  public infoLOD: LODInfo<TCustomData> = null; // TODO rename
+  public infoLOD: LODInfo<TData> = null; // TODO rename
   /** @internal */ _renderer: WebGLRenderer = null;
-  /** @internal */ _indexArray: Uint16Array | Uint32Array;
+  /** @internal */ _indexArray: Uint32Array;
   /** @internal */ _matrixArray: Float32Array;
   /** @internal */ _colorArray: Float32Array = null;
+  /** @internal */ _instancesCount: number;
   /** @internal */ _count: number;
   /** @internal */ _perObjectFrustumCulled = true;
   /** @internal */ _sortObjects = false;
@@ -116,12 +112,12 @@ export class InstancedMesh2<
     if (!geometry) throw new Error('"geometry" is mandatory.');
     if (!material) throw new Error('"material" is mandatory.');
 
-    const { instancesUseEuler, renderer } = params;
+    const { instancesUseEuler, renderer, createInstances } = params;
 
     super(geometry, material);
 
-    const capacity = params.capacity > 0 ? params.capacity : _defaultCapacity;
-    const count = params.capacity ?? 0;
+    const capacity = params.count > 0 ? params.count : _defaultCapacity;
+    const count = params.count ?? 0;
     this._renderer = renderer;
     this._capacity = capacity;
     this._instancesCount = count;
@@ -132,6 +128,7 @@ export class InstancedMesh2<
     this._instance = new InstancedEntity(this, -1, instancesUseEuler);
     this._parentLOD = LOD;
     this.visibilityArray = LOD?.visibilityArray ?? new Array(capacity).fill(true);
+    this.frustumCulled = false;
 
     this.initIndexArray();
     this.initIndexAttribute();
@@ -139,6 +136,8 @@ export class InstancedMesh2<
 
     this.patchMaterial(this.customDepthMaterial);
     this.patchMaterial(this.customDistanceMaterial);
+
+    if (createInstances) this.createInstances();
   }
 
   public override onBeforeShadow(renderer: WebGLRenderer, scene: Scene, camera: Camera, shadowCamera: Camera, geometry: BufferGeometry, depthMaterial: Material, group: Group): void {
@@ -146,6 +145,7 @@ export class InstancedMesh2<
   }
 
   public override onBeforeRender(renderer: WebGLRenderer, scene: Scene, camera: Camera, geometry: BufferGeometry, material: Material, group: Group): void {
+    // this.matricesTexture.update(renderer);
     if (this.instanceIndex) this.performFrustumCulling(camera);
     else this._renderer = renderer;
   }
@@ -156,7 +156,7 @@ export class InstancedMesh2<
 
   protected initIndexArray(): void {
     const count = this._capacity;
-    const array = new Uint32Array(count); // use uint16 if less 32k
+    const array = new Uint32Array(count);
 
     for (let i = 0; i < count; i++) {
       array[i] = i;
@@ -172,9 +172,9 @@ export class InstancedMesh2<
     }
 
     const array = this._indexArray;
-    const gl = this._renderer.getContext() as WebGL2RenderingContext;
+    const gl = this._renderer.getContext() as WebGL2RenderingContext; // TODO cache it ?
 
-    this.instanceIndex = new GLInstancedBufferAttribute(gl, gl.UNSIGNED_INT, 1, 4, array); // UNSIGNED_SHORT usare anche questo se < 65k
+    this.instanceIndex = new GLInstancedBufferAttribute(gl, gl.UNSIGNED_INT, 1, 4, array);
     this._geometry?.setAttribute('instanceIndex', this.instanceIndex as unknown as BufferAttribute);
   }
 
@@ -237,60 +237,9 @@ export class InstancedMesh2<
     material.isInstancedMeshPatched = true;
   }
 
-  public updateInstances(onUpdate: UpdateEntityCallback<Entity<TCustomData>>, start = 0, count = this._instancesCount): this {
-    const instances = this.instances;
-    const end = start + count;
-
-    if (instances) {
-      const instances = this.instances;
-
-      for (let i = start; i < end; i++) {
-        const instance = instances[i];
-        onUpdate(instance, i);
-        instance.updateMatrix();
-      }
-
-      return this;
-    }
-
-    const instance = this._instance;
-
-    for (let i = start; i < end; i++) {
-      (instance as any).id = i;
-      instance.position.set(0, 0, 0);
-      instance.scale.set(1, 1, 1);
-      instance.quaternion.set(0, 0, 0, 1);
-      instance.rotation?.set(0, 0, 0);
-
-      onUpdate(instance as Entity<TCustomData>, i);
-      instance.updateMatrix();
-    }
-
-    return this;
-  }
-
-  public createInstances(onInstanceCreation?: UpdateEntityCallback<Entity<TCustomData>>, start = 0, count = this._instancesCount): this {
-    const end = start + count;
-    const instancesUseEuler = this._instancesUseEuler;
-    const instances = this.instances = new Array(count);
-
-    for (let i = start; i < end; i++) {
-      const instance = new InstancedEntity(this, i, instancesUseEuler) as Entity<TCustomData>;
-      instances[i] = instance;
-
-      if (onInstanceCreation) {
-        onInstanceCreation(instance, i);
-        instance.updateMatrix();
-      }
-    }
-
-    return this;
-  }
-
   public computeBVH(config: BVHParams = {}): void {
     if (!this.bvh) this.bvh = new InstancedMeshBVH(this, config.margin, config.highPrecision, config.getBBoxFromBSphere, config.accurateCulling);
     this.bvh.clear();
-    // TODO set conf
     this.bvh.create();
   }
 
@@ -345,7 +294,7 @@ export class InstancedMesh2<
   }
 
   public setUniformAt(id: number, name: string, value: UniformValue): void { // TODO support multimaterial?
-    const texture = (this._material as ShaderMaterial).uniforms[name].value as DataTexture; // TODO fix type
+    const texture = (this._material as ShaderMaterial).uniforms[name].value as DataTexture2; // TODO fix type
     let setCallback = this._uniformsSetCallback.get(name);
 
     if (!setCallback) {
@@ -383,7 +332,7 @@ export class InstancedMesh2<
     const len = objectInfluences.length + 1; // morphBaseInfluence + all influences
 
     if (this.morphTexture === null) {
-      this.morphTexture = new DataTexture(new Float32Array(len * this._capacity), len, this._capacity, RedFormat, FloatType);
+      this.morphTexture = new DataTexture2(new Float32Array(len * this._capacity), len, this._capacity, RedFormat, FloatType);
     }
 
     const array = this.morphTexture.source.data.data;

@@ -19,7 +19,7 @@ export interface LODInfo<TCustomData = {}> {
 
 export interface LODRenderList<TCustomData = {}> {
   levels: LODLevel<TCustomData>[];
-  indexes: (Uint16Array | Uint32Array)[];
+  indexes: Uint32Array[];
   count: number[];
 }
 
@@ -108,7 +108,7 @@ InstancedMesh2.prototype.addLevel = function (renderList: LODRenderList, geometr
 
   const objIndex = objectsList.findIndex((e) => e.geometry === geometry);
   if (objIndex === -1) {
-    const params: InstancedMesh2Params = { capacity: this._capacity, renderer: this._renderer };
+    const params: InstancedMesh2Params = { count: this._capacity, renderer: this._renderer }; // TODO check
     object = new InstancedMesh2(geometry, material ?? new ShaderMaterial(), params, this);
     objectsList.push(object);
     this.add(object); // TODO handle render order?

@@ -12,7 +12,7 @@ export class InstancedEntity {
   public scale = new Vector3(1, 1, 1);
   public quaternion: Quaternion;
   public rotation: Euler;
-  protected _parent: Object3D; // TODO implement
+  // protected _parent: Object3D; // TODO implement
 
   public get visible(): boolean { return this.owner.getVisibilityAt(this.id); }
   public set visible(value: boolean) { this.owner.setVisibilityAt(this.id, value); }
