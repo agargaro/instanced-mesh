@@ -46,7 +46,7 @@ InstancedMesh2.prototype.raycast = function (raycaster: Raycaster, result: Inter
     if (!raycaster.ray.intersectsSphere(_sphere)) return;
 
     const instancesToCheck = this._indexArray;
-    const checkCount = raycastFrustum ? this._count : this.instancesCount;
+    const checkCount = raycastFrustum ? this._count : this._instancesCount;
 
     for (let i = 0; i < checkCount; i++) {
       this.checkObjectIntersection(raycaster, instancesToCheck[i], result);
@@ -61,7 +61,7 @@ InstancedMesh2.prototype.raycast = function (raycaster: Raycaster, result: Inter
 };
 
 InstancedMesh2.prototype.checkObjectIntersection = function (raycaster: Raycaster, objectIndex: number, result: Intersection[]): void {
-  if (objectIndex > this.instancesCount || !this.getVisibilityAt(objectIndex)) return;
+  if (objectIndex > this._instancesCount || !this.getVisibilityAt(objectIndex)) return;
 
   this.getMatrixAt(objectIndex, _mesh.matrixWorld);
 

@@ -56,7 +56,7 @@ export class InstancedMeshBVH {
   }
 
   public create(): void {
-    const count = this.target.instancesCount;
+    const count = this.target._instancesCount;
     const boxes: FloatArray[] = new Array(count); // test if single array and recreation inside node creation is faster due to memory location
     const objects: Uint32Array = new Uint32Array(count); // TODO could be opt if instances are less than 65k
 
