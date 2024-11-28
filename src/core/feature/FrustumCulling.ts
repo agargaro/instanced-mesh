@@ -106,7 +106,7 @@ InstancedMesh2.prototype.updateIndexArray = function (): void {
   if (!this._visibilityChanged) return;
 
   const array = this._indexArray;
-  const instancesCount = this.instancesCount;
+  const instancesCount = this._instancesCount;
   let count = 0;
 
   for (let i = 0; i < instancesCount; i++) {
@@ -120,7 +120,7 @@ InstancedMesh2.prototype.updateIndexArray = function (): void {
 };
 
 InstancedMesh2.prototype.updateRenderList = function (): void {
-  const instancesCount = this.instancesCount;
+  const instancesCount = this._instancesCount;
 
   for (let i = 0; i < instancesCount; i++) {
     if (this.getVisibilityAt(i)) {
@@ -134,7 +134,7 @@ InstancedMesh2.prototype.updateRenderList = function (): void {
 InstancedMesh2.prototype.BVHCulling = function (): void {
   const array = this._indexArray;
   const matrixArray = this._matrixArray;
-  const instancesCount = this.instancesCount;
+  const instancesCount = this._instancesCount;
   const sortObjects = this._sortObjects;
   let count = 0;
 
@@ -161,7 +161,7 @@ InstancedMesh2.prototype.linearCulling = function (): void {
   const bSphere = this._geometry.boundingSphere;
   const radius = bSphere.radius;
   const center = bSphere.center;
-  const instancesCount = this.instancesCount;
+  const instancesCount = this._instancesCount;
   const geometryCentered = center.x === 0 && center.y === 0 && center.z === 0;
   const sortObjects = this._sortObjects;
   let count = 0;
@@ -251,7 +251,7 @@ InstancedMesh2.prototype.frustumCullingLOD = function (renderList: LODRenderList
 InstancedMesh2.prototype.BVHCullingLOD = function (renderList: LODRenderList, sortObjects: boolean): void {
   const { count, indexes, levels } = renderList;
   const matrixArray = this._matrixArray;
-  const instancesCount = this.instancesCount;
+  const instancesCount = this._instancesCount;
   const visibilityArray = this.visibilityArray;
 
   if (sortObjects) { // todo refactor
@@ -283,7 +283,7 @@ InstancedMesh2.prototype.linearCullingLOD = function (renderList: LODRenderList,
   const bSphere = this._geometry.boundingSphere; // TODO check se esiste?
   const radius = bSphere.radius;
   const center = bSphere.center;
-  const instancesCount = this.instancesCount;
+  const instancesCount = this._instancesCount;
   const geometryCentered = center.x === 0 && center.y === 0 && center.z === 0;
 
   _frustum.setFromProjectionMatrix(_projScreenMatrix);

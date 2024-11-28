@@ -6,12 +6,15 @@ import { InstancedMeshBVH } from './InstancedMeshBVH.js';
 import { GLInstancedBufferAttribute } from './utils/GLInstancedBufferAttribute.js';
 import { InstancedRenderItem } from './utils/InstancedRenderList.js';
 
-// TODO: Add expand and count/maxCount when create?
 // TODO: partial texture update
 // TODO: Use BVH only for raycasting
 // TODO LOD: instancedMeshLOD rendering first nearest levels, look out to transparent
 // TODO LOD: shared customDepthMaterial and customDistanceMaterial?
 // TODO LOD: BVH and handle raycastOnlyFrustum?;
+// TODO LOD: sync all textures private property (colorsArray, colorsTexture, etc) to prevent to create unnecesary textures
+
+// TODO fix createInstances and add flag.
+// TODO fix computeBVH with dynamic count.
 
 export type Entity<T> = InstancedEntity & T;
 export type UpdateEntityCallback<T> = (obj: Entity<T>, index: number) => void;
@@ -23,6 +26,12 @@ export interface BVHParams {
   getBBoxFromBSphere?: boolean;
   multiplier?: number;
   accurateCulling?: boolean;
+}
+
+export interface InstancedMesh2Params {
+  capacity?: number;
+  renderer?: WebGLRenderer;
+  instancesUseEuler?: boolean;
 }
 
 export class InstancedMesh2<
@@ -40,7 +49,7 @@ export class InstancedMesh2<
   public morphTexture: DataTexture = null;
   public boundingBox: Box3 = null;
   public boundingSphere: Sphere = null;
-  public instancesCount: number; // TODO handle update from dynamic to static
+  public _instancesCount: number; // TODO handle update from dynamic to static
   public bvh: InstancedMeshBVH = null;
   public customSort: CustomSortCallback = null;
   public raycastOnlyFrustum = false;
@@ -53,14 +62,14 @@ export class InstancedMesh2<
   /** @internal */ _count: number;
   /** @internal */ _perObjectFrustumCulled = true;
   /** @internal */ _sortObjects = false;
-  /** @internal */ _maxCount: number;
-  /** @internal */ _visibilityChanged = false;
+  /** @internal */ _capacity: number;
+  /** @internal */ _visibilityChanged = false; // TODO rename
   /** @internal */ _geometry: TGeometry;
   /** @internal */ _material: TMaterial;
   /** @internal */ _parentLOD: InstancedMesh2;
   protected _uniformsSetCallback = new Map<string, (id: number, value: UniformValue) => void>();
   protected readonly _instancesUseEuler: boolean;
-  protected readonly _instance: InstancedEntity;
+  protected readonly _instance: InstancedEntity; // TODO rename tempInstance?
 
   public override customDepthMaterial = new MeshDepthMaterial({ depthPacking: RGBADepthPacking });
   public override customDistanceMaterial = new MeshDistanceMaterial();
@@ -70,8 +79,11 @@ export class InstancedMesh2<
   private readonly instanceMatrix = new InstancedBufferAttribute(new Float32Array(0), 16); // must be init to avoid exception
   private readonly instanceColor = null; // must be null to avoid exception
 
+  public get capacity(): number { return this._capacity; }
   public get count(): number { return this._count; }
-  public get maxCount(): number { return this._maxCount; }
+
+  public get instancesCount(): number { return this._instancesCount; }
+  public set instancesCount(value: number) { this.setInstancesCount(value); }
 
   public get perObjectFrustumCulled(): boolean { return this._perObjectFrustumCulled; }
   public set perObjectFrustumCulled(value: boolean) {
@@ -100,27 +112,32 @@ export class InstancedMesh2<
   }
 
   /** MATERIAL CANNOT BE SHARED AND GEOMETRY IS CLONED IF ALREADY PATCHED */
-  constructor(renderer: WebGLRenderer, count: number, geometry?: TGeometry, material?: TMaterial, LOD?: InstancedMesh2, instancesUseEuler = false) {
-    if (!count || count < 0) throw new Error('"count" must be greater than 0.');
+  constructor(geometry: TGeometry, material: TMaterial, params: InstancedMesh2Params = {}, LOD?: InstancedMesh2) {
+    if (!geometry) throw new Error('"geometry" is mandatory.');
+    if (!material) throw new Error('"material" is mandatory.');
+
+    const { instancesUseEuler, renderer } = params;
 
     super(geometry, material);
 
+    const capacity = params.capacity > 0 ? params.capacity : _defaultCapacity;
+    const count = params.capacity ?? 0;
     this._renderer = renderer;
-    this._instancesUseEuler = instancesUseEuler;
-    this._instance = new InstancedEntity(this, -1, instancesUseEuler);
-    this.instancesCount = count;
-    this._maxCount = count;
+    this._capacity = capacity;
+    this._instancesCount = count;
     this._count = count;
     this._geometry = geometry;
     this._material = material;
+    this._instancesUseEuler = instancesUseEuler ?? false;
+    this._instance = new InstancedEntity(this, -1, instancesUseEuler);
     this._parentLOD = LOD;
-    this.visibilityArray = LOD?.visibilityArray ?? new Array(count).fill(true);
+    this.visibilityArray = LOD?.visibilityArray ?? new Array(capacity).fill(true);
 
     this.initIndexArray();
     this.initIndexAttribute();
     this.initMatricesTexture();
 
-    this.patchMaterial(this.customDepthMaterial); // TODO check if with LOD can reuse it
+    this.patchMaterial(this.customDepthMaterial);
     this.patchMaterial(this.customDistanceMaterial);
   }
 
@@ -138,7 +155,7 @@ export class InstancedMesh2<
   }
 
   protected initIndexArray(): void {
-    const count = this._maxCount;
+    const count = this._capacity;
     const array = new Uint32Array(count); // use uint16 if less 32k
 
     for (let i = 0; i < count; i++) {
@@ -162,7 +179,7 @@ export class InstancedMesh2<
   }
 
   protected initMatricesTexture(): void {
-    this.matricesTexture = this._parentLOD ? this._parentLOD.matricesTexture : createSquareTexture_mat4(this._maxCount);
+    this.matricesTexture = this._parentLOD ? this._parentLOD.matricesTexture : createSquareTexture_mat4(this._capacity);
     this._matrixArray = this.matricesTexture.image.data as unknown as Float32Array;
   }
 
@@ -220,7 +237,7 @@ export class InstancedMesh2<
     material.isInstancedMeshPatched = true;
   }
 
-  public updateInstances(onUpdate: UpdateEntityCallback<Entity<TCustomData>>, start = 0, count = this.instancesCount): this {
+  public updateInstances(onUpdate: UpdateEntityCallback<Entity<TCustomData>>, start = 0, count = this._instancesCount): this {
     const instances = this.instances;
     const end = start + count;
 
@@ -252,7 +269,7 @@ export class InstancedMesh2<
     return this;
   }
 
-  public createInstances(onInstanceCreation?: UpdateEntityCallback<Entity<TCustomData>>, start = 0, count = this.instancesCount): this {
+  public createInstances(onInstanceCreation?: UpdateEntityCallback<Entity<TCustomData>>, start = 0, count = this._instancesCount): this {
     const end = start + count;
     const instancesUseEuler = this._instancesUseEuler;
     const instances = this.instances = new Array(count);
@@ -308,7 +325,7 @@ export class InstancedMesh2<
 
   public setColorAt(id: number, color: ColorRepresentation): void {
     if (this.colorsTexture === null) {
-      this.colorsTexture = createSquareTexture_vec4(this._maxCount);
+      this.colorsTexture = createSquareTexture_vec4(this._capacity);
       this.colorsTexture.colorSpace = ColorManagement.workingColorSpace;
       this._colorArray = this.colorsTexture.image.data as unknown as Float32Array;
       this._colorArray.fill(1);
@@ -366,7 +383,7 @@ export class InstancedMesh2<
     const len = objectInfluences.length + 1; // morphBaseInfluence + all influences
 
     if (this.morphTexture === null) {
-      this.morphTexture = new DataTexture(new Float32Array(len * this._maxCount), len, this._maxCount, RedFormat, FloatType);
+      this.morphTexture = new DataTexture(new Float32Array(len * this._capacity), len, this._capacity, RedFormat, FloatType);
     }
 
     const array = this.morphTexture.source.data.data;
@@ -389,7 +406,7 @@ export class InstancedMesh2<
 
   public computeBoundingBox(): void { // if bvh present, can override? TODO
     const geometry = this._geometry;
-    const count = this.instancesCount;
+    const count = this._instancesCount;
 
     if (this.boundingBox === null) this.boundingBox = new Box3();
     if (geometry.boundingBox === null) geometry.computeBoundingBox();
@@ -407,7 +424,7 @@ export class InstancedMesh2<
 
   public computeBoundingSphere(): void {
     const geometry = this._geometry;
-    const count = this.instancesCount;
+    const count = this._instancesCount;
 
     if (this.boundingSphere === null) this.boundingSphere = new Sphere();
     if (geometry.boundingSphere === null) geometry.computeBoundingSphere();
@@ -437,9 +454,9 @@ export class InstancedMesh2<
 
     // TODO copy uniform?
 
-    this.instancesCount = source.instancesCount;
-    this._count = source._maxCount;
-    this._maxCount = source._maxCount;
+    this._instancesCount = source._instancesCount;
+    this._count = source._capacity;
+    this._capacity = source._capacity;
 
     if (source.boundingBox !== null) this.boundingBox = source.boundingBox.clone();
     if (source.boundingSphere !== null) this.boundingSphere = source.boundingSphere.clone();
@@ -469,6 +486,7 @@ export class InstancedMesh2<
   }
 }
 
+const _defaultCapacity = 1000;
 const _box3 = new Box3();
 const _sphere = new Sphere();
 const _tempMat4 = new Matrix4();

@@ -1,5 +1,5 @@
 import { BufferGeometry, Material, ShaderMaterial } from 'three';
-import { InstancedMesh2 } from '../InstancedMesh2.js';
+import { InstancedMesh2, InstancedMesh2Params } from '../InstancedMesh2.js';
 
 declare module '../InstancedMesh2.js' {
   interface InstancedMesh2 {
@@ -108,7 +108,8 @@ InstancedMesh2.prototype.addLevel = function (renderList: LODRenderList, geometr
 
   const objIndex = objectsList.findIndex((e) => e.geometry === geometry);
   if (objIndex === -1) {
-    object = new InstancedMesh2(this._renderer, this._maxCount, geometry, material ?? new ShaderMaterial(), this);
+    const params: InstancedMesh2Params = { capacity: this._capacity, renderer: this._renderer };
+    object = new InstancedMesh2(geometry, material ?? new ShaderMaterial(), params, this);
     objectsList.push(object);
     this.add(object); // TODO handle render order?
   } else {

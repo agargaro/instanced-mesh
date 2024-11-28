@@ -19,7 +19,9 @@ const scene = new Scene();
 
 scene.continuousRaycasting = true;
 
-const instancedMesh = new InstancedMesh2<{ dir: Vector3 }>(main.renderer, config.count, new OctahedronGeometry(1, 2), new MeshLambertMaterial({ flatShading: true }));
+const geometry = new OctahedronGeometry(1, 2);
+const material = new MeshLambertMaterial({ flatShading: true });
+const instancedMesh = new InstancedMesh2<{ dir: Vector3 }>({ geometry, material, capacity: config.count });
 
 instancedMesh.createInstances((object) => {
   object.dir = new Vector3().randomDirection();
@@ -58,13 +60,13 @@ scene.on('animate', (e) => {
 });
 
 const controls = new OrbitControls(camera, main.renderer.domElement);
-controls.panSpeed = 1000;
+controls.panSpeed = 100;
 
 main.createView({ scene, camera, onAfterRender: () => spheresCount.updateDisplay() });
 
 const gui = new GUI();
-gui.add(instancedMesh, 'maxCount').name('instances max count').disable();
+gui.add(instancedMesh, 'capacity').name('instances max count').disable();
 const spheresCount = gui.add(instancedMesh, 'count').name('instances rendered').disable();
-gui.add(config, 'count', 0, instancedMesh.maxCount).name('instances count').onChange((v) => instancedMesh.instancesCount = v);
+gui.add(config, 'count', 0, instancedMesh.capacity).name('instances count').onChange((v) => instancedMesh.instancesCount = v);
 gui.add(config, 'animatedCount', 0, 50000).name('instances animated');
 gui.add(camera, 'far', 100, config.spawnRadius, 20).name('camera far').onChange(() => camera.updateProjectionMatrix());
