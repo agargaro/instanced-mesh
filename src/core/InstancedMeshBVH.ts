@@ -4,7 +4,7 @@ import { getSphereFromMatrix_centeredGeometry, SphereTarget } from '../utils/Mat
 import { LODLevel } from './feature/LOD.js';
 import { InstancedMesh2 } from './InstancedMesh2.js';
 
-// TODO handle multiplier parameter
+// TODO handle multiplier parameter?
 // TODO getBoxFromSphere updated if change geometry (and create accessor)
 
 export class InstancedMeshBVH {

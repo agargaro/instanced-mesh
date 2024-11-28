@@ -1,41 +1,38 @@
-import { DataTexture, FloatType, IntType, PixelFormat, RedFormat, RedIntegerFormat, RGBAFormat, RGBAIntegerFormat, RGFormat, RGIntegerFormat, TextureDataType, UnsignedIntType } from 'three';
+import { FloatType, IntType, PixelFormat, RedFormat, RedIntegerFormat, RGBAFormat, RGBAIntegerFormat, RGFormat, RGIntegerFormat, TextureDataType, TypedArray, UnsignedIntType } from 'three';
+import { DataTexture2 } from '../core/utils/DataTexture2.js';
 
 export type ChannelSize = 1 | 2 | 3 | 4;
-
-export type TypedArrayConstructor =
-  Int8ArrayConstructor | Int16ArrayConstructor | Int32ArrayConstructor |
-  Uint8ArrayConstructor | Uint8ClampedArrayConstructor | Uint16ArrayConstructor | Uint32ArrayConstructor |
-  Float32ArrayConstructor | Float64ArrayConstructor;
+export type TypedArrayConstructor = new (count: number) => TypedArray;
 
 export function getTextureSquareSize(count: number, stride: number): number {
   return Math.max(stride, Math.ceil(Math.sqrt(count / stride)) * stride);
 }
 
-export function createSquareTexture_float(count: number): DataTexture {
+export function createSquareTexture_float(count: number): DataTexture2 {
   return createSquareTexture(Float32Array, 1, 1, count);
 }
 
-export function createSquareTexture_uint(count: number): DataTexture {
+export function createSquareTexture_uint(count: number): DataTexture2 {
   return createSquareTexture(Uint32Array, 1, 1, count);
 }
 
-export function createSquareTexture_vec2(count: number): DataTexture {
+export function createSquareTexture_vec2(count: number): DataTexture2 {
   return createSquareTexture(Float32Array, 2, 1, count);
 }
 
-export function createSquareTexture_vec4(count: number): DataTexture {
+export function createSquareTexture_vec4(count: number): DataTexture2 {
   return createSquareTexture(Float32Array, 4, 1, count);
 }
 
-export function createSquareTexture_mat3(count: number): DataTexture {
+export function createSquareTexture_mat3(count: number): DataTexture2 {
   return createSquareTexture(Float32Array, 4, 3, count);
 }
 
-export function createSquareTexture_mat4(count: number): DataTexture {
+export function createSquareTexture_mat4(count: number): DataTexture2 {
   return createSquareTexture(Float32Array, 4, 4, count);
 }
 
-export function createSquareTexture(arrayType: TypedArrayConstructor, channels: ChannelSize, stride: number, count: number): DataTexture {
+export function createSquareTexture(arrayType: TypedArrayConstructor, channels: ChannelSize, stride: number, count: number): DataTexture2 {
   if (channels === 3) {
     console.warn('"channels" cannot be 3. Set to 4. More info: https://github.com/mrdoob/three.js/pull/23228');
     channels = 4;
@@ -60,7 +57,7 @@ export function createSquareTexture(arrayType: TypedArrayConstructor, channels: 
       break;
   }
 
-  const texture = new DataTexture(array, size, size, format, type);
+  const texture = new DataTexture2(array, size, size, format, type);
   texture.needsUpdate = true;
   return texture;
 }

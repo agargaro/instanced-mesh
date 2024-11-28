@@ -24,6 +24,9 @@ export function resizeSquareTextureArray_mat4(array: TypedArray, count: number):
 
 export function resizeSquareTextureArray(array: TypedArray, channels: ChannelSize, stride: number, count: number): TextureImageData {
   const size = getTextureSquareSize(count, stride);
+  const currentSize = Math.sqrt(array.length / channels);
+  if (size === currentSize) return;
+
   const newArray = new (array as any).constructor(size * size * channels);
   newArray.set(array);
   return { data: newArray, height: size, width: size };
