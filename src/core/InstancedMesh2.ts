@@ -13,6 +13,9 @@ import { InstancedRenderItem } from './utils/InstancedRenderList.js';
 // TODO LOD: BVH and handle raycastOnlyFrustum?;
 // TODO LOD: sync all textures private property (colorsArray, colorsTexture, etc) to prevent to create unnecesary textures
 
+// TODO fix createInstances and add flag.
+// TODO fix computeBVH with dynamic count.
+
 export type Entity<T> = InstancedEntity & T;
 export type UpdateEntityCallback<T> = (obj: Entity<T>, index: number) => void;
 export type CustomSortCallback = (list: InstancedRenderItem[]) => void;
@@ -110,8 +113,8 @@ export class InstancedMesh2<
 
   /** MATERIAL CANNOT BE SHARED AND GEOMETRY IS CLONED IF ALREADY PATCHED */
   constructor(geometry: TGeometry, material: TMaterial, params: InstancedMesh2Params = {}, LOD?: InstancedMesh2) {
-    if (geometry) throw new Error('"geometry" is mandatory.');
-    if (material) throw new Error('"material" is mandatory.');
+    if (!geometry) throw new Error('"geometry" is mandatory.');
+    if (!material) throw new Error('"material" is mandatory.');
 
     const { instancesUseEuler, renderer } = params;
 
