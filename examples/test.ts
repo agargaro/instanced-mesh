@@ -4,8 +4,9 @@ import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
 import { OrbitControls } from 'three/examples/jsm/Addons.js';
 import { InstancedMesh2 } from '../src/index.js';
 
+const maxCount = 10000000;
 const main = new Main(); // init renderer and other stuff
-const camera = new PerspectiveCameraAuto().translateZ(200);
+const camera = new PerspectiveCameraAuto(50, 0.1, 5000).translateZ(200);
 const scene = new Scene();
 const controls = new OrbitControls(camera, main.renderer.domElement);
 controls.update();
@@ -18,25 +19,22 @@ main.createView({
   }
 });
 
-const instancedMesh = new InstancedMesh2(new BoxGeometry(), new MeshNormalMaterial()); // capacity is optional
-instancedMesh.on('click', (e) => instancedMesh.setVisibilityAt(e.intersection.instanceId, false));
-scene.add(instancedMesh);
+const boxes = new InstancedMesh2(new BoxGeometry(), new MeshNormalMaterial());
+boxes.on('click', (e) => boxes.setVisibilityAt(e.intersection.instanceId, false));
+boxes.computeBVH({ getBBoxFromBSphere: true });
+scene.add(boxes);
 
-scene.on('animate', () => {
-  if (instancedMesh.instancesCount >= 10000000) return;
-
-  instancedMesh.addInstances(625, (obj, index) => {
+const event = boxes.on('animate', () => {
+  boxes.addInstances(625, (obj, index) => {
     obj.position.randomDirection().multiplyScalar(Math.random() * 1000000 + 200);
-    obj.scale.random().multiplyScalar(Math.random() * 5 + 1);
+    obj.scale.random().multiplyScalar(Math.random() * 10 + 5);
     obj.quaternion.random();
   });
 
-  if (instancedMesh.instancesCount === 625) {
-    instancedMesh.computeBVH({ getBBoxFromBSphere: true }); // fix if count is 0
-  }
+  if (boxes.instancesCount >= maxCount) boxes.off('animate', event);
 });
 
 const gui = new GUI();
-const capacity = gui.add(instancedMesh, 'capacity').name('capacity').disable();
-const instancesCount = gui.add(instancedMesh, 'instancesCount').name('instances count').disable();
-const renderedCount = gui.add(instancedMesh, 'count').name('instances rendered').disable();
+const capacity = gui.add(boxes, 'capacity').name('capacity').disable();
+const instancesCount = gui.add(boxes, 'instancesCount').name('instances count').disable();
+const renderedCount = gui.add(boxes, 'count').name('instances rendered').disable();
