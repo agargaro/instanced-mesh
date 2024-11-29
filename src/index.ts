@@ -14,7 +14,6 @@ export * from './shaders/chunks/get_from_texture.glsl.js';
 export * from './shaders/chunks/instanced_pars_vertex.glsl.js';
 export * from './shaders/chunks/instanced_vertex.glsl.js';
 
-export * from './utils/CreateTexture.js';
 export * from './utils/MatrixUtils.js';
 export * from './utils/SortingUtils.js';
 

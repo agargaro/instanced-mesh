@@ -18,6 +18,8 @@ ShaderChunk.common = ShaderChunk.common.concat('\n#include <get_from_texture>');
 ShaderChunk.batching_pars_vertex = ShaderChunk.batching_pars_vertex.concat('\n#include <instanced_pars_vertex>');
 ShaderChunk['batching_vertex'] = ShaderChunk['batching_vertex'].concat('\n#include <instanced_vertex>'); // TODO fix d.ts
 
+ShaderChunk['morphinstance_vertex'] = ShaderChunk['morphinstance_vertex'].replaceAll('gl_InstanceID', 'instanceIndex');
+
 // use 'getPatchedShader' function to make these example works
 // examples/jsm/modifiers/CurveModifier.js
 // examples/jsm/postprocessing/OutlinePass.js

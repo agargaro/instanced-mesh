@@ -76,7 +76,7 @@ export class InstancedEntity {
     te[offset + 14] = position.z;
     te[offset + 15] = 1;
 
-    owner.matricesTexture.needsUpdate = true;
+    owner.matricesTexture.enqueueUpdate(id);
     owner.bvh?.move(id);
   }
 
@@ -91,7 +91,7 @@ export class InstancedEntity {
     te[offset + 13] = position.y;
     te[offset + 14] = position.z;
 
-    owner.matricesTexture.needsUpdate = true;
+    owner.matricesTexture.enqueueUpdate(id);
     owner.bvh?.move(id);
   }
 

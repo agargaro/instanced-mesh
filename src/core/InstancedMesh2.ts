@@ -1,12 +1,11 @@
-import { Box3, BufferAttribute, BufferGeometry, Camera, Color, ColorManagement, ColorRepresentation, FloatType, Group, InstancedBufferAttribute, Material, Matrix4, Mesh, MeshDepthMaterial, MeshDistanceMaterial, Object3D, Object3DEventMap, RGBADepthPacking, RGFormat, RedFormat, Scene, ShaderMaterial, Sphere, WebGLRenderer } from 'three';
-import { createSquareTexture_mat4, createSquareTexture_vec4 } from '../utils/CreateTexture.js';
+import { Box3, BufferAttribute, BufferGeometry, Camera, Color, ColorManagement, ColorRepresentation, DataTexture, FloatType, Group, InstancedBufferAttribute, Material, Matrix4, Mesh, MeshDepthMaterial, MeshDistanceMaterial, Object3D, Object3DEventMap, RGBADepthPacking, RGFormat, RedFormat, Scene, ShaderMaterial, Sphere, WebGLRenderer } from 'three';
 import { Entity } from './feature/Instances.js';
 import { LODInfo } from './feature/LOD.js';
 import { InstancedEntity, UniformValue, UniformValueNoNumber } from './InstancedEntity.js';
 import { InstancedMeshBVH } from './InstancedMeshBVH.js';
-import { DataTexture2 } from './utils/DataTexture2.js';
 import { GLInstancedBufferAttribute } from './utils/GLInstancedBufferAttribute.js';
 import { InstancedRenderItem } from './utils/InstancedRenderList.js';
+import { SquareDataTexture } from './utils/SquareDataTexture.js';
 
 // TODO: Use BVH only for raycasting
 // TODO LOD: instancedMeshLOD rendering first nearest levels, look out to transparent
@@ -17,10 +16,10 @@ import { InstancedRenderItem } from './utils/InstancedRenderList.js';
 export type CustomSortCallback = (list: InstancedRenderItem[]) => void;
 
 export interface InstancedMesh2Params {
-  count?: number;
-  renderer?: WebGLRenderer;
+  capacity?: number;
   createInstances?: boolean;
   instancesUseEuler?: boolean;
+  renderer?: WebGLRenderer;
 }
 
 export interface BVHParams {
@@ -40,9 +39,9 @@ export class InstancedMesh2<
   public readonly isInstancedMesh2 = true;
   public instances: Entity<TData>[] = null;
   public instanceIndex: GLInstancedBufferAttribute;
-  public matricesTexture: DataTexture2;
-  public colorsTexture: DataTexture2 = null;
-  public morphTexture: DataTexture2 = null;
+  public matricesTexture: SquareDataTexture;
+  public colorsTexture: SquareDataTexture = null;
+  public morphTexture: DataTexture = null;
   public boundingBox: Box3 = null;
   public boundingSphere: Sphere = null;
   public bvh: InstancedMeshBVH = null;
@@ -54,8 +53,8 @@ export class InstancedMesh2<
   /** @internal */ _indexArray: Uint32Array;
   /** @internal */ _matrixArray: Float32Array;
   /** @internal */ _colorArray: Float32Array = null;
-  /** @internal */ _instancesCount: number;
-  /** @internal */ _count: number;
+  /** @internal */ _instancesCount = 0;
+  /** @internal */ _count = 0;
   /** @internal */ _perObjectFrustumCulled = true;
   /** @internal */ _sortObjects = false;
   /** @internal */ _capacity: number;
@@ -116,12 +115,9 @@ export class InstancedMesh2<
 
     super(geometry, material);
 
-    const capacity = params.count > 0 ? params.count : _defaultCapacity;
-    const count = params.count ?? 0;
+    const capacity = params.capacity > 0 ? params.capacity : _defaultCapacity;
     this._renderer = renderer;
     this._capacity = capacity;
-    this._instancesCount = count;
-    this._count = count;
     this._geometry = geometry;
     this._material = material;
     this._instancesUseEuler = instancesUseEuler ?? false;
@@ -145,7 +141,8 @@ export class InstancedMesh2<
   }
 
   public override onBeforeRender(renderer: WebGLRenderer, scene: Scene, camera: Camera, geometry: BufferGeometry, material: Material, group: Group): void {
-    // this.matricesTexture.update(renderer);
+    this.matricesTexture.update(renderer); // TODO anche le altre
+    // this.colorsTexture.update(); // TODO impotante
     if (this.instanceIndex) this.performFrustumCulling(camera);
     else this._renderer = renderer;
   }
@@ -179,7 +176,7 @@ export class InstancedMesh2<
   }
 
   protected initMatricesTexture(): void {
-    this.matricesTexture = this._parentLOD ? this._parentLOD.matricesTexture : createSquareTexture_mat4(this._capacity);
+    this.matricesTexture = this._parentLOD ? this._parentLOD.matricesTexture : new SquareDataTexture(Float32Array, 4, 4, this._capacity);
     this._matrixArray = this.matricesTexture.image.data as unknown as Float32Array;
   }
 
@@ -255,7 +252,7 @@ export class InstancedMesh2<
       matrix.decompose(instance.position, instance.quaternion, instance.scale);
     }
 
-    this.matricesTexture.needsUpdate = true;
+    this.matricesTexture.enqueueUpdate(id);
     this.bvh?.move(id);
   }
 
@@ -274,7 +271,7 @@ export class InstancedMesh2<
 
   public setColorAt(id: number, color: ColorRepresentation): void {
     if (this.colorsTexture === null) {
-      this.colorsTexture = createSquareTexture_vec4(this._capacity);
+      this.colorsTexture = new SquareDataTexture(Float32Array, 4, 1, this._capacity);
       this.colorsTexture.colorSpace = ColorManagement.workingColorSpace;
       this._colorArray = this.colorsTexture.image.data as unknown as Float32Array;
       this._colorArray.fill(1);
@@ -294,7 +291,7 @@ export class InstancedMesh2<
   }
 
   public setUniformAt(id: number, name: string, value: UniformValue): void { // TODO support multimaterial?
-    const texture = (this._material as ShaderMaterial).uniforms[name].value as DataTexture2; // TODO fix type
+    const texture = (this._material as ShaderMaterial).uniforms[name].value as SquareDataTexture; // TODO fix type
     let setCallback = this._uniformsSetCallback.get(name);
 
     if (!setCallback) {
@@ -332,7 +329,7 @@ export class InstancedMesh2<
     const len = objectInfluences.length + 1; // morphBaseInfluence + all influences
 
     if (this.morphTexture === null) {
-      this.morphTexture = new DataTexture2(new Float32Array(len * this._capacity), len, this._capacity, RedFormat, FloatType);
+      this.morphTexture = new DataTexture(new Float32Array(len * this._capacity), len, this._capacity, RedFormat, FloatType);
     }
 
     const array = this.morphTexture.source.data.data;
