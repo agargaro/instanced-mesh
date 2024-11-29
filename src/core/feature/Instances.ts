@@ -9,7 +9,6 @@ declare module '../InstancedMesh2.js' {
     /** @internal */ clearInstance(instance: InstancedEntity, index: number): InstancedEntity;
     /** @internal */ createInstances(start?: number, count?: number): this;
     updateInstances(onUpdate: UpdateEntityCallback<Entity<TData>>, start?: number, count?: number): this;
-    addInstance(onCreation?: UpdateEntityCallback<Entity<TData>>): this;
     addInstances(count: number, onCreation?: UpdateEntityCallback<Entity<TData>>): this;
     // removeInstances(count: number): void;
   }
@@ -48,20 +47,6 @@ InstancedMesh2.prototype.createInstances = function (this: InstancedMesh2, start
   for (let i = start; i < end; i++) {
     const instance = new InstancedEntity(this, i, this._instancesUseEuler);
     instances[i] = instance;
-  }
-
-  return this;
-};
-
-InstancedMesh2.prototype.addInstance = function (onCreation?: UpdateEntityCallback): InstancedMesh2 {
-  const index = this._instancesCount;
-  this.setInstancesCount(this._instancesCount + 1);
-
-  if (onCreation) {
-    const instance: InstancedEntity = this.instances ? this.instances[index] : this.clearInstance(this._instance, index);
-    onCreation(instance, index);
-    instance.updateMatrix();
-    this.bvh?.insert(index);
   }
 
   return this;

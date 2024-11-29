@@ -108,7 +108,7 @@ InstancedMesh2.prototype.addLevel = function (renderList: LODRenderList, geometr
 
   const objIndex = objectsList.findIndex((e) => e.geometry === geometry);
   if (objIndex === -1) {
-    const params: InstancedMesh2Params = { count: this._capacity, renderer: this._renderer }; // TODO check
+    const params: InstancedMesh2Params = { capacity: this._capacity, renderer: this._renderer }; // TODO check
     object = new InstancedMesh2(geometry, material ?? new ShaderMaterial(), params, this);
     objectsList.push(object);
     this.add(object); // TODO handle render order?

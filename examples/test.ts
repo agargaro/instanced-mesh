@@ -18,23 +18,23 @@ main.createView({
   }
 });
 
-const instancedMesh = new InstancedMesh2(new BoxGeometry(), new MeshNormalMaterial());
+const instancedMesh = new InstancedMesh2(new BoxGeometry(), new MeshNormalMaterial()); // capacity is optional
 instancedMesh.on('click', (e) => instancedMesh.setVisibilityAt(e.intersection.instanceId, false));
 scene.add(instancedMesh);
 
-const timer = setInterval(() => {
-  instancedMesh.addInstances(200, (obj, index) => {
-    obj.position.randomDirection().multiplyScalar(Math.random() * 10000 + 200);
+scene.on('animate', () => {
+  if (instancedMesh.instancesCount >= 10000000) return;
+
+  instancedMesh.addInstances(625, (obj, index) => {
+    obj.position.randomDirection().multiplyScalar(Math.random() * 1000000 + 200);
     obj.scale.random().multiplyScalar(Math.random() * 5 + 1);
     obj.quaternion.random();
   });
 
-  if (instancedMesh.instancesCount === 200) { // FIX
-    instancedMesh.computeBVH({ accurateCulling: false, getBBoxFromBSphere: true }); // fix if count is 0
+  if (instancedMesh.instancesCount === 625) {
+    instancedMesh.computeBVH({ getBBoxFromBSphere: true }); // fix if count is 0
   }
-
-  if (instancedMesh.instancesCount === 1000000) clearInterval(timer);
-}, 1000 / 60);
+});
 
 const gui = new GUI();
 const capacity = gui.add(instancedMesh, 'capacity').name('capacity').disable();
