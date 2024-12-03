@@ -293,6 +293,22 @@ export class InstancedMesh2<
     return color.fromArray(this._colorArray, id * 4);
   }
 
+  public setOpacityAt(id: number, value: number): void {
+    if (this.colorsTexture === null) {
+      this.colorsTexture = new SquareDataTexture(Float32Array, 4, 1, this._capacity);
+      this.colorsTexture.colorSpace = ColorManagement.workingColorSpace;
+      this._colorArray = this.colorsTexture.image.data as unknown as Float32Array;
+      this._colorArray.fill(1); // TODO make a function to create colorTexture
+    }
+
+    this._colorArray[id * 4 + 3] = value;
+    this.colorsTexture.enqueueUpdate(id);
+  }
+
+  public getOpacityAt(id: number): number {
+    return this._colorArray[id * 4 + 3];
+  }
+
   public setUniformAt(id: number, name: string, value: UniformValue): void { // TODO support multimaterial?
     const texture = (this._material as ShaderMaterial).uniforms[name].value as SquareDataTexture; // TODO fix type
     let setCallback = this._uniformsSetCallback.get(name);
