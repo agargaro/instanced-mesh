@@ -16,9 +16,9 @@ scene.continuousRaycasting = true;
 
 const geometry = new BoxGeometry(0.1, 0.1, 0.1);
 const material = new MeshLambertMaterial();
-const instancedMesh = new InstancedMesh2(main.renderer, 150000, geometry, material);
+const instancedMesh = new InstancedMesh2(geometry, material);
 
-instancedMesh.updateInstances((object) => {
+instancedMesh.addInstances(150000, (object) => {
   object.position.setFromSphericalCoords(random.range(0.5, 30), random.range(0, Math.PI * 2), random.range(0, Math.PI * 2));
   object.quaternion.random();
   object.color = 'white';
@@ -50,7 +50,7 @@ main.createView({ scene, camera, backgroundColor: 'white', onAfterRender: () => 
 const bvh = instancedMesh.bvh;
 
 const gui = new GUI();
-gui.add(instancedMesh, 'maxCount').disable();
+gui.add(instancedMesh, 'capacity').disable();
 const spheresCount = gui.add(instancedMesh, 'count').name('instances rendered').disable();
 gui.add(instancedMesh, 'instancesCount', 0, instancedMesh.capacity);
 gui.add(config, 'useBVH').name('use BVH').onChange((value) => instancedMesh.bvh = value ? bvh : null);

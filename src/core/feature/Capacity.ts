@@ -13,10 +13,11 @@ InstancedMesh2.prototype.resizeBuffers = function (capacity: number): InstancedM
   this._capacity = capacity;
   const minCapacity = Math.min(capacity, oldCapacity);
 
+  const indexArray = new Uint32Array(capacity);
+  indexArray.set(new Uint32Array(this._indexArray.buffer, 0, minCapacity)); // safely copy TODO method
+  this._indexArray = indexArray;
   if (this.instanceIndex) {
-    const indexArray = new Uint32Array(capacity);
-    indexArray.set(new Uint32Array(this._indexArray.buffer, 0, minCapacity));
-    this._indexArray = this.instanceIndex.array = indexArray;
+    this.instanceIndex.array = indexArray;
   }
 
   this.visibilityArray.length = capacity;
@@ -47,7 +48,11 @@ InstancedMesh2.prototype.resizeBuffers = function (capacity: number): InstancedM
 
 InstancedMesh2.prototype.setInstancesCount = function (count: number): void {
   if (count > this._capacity) {
-    const newCapacity = this.capacity + (this._capacity >> 1) + 512;
+    let newCapacity = this.capacity + (this._capacity >> 1) + 512;
+    while (newCapacity < count) {
+      newCapacity += (newCapacity >> 1) + 512;
+    }
+
     this.resizeBuffers(newCapacity);
   }
 

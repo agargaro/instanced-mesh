@@ -141,8 +141,9 @@ export class InstancedMesh2<
   }
 
   public override onBeforeRender(renderer: WebGLRenderer, scene: Scene, camera: Camera, geometry: BufferGeometry, material: Material, group: Group): void {
-    this.matricesTexture.update(renderer); // TODO anche le altre
-    // this.colorsTexture.update(); // TODO impotante
+    this.matricesTexture.update(renderer);
+    this.colorsTexture.update(renderer);
+    // TODO others texture
     if (this.instanceIndex) this.performFrustumCulling(camera);
     else this._renderer = renderer;
   }
@@ -228,6 +229,8 @@ export class InstancedMesh2<
         shader.defines['USE_INSTANCING_COLOR_INDIRECT'] = '';
         shader.fragmentShader = shader.fragmentShader.replace('#include <common>', '#define USE_COLOR\n#include <common>');
         // NOTE that '#defined USE_COLOR' is defined only in fragment shader to make it work.
+
+        // TODO check se si può migliorare togliendo USE_INSTANCING_COLOR_INDIRECT
       }
     };
 
@@ -283,7 +286,7 @@ export class InstancedMesh2<
       _tempCol.set(color).toArray(this._colorArray, id * 4);
     }
 
-    this.colorsTexture.needsUpdate = true;
+    this.colorsTexture.enqueueUpdate(id);
   }
 
   public getColorAt(id: number, color = _tempCol): Color {
