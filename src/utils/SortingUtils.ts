@@ -13,11 +13,7 @@ export function createRadixSort(target: InstancedMesh2): typeof radixSort<Instan
   };
 
   return function sortFunction(list: InstancedRenderItem[]): void {
-    const material = target._material as Material;
-
-    if (!material.isMaterial) throw new Error('Multi material is not supported.');
-
-    options.reversed = material.transparent;
+    options.reversed = !!(target._material as Material)?.transparent;
 
     if (target.capacity > options.aux.length) {
       options.aux.length = target.capacity;
