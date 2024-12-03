@@ -230,7 +230,15 @@ export class InstancedMesh2<
         shader.fragmentShader = shader.fragmentShader.replace('#include <common>', '#define USE_COLOR\n#include <common>');
         // NOTE that '#defined USE_COLOR' is defined only in fragment shader to make it work.
 
-        // TODO check se si può migliorare togliendo USE_INSTANCING_COLOR_INDIRECT
+        // TODO opptmize after create override uniform
+
+        // pass instanceIndex to fragment shader
+        shader.vertexShader = shader.vertexShader.replace('#include <batching_pars_vertex>', '#include <batching_pars_vertex>\n flat varying uint vInstanceIndex;');
+        shader.vertexShader = shader.vertexShader.replace('#include <batching_vertex>', '#include <batching_vertex>\n vInstanceIndex = instanceIndex;');
+        // remove opacity from uniform and add opacityTexture and instanceIndex
+        shader.fragmentShader = shader.fragmentShader.replace('uniform float opacity;', 'uniform highp sampler2D colorsTexture;\n flat varying uint vInstanceIndex;');
+        // get opacity value from texture
+        shader.fragmentShader = shader.fragmentShader.replace('void main() {', 'void main() {\n float opacity = getVec4FromTexture(colorsTexture, vInstanceIndex).a;');
       }
     };
 
