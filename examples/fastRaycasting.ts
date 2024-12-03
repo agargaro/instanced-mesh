@@ -24,7 +24,7 @@ instancedMesh.addInstances(150000, (object, index) => {
   object.position.setFromSphericalCoords(random.range(0.5, 30), random.range(0, Math.PI * 2), random.range(0, Math.PI * 2));
   object.quaternion.random();
   object.color = 'white';
-  instancedMesh.setOpacityAt(index, Math.random()); // TODO add obj.opacity
+  object.opacity = Math.random();
 });
 
 instancedMesh.on('pointerintersection', (e) => {
