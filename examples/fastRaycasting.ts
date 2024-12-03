@@ -2,7 +2,7 @@ import { Main, PerspectiveCameraAuto } from '@three.ez/main';
 import { AmbientLight, BoxGeometry, Color, DirectionalLight, MeshLambertMaterial, Scene } from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { GUI } from 'three/examples/jsm/libs/lil-gui.module.min.js';
-import { InstancedMesh2 } from '../src/index.js';
+import { createRadixSort, InstancedMesh2 } from '../src/index.js';
 import { PRNG } from './objects/random.js';
 
 const config = { useBVH: true };
@@ -15,13 +15,16 @@ const scene = new Scene();
 scene.continuousRaycasting = true;
 
 const geometry = new BoxGeometry(0.1, 0.1, 0.1);
-const material = new MeshLambertMaterial();
+const material = new MeshLambertMaterial({ transparent: true, depthWrite: false });
 const instancedMesh = new InstancedMesh2(geometry, material);
+instancedMesh.sortObjects = true;
+instancedMesh.customSort = createRadixSort(instancedMesh);
 
-instancedMesh.addInstances(150000, (object) => {
+instancedMesh.addInstances(150000, (object, index) => {
   object.position.setFromSphericalCoords(random.range(0.5, 30), random.range(0, Math.PI * 2), random.range(0, Math.PI * 2));
   object.quaternion.random();
   object.color = 'white';
+  object.opacity = Math.random();
 });
 
 instancedMesh.on('pointerintersection', (e) => {

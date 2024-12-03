@@ -20,6 +20,9 @@ export class InstancedEntity {
   public get color(): Color { return this.owner.getColorAt(this.id); }
   public set color(value: ColorRepresentation) { this.owner.setColorAt(this.id, value); }
 
+  public get opacity(): number { return this.owner.getOpacityAt(this.id); }
+  public set opacity(value: number) { this.owner.setOpacityAt(this.id, value); }
+
   public get morph(): Mesh { return this.owner.getMorphAt(this.id); }
   public set morph(value: Mesh) { this.owner.setMorphAt(this.id, value); }
 
