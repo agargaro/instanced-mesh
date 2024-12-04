@@ -5,7 +5,8 @@ import { InstancedMesh2 } from '../InstancedMesh2.js';
 export type UniformType = 'float' | 'vec2' | 'vec3' | 'vec4' | 'mat3' | 'mat4';
 export type UniformValueObj = Vector2 | Vector3 | Vector4 | Matrix3 | Matrix4 | Color;
 export type UniformValue = number | UniformValueObj;
-/** @internal */ export type UniformMap = Map<string, { offset: number; size: number }>;
+type UniformMapType = { offset: number; size: number; type: UniformType };
+/** @internal */ export type UniformMap = Map<string, UniformMapType>;
 
 /** @internal */
 export type UniformSchema<T = any> = {
@@ -15,8 +16,8 @@ export type UniformSchema<T = any> = {
 /** @internal */
 export interface UniformSchemaResult {
   channels: ChannelSize;
-  stride: number;
-  uniforms: UniformMap;
+  pixelsPerInstance: number;
+  uniformMap: UniformMap;
 }
 
 declare module '../InstancedMesh2.js' {
@@ -46,47 +47,53 @@ InstancedMesh2.prototype.setUniformAt = function (id: number, name: string, valu
 };
 
 InstancedMesh2.prototype.initUniformsPerInstance = function<T> (schema: UniformSchema<T>): void {
-  const { channels, stride, uniforms } = this.getUniforSchemaResult(schema);
-  this.uniformsTexture = new SquareDataTexture(Float32Array, channels, stride, this._capacity, uniforms);
+  const { channels, pixelsPerInstance, uniformMap } = this.getUniforSchemaResult(schema);
+  this.uniformsTexture = new SquareDataTexture(Float32Array, channels, pixelsPerInstance, this._capacity, uniformMap);
 };
 
 InstancedMesh2.prototype.getUniforSchemaResult = function (schema: UniformSchema): UniformSchemaResult {
   let totalSize = 0;
-  const uniforms = new Map<string, { offset: number; size: number }>();
-  const tempOffset = [0];
+  const uniformMap = new Map<string, UniformMapType>();
+  let uniforms: { type: UniformType; name: string; size: number }[] = [];
 
-  // TODO sort
-
-  for (const key in schema) {
-    let size = this.getUniformSize(schema[key]);
-
-    if (size > 4) {
-      console.warn(`Invalid size.`);
-      size += 4 - size % 4;
-    }
-
-    const offset = this.getUniformOffset(size, tempOffset);
-    uniforms.set(key, { offset, size });
+  for (const name in schema) {
+    const type = schema[name];
+    const size = this.getUniformSize(type);
     totalSize += size;
+    uniforms.push({ name, type, size });
   }
 
-  const stride = Math.ceil(totalSize / 4);
+  uniforms = uniforms.sort((a, b) => b.size - a.size);
+
+  const tempOffset = [];
+  for (const { name, size, type } of uniforms) {
+    const offset = this.getUniformOffset(size, tempOffset);
+    uniformMap.set(name, { offset, size, type });
+  }
+
+  const pixelsPerInstance = Math.ceil(totalSize / 4);
   const channels = Math.min(totalSize, 4) as ChannelSize;
 
-  return { channels, stride, uniforms };
+  return { channels, pixelsPerInstance, uniformMap };
 };
 
 InstancedMesh2.prototype.getUniformOffset = function (size: number, tempOffset: number[]): number {
-  for (let i = 0; i < tempOffset.length; i++) {
-    if (tempOffset[i] + size <= 4) {
-      const offset = tempOffset[i];
-      tempOffset[i] += size;
-      return i * 4 + offset;
+  if (size < 4) {
+    for (let i = 0; i < tempOffset.length; i++) {
+      if (tempOffset[i] + size <= 4) {
+        const offset = tempOffset[i];
+        tempOffset[i] += size;
+        return i * 4 + offset;
+      }
     }
   }
 
-  tempOffset.push(size);
-  return (tempOffset.length - 1) * 4;
+  const offset = tempOffset.length;
+  for (; size > 0; size -= 4) {
+    tempOffset.push(size);
+  }
+
+  return offset * 4;
 };
 
 InstancedMesh2.prototype.getUniformSize = function (type: UniformType): number {

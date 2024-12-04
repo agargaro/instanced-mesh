@@ -6,17 +6,17 @@ export type TypedArrayConstructor = new (count: number) => TypedArray;
 export type TextureInfo = { array: TypedArray; size: number; format: PixelFormat; type: TextureDataType };
 export type UpdateRowInfo = { index: number; count: number };
 
-export function getSquareTextureSize(capacity: number, stride: number): number {
-  return Math.max(stride, Math.ceil(Math.sqrt(capacity / stride)) * stride);
+export function getSquareTextureSize(capacity: number, pixelsPerInstance: number): number {
+  return Math.max(pixelsPerInstance, Math.ceil(Math.sqrt(capacity / pixelsPerInstance)) * pixelsPerInstance);
 }
 
-export function getSquareTextureInfo(arrayType: TypedArrayConstructor, channels: ChannelSize, stride: number, capacity: number): TextureInfo {
+export function getSquareTextureInfo(arrayType: TypedArrayConstructor, channels: ChannelSize, pixelsPerInstance: number, capacity: number): TextureInfo {
   if (channels === 3) {
     console.warn('"channels" cannot be 3. Set to 4. More info: https://github.com/mrdoob/three.js/pull/23228');
     channels = 4;
   }
 
-  const size = getSquareTextureSize(capacity, stride);
+  const size = getSquareTextureSize(capacity, pixelsPerInstance);
   const array = new arrayType(size * size * channels);
   const isFloat = arrayType.name.includes('Float');
   const isUnsignedInt = arrayType.name.includes('Uint');
@@ -43,6 +43,7 @@ export class SquareDataTexture extends DataTexture {
   // public maxUpdateCalls = 5; // TODO implement
   /** @internal */ _data: TypedArray;
   protected _channels: ChannelSize;
+  protected _pixelsPerInstance: number;
   protected _stride: number;
   protected _rowToUpdate: boolean[];
   protected _uniformMap: UniformMap;
@@ -50,19 +51,20 @@ export class SquareDataTexture extends DataTexture {
   protected _gl: WebGL2RenderingContext = null;
   protected _utils: WebGLUtils = null;
 
-  constructor(arrayType: TypedArrayConstructor, channels: ChannelSize, stride: number, capacity: number, uniformMap?: UniformMap) {
-    const { array, format, size, type } = getSquareTextureInfo(arrayType, channels, stride, capacity);
+  constructor(arrayType: TypedArrayConstructor, channels: ChannelSize, pixelsPerInstance: number, capacity: number, uniformMap?: UniformMap) {
+    const { array, format, size, type } = getSquareTextureInfo(arrayType, channels, pixelsPerInstance, capacity);
     super(array, size, size, format, type);
     this._data = array;
     this._channels = channels;
-    this._stride = stride;
+    this._pixelsPerInstance = pixelsPerInstance;
+    this._stride = pixelsPerInstance * channels;
     this._rowToUpdate = new Array(size);
     this._uniformMap = uniformMap;
     this.needsUpdate = true;
   }
 
   public resize(count: number): void {
-    const size = getSquareTextureSize(count, this._stride);
+    const size = getSquareTextureSize(count, this._pixelsPerInstance);
     if (size === this.image.width) return;
 
     const currentData = this._data;
@@ -85,7 +87,7 @@ export class SquareDataTexture extends DataTexture {
       return;
     }
 
-    const elementsPerRow = this.image.width / this._stride;
+    const elementsPerRow = this.image.width / this._pixelsPerInstance;
     const rowIndex = Math.floor(index / elementsPerRow);
     this._rowToUpdate[rowIndex] = true;
   }
@@ -145,7 +147,7 @@ export class SquareDataTexture extends DataTexture {
 
   public setUniformAt(id: number, name: string, value: UniformValue): void {
     const { offset, size } = this._uniformMap.get(name);
-    const stride = this._stride * this._channels; // this should be improved maybe
+    const stride = this._stride;
 
     if (size === 1) {
       this._data[id * stride + offset] = value as number;
@@ -156,7 +158,7 @@ export class SquareDataTexture extends DataTexture {
 
   public getUniformAt(id: number, name: string, target?: UniformValueObj): UniformValue {
     const { offset, size } = this._uniformMap.get(name);
-    const stride = this._stride * this._channels;
+    const stride = this._stride;
 
     if (size === 1) {
       return this._data[id * stride + offset];
