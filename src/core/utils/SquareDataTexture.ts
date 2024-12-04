@@ -1,4 +1,5 @@
 import { DataTexture, FloatType, IntType, PixelFormat, RedFormat, RedIntegerFormat, RGBAFormat, RGBAIntegerFormat, RGFormat, RGIntegerFormat, TextureDataType, TypedArray, UnsignedIntType, WebGLRenderer, WebGLUtils } from 'three';
+import { UniformMap, UniformValue, UniformValueObj } from '../feature/Uniforms.js';
 
 export type ChannelSize = 1 | 2 | 3 | 4;
 export type TypedArrayConstructor = new (count: number) => TypedArray;
@@ -38,21 +39,25 @@ export function getSquareTextureInfo(arrayType: TypedArrayConstructor, channels:
 }
 
 export class SquareDataTexture extends DataTexture {
+  public partialUpdate = true;
+  // public maxUpdateCalls = 5; // TODO implement
+  /** @internal */ _data: TypedArray;
   protected _channels: ChannelSize;
   protected _stride: number;
-  // public maxUpdateCalls = 5; // TODO implement
-  public partialUpdate = true;
   protected _rowToUpdate: boolean[];
+  protected _uniformMap: UniformMap;
   protected _renderer: WebGLRenderer = null;
   protected _gl: WebGL2RenderingContext = null;
   protected _utils: WebGLUtils = null;
 
-  constructor(arrayType: TypedArrayConstructor, channels: ChannelSize, stride: number, capacity: number) {
+  constructor(arrayType: TypedArrayConstructor, channels: ChannelSize, stride: number, capacity: number, uniformMap?: UniformMap) {
     const { array, format, size, type } = getSquareTextureInfo(arrayType, channels, stride, capacity);
     super(array, size, size, format, type);
+    this._data = array;
     this._channels = channels;
     this._stride = stride;
     this._rowToUpdate = new Array(size);
+    this._uniformMap = uniformMap;
     this.needsUpdate = true;
   }
 
@@ -60,17 +65,18 @@ export class SquareDataTexture extends DataTexture {
     const size = getSquareTextureSize(count, this._stride);
     if (size === this.image.width) return;
 
-    const currentData = this.image.data;
+    const currentData = this._data;
     const channels = this._channels;
     this._rowToUpdate.length = size;
     const arrayType = (currentData as any).constructor;
 
-    const data = new arrayType(size * size * channels) as Uint8Array; // TODO fix wrong d.ts...
+    const data = new arrayType(size * size * channels);
     const minLength = Math.min(currentData.length, data.length);
     data.set(new arrayType(currentData.buffer, 0, minLength));
 
     this.dispose();
     this.image = { data, height: size, width: size };
+    this._data = data;
   }
 
   public enqueueUpdate(index: number): void {
@@ -135,5 +141,31 @@ export class SquareDataTexture extends DataTexture {
     }
 
     gl.bindTexture(gl.TEXTURE_2D, activeTexture);
+  }
+
+  public setUniformAt(id: number, name: string, value: UniformValue): void {
+    const { offset, size } = this._uniformMap.get(name);
+    const stride = this._stride * this._channels; // this should be improved maybe
+
+    if (size === 1) {
+      this._data[id * stride + offset] = value as number;
+    } else {
+      (value as UniformValueObj).toArray(this._data, id * stride + offset);
+    }
+  }
+
+  public getUniformAt(id: number, name: string, target?: UniformValueObj): UniformValue {
+    const { offset, size } = this._uniformMap.get(name);
+    const stride = this._stride * this._channels;
+
+    if (size === 1) {
+      return this._data[id * stride + offset];
+    }
+
+    return target.fromArray(this._data, id * stride + offset);
+  }
+
+  public getUniformGLSL(): void {
+    return undefined; // TODO
   }
 }

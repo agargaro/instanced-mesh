@@ -1,8 +1,6 @@
-import { Color, ColorRepresentation, Euler, Matrix3, Matrix4, Mesh, Object3D, Quaternion, Vector2, Vector3, Vector4 } from 'three';
+import { Color, ColorRepresentation, Euler, Matrix4, Mesh, Object3D, Quaternion, Vector3 } from 'three';
 import { InstancedMesh2 } from './InstancedMesh2.js';
-
-export type UniformValueNoNumber = Vector2 | Vector3 | Vector4 | Matrix3 | Matrix4;
-export type UniformValue = number | UniformValueNoNumber;
+import { UniformValue, UniformValueObj } from './feature/Uniforms.js';
 
 export class InstancedEntity {
   public readonly isInstanceEntity = true;
@@ -96,6 +94,10 @@ export class InstancedEntity {
 
     owner.matricesTexture.enqueueUpdate(id);
     owner.bvh?.move(id);
+  }
+
+  public getUniform(name: string, target?: UniformValueObj): UniformValue {
+    return this.owner.getUniformAt(this.id, name, target);
   }
 
   public setUniform(name: string, value: UniformValue): void {

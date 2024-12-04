@@ -1,7 +1,7 @@
-import { Box3, BufferAttribute, BufferGeometry, Camera, Color, ColorManagement, ColorRepresentation, DataTexture, FloatType, Group, InstancedBufferAttribute, Material, Matrix4, Mesh, MeshDepthMaterial, MeshDistanceMaterial, Object3D, Object3DEventMap, RGBADepthPacking, RGFormat, RedFormat, Scene, ShaderMaterial, Sphere, WebGLRenderer } from 'three';
+import { Box3, BufferAttribute, BufferGeometry, Camera, Color, ColorManagement, ColorRepresentation, DataTexture, FloatType, Group, InstancedBufferAttribute, Material, Matrix4, Mesh, MeshDepthMaterial, MeshDistanceMaterial, Object3D, Object3DEventMap, RGBADepthPacking, RedFormat, Scene, Sphere, WebGLRenderer } from 'three';
 import { Entity } from './feature/Instances.js';
 import { LODInfo } from './feature/LOD.js';
-import { InstancedEntity, UniformValue, UniformValueNoNumber } from './InstancedEntity.js';
+import { InstancedEntity } from './InstancedEntity.js';
 import { InstancedMeshBVH } from './InstancedMeshBVH.js';
 import { GLInstancedBufferAttribute } from './utils/GLInstancedBufferAttribute.js';
 import { InstancedRenderItem } from './utils/InstancedRenderList.js';
@@ -42,6 +42,7 @@ export class InstancedMesh2<
   public matricesTexture: SquareDataTexture;
   public colorsTexture: SquareDataTexture = null;
   public morphTexture: DataTexture = null;
+  public uniformsTexture: SquareDataTexture = null;
   public boundingBox: Box3 = null;
   public boundingSphere: Sphere = null;
   public bvh: InstancedMeshBVH = null;
@@ -62,7 +63,6 @@ export class InstancedMesh2<
   /** @internal */ _geometry: TGeometry;
   /** @internal */ _material: TMaterial;
   /** @internal */ _parentLOD: InstancedMesh2;
-  protected _uniformsSetCallback = new Map<string, (id: number, value: UniformValue) => void>();
   protected readonly _instancesUseEuler: boolean;
   protected readonly _instance: InstancedEntity; // TODO rename tempInstance?
 
@@ -142,8 +142,8 @@ export class InstancedMesh2<
 
   public override onBeforeRender(renderer: WebGLRenderer, scene: Scene, camera: Camera, geometry: BufferGeometry, material: Material, group: Group): void {
     this.matricesTexture.update(renderer);
-    this.colorsTexture.update(renderer);
-    // TODO others texture
+    this.colorsTexture?.update(renderer);
+    this.uniformsTexture?.update(renderer);
     if (this.instanceIndex) this.performFrustumCulling(camera);
     else this._renderer = renderer;
   }
@@ -222,7 +222,13 @@ export class InstancedMesh2<
       if (!shader.defines) shader.defines = {};
       shader.defines['USE_INSTANCING_INDIRECT'] = '';
 
-      if (this.colorsTexture !== null) {
+      if (this.uniformsTexture) {
+        shader.uniforms.uniformsTexture = { value: this.uniformsTexture };
+
+        // TODO
+      }
+
+      if (this.colorsTexture) {
         if (!shader.fragmentShader.includes('#include <color_pars_fragment>')) return;
 
         shader.uniforms.colorsTexture = { value: this.colorsTexture };
@@ -231,14 +237,8 @@ export class InstancedMesh2<
         // NOTE that '#defined USE_COLOR' is defined only in fragment shader to make it work.
 
         // TODO opptmize after create override uniform
-
-        // pass instanceIndex to fragment shader
-        shader.vertexShader = shader.vertexShader.replace('#include <batching_pars_vertex>', '#include <batching_pars_vertex>\n flat varying uint vInstanceIndex;');
-        shader.vertexShader = shader.vertexShader.replace('#include <batching_vertex>', '#include <batching_vertex>\n vInstanceIndex = instanceIndex;');
-        // remove opacity from uniform and add opacityTexture and instanceIndex
-        shader.fragmentShader = shader.fragmentShader.replace('uniform float opacity;', 'uniform highp sampler2D colorsTexture;\n flat varying uint vInstanceIndex;');
-        // get opacity value from texture
-        shader.fragmentShader = shader.fragmentShader.replace('void main() {', 'void main() {\n float opacity = getVec4FromTexture(colorsTexture, vInstanceIndex).a;');
+        shader.vertexShader = shader.vertexShader.replace('void main() {', 'flat varying uint vInstanceIndex;\n void main() {\n vInstanceIndex = instanceIndex;');
+        shader.fragmentShader = shader.fragmentShader.replace('void main() {', 'uniform highp sampler2D colorsTexture;\n flat varying uint vInstanceIndex;\n void main() {\n float opacity = getVec4FromTexture(colorsTexture, vInstanceIndex).a;');
       }
     };
 
@@ -315,27 +315,6 @@ export class InstancedMesh2<
 
   public getOpacityAt(id: number): number {
     return this._colorArray[id * 4 + 3];
-  }
-
-  public setUniformAt(id: number, name: string, value: UniformValue): void { // TODO support multimaterial?
-    const texture = (this._material as ShaderMaterial).uniforms[name].value as SquareDataTexture; // TODO fix type
-    let setCallback = this._uniformsSetCallback.get(name);
-
-    if (!setCallback) {
-      const array = texture.image.data;
-
-      if (texture.format === RedFormat) {
-        setCallback = (id: number, value: UniformValue) => array[id] = value as number;
-      } else {
-        const size = texture.format === RGFormat ? 2 : 4; // 3 is not supported
-        setCallback = (id: number, value: UniformValue) => (value as UniformValueNoNumber).toArray(array, id * size);
-      }
-
-      this._uniformsSetCallback.set(name, setCallback);
-    }
-
-    setCallback(id, value);
-    texture.needsUpdate = true;
   }
 
   public getMorphAt(index: number, object = _tempMesh): Mesh {

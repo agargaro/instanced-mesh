@@ -8,15 +8,15 @@ import { InstancedMesh2 } from '../core/InstancedMesh2.js';
 export function createRadixSort(target: InstancedMesh2): typeof radixSort<InstancedRenderItem> {
   const options: RadixSortOptions<InstancedRenderItem> = {
     get: (el) => el.depthSort,
-    aux: new Array(target.capacity),
+    aux: new Array(target._capacity),
     reversed: null
   };
 
   return function sortFunction(list: InstancedRenderItem[]): void {
     options.reversed = !!(target._material as Material)?.transparent;
 
-    if (target.capacity > options.aux.length) {
-      options.aux.length = target.capacity;
+    if (target._capacity > options.aux.length) {
+      options.aux.length = target._capacity;
     }
 
     let minZ = Infinity;
