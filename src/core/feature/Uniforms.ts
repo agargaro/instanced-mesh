@@ -81,19 +81,19 @@ InstancedMesh2.prototype.getUniformOffset = function (size: number, tempOffset: 
   if (size < 4) {
     for (let i = 0; i < tempOffset.length; i++) {
       if (tempOffset[i] + size <= 4) {
-        const offset = tempOffset[i];
+        const offset = i * 4 + tempOffset[i];
         tempOffset[i] += size;
-        return i * 4 + offset;
+        return offset;
       }
     }
   }
 
-  const offset = tempOffset.length;
+  const offset = tempOffset.length * 4;
   for (; size > 0; size -= 4) {
     tempOffset.push(size);
   }
 
-  return offset * 4;
+  return offset;
 };
 
 InstancedMesh2.prototype.getUniformSize = function (type: UniformType): number {

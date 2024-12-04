@@ -99,7 +99,7 @@ export class SquareDataTexture extends DataTexture {
 
     this.initRendererInfo(renderer);
     this.updateRows(info);
-    this._rowToUpdate.fill(false); // TODO improve
+    this._rowToUpdate.fill(false); // improve setting false only true locations?
   }
 
   protected getUpdateRowsInfo(): UpdateRowInfo[] {
@@ -167,7 +167,53 @@ export class SquareDataTexture extends DataTexture {
     return target.fromArray(this._data, id * stride + offset);
   }
 
-  public getUniformGLSL(): void {
-    return undefined; // TODO
+  public getUniformsFragmentGLSL(textureName: string, indexName: string): string {
+    // TODO override uniform also in vertex shader
+    const pixelsPerInstance = this._pixelsPerInstance;
+    const uniforms = this._uniformMap;
+
+    let texelsFetch = `
+      int size = textureSize(${textureName}, 0).x;
+      int j = int(${indexName}) * ${pixelsPerInstance};
+      int x = j % size;
+      int y = j / size;
+    `;
+    for (let i = 0; i < this._pixelsPerInstance; i++) {
+      texelsFetch += `vec4 _texel${i} = texelFetch(${textureName}, ivec2(x + ${i}, y), 0);\n`;
+    }
+
+    let getData = '';
+    for (const [name, { type, offset, size }] of uniforms) {
+      const tId = Math.floor(offset / this._channels);
+
+      if (type === 'mat3') {
+        getData += `mat3 ${name} = mat3(texel${tId}.rgb, vec3(texel${tId}.a, texel${tId + 1}.rg), vec3(texel${tId + 1}.ba, texel${tId + 2}.r));\n`;
+      } else if (type === 'mat4') {
+        getData += `mat4 ${name} = mat4(texel${tId}, texel${tId + 1}, texel${tId + 2}, texel${tId + 3});\n`;
+      } else {
+        const components = this.getUniformComponents(offset, size);
+        getData += `${type} ${name} = _texel${tId}.${components};\n`;
+      }
+    }
+
+    return `
+      uniform highp sampler2D ${textureName};  
+
+      void main() {
+        ${texelsFetch}
+        ${getData}`;
+  }
+
+  protected getUniformComponents(offset: number, size: number): string {
+    const startIndex = offset % this._channels;
+    let components = '';
+
+    for (let i = 0; i < size; i++) {
+      components += componentsArray[startIndex + i];
+    }
+
+    return components;
   }
 }
+
+const componentsArray = ['r', 'g', 'b', 'a'];

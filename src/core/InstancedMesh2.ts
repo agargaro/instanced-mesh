@@ -222,10 +222,15 @@ export class InstancedMesh2<
       if (!shader.defines) shader.defines = {};
       shader.defines['USE_INSTANCING_INDIRECT'] = '';
 
+      if (this.uniformsTexture || this.colorsTexture) { // solo se c'è anche opacity
+        shader.vertexShader = shader.vertexShader.replace('void main() {', 'flat varying uint vInstanceIndex;\n void main() {\n vInstanceIndex = instanceIndex;');
+        shader.fragmentShader = shader.fragmentShader.replace('void main() {', 'flat varying uint vInstanceIndex;\n void main() {');
+      }
+
       if (this.uniformsTexture) {
         shader.uniforms.uniformsTexture = { value: this.uniformsTexture };
-
-        // TODO
+        const uniformsFragmentGLSL = this.uniformsTexture.getUniformsFragmentGLSL('uniformsTexture', 'vInstanceIndex');
+        shader.fragmentShader = shader.fragmentShader.replace('void main() {', uniformsFragmentGLSL);
       }
 
       if (this.colorsTexture) {
@@ -237,8 +242,7 @@ export class InstancedMesh2<
         // NOTE that '#defined USE_COLOR' is defined only in fragment shader to make it work.
 
         // TODO opptmize after create override uniform
-        shader.vertexShader = shader.vertexShader.replace('void main() {', 'flat varying uint vInstanceIndex;\n void main() {\n vInstanceIndex = instanceIndex;');
-        shader.fragmentShader = shader.fragmentShader.replace('void main() {', 'uniform highp sampler2D colorsTexture;\n flat varying uint vInstanceIndex;\n void main() {\n float opacity = getVec4FromTexture(colorsTexture, vInstanceIndex).a;');
+        shader.fragmentShader = shader.fragmentShader.replace('void main() {', 'uniform highp sampler2D colorsTexture;\n void main() {\n float opacity = getVec4FromTexture(colorsTexture, vInstanceIndex).a;');
       }
     };
 
