@@ -9,9 +9,7 @@ type UniformMapType = { offset: number; size: number; type: UniformType };
 /** @internal */ export type UniformMap = Map<string, UniformMapType>;
 
 /** @internal */
-export type UniformSchema<T = any> = {
-  [K in keyof T as T[K] extends (...args: any[]) => any ? never : K]?: UniformType;
-};
+export type UniformSchema = { [x: string]: UniformType };
 
 /** @internal */
 export interface UniformSchemaResult {
@@ -24,14 +22,14 @@ declare module '../InstancedMesh2.js' {
   interface InstancedMesh2 {
     getUniformAt(id: number, name: string, target?: UniformValueObj): UniformValue;
     setUniformAt(id: number, name: string, value: UniformValue): void;
-    initUniformsPerInstance<T = any>(schema: UniformSchema<T>): void;
+    initUniformsPerInstance(schema: UniformSchema): void;
     /** @internal */ getUniforSchemaResult(schema: UniformSchema): UniformSchemaResult;
     /** @internal */ getUniformOffset(size: number, tempOffset: number[]): number;
     /** @internal */ getUniformSize(type: UniformType): number;
   }
 }
 
-InstancedMesh2.prototype.getUniformAt = function (id: number, name: string, target?: UniformValueObj): UniformValue { // TODO improve d.ts?
+InstancedMesh2.prototype.getUniformAt = function (id: number, name: string, target?: UniformValueObj): UniformValue {
   if (!this.uniformsTexture) {
     throw new Error('Before get/set uniform, it\'s necessary to use "initUniformPerInstance".');
   }
@@ -46,7 +44,7 @@ InstancedMesh2.prototype.setUniformAt = function (id: number, name: string, valu
   this.uniformsTexture.enqueueUpdate(id);
 };
 
-InstancedMesh2.prototype.initUniformsPerInstance = function<T> (schema: UniformSchema<T>): void {
+InstancedMesh2.prototype.initUniformsPerInstance = function (schema: UniformSchema): void {
   const { channels, pixelsPerInstance, uniformMap } = this.getUniforSchemaResult(schema);
   this.uniformsTexture = new SquareDataTexture(Float32Array, channels, pixelsPerInstance, this._capacity, uniformMap);
 };
