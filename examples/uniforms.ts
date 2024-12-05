@@ -3,7 +3,7 @@ import { AmbientLight, Color, DirectionalLight, EquirectangularReflectionMapping
 import { RGBELoader } from 'three/examples/jsm/Addons.js';
 import { InstancedMesh2 } from '../src/index.js';
 
-const main = new Main({ showStats: false });
+const main = new Main({ showStats: false }); //  FIX stats
 const scene = new Scene();
 const camera = new PerspectiveCameraAuto().translateZ(30);
 const dirLigth = new DirectionalLight();
@@ -14,7 +14,7 @@ new RGBELoader().load(url, (texture) => {
   scene.environment = texture;
 });
 
-const instancedMesh = new InstancedMesh2(new TorusKnotGeometry(1, 0.4, 128, 32), new MeshStandardMaterial(), { createInstances: true, capacity: 50 });
+const instancedMesh = new InstancedMesh2(new TorusKnotGeometry(1, 0.4, 128, 32), new MeshStandardMaterial(), { createInstances: true });
 
 instancedMesh.initUniformsPerInstance(({ metalness: 'float', roughness: 'float', emissive: 'vec3' }));
 

@@ -4,7 +4,7 @@ import { UniformMap, UniformValue, UniformValueObj } from '../feature/Uniforms.j
 export type ChannelSize = 1 | 2 | 3 | 4;
 export type TypedArrayConstructor = new (count: number) => TypedArray;
 export type TextureInfo = { array: TypedArray; size: number; format: PixelFormat; type: TextureDataType };
-export type UpdateRowInfo = { index: number; count: number };
+export type UpdateRowInfo = { row: number; count: number };
 
 export function getSquareTextureSize(capacity: number, pixelsPerInstance: number): number {
   return Math.max(pixelsPerInstance, Math.ceil(Math.sqrt(capacity / pixelsPerInstance)) * pixelsPerInstance);
@@ -108,11 +108,11 @@ export class SquareDataTexture extends DataTexture {
 
     for (let i = 0, l = rowsToUpdate.length; i < l; i++) {
       if (rowsToUpdate[i]) {
-        const index = i;
+        const row = i;
         for (; i < l; i++) {
           if (!rowsToUpdate[i]) break;
         }
-        result.push({ index, count: i - index });
+        result.push({ row, count: i - row });
       }
     }
 
@@ -125,24 +125,46 @@ export class SquareDataTexture extends DataTexture {
     if (!this._utils) this._utils = new WebGLUtils(this._gl, renderer.extensions);
   }
 
+  // @reference: https://github.com/mrdoob/three.js/blob/master/src/renderers/WebGLRenderer.js#L2569
   protected updateRows(info: UpdateRowInfo[]): void {
-    const textureProperties = this._renderer.properties.get(this);
-    if (!(textureProperties as any).__webglTexture) return; // TODO to understand better
-
+    const state = this._renderer.state;
     const gl = this._gl;
-    const format = this._utils.convert(this.format);
-    const type = this._utils.convert(this.type);
-    const { width, data } = this.image;
+    const glFormat = this._utils.convert(this.format);
+    const glType = this._utils.convert(this.type);
+    const { data, height, width } = this.image;
 
-    const activeTexture = gl.getParameter(gl.TEXTURE_BINDING_2D);
-    gl.bindTexture(gl.TEXTURE_2D, (textureProperties as any).__webglTexture);
+    const textureProperties: any = this._renderer.properties.get(this);
+    if (!textureProperties.__webglTexture) return;
 
-    for (const rowInfo of info) {
-      const { count, index } = rowInfo;
-      gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, index, width, count, format, type, data, index * width * this._channels);
+    state.bindTexture(gl.TEXTURE_2D, textureProperties.__webglTexture);
+
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, this.flipY);
+    gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, this.premultiplyAlpha);
+    gl.pixelStorei(gl.UNPACK_ALIGNMENT, this.unpackAlignment);
+
+    const currentUnpackRowLen = gl.getParameter(gl.UNPACK_ROW_LENGTH);
+    const currentUnpackImageHeight = gl.getParameter(gl.UNPACK_IMAGE_HEIGHT);
+    const currentUnpackSkipPixels = gl.getParameter(gl.UNPACK_SKIP_PIXELS);
+    const currentUnpackSkipRows = gl.getParameter(gl.UNPACK_SKIP_ROWS);
+    const currentUnpackSkipImages = gl.getParameter(gl.UNPACK_SKIP_IMAGES);
+
+    gl.pixelStorei(gl.UNPACK_ROW_LENGTH, width);
+    gl.pixelStorei(gl.UNPACK_IMAGE_HEIGHT, height);
+    gl.pixelStorei(gl.UNPACK_SKIP_PIXELS, 0); // start x axis
+    gl.pixelStorei(gl.UNPACK_SKIP_IMAGES, 0); // start z axis
+
+    for (const { count, row } of info) {
+      gl.pixelStorei(gl.UNPACK_SKIP_ROWS, row); // start y axis
+      gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, row, width, count, glFormat, glType, data);
     }
 
-    gl.bindTexture(gl.TEXTURE_2D, activeTexture);
+    gl.pixelStorei(gl.UNPACK_ROW_LENGTH, currentUnpackRowLen);
+    gl.pixelStorei(gl.UNPACK_IMAGE_HEIGHT, currentUnpackImageHeight);
+    gl.pixelStorei(gl.UNPACK_SKIP_PIXELS, currentUnpackSkipPixels);
+    gl.pixelStorei(gl.UNPACK_SKIP_ROWS, currentUnpackSkipRows);
+    gl.pixelStorei(gl.UNPACK_SKIP_IMAGES, currentUnpackSkipImages);
+
+    state.unbindTexture();
   }
 
   public setUniformAt(id: number, name: string, value: UniformValue): void {
