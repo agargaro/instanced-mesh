@@ -48,7 +48,7 @@ InstancedMesh2.prototype.resizeBuffers = function (capacity: number): InstancedM
 
 InstancedMesh2.prototype.setInstancesCount = function (count: number): void {
   if (count > this._capacity) {
-    let newCapacity = this.capacity + (this._capacity >> 1) + 512;
+    let newCapacity = this._capacity + (this._capacity >> 1) + 512;
     while (newCapacity < count) {
       newCapacity += (newCapacity >> 1) + 512;
     }

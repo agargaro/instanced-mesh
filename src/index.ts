@@ -6,6 +6,7 @@ export * from './core/feature/FrustumCulling.js';
 export * from './core/feature/Instances.js';
 export * from './core/feature/LOD.js';
 export * from './core/feature/Raycasting.js';
+export * from './core/feature/Uniforms.js';
 export * from './core/utils/GLInstancedBufferAttribute.js';
 export * from './core/utils/InstancedRenderList.js';
 
