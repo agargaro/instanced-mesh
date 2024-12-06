@@ -222,12 +222,11 @@ export class InstancedMesh2<
       if (!shader.defines) shader.defines = {};
       shader.defines['USE_INSTANCING_INDIRECT'] = '';
 
-      if (this.uniformsTexture || this.colorsTexture) { // solo se c'è anche opacity
+      // create varying vInstanceIndex
+      if (this.uniformsTexture) {
         shader.vertexShader = shader.vertexShader.replace('void main() {', 'flat varying uint vInstanceIndex;\n void main() {\n vInstanceIndex = instanceIndex;');
         shader.fragmentShader = shader.fragmentShader.replace('void main() {', 'flat varying uint vInstanceIndex;\n void main() {');
-      }
 
-      if (this.uniformsTexture) {
         shader.uniforms.uniformsTexture = { value: this.uniformsTexture };
         const uniformsFragmentGLSL = this.uniformsTexture.getUniformsFragmentGLSL('uniformsTexture', 'vInstanceIndex');
         shader.fragmentShader = shader.fragmentShader.replace('void main() {', uniformsFragmentGLSL);
@@ -237,12 +236,8 @@ export class InstancedMesh2<
         if (!shader.fragmentShader.includes('#include <color_pars_fragment>')) return;
 
         shader.uniforms.colorsTexture = { value: this.colorsTexture };
-        shader.defines['USE_INSTANCING_COLOR_INDIRECT'] = '';
-        shader.fragmentShader = shader.fragmentShader.replace('#include <common>', '#define USE_COLOR\n#include <common>');
-        // NOTE that '#defined USE_COLOR' is defined only in fragment shader to make it work.
-
-        // TODO opptmize after create override uniform
-        shader.fragmentShader = shader.fragmentShader.replace('void main() {', 'uniform highp sampler2D colorsTexture;\n void main() {\n float opacity = getVec4FromTexture(colorsTexture, vInstanceIndex).a;');
+        // shader.defines['USE_INSTANCING_COLOR_INDIRECT'] = '';
+        shader.defines['USE_INSTANCING_COLOR_ALPHA_INDIRECT'] = '';
       }
     };
 
