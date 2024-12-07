@@ -19,4 +19,4 @@ title: "getMaxScaleOnAxisAt"
 
 ## Defined in
 
-[src/utils/MatrixUtils.ts:46](https://github.com/agargaro/instanced-mesh/blob/2f190ad5fd5081569022452a2d45df7354f092df/src/utils/MatrixUtils.ts#L46)
+[src/utils/MatrixUtils.ts:46](https://github.com/agargaro/instanced-mesh/blob/885e4bcb6a18860a783ace14f574e3f89257c5ee/src/utils/MatrixUtils.ts#L46)

@@ -23,7 +23,7 @@ title: "InstancedRenderList"
 
 #### Defined in
 
-[src/core/utils/InstancedRenderList.ts:4](https://github.com/agargaro/instanced-mesh/blob/2f190ad5fd5081569022452a2d45df7354f092df/src/core/utils/InstancedRenderList.ts#L4)
+[src/core/utils/InstancedRenderList.ts:4](https://github.com/agargaro/instanced-mesh/blob/885e4bcb6a18860a783ace14f574e3f89257c5ee/src/core/utils/InstancedRenderList.ts#L4)
 
 ## Methods
 
@@ -43,7 +43,7 @@ title: "InstancedRenderList"
 
 #### Defined in
 
-[src/core/utils/InstancedRenderList.ts:7](https://github.com/agargaro/instanced-mesh/blob/2f190ad5fd5081569022452a2d45df7354f092df/src/core/utils/InstancedRenderList.ts#L7)
+[src/core/utils/InstancedRenderList.ts:7](https://github.com/agargaro/instanced-mesh/blob/885e4bcb6a18860a783ace14f574e3f89257c5ee/src/core/utils/InstancedRenderList.ts#L7)
 
 ***
 
@@ -57,4 +57,4 @@ title: "InstancedRenderList"
 
 #### Defined in
 
-[src/core/utils/InstancedRenderList.ts:23](https://github.com/agargaro/instanced-mesh/blob/2f190ad5fd5081569022452a2d45df7354f092df/src/core/utils/InstancedRenderList.ts#L23)
+[src/core/utils/InstancedRenderList.ts:23](https://github.com/agargaro/instanced-mesh/blob/885e4bcb6a18860a783ace14f574e3f89257c5ee/src/core/utils/InstancedRenderList.ts#L23)

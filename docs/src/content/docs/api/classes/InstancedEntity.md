@@ -25,7 +25,7 @@ title: "InstancedEntity"
 
 #### Defined in
 
-[src/core/InstancedEntity.ts:29](https://github.com/agargaro/instanced-mesh/blob/2f190ad5fd5081569022452a2d45df7354f092df/src/core/InstancedEntity.ts#L29)
+[src/core/InstancedEntity.ts:29](https://github.com/agargaro/instanced-mesh/blob/885e4bcb6a18860a783ace14f574e3f89257c5ee/src/core/InstancedEntity.ts#L29)
 
 ## Properties
 
@@ -35,7 +35,7 @@ title: "InstancedEntity"
 
 #### Defined in
 
-[src/core/InstancedEntity.ts:9](https://github.com/agargaro/instanced-mesh/blob/2f190ad5fd5081569022452a2d45df7354f092df/src/core/InstancedEntity.ts#L9)
+[src/core/InstancedEntity.ts:9](https://github.com/agargaro/instanced-mesh/blob/885e4bcb6a18860a783ace14f574e3f89257c5ee/src/core/InstancedEntity.ts#L9)
 
 ***
 
@@ -45,7 +45,7 @@ title: "InstancedEntity"
 
 #### Defined in
 
-[src/core/InstancedEntity.ts:8](https://github.com/agargaro/instanced-mesh/blob/2f190ad5fd5081569022452a2d45df7354f092df/src/core/InstancedEntity.ts#L8)
+[src/core/InstancedEntity.ts:8](https://github.com/agargaro/instanced-mesh/blob/885e4bcb6a18860a783ace14f574e3f89257c5ee/src/core/InstancedEntity.ts#L8)
 
 ***
 
@@ -55,7 +55,7 @@ title: "InstancedEntity"
 
 #### Defined in
 
-[src/core/InstancedEntity.ts:10](https://github.com/agargaro/instanced-mesh/blob/2f190ad5fd5081569022452a2d45df7354f092df/src/core/InstancedEntity.ts#L10)
+[src/core/InstancedEntity.ts:10](https://github.com/agargaro/instanced-mesh/blob/885e4bcb6a18860a783ace14f574e3f89257c5ee/src/core/InstancedEntity.ts#L10)
 
 ***
 
@@ -65,7 +65,7 @@ title: "InstancedEntity"
 
 #### Defined in
 
-[src/core/InstancedEntity.ts:11](https://github.com/agargaro/instanced-mesh/blob/2f190ad5fd5081569022452a2d45df7354f092df/src/core/InstancedEntity.ts#L11)
+[src/core/InstancedEntity.ts:11](https://github.com/agargaro/instanced-mesh/blob/885e4bcb6a18860a783ace14f574e3f89257c5ee/src/core/InstancedEntity.ts#L11)
 
 ***
 
@@ -75,7 +75,7 @@ title: "InstancedEntity"
 
 #### Defined in
 
-[src/core/InstancedEntity.ts:13](https://github.com/agargaro/instanced-mesh/blob/2f190ad5fd5081569022452a2d45df7354f092df/src/core/InstancedEntity.ts#L13)
+[src/core/InstancedEntity.ts:13](https://github.com/agargaro/instanced-mesh/blob/885e4bcb6a18860a783ace14f574e3f89257c5ee/src/core/InstancedEntity.ts#L13)
 
 ***
 
@@ -85,7 +85,7 @@ title: "InstancedEntity"
 
 #### Defined in
 
-[src/core/InstancedEntity.ts:14](https://github.com/agargaro/instanced-mesh/blob/2f190ad5fd5081569022452a2d45df7354f092df/src/core/InstancedEntity.ts#L14)
+[src/core/InstancedEntity.ts:14](https://github.com/agargaro/instanced-mesh/blob/885e4bcb6a18860a783ace14f574e3f89257c5ee/src/core/InstancedEntity.ts#L14)
 
 ***
 
@@ -95,7 +95,7 @@ title: "InstancedEntity"
 
 #### Defined in
 
-[src/core/InstancedEntity.ts:12](https://github.com/agargaro/instanced-mesh/blob/2f190ad5fd5081569022452a2d45df7354f092df/src/core/InstancedEntity.ts#L12)
+[src/core/InstancedEntity.ts:12](https://github.com/agargaro/instanced-mesh/blob/885e4bcb6a18860a783ace14f574e3f89257c5ee/src/core/InstancedEntity.ts#L12)
 
 ## Accessors
 
@@ -123,7 +123,7 @@ title: "InstancedEntity"
 
 #### Defined in
 
-[src/core/InstancedEntity.ts:20](https://github.com/agargaro/instanced-mesh/blob/2f190ad5fd5081569022452a2d45df7354f092df/src/core/InstancedEntity.ts#L20)
+[src/core/InstancedEntity.ts:20](https://github.com/agargaro/instanced-mesh/blob/885e4bcb6a18860a783ace14f574e3f89257c5ee/src/core/InstancedEntity.ts#L20)
 
 ***
 
@@ -139,7 +139,7 @@ title: "InstancedEntity"
 
 #### Defined in
 
-[src/core/InstancedEntity.ts:26](https://github.com/agargaro/instanced-mesh/blob/2f190ad5fd5081569022452a2d45df7354f092df/src/core/InstancedEntity.ts#L26)
+[src/core/InstancedEntity.ts:26](https://github.com/agargaro/instanced-mesh/blob/885e4bcb6a18860a783ace14f574e3f89257c5ee/src/core/InstancedEntity.ts#L26)
 
 ***
 
@@ -155,7 +155,7 @@ title: "InstancedEntity"
 
 #### Defined in
 
-[src/core/InstancedEntity.ts:27](https://github.com/agargaro/instanced-mesh/blob/2f190ad5fd5081569022452a2d45df7354f092df/src/core/InstancedEntity.ts#L27)
+[src/core/InstancedEntity.ts:27](https://github.com/agargaro/instanced-mesh/blob/885e4bcb6a18860a783ace14f574e3f89257c5ee/src/core/InstancedEntity.ts#L27)
 
 ***
 
@@ -183,7 +183,7 @@ title: "InstancedEntity"
 
 #### Defined in
 
-[src/core/InstancedEntity.ts:23](https://github.com/agargaro/instanced-mesh/blob/2f190ad5fd5081569022452a2d45df7354f092df/src/core/InstancedEntity.ts#L23)
+[src/core/InstancedEntity.ts:23](https://github.com/agargaro/instanced-mesh/blob/885e4bcb6a18860a783ace14f574e3f89257c5ee/src/core/InstancedEntity.ts#L23)
 
 ***
 
@@ -211,7 +211,7 @@ title: "InstancedEntity"
 
 #### Defined in
 
-[src/core/InstancedEntity.ts:17](https://github.com/agargaro/instanced-mesh/blob/2f190ad5fd5081569022452a2d45df7354f092df/src/core/InstancedEntity.ts#L17)
+[src/core/InstancedEntity.ts:17](https://github.com/agargaro/instanced-mesh/blob/885e4bcb6a18860a783ace14f574e3f89257c5ee/src/core/InstancedEntity.ts#L17)
 
 ## Methods
 
@@ -229,7 +229,7 @@ title: "InstancedEntity"
 
 #### Defined in
 
-[src/core/InstancedEntity.ts:109](https://github.com/agargaro/instanced-mesh/blob/2f190ad5fd5081569022452a2d45df7354f092df/src/core/InstancedEntity.ts#L109)
+[src/core/InstancedEntity.ts:109](https://github.com/agargaro/instanced-mesh/blob/885e4bcb6a18860a783ace14f574e3f89257c5ee/src/core/InstancedEntity.ts#L109)
 
 ***
 
@@ -247,7 +247,7 @@ title: "InstancedEntity"
 
 #### Defined in
 
-[src/core/InstancedEntity.ts:114](https://github.com/agargaro/instanced-mesh/blob/2f190ad5fd5081569022452a2d45df7354f092df/src/core/InstancedEntity.ts#L114)
+[src/core/InstancedEntity.ts:114](https://github.com/agargaro/instanced-mesh/blob/885e4bcb6a18860a783ace14f574e3f89257c5ee/src/core/InstancedEntity.ts#L114)
 
 ***
 
@@ -265,7 +265,7 @@ title: "InstancedEntity"
 
 #### Defined in
 
-[src/core/InstancedEntity.ts:102](https://github.com/agargaro/instanced-mesh/blob/2f190ad5fd5081569022452a2d45df7354f092df/src/core/InstancedEntity.ts#L102)
+[src/core/InstancedEntity.ts:102](https://github.com/agargaro/instanced-mesh/blob/885e4bcb6a18860a783ace14f574e3f89257c5ee/src/core/InstancedEntity.ts#L102)
 
 ***
 
@@ -285,7 +285,7 @@ title: "InstancedEntity"
 
 #### Defined in
 
-[src/core/InstancedEntity.ts:119](https://github.com/agargaro/instanced-mesh/blob/2f190ad5fd5081569022452a2d45df7354f092df/src/core/InstancedEntity.ts#L119)
+[src/core/InstancedEntity.ts:119](https://github.com/agargaro/instanced-mesh/blob/885e4bcb6a18860a783ace14f574e3f89257c5ee/src/core/InstancedEntity.ts#L119)
 
 ***
 
@@ -305,7 +305,7 @@ title: "InstancedEntity"
 
 #### Defined in
 
-[src/core/InstancedEntity.ts:125](https://github.com/agargaro/instanced-mesh/blob/2f190ad5fd5081569022452a2d45df7354f092df/src/core/InstancedEntity.ts#L125)
+[src/core/InstancedEntity.ts:125](https://github.com/agargaro/instanced-mesh/blob/885e4bcb6a18860a783ace14f574e3f89257c5ee/src/core/InstancedEntity.ts#L125)
 
 ***
 
@@ -323,7 +323,7 @@ title: "InstancedEntity"
 
 #### Defined in
 
-[src/core/InstancedEntity.ts:131](https://github.com/agargaro/instanced-mesh/blob/2f190ad5fd5081569022452a2d45df7354f092df/src/core/InstancedEntity.ts#L131)
+[src/core/InstancedEntity.ts:131](https://github.com/agargaro/instanced-mesh/blob/885e4bcb6a18860a783ace14f574e3f89257c5ee/src/core/InstancedEntity.ts#L131)
 
 ***
 
@@ -341,7 +341,7 @@ title: "InstancedEntity"
 
 #### Defined in
 
-[src/core/InstancedEntity.ts:135](https://github.com/agargaro/instanced-mesh/blob/2f190ad5fd5081569022452a2d45df7354f092df/src/core/InstancedEntity.ts#L135)
+[src/core/InstancedEntity.ts:135](https://github.com/agargaro/instanced-mesh/blob/885e4bcb6a18860a783ace14f574e3f89257c5ee/src/core/InstancedEntity.ts#L135)
 
 ***
 
@@ -359,7 +359,7 @@ title: "InstancedEntity"
 
 #### Defined in
 
-[src/core/InstancedEntity.ts:139](https://github.com/agargaro/instanced-mesh/blob/2f190ad5fd5081569022452a2d45df7354f092df/src/core/InstancedEntity.ts#L139)
+[src/core/InstancedEntity.ts:139](https://github.com/agargaro/instanced-mesh/blob/885e4bcb6a18860a783ace14f574e3f89257c5ee/src/core/InstancedEntity.ts#L139)
 
 ***
 
@@ -379,7 +379,7 @@ title: "InstancedEntity"
 
 #### Defined in
 
-[src/core/InstancedEntity.ts:98](https://github.com/agargaro/instanced-mesh/blob/2f190ad5fd5081569022452a2d45df7354f092df/src/core/InstancedEntity.ts#L98)
+[src/core/InstancedEntity.ts:98](https://github.com/agargaro/instanced-mesh/blob/885e4bcb6a18860a783ace14f574e3f89257c5ee/src/core/InstancedEntity.ts#L98)
 
 ***
 
@@ -399,7 +399,7 @@ title: "InstancedEntity"
 
 #### Defined in
 
-[src/core/InstancedEntity.ts:143](https://github.com/agargaro/instanced-mesh/blob/2f190ad5fd5081569022452a2d45df7354f092df/src/core/InstancedEntity.ts#L143)
+[src/core/InstancedEntity.ts:143](https://github.com/agargaro/instanced-mesh/blob/885e4bcb6a18860a783ace14f574e3f89257c5ee/src/core/InstancedEntity.ts#L143)
 
 ***
 
@@ -417,7 +417,7 @@ title: "InstancedEntity"
 
 #### Defined in
 
-[src/core/InstancedEntity.ts:149](https://github.com/agargaro/instanced-mesh/blob/2f190ad5fd5081569022452a2d45df7354f092df/src/core/InstancedEntity.ts#L149)
+[src/core/InstancedEntity.ts:149](https://github.com/agargaro/instanced-mesh/blob/885e4bcb6a18860a783ace14f574e3f89257c5ee/src/core/InstancedEntity.ts#L149)
 
 ***
 
@@ -435,7 +435,7 @@ title: "InstancedEntity"
 
 #### Defined in
 
-[src/core/InstancedEntity.ts:153](https://github.com/agargaro/instanced-mesh/blob/2f190ad5fd5081569022452a2d45df7354f092df/src/core/InstancedEntity.ts#L153)
+[src/core/InstancedEntity.ts:153](https://github.com/agargaro/instanced-mesh/blob/885e4bcb6a18860a783ace14f574e3f89257c5ee/src/core/InstancedEntity.ts#L153)
 
 ***
 
@@ -453,7 +453,7 @@ title: "InstancedEntity"
 
 #### Defined in
 
-[src/core/InstancedEntity.ts:157](https://github.com/agargaro/instanced-mesh/blob/2f190ad5fd5081569022452a2d45df7354f092df/src/core/InstancedEntity.ts#L157)
+[src/core/InstancedEntity.ts:157](https://github.com/agargaro/instanced-mesh/blob/885e4bcb6a18860a783ace14f574e3f89257c5ee/src/core/InstancedEntity.ts#L157)
 
 ***
 
@@ -467,7 +467,7 @@ title: "InstancedEntity"
 
 #### Defined in
 
-[src/core/InstancedEntity.ts:42](https://github.com/agargaro/instanced-mesh/blob/2f190ad5fd5081569022452a2d45df7354f092df/src/core/InstancedEntity.ts#L42)
+[src/core/InstancedEntity.ts:42](https://github.com/agargaro/instanced-mesh/blob/885e4bcb6a18860a783ace14f574e3f89257c5ee/src/core/InstancedEntity.ts#L42)
 
 ***
 
@@ -481,4 +481,4 @@ title: "InstancedEntity"
 
 #### Defined in
 
-[src/core/InstancedEntity.ts:83](https://github.com/agargaro/instanced-mesh/blob/2f190ad5fd5081569022452a2d45df7354f092df/src/core/InstancedEntity.ts#L83)
+[src/core/InstancedEntity.ts:83](https://github.com/agargaro/instanced-mesh/blob/885e4bcb6a18860a783ace14f574e3f89257c5ee/src/core/InstancedEntity.ts#L83)

@@ -1,0 +1,115 @@
+---
+export const c = (...args: (string | boolean)[]) => {
+  return args.filter(Boolean).join(' ');
+};
+
+interface Props {
+  /**
+   * The path to the entry App.svelte file relative to src/examples
+   */
+  path: string
+  hideCode?: boolean
+  hidePreview?: boolean
+  iframe?: boolean
+  showFile?: string
+  expandCode?: boolean
+  previewClass?: string
+  hideStackblitz?: boolean
+}
+
+const { path, hideCode, hidePreview, iframe, showFile, expandCode, previewClass, hideStackblitz } = Astro.props;
+ 
+const allModules = import.meta.glob('../../examples/**/*', {
+  as: 'raw',
+  eager: true
+}) as Record<string, string>;
+// TODO - Test example retrive
+debugger
+for (const path in allModules) {
+  if (!path.replace('../../examples/', '').startsWith(path)) {
+    delete allModules[path]
+  }
+}
+
+const files: Record<string, string> = {};
+for (const modulePath in allModules) {
+  let relativePath = modulePath.replace('../../examples/', '').replace(path, '').slice(1);
+  if (relativePath.startsWith('/')) {
+    relativePath = relativePath.slice(1);
+  }
+  files[relativePath] = allModules[modulePath];
+}
+
+const filePaths = Object.keys(files);
+const hideCodeResolved = hideCode ?? false;
+const hidePreviewResolved = hidePreview ?? false;
+---
+
+<div class="example-component-wrapper">
+  { !hidePreviewResolved && (
+    <div class={c(previewClass)}>
+      { iframe != false ? (
+        <iframe
+          src={`/examples/${path}`}
+          title={path}
+          class="example-iframe"
+        />
+      ) : (
+        <div class="example-preview">
+          <!-- Render preview dynamically -->
+          {Object.entries(files).map(([filePath, content]) => (
+            <div class="file-preview" data-path={filePath}>
+              <pre><code>{content}</code></pre>
+            </div>
+          ))}
+        </div>
+      ) }
+
+      { !hideStackblitz && (
+        <div class="open-in-stackblitz">
+          <button
+            class="stackblitz-button"
+            onClick={() => {
+              const sdk = import('@stackblitz/sdk');
+              console.log('try to openProject')
+              //@ts-ignore
+              sdk.then(({openProject}) => {
+                openProject({
+                  files,
+                  title: 'Example Project',
+                  description: 'Example Code Preview',
+                  template: 'node',
+                });
+              });
+            }}
+          >
+            Open in StackBlitz
+          </button>
+        </div>
+      ) }
+    </div>
+  )}
+
+  { !hideCodeResolved && (
+    <div class="code-wrapper">
+      <button
+        class="toggle-code-button"
+        onClick={() => {
+          const codeWrapper = document.querySelector('.code-wrapper-content');
+          codeWrapper?.classList.toggle('expanded');
+        }}
+      >
+        Toggle Code
+      </button>
+
+      <div class="code-wrapper-content">
+        { Object.entries(files).map(([filePath, content]) => (
+          <div class="code-file" data-path={filePath}>
+            <h4>{filePath}</h4>
+            <pre><code>{content}</code></pre>
+          </div>
+        )) }
+      </div>
+    </div>
+  )}
+</div>

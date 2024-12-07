@@ -39,7 +39,7 @@ title: "GLInstancedBufferAttribute"
 
 #### Defined in
 
-[src/core/utils/GLInstancedBufferAttribute.ts:10](https://github.com/agargaro/instanced-mesh/blob/2f190ad5fd5081569022452a2d45df7354f092df/src/core/utils/GLInstancedBufferAttribute.ts#L10)
+[src/core/utils/GLInstancedBufferAttribute.ts:10](https://github.com/agargaro/instanced-mesh/blob/885e4bcb6a18860a783ace14f574e3f89257c5ee/src/core/utils/GLInstancedBufferAttribute.ts#L10)
 
 ## Properties
 
@@ -49,7 +49,7 @@ title: "GLInstancedBufferAttribute"
 
 #### Defined in
 
-[src/core/utils/GLInstancedBufferAttribute.ts:7](https://github.com/agargaro/instanced-mesh/blob/2f190ad5fd5081569022452a2d45df7354f092df/src/core/utils/GLInstancedBufferAttribute.ts#L7)
+[src/core/utils/GLInstancedBufferAttribute.ts:7](https://github.com/agargaro/instanced-mesh/blob/885e4bcb6a18860a783ace14f574e3f89257c5ee/src/core/utils/GLInstancedBufferAttribute.ts#L7)
 
 ***
 
@@ -93,7 +93,7 @@ node\_modules/@types/three/src/core/GLBufferAttribute.d.ts:88
 
 > **elementSize**: `1` \| `2` \| `4`
 
-Stores the corresponding size in bytes for the current [.type](../../../../api/classes/glinstancedbufferattribute/#type) property value.
+Stores the corresponding size in bytes for the current [.type](../../../../../api/classes/glinstancedbufferattribute/#type) property value.
 
 The corresponding size (_in bytes_) for the given "type" param.
 #### WebGL Data Type (`GLenum`)
@@ -107,7 +107,7 @@ The corresponding size (_in bytes_) for the given "type" param.
 
 #### Remarks
 
-Set this property together with [.type](../../../../api/classes/glinstancedbufferattribute/#type). The recommended way is using the [.setType](../../../../api/classes/glinstancedbufferattribute/#settype) method.
+Set this property together with [.type](../../../../../api/classes/glinstancedbufferattribute/#type). The recommended way is using the [.setType](../../../../../api/classes/glinstancedbufferattribute/#settype) method.
 
 #### See
 
@@ -154,7 +154,7 @@ node\_modules/@types/three/src/core/GLBufferAttribute.d.ts:29
 
 #### Defined in
 
-[src/core/utils/GLInstancedBufferAttribute.ts:5](https://github.com/agargaro/instanced-mesh/blob/2f190ad5fd5081569022452a2d45df7354f092df/src/core/utils/GLInstancedBufferAttribute.ts#L5)
+[src/core/utils/GLInstancedBufferAttribute.ts:5](https://github.com/agargaro/instanced-mesh/blob/885e4bcb6a18860a783ace14f574e3f89257c5ee/src/core/utils/GLInstancedBufferAttribute.ts#L5)
 
 ***
 
@@ -164,7 +164,7 @@ node\_modules/@types/three/src/core/GLBufferAttribute.d.ts:29
 
 #### Defined in
 
-[src/core/utils/GLInstancedBufferAttribute.ts:4](https://github.com/agargaro/instanced-mesh/blob/2f190ad5fd5081569022452a2d45df7354f092df/src/core/utils/GLInstancedBufferAttribute.ts#L4)
+[src/core/utils/GLInstancedBufferAttribute.ts:4](https://github.com/agargaro/instanced-mesh/blob/885e4bcb6a18860a783ace14f574e3f89257c5ee/src/core/utils/GLInstancedBufferAttribute.ts#L4)
 
 ***
 
@@ -195,7 +195,7 @@ node\_modules/@types/three/src/core/GLBufferAttribute.d.ts:64
 
 #### Defined in
 
-[src/core/utils/GLInstancedBufferAttribute.ts:6](https://github.com/agargaro/instanced-mesh/blob/2f190ad5fd5081569022452a2d45df7354f092df/src/core/utils/GLInstancedBufferAttribute.ts#L6)
+[src/core/utils/GLInstancedBufferAttribute.ts:6](https://github.com/agargaro/instanced-mesh/blob/885e4bcb6a18860a783ace14f574e3f89257c5ee/src/core/utils/GLInstancedBufferAttribute.ts#L6)
 
 ***
 
@@ -236,7 +236,7 @@ A [WebGL Data Type](https://developer.mozilla.org/en-US/docs/Web/API/WebGL_API/C
 
 #### Remarks
 
-Set this property together with [.elementSize](../../../../api/classes/glinstancedbufferattribute/#elementsize). The recommended way is using the [.setType()](../../../../api/classes/glinstancedbufferattribute/#settype) method.
+Set this property together with [.elementSize](../../../../../api/classes/glinstancedbufferattribute/#elementsize). The recommended way is using the [.setType()](../../../../../api/classes/glinstancedbufferattribute/#settype) method.
 
 #### Inherited from
 
@@ -274,7 +274,7 @@ node\_modules/@types/three/src/core/GLBufferAttribute.d.ts:94
 
 > **set** **needsUpdate**(`value`): `void`
 
-Setting this to true increments [.version](../../../../api/classes/glinstancedbufferattribute/#version).
+Setting this to true increments [.version](../../../../../api/classes/glinstancedbufferattribute/#version).
 
 ##### Remarks
 
@@ -308,7 +308,7 @@ node\_modules/@types/three/src/core/GLBufferAttribute.d.ts:100
 
 #### Defined in
 
-[src/core/utils/GLInstancedBufferAttribute.ts:31](https://github.com/agargaro/instanced-mesh/blob/2f190ad5fd5081569022452a2d45df7354f092df/src/core/utils/GLInstancedBufferAttribute.ts#L31)
+[src/core/utils/GLInstancedBufferAttribute.ts:31](https://github.com/agargaro/instanced-mesh/blob/885e4bcb6a18860a783ace14f574e3f89257c5ee/src/core/utils/GLInstancedBufferAttribute.ts#L31)
 
 ***
 
@@ -316,7 +316,7 @@ node\_modules/@types/three/src/core/GLBufferAttribute.d.ts:100
 
 > **setBuffer**(`buffer`): `this`
 
-Sets the [.buffer](../../../../api/classes/glinstancedbufferattribute/#buffer) property.
+Sets the [.buffer](../../../../../api/classes/glinstancedbufferattribute/#buffer) property.
 
 #### Parameters
 
@@ -340,7 +340,7 @@ node\_modules/@types/three/src/core/GLBufferAttribute.d.ts:105
 
 > **setCount**(`count`): `this`
 
-Sets the [count](../../../../api/classes/glinstancedbufferattribute/#count) property.
+Sets the [count](../../../../../api/classes/glinstancedbufferattribute/#count) property.
 
 #### Parameters
 
@@ -364,7 +364,7 @@ node\_modules/@types/three/src/core/GLBufferAttribute.d.ts:120
 
 > **setItemSize**(`itemSize`): `this`
 
-Sets the [itemSize](../../../../api/classes/glinstancedbufferattribute/#itemsize) property.
+Sets the [itemSize](../../../../../api/classes/glinstancedbufferattribute/#itemsize) property.
 
 #### Parameters
 
@@ -388,7 +388,7 @@ node\_modules/@types/three/src/core/GLBufferAttribute.d.ts:115
 
 > **setType**(`type`, `elementSize`): `this`
 
-Sets the both [type](../../../../api/classes/glinstancedbufferattribute/#type) and GLBufferAttribute.elementSize | elementSize properties.
+Sets the both [type](../../../../../api/classes/glinstancedbufferattribute/#type) and GLBufferAttribute.elementSize | elementSize properties.
 
 #### Parameters
 
@@ -426,4 +426,4 @@ node\_modules/@types/three/src/core/GLBufferAttribute.d.ts:110
 
 #### Defined in
 
-[src/core/utils/GLInstancedBufferAttribute.ts:21](https://github.com/agargaro/instanced-mesh/blob/2f190ad5fd5081569022452a2d45df7354f092df/src/core/utils/GLInstancedBufferAttribute.ts#L21)
+[src/core/utils/GLInstancedBufferAttribute.ts:21](https://github.com/agargaro/instanced-mesh/blob/885e4bcb6a18860a783ace14f574e3f89257c5ee/src/core/utils/GLInstancedBufferAttribute.ts#L21)

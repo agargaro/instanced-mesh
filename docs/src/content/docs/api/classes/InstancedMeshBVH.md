@@ -27,7 +27,7 @@ title: "InstancedMeshBVH"
 
 #### Defined in
 
-[src/core/InstancedMeshBVH.ts:26](https://github.com/agargaro/instanced-mesh/blob/2f190ad5fd5081569022452a2d45df7354f092df/src/core/InstancedMeshBVH.ts#L26)
+[src/core/InstancedMeshBVH.ts:26](https://github.com/agargaro/instanced-mesh/blob/885e4bcb6a18860a783ace14f574e3f89257c5ee/src/core/InstancedMeshBVH.ts#L26)
 
 ## Properties
 
@@ -37,7 +37,7 @@ title: "InstancedMeshBVH"
 
 #### Defined in
 
-[src/core/InstancedMeshBVH.ts:13](https://github.com/agargaro/instanced-mesh/blob/2f190ad5fd5081569022452a2d45df7354f092df/src/core/InstancedMeshBVH.ts#L13)
+[src/core/InstancedMeshBVH.ts:13](https://github.com/agargaro/instanced-mesh/blob/885e4bcb6a18860a783ace14f574e3f89257c5ee/src/core/InstancedMeshBVH.ts#L13)
 
 ***
 
@@ -47,7 +47,7 @@ title: "InstancedMeshBVH"
 
 #### Defined in
 
-[src/core/InstancedMeshBVH.ts:12](https://github.com/agargaro/instanced-mesh/blob/2f190ad5fd5081569022452a2d45df7354f092df/src/core/InstancedMeshBVH.ts#L12)
+[src/core/InstancedMeshBVH.ts:12](https://github.com/agargaro/instanced-mesh/blob/885e4bcb6a18860a783ace14f574e3f89257c5ee/src/core/InstancedMeshBVH.ts#L12)
 
 ***
 
@@ -57,7 +57,7 @@ title: "InstancedMeshBVH"
 
 #### Defined in
 
-[src/core/InstancedMeshBVH.ts:14](https://github.com/agargaro/instanced-mesh/blob/2f190ad5fd5081569022452a2d45df7354f092df/src/core/InstancedMeshBVH.ts#L14)
+[src/core/InstancedMeshBVH.ts:14](https://github.com/agargaro/instanced-mesh/blob/885e4bcb6a18860a783ace14f574e3f89257c5ee/src/core/InstancedMeshBVH.ts#L14)
 
 ***
 
@@ -67,7 +67,7 @@ title: "InstancedMeshBVH"
 
 #### Defined in
 
-[src/core/InstancedMeshBVH.ts:11](https://github.com/agargaro/instanced-mesh/blob/2f190ad5fd5081569022452a2d45df7354f092df/src/core/InstancedMeshBVH.ts#L11)
+[src/core/InstancedMeshBVH.ts:11](https://github.com/agargaro/instanced-mesh/blob/885e4bcb6a18860a783ace14f574e3f89257c5ee/src/core/InstancedMeshBVH.ts#L11)
 
 ## Methods
 
@@ -81,7 +81,7 @@ title: "InstancedMeshBVH"
 
 #### Defined in
 
-[src/core/InstancedMeshBVH.ts:105](https://github.com/agargaro/instanced-mesh/blob/2f190ad5fd5081569022452a2d45df7354f092df/src/core/InstancedMeshBVH.ts#L105)
+[src/core/InstancedMeshBVH.ts:105](https://github.com/agargaro/instanced-mesh/blob/885e4bcb6a18860a783ace14f574e3f89257c5ee/src/core/InstancedMeshBVH.ts#L105)
 
 ***
 
@@ -95,7 +95,7 @@ title: "InstancedMeshBVH"
 
 #### Defined in
 
-[src/core/InstancedMeshBVH.ts:56](https://github.com/agargaro/instanced-mesh/blob/2f190ad5fd5081569022452a2d45df7354f092df/src/core/InstancedMeshBVH.ts#L56)
+[src/core/InstancedMeshBVH.ts:56](https://github.com/agargaro/instanced-mesh/blob/885e4bcb6a18860a783ace14f574e3f89257c5ee/src/core/InstancedMeshBVH.ts#L56)
 
 ***
 
@@ -113,7 +113,7 @@ title: "InstancedMeshBVH"
 
 #### Defined in
 
-[src/core/InstancedMeshBVH.ts:98](https://github.com/agargaro/instanced-mesh/blob/2f190ad5fd5081569022452a2d45df7354f092df/src/core/InstancedMeshBVH.ts#L98)
+[src/core/InstancedMeshBVH.ts:98](https://github.com/agargaro/instanced-mesh/blob/885e4bcb6a18860a783ace14f574e3f89257c5ee/src/core/InstancedMeshBVH.ts#L98)
 
 ***
 
@@ -133,7 +133,7 @@ title: "InstancedMeshBVH"
 
 #### Defined in
 
-[src/core/InstancedMeshBVH.ts:110](https://github.com/agargaro/instanced-mesh/blob/2f190ad5fd5081569022452a2d45df7354f092df/src/core/InstancedMeshBVH.ts#L110)
+[src/core/InstancedMeshBVH.ts:110](https://github.com/agargaro/instanced-mesh/blob/885e4bcb6a18860a783ace14f574e3f89257c5ee/src/core/InstancedMeshBVH.ts#L110)
 
 ***
 
@@ -157,7 +157,7 @@ title: "InstancedMeshBVH"
 
 #### Defined in
 
-[src/core/InstancedMeshBVH.ts:122](https://github.com/agargaro/instanced-mesh/blob/2f190ad5fd5081569022452a2d45df7354f092df/src/core/InstancedMeshBVH.ts#L122)
+[src/core/InstancedMeshBVH.ts:122](https://github.com/agargaro/instanced-mesh/blob/885e4bcb6a18860a783ace14f574e3f89257c5ee/src/core/InstancedMeshBVH.ts#L122)
 
 ***
 
@@ -175,7 +175,7 @@ title: "InstancedMeshBVH"
 
 #### Defined in
 
-[src/core/InstancedMeshBVH.ts:73](https://github.com/agargaro/instanced-mesh/blob/2f190ad5fd5081569022452a2d45df7354f092df/src/core/InstancedMeshBVH.ts#L73)
+[src/core/InstancedMeshBVH.ts:73](https://github.com/agargaro/instanced-mesh/blob/885e4bcb6a18860a783ace14f574e3f89257c5ee/src/core/InstancedMeshBVH.ts#L73)
 
 ***
 
@@ -193,7 +193,7 @@ title: "InstancedMeshBVH"
 
 #### Defined in
 
-[src/core/InstancedMeshBVH.ts:78](https://github.com/agargaro/instanced-mesh/blob/2f190ad5fd5081569022452a2d45df7354f092df/src/core/InstancedMeshBVH.ts#L78)
+[src/core/InstancedMeshBVH.ts:78](https://github.com/agargaro/instanced-mesh/blob/885e4bcb6a18860a783ace14f574e3f89257c5ee/src/core/InstancedMeshBVH.ts#L78)
 
 ***
 
@@ -213,7 +213,7 @@ title: "InstancedMeshBVH"
 
 #### Defined in
 
-[src/core/InstancedMeshBVH.ts:159](https://github.com/agargaro/instanced-mesh/blob/2f190ad5fd5081569022452a2d45df7354f092df/src/core/InstancedMeshBVH.ts#L159)
+[src/core/InstancedMeshBVH.ts:159](https://github.com/agargaro/instanced-mesh/blob/885e4bcb6a18860a783ace14f574e3f89257c5ee/src/core/InstancedMeshBVH.ts#L159)
 
 ***
 
@@ -231,7 +231,7 @@ title: "InstancedMeshBVH"
 
 #### Defined in
 
-[src/core/InstancedMeshBVH.ts:91](https://github.com/agargaro/instanced-mesh/blob/2f190ad5fd5081569022452a2d45df7354f092df/src/core/InstancedMeshBVH.ts#L91)
+[src/core/InstancedMeshBVH.ts:91](https://github.com/agargaro/instanced-mesh/blob/885e4bcb6a18860a783ace14f574e3f89257c5ee/src/core/InstancedMeshBVH.ts#L91)
 
 ***
 
@@ -251,4 +251,4 @@ title: "InstancedMeshBVH"
 
 #### Defined in
 
-[src/core/InstancedMeshBVH.ts:148](https://github.com/agargaro/instanced-mesh/blob/2f190ad5fd5081569022452a2d45df7354f092df/src/core/InstancedMeshBVH.ts#L148)
+[src/core/InstancedMeshBVH.ts:148](https://github.com/agargaro/instanced-mesh/blob/885e4bcb6a18860a783ace14f574e3f89257c5ee/src/core/InstancedMeshBVH.ts#L148)
