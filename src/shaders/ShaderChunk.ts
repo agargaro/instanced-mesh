@@ -9,9 +9,13 @@ ShaderChunk['instanced_vertex'] = instanced_vertex;
 ShaderChunk['instanced_color_pars_fragment'] = instanced_color_pars_fragment;
 ShaderChunk['instanced_color_fragment'] = instanced_color_fragment;
 
-ShaderChunk.project_vertex = ShaderChunk.project_vertex.replace('#ifdef USE_INSTANCING', '#if defined USE_INSTANCING || defined USE_INSTANCING_INDIRECT');
-ShaderChunk.worldpos_vertex = ShaderChunk.worldpos_vertex.replace('#ifdef USE_INSTANCING', '#if defined USE_INSTANCING || defined USE_INSTANCING_INDIRECT');
-ShaderChunk.defaultnormal_vertex = ShaderChunk.defaultnormal_vertex.replace('#ifdef USE_INSTANCING', '#if defined USE_INSTANCING || defined USE_INSTANCING_INDIRECT');
+export function patchShader(shader: string): string {
+  return shader.replace('#ifdef USE_INSTANCING', '#if defined USE_INSTANCING || defined USE_INSTANCING_INDIRECT');
+}
+
+ShaderChunk.project_vertex = patchShader(ShaderChunk.project_vertex);
+ShaderChunk.worldpos_vertex = patchShader(ShaderChunk.worldpos_vertex);
+ShaderChunk.defaultnormal_vertex = patchShader(ShaderChunk.defaultnormal_vertex);
 
 ShaderChunk.batching_pars_vertex = ShaderChunk.batching_pars_vertex.concat('\n#include <instanced_pars_vertex>');
 ShaderChunk['batching_vertex'] = ShaderChunk['batching_vertex'].concat('\n#include <instanced_vertex>');
@@ -19,15 +23,9 @@ ShaderChunk['batching_vertex'] = ShaderChunk['batching_vertex'].concat('\n#inclu
 ShaderChunk.color_pars_fragment = ShaderChunk.color_pars_fragment.concat('\n#include <instanced_color_pars_fragment>');
 ShaderChunk.color_fragment = ShaderChunk.color_fragment.concat('\n#include <instanced_color_fragment>');
 
-// FIX don't override like this
+// TODO FIX don't override like this
 ShaderChunk['morphinstance_vertex'] = ShaderChunk['morphinstance_vertex'].replaceAll('gl_InstanceID', 'instanceIndex');
 
 // use 'getPatchedShader' function to make these example works
 // examples/jsm/modifiers/CurveModifier.js
 // examples/jsm/postprocessing/OutlinePass.js
-
-export function patchShader(shader: string): string {
-  return shader.replace('#ifdef USE_INSTANCING', '#if defined USE_INSTANCING || defined USE_INSTANCING_INDIRECT')
-    .replace('#ifdef USE_INSTANCING_COLOR', '#if defined USE_INSTANCING_COLOR || defined USE_INSTANCING_COLOR_INDIRECT')
-    .replace('defined( USE_INSTANCING_COLOR )', 'defined( USE_INSTANCING_COLOR ) || defined( USE_INSTANCING_COLOR_INDIRECT )');
-}

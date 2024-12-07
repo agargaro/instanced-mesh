@@ -18,7 +18,7 @@ export default /* glsl */`
   #if defined( USE_INSTANCING_COLOR_INDIRECT ) || defined( USE_INSTANCING_COLOR_ALPHA_INDIRECT )
     uniform highp sampler2D colorsTexture;
 
-    #if defined( USE_INSTANCING_COLOR_ALPHA_INDIRECT )
+    #ifdef USE_INSTANCING_COLOR_ALPHA_INDIRECT
       flat varying vec4 vColor;
     
       vec4 getColorTexture() {
