@@ -64,7 +64,8 @@ export class InstancedMesh2<
   /** @internal */ _material: TMaterial;
   /** @internal */ _parentLOD: InstancedMesh2;
   protected readonly _instancesUseEuler: boolean;
-  protected readonly _instance: InstancedEntity; // TODO rename tempInstance?
+  protected readonly _tempInstance: InstancedEntity;
+  protected useOpacity = false;
 
   public override customDepthMaterial = new MeshDepthMaterial({ depthPacking: RGBADepthPacking });
   public override customDistanceMaterial = new MeshDistanceMaterial();
@@ -121,7 +122,7 @@ export class InstancedMesh2<
     this._geometry = geometry;
     this._material = material;
     this._instancesUseEuler = instancesUseEuler ?? false;
-    this._instance = new InstancedEntity(this, -1, instancesUseEuler);
+    this._tempInstance = new InstancedEntity(this, -1, instancesUseEuler);
     this._parentLOD = LOD;
     this.visibilityArray = LOD?.visibilityArray ?? new Array(capacity).fill(true);
     this.frustumCulled = false;
@@ -181,6 +182,13 @@ export class InstancedMesh2<
     this._matrixArray = this.matricesTexture.image.data as unknown as Float32Array;
   }
 
+  protected initColorsTexture(): void {
+    this.colorsTexture = new SquareDataTexture(Float32Array, 4, 1, this._capacity);
+    this.colorsTexture.colorSpace = ColorManagement.workingColorSpace;
+    this._colorArray = this.colorsTexture.image.data as unknown as Float32Array;
+    this._colorArray.fill(1);
+  }
+
   protected patchGeometry(geometry: TGeometry): void {
     if (geometry.hasAttribute('instanceIndex')) {
       geometry = geometry.clone();
@@ -222,8 +230,8 @@ export class InstancedMesh2<
       if (!shader.defines) shader.defines = {};
       shader.defines['USE_INSTANCING_INDIRECT'] = '';
 
-      // create varying vInstanceIndex
       if (this.uniformsTexture) {
+        // create varying vInstanceIndex
         shader.vertexShader = shader.vertexShader.replace('void main() {', 'flat varying uint vInstanceIndex;\n void main() {\n vInstanceIndex = instanceIndex;');
         shader.fragmentShader = shader.fragmentShader.replace('void main() {', 'flat varying uint vInstanceIndex;\n void main() {');
 
@@ -236,8 +244,12 @@ export class InstancedMesh2<
         if (!shader.fragmentShader.includes('#include <color_pars_fragment>')) return;
 
         shader.uniforms.colorsTexture = { value: this.colorsTexture };
-        // shader.defines['USE_INSTANCING_COLOR_INDIRECT'] = '';
-        shader.defines['USE_INSTANCING_COLOR_ALPHA_INDIRECT'] = '';
+
+        if (this.useOpacity) {
+          shader.defines['USE_INSTANCING_COLOR_ALPHA_INDIRECT'] = '';
+        } else {
+          shader.defines['USE_INSTANCING_COLOR_INDIRECT'] = '';
+        }
       }
     };
 
@@ -281,10 +293,7 @@ export class InstancedMesh2<
 
   public setColorAt(id: number, color: ColorRepresentation): void {
     if (this.colorsTexture === null) {
-      this.colorsTexture = new SquareDataTexture(Float32Array, 4, 1, this._capacity);
-      this.colorsTexture.colorSpace = ColorManagement.workingColorSpace;
-      this._colorArray = this.colorsTexture.image.data as unknown as Float32Array;
-      this._colorArray.fill(1);
+      this.initColorsTexture();
     }
 
     if ((color as Color).isColor) {
@@ -302,12 +311,10 @@ export class InstancedMesh2<
 
   public setOpacityAt(id: number, value: number): void {
     if (this.colorsTexture === null) {
-      this.colorsTexture = new SquareDataTexture(Float32Array, 4, 1, this._capacity);
-      this.colorsTexture.colorSpace = ColorManagement.workingColorSpace;
-      this._colorArray = this.colorsTexture.image.data as unknown as Float32Array;
-      this._colorArray.fill(1); // TODO make a function to create colorTexture
+      this.initColorsTexture();
     }
 
+    this.useOpacity = true;
     this._colorArray[id * 4 + 3] = value;
     this.colorsTexture.enqueueUpdate(id);
   }

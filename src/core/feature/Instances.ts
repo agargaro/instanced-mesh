@@ -26,7 +26,7 @@ InstancedMesh2.prototype.clearInstance = function (instance: InstancedEntity, in
 InstancedMesh2.prototype.updateInstances = function (this: InstancedMesh2, onUpdate?: UpdateEntityCallback, start = 0, count = this._instancesCount): InstancedMesh2 {
   const end = start + count;
   const instances = this.instances;
-  const tempInstance = this._instance;
+  const tempInstance = this._tempInstance;
 
   for (let i = start; i < end; i++) {
     const instance = instances ? instances[i] : this.clearInstance(tempInstance, i);
@@ -61,7 +61,7 @@ InstancedMesh2.prototype.addInstances = function (count: number, onCreation?: Up
 
   if (onCreation) {
     for (let i = start; i < end; i++) {
-      const instance = this.instances ? this.instances[i] : this.clearInstance(this._instance, i);
+      const instance = this.instances ? this.instances[i] : this.clearInstance(this._tempInstance, i);
       onCreation(instance, i);
       instance.updateMatrix();
       bvh?.insert(i);
