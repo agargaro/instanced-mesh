@@ -45,7 +45,7 @@ InstancedMesh2.prototype.createInstances = function (this: InstancedMesh2, start
 
   const instances = this.instances;
   for (let i = start; i < end; i++) {
-    const instance = new InstancedEntity(this, i, this._instancesUseEuler);
+    const instance = new InstancedEntity(this, i, this._allowsEuler);
     instances[i] = instance;
   }
 

@@ -14,10 +14,31 @@ import { SquareDataTexture } from './utils/SquareDataTexture.js';
 // TODO LOD: BVH and handle raycastOnlyFrustum?;
 // TODO LOD: sync all textures private property (colorsArray, colorsTexture, etc) to prevent to create unnecesary textures
 
+/**
+ * Parameters for configuring an `InstancedMesh2` instance.
+ */
 export interface InstancedMesh2Params {
+  /**
+   * Determines the maximum number of instances that buffers can hold.
+   * The buffers will be expanded automatically if necessary.
+   * @default 1000
+   */
   capacity?: number;
+  /**
+   * Determines whether to create an array of `InstancedEntity` to easily manipulate instances at the cost of more memory.
+   * @default false
+   */
   createInstances?: boolean;
-  instancesUseEuler?: boolean;
+  /**
+   * Determines whether `InstancedEntity` can use the `rotation` property.
+   * If **true** `quaternion` and `rotation` will be synchronized, affecting performance.
+   * @default false
+   */
+  allowsEuler?: boolean;
+  /**
+   * WebGL renderer instance.
+   * If not provided, buffers will be initialized during the first render, resulting in no instances being rendered initially.
+   */
   renderer?: WebGLRenderer;
 }
 
@@ -62,7 +83,7 @@ export class InstancedMesh2<
   /** @internal */ _geometry: TGeometry;
   /** @internal */ _material: TMaterial;
   /** @internal */ _parentLOD: InstancedMesh2;
-  protected readonly _instancesUseEuler: boolean;
+  protected readonly _allowsEuler: boolean;
   protected readonly _tempInstance: InstancedEntity;
   protected _useOpacity = false;
 
@@ -111,7 +132,7 @@ export class InstancedMesh2<
     if (!geometry) throw new Error('"geometry" is mandatory.');
     if (!material) throw new Error('"material" is mandatory.');
 
-    const { instancesUseEuler, renderer, createInstances } = params;
+    const { allowsEuler, renderer, createInstances } = params;
 
     super(geometry, material);
 
@@ -120,8 +141,8 @@ export class InstancedMesh2<
     this._capacity = capacity;
     this._geometry = geometry;
     this._material = material;
-    this._instancesUseEuler = instancesUseEuler ?? false;
-    this._tempInstance = new InstancedEntity(this, -1, instancesUseEuler);
+    this._allowsEuler = allowsEuler ?? false;
+    this._tempInstance = new InstancedEntity(this, -1, allowsEuler);
     this._parentLOD = LOD;
     this.visibilityArray = LOD?.visibilityArray ?? new Array(capacity).fill(true);
     this.frustumCulled = false;
