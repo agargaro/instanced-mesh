@@ -40,7 +40,7 @@ export function getSquareTextureInfo(arrayType: TypedArrayConstructor, channels:
 
 export class SquareDataTexture extends DataTexture {
   public partialUpdate = true;
-  // public maxUpdateCalls = 5; // TODO implement
+  public maxUpdateCalls = 100;
   /** @internal */ _data: TypedArray;
   protected _channels: ChannelSize;
   protected _pixelsPerInstance: number;
@@ -94,12 +94,17 @@ export class SquareDataTexture extends DataTexture {
 
   public update(renderer: WebGLRenderer): void {
     if (!this.partialUpdate) return;
-    const info = this.getUpdateRowsInfo();
-    if (info.length === 0) return;
+    const rowsInfo = this.getUpdateRowsInfo();
+    if (rowsInfo.length === 0) return;
 
-    this.initRendererInfo(renderer);
-    this.updateRows(info);
-    this._rowToUpdate.fill(false); // improve setting false only true locations?
+    if (rowsInfo.length > this.maxUpdateCalls) {
+      this.needsUpdate = true;
+    } else {
+      this.initRendererInfo(renderer);
+      this.updateRows(rowsInfo);
+    }
+
+    this._rowToUpdate.fill(false);
   }
 
   protected getUpdateRowsInfo(): UpdateRowInfo[] {
