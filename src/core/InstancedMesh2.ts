@@ -71,9 +71,6 @@ export class InstancedMesh2<
   public visibilityArray: boolean[];
   public LODinfo: LODInfo<TData> = null;
   /** @internal */ _renderer: WebGLRenderer = null;
-  /** @internal */ _indexArray: Uint32Array;
-  /** @internal */ _matrixArray: Float32Array;
-  /** @internal */ _colorArray: Float32Array = null;
   /** @internal */ _instancesCount = 0;
   /** @internal */ _count = 0;
   /** @internal */ _perObjectFrustumCulled = true;
@@ -147,7 +144,6 @@ export class InstancedMesh2<
     this.visibilityArray = LOD?.visibilityArray ?? new Array(capacity).fill(true);
     this.frustumCulled = false;
 
-    this.initIndexArray();
     this.initIndexAttribute();
     this.initMatricesTexture();
 
@@ -173,40 +169,36 @@ export class InstancedMesh2<
     if (!this.instanceIndex) this.initIndexAttribute();
   }
 
-  protected initIndexArray(): void {
-    const count = this._capacity;
-    const array = new Uint32Array(count);
-
-    for (let i = 0; i < count; i++) {
-      array[i] = i;
-    }
-
-    this._indexArray = array;
-  }
-
   protected initIndexAttribute(): void {
     if (!this._renderer) {
       this._count = 0;
       return;
     }
 
-    const array = this._indexArray;
     const gl = this._renderer.getContext() as WebGL2RenderingContext;
+    const capacity = this._capacity;
+    const array = new Uint32Array(capacity);
+
+    for (let i = 0; i < capacity; i++) {
+      array[i] = i;
+    }
 
     this.instanceIndex = new GLInstancedBufferAttribute(gl, gl.UNSIGNED_INT, 1, 4, array);
     this._geometry?.setAttribute('instanceIndex', this.instanceIndex as unknown as BufferAttribute);
   }
 
   protected initMatricesTexture(): void {
-    this.matricesTexture = this._parentLOD ? this._parentLOD.matricesTexture : new SquareDataTexture(Float32Array, 4, 4, this._capacity);
-    this._matrixArray = this.matricesTexture.image.data as unknown as Float32Array;
+    if (this._parentLOD) {
+      this.matricesTexture = this._parentLOD.matricesTexture;
+    } else {
+      this.matricesTexture = new SquareDataTexture(Float32Array, 4, 4, this._capacity);
+    }
   }
 
   protected initColorsTexture(): void {
     this.colorsTexture = new SquareDataTexture(Float32Array, 4, 1, this._capacity);
     this.colorsTexture.colorSpace = ColorManagement.workingColorSpace;
-    this._colorArray = this.colorsTexture.image.data as unknown as Float32Array;
-    this._colorArray.fill(1);
+    this.colorsTexture._data.fill(1);
   }
 
   protected patchGeometry(geometry: TGeometry): void {
@@ -287,7 +279,7 @@ export class InstancedMesh2<
   }
 
   public setMatrixAt(id: number, matrix: Matrix4): void {
-    matrix.toArray(this._matrixArray, id * 16);
+    matrix.toArray(this.matricesTexture._data, id * 16);
 
     if (this.instances) {
       const instance = this.instances[id];
@@ -299,7 +291,7 @@ export class InstancedMesh2<
   }
 
   public getMatrixAt(id: number, matrix = _tempMat4): Matrix4 {
-    return matrix.fromArray(this._matrixArray, id * 16);
+    return matrix.fromArray(this.matricesTexture._data, id * 16);
   }
 
   public setVisibilityAt(id: number, visible: boolean): void {
@@ -317,16 +309,16 @@ export class InstancedMesh2<
     }
 
     if ((color as Color).isColor) {
-      (color as Color).toArray(this._colorArray, id * 4);
+      (color as Color).toArray(this.colorsTexture._data, id * 4);
     } else {
-      _tempCol.set(color).toArray(this._colorArray, id * 4);
+      _tempCol.set(color).toArray(this.colorsTexture._data, id * 4);
     }
 
     this.colorsTexture.enqueueUpdate(id);
   }
 
   public getColorAt(id: number, color = _tempCol): Color {
-    return color.fromArray(this._colorArray, id * 4);
+    return color.fromArray(this.colorsTexture._data, id * 4);
   }
 
   public setOpacityAt(id: number, value: number): void {
@@ -335,12 +327,12 @@ export class InstancedMesh2<
     }
 
     this._useOpacity = true;
-    this._colorArray[id * 4 + 3] = value;
+    this.colorsTexture._data[id * 4 + 3] = value;
     this.colorsTexture.enqueueUpdate(id);
   }
 
   public getOpacityAt(id: number): number {
-    return this._colorArray[id * 4 + 3];
+    return this.colorsTexture._data[id * 4 + 3];
   }
 
   public getMorphAt(index: number, object = _tempMesh): Mesh {

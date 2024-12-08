@@ -52,7 +52,7 @@ InstancedMesh2.prototype.initUniformsPerInstance = function (schema: UniformSche
 InstancedMesh2.prototype.getUniforSchemaResult = function (schema: UniformSchema): UniformSchemaResult {
   let totalSize = 0;
   const uniformMap = new Map<string, UniformMapType>();
-  let uniforms: { type: UniformType; name: string; size: number }[] = [];
+  const uniforms: { type: UniformType; name: string; size: number }[] = [];
 
   for (const name in schema) {
     const type = schema[name];
@@ -61,7 +61,7 @@ InstancedMesh2.prototype.getUniforSchemaResult = function (schema: UniformSchema
     uniforms.push({ name, type, size });
   }
 
-  uniforms = uniforms.sort((a, b) => b.size - a.size);
+  uniforms.sort((a, b) => b.size - a.size);
 
   const tempOffset = [];
   for (const { name, size, type } of uniforms) {
