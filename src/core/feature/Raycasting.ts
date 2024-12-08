@@ -45,7 +45,7 @@ InstancedMesh2.prototype.raycast = function (raycaster: Raycaster, result: Inter
     _sphere.copy(this.boundingSphere);
     if (!raycaster.ray.intersectsSphere(_sphere)) return;
 
-    const instancesToCheck = this._indexArray;
+    const instancesToCheck = this.instanceIndex.array;
     const checkCount = raycastFrustum ? this._count : this._instancesCount;
 
     for (let i = 0; i < checkCount; i++) {
