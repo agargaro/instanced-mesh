@@ -44,7 +44,7 @@ InstancedMesh2.prototype.resizeBuffers = function (capacity: number): InstancedM
     this.morphTexture.image.data.set(oldArray); // FIX if reduce
   }
 
-  // TODO custom uniform texture
+  this.uniformsTexture?.resize(capacity);
 
   return this;
 };

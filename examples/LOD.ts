@@ -21,7 +21,7 @@ instancedMeshLOD.addLOD(new SphereGeometry(5, 20, 10), new MeshLambertMaterial({
 instancedMeshLOD.addLOD(new SphereGeometry(5, 10, 5), new MeshLambertMaterial({ color: 'orange' }), 500);
 instancedMeshLOD.addLOD(new SphereGeometry(5, 5, 3), new MeshLambertMaterial({ color: 'red' }), 1000);
 
-instancedMeshLOD.infoLOD[0].object.geometry.computeBoundingSphere(); // improve
+instancedMeshLOD.LODinfo[0].object.geometry.computeBoundingSphere(); // improve
 
 instancedMeshLOD.updateInstances((object, index) => {
   object.position.x = random.range(-spawnRange, spawnRange);

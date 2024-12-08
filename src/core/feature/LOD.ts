@@ -45,12 +45,12 @@ InstancedMesh2.prototype.setFirstLODDistance = function (distance = 0, hysteresi
     return;
   }
 
-  if (!this.infoLOD) {
-    this.infoLOD = { render: null, shadowRender: null, objects: [this] };
+  if (!this.LODinfo) {
+    this.LODinfo = { render: null, shadowRender: null, objects: [this] };
   }
 
-  if (!this.infoLOD.render) {
-    this.infoLOD.render = {
+  if (!this.LODinfo.render) {
+    this.LODinfo.render = {
       levels: [{ distance, hysteresis, object: this }],
       indexes: [this._indexArray],
       count: [0]
@@ -66,14 +66,14 @@ InstancedMesh2.prototype.addLOD = function (geometry: BufferGeometry, material: 
     return;
   }
 
-  if (!this.infoLOD?.render && distance === 0) {
+  if (!this.LODinfo?.render && distance === 0) {
     console.error('Cannot set distance to 0 for the first LOD. Use "setFirstLODDistance" before use "addLOD".');
     return;
   } else {
     this.setFirstLODDistance(0, hysteresis);
   }
 
-  this.addLevel(this.infoLOD.render, geometry, material, distance, hysteresis);
+  this.addLevel(this.LODinfo.render, geometry, material, distance, hysteresis);
 
   return this;
 };
@@ -84,15 +84,15 @@ InstancedMesh2.prototype.addShadowLOD = function (geometry: BufferGeometry, dist
     return;
   }
 
-  if (!this.infoLOD) {
-    this.infoLOD = { render: null, shadowRender: null, objects: [this] };
+  if (!this.LODinfo) {
+    this.LODinfo = { render: null, shadowRender: null, objects: [this] };
   }
 
-  if (!this.infoLOD.shadowRender) {
-    this.infoLOD.shadowRender = { levels: [], indexes: [], count: [] };
+  if (!this.LODinfo.shadowRender) {
+    this.LODinfo.shadowRender = { levels: [], indexes: [], count: [] };
   }
 
-  const object = this.addLevel(this.infoLOD.shadowRender, geometry, null, distance, hysteresis);
+  const object = this.addLevel(this.LODinfo.shadowRender, geometry, null, distance, hysteresis);
   object.castShadow = true;
   this.castShadow = true;
 
@@ -100,7 +100,7 @@ InstancedMesh2.prototype.addShadowLOD = function (geometry: BufferGeometry, dist
 };
 
 InstancedMesh2.prototype.addLevel = function (renderList: LODRenderList, geometry: BufferGeometry, material: Material, distance: number, hysteresis: number): InstancedMesh2 {
-  const objectsList = this.infoLOD.objects;
+  const objectsList = this.LODinfo.objects;
   const levels = renderList.levels;
   let index;
   let object: InstancedMesh2;
@@ -108,7 +108,7 @@ InstancedMesh2.prototype.addLevel = function (renderList: LODRenderList, geometr
 
   const objIndex = objectsList.findIndex((e) => e.geometry === geometry);
   if (objIndex === -1) {
-    const params: InstancedMesh2Params = { capacity: this._capacity, renderer: this._renderer }; // TODO check
+    const params: InstancedMesh2Params = { capacity: this._capacity, renderer: this._renderer };
     object = new InstancedMesh2(geometry, material ?? new ShaderMaterial(), params, this);
     objectsList.push(object);
     this.add(object); // TODO handle render order?

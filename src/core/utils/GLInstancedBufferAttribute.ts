@@ -23,7 +23,7 @@ export class GLInstancedBufferAttribute extends GLBufferAttribute {
   public update(renderer: WebGLRenderer, count: number): void {
     if (!this._needsUpdate || count === 0) return;
 
-    const gl = renderer.getContext(); // TODO check performance or cache it
+    const gl = renderer.getContext();
     gl.bindBuffer(gl.ARRAY_BUFFER, this.buffer);
 
     if (this.array === this._cacheArray) {

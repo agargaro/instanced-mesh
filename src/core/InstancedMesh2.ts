@@ -1,19 +1,18 @@
 import { Box3, BufferAttribute, BufferGeometry, Camera, Color, ColorManagement, ColorRepresentation, DataTexture, FloatType, Group, InstancedBufferAttribute, Material, Matrix4, Mesh, MeshDepthMaterial, MeshDistanceMaterial, Object3D, Object3DEventMap, RGBADepthPacking, RedFormat, Scene, Sphere, WebGLRenderer } from 'three';
+import { CustomSortCallback } from './feature/FrustumCulling.js';
 import { Entity } from './feature/Instances.js';
 import { LODInfo } from './feature/LOD.js';
 import { InstancedEntity } from './InstancedEntity.js';
 import { InstancedMeshBVH } from './InstancedMeshBVH.js';
 import { GLInstancedBufferAttribute } from './utils/GLInstancedBufferAttribute.js';
-import { InstancedRenderItem } from './utils/InstancedRenderList.js';
 import { SquareDataTexture } from './utils/SquareDataTexture.js';
 
+// TODO if bvh present, can override?
 // TODO: Use BVH only for raycasting
 // TODO LOD: instancedMeshLOD rendering first nearest levels, look out to transparent
 // TODO LOD: shared customDepthMaterial and customDistanceMaterial?
 // TODO LOD: BVH and handle raycastOnlyFrustum?;
 // TODO LOD: sync all textures private property (colorsArray, colorsTexture, etc) to prevent to create unnecesary textures
-
-export type CustomSortCallback = (list: InstancedRenderItem[]) => void;
 
 export interface InstancedMesh2Params {
   capacity?: number;
@@ -49,7 +48,7 @@ export class InstancedMesh2<
   public customSort: CustomSortCallback = null;
   public raycastOnlyFrustum = false;
   public visibilityArray: boolean[];
-  public infoLOD: LODInfo<TData> = null; // TODO rename
+  public LODinfo: LODInfo<TData> = null;
   /** @internal */ _renderer: WebGLRenderer = null;
   /** @internal */ _indexArray: Uint32Array;
   /** @internal */ _matrixArray: Float32Array;
@@ -59,13 +58,13 @@ export class InstancedMesh2<
   /** @internal */ _perObjectFrustumCulled = true;
   /** @internal */ _sortObjects = false;
   /** @internal */ _capacity: number;
-  /** @internal */ _visibilityChanged = false; // TODO rename
+  /** @internal */ _indexArrayNeedsUpdate = false;
   /** @internal */ _geometry: TGeometry;
   /** @internal */ _material: TMaterial;
   /** @internal */ _parentLOD: InstancedMesh2;
   protected readonly _instancesUseEuler: boolean;
   protected readonly _tempInstance: InstancedEntity;
-  protected useOpacity = false;
+  protected _useOpacity = false;
 
   public override customDepthMaterial = new MeshDepthMaterial({ depthPacking: RGBADepthPacking });
   public override customDistanceMaterial = new MeshDistanceMaterial();
@@ -84,13 +83,13 @@ export class InstancedMesh2<
   public get perObjectFrustumCulled(): boolean { return this._perObjectFrustumCulled; }
   public set perObjectFrustumCulled(value: boolean) {
     this._perObjectFrustumCulled = value;
-    this._visibilityChanged = true;
+    this._indexArrayNeedsUpdate = true;
   }
 
   public get sortObjects(): boolean { return this._sortObjects; }
   public set sortObjects(value: boolean) {
     this._sortObjects = value;
-    this._visibilityChanged = true;
+    this._indexArrayNeedsUpdate = true;
   }
 
   // @ts-expect-error it's defined as a property, but is overridden as an accessor.
@@ -171,7 +170,7 @@ export class InstancedMesh2<
     }
 
     const array = this._indexArray;
-    const gl = this._renderer.getContext() as WebGL2RenderingContext; // TODO cache it ?
+    const gl = this._renderer.getContext() as WebGL2RenderingContext;
 
     this.instanceIndex = new GLInstancedBufferAttribute(gl, gl.UNSIGNED_INT, 1, 4, array);
     this._geometry?.setAttribute('instanceIndex', this.instanceIndex as unknown as BufferAttribute);
@@ -245,7 +244,7 @@ export class InstancedMesh2<
 
         shader.uniforms.colorsTexture = { value: this.colorsTexture };
 
-        if (this.useOpacity) {
+        if (this._useOpacity) {
           shader.defines['USE_INSTANCING_COLOR_ALPHA_INDIRECT'] = '';
         } else {
           shader.defines['USE_INSTANCING_COLOR_INDIRECT'] = '';
@@ -284,7 +283,7 @@ export class InstancedMesh2<
 
   public setVisibilityAt(id: number, visible: boolean): void {
     this.visibilityArray[id] = visible;
-    this._visibilityChanged = true;
+    this._indexArrayNeedsUpdate = true;
   }
 
   public getVisibilityAt(id: number): boolean {
@@ -314,7 +313,7 @@ export class InstancedMesh2<
       this.initColorsTexture();
     }
 
-    this.useOpacity = true;
+    this._useOpacity = true;
     this._colorArray[id * 4 + 3] = value;
     this.colorsTexture.enqueueUpdate(id);
   }
@@ -362,7 +361,7 @@ export class InstancedMesh2<
     this.getMatrixAt(id, target.matrix).decompose(target.position, target.quaternion, target.scale);
   }
 
-  public computeBoundingBox(): void { // if bvh present, can override? TODO
+  public computeBoundingBox(): void {
     const geometry = this._geometry;
     const count = this._instancesCount;
 
@@ -423,22 +422,12 @@ export class InstancedMesh2<
   }
 
   public dispose(): this {
-    this.dispatchEvent<any>({ type: 'dispose' }); // TODO fix d.ts
+    this.dispatchEvent<any>({ type: 'dispose' });
 
     this.matricesTexture.dispose();
-    this.matricesTexture = null;
-
-    // TODO dispose uniform
-
-    if (this.colorsTexture !== null) {
-      this.colorsTexture.dispose();
-      this.colorsTexture = null;
-    }
-
-    if (this.morphTexture !== null) {
-      this.morphTexture.dispose();
-      this.morphTexture = null;
-    }
+    this.colorsTexture?.dispose();
+    this.morphTexture?.dispose();
+    this.uniformsTexture?.dispose();
 
     return this;
   }
