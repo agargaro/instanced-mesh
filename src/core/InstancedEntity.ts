@@ -45,7 +45,7 @@ export class InstancedEntity {
     const position = this.position;
     const quaternion = this.quaternion as any;
     const scale = this.scale;
-    const te = owner._matrixArray;
+    const te = owner.matricesTexture._data;
     const id = this.id;
     const offset = id * 16;
 
@@ -84,7 +84,7 @@ export class InstancedEntity {
   public updateMatrixPosition(): void {
     const owner = this.owner;
     const position = this.position;
-    const te = owner._matrixArray;
+    const te = owner.matricesTexture._data;
     const id = this.id;
     const offset = id * 16;
 

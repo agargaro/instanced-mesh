@@ -167,7 +167,8 @@ export class InstancedMeshBVH {
 
   protected getBox(id: number, array: FloatArray): FloatArray {
     if (this._getBoxFromSphere) {
-      const { centerX, centerY, centerZ, maxScale } = getSphereFromMatrix_centeredGeometry(id, this.target._matrixArray, this._sphereTarget);
+      const matrixArray = this.target.matricesTexture._data as Float32Array;
+      const { centerX, centerY, centerZ, maxScale } = getSphereFromMatrix_centeredGeometry(id, matrixArray, this._sphereTarget);
       const radius = this._geoBoundingSphere.radius * maxScale;
       array[0] = centerX - radius;
       array[1] = centerX + radius;

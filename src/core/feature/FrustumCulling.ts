@@ -60,7 +60,7 @@ InstancedMesh2.prototype.performFrustumCulling = function (camera: Camera, camer
 InstancedMesh2.prototype.frustumCulling = function (camera: Camera): void {
   const sortObjects = this._sortObjects;
   const perObjectFrustumCulled = this._perObjectFrustumCulled;
-  const array = this._indexArray;
+  const array = this.instanceIndex.array;
 
   this.instanceIndex._needsUpdate = true; // TODO improve
 
@@ -107,7 +107,7 @@ InstancedMesh2.prototype.frustumCulling = function (camera: Camera): void {
 InstancedMesh2.prototype.updateIndexArray = function (): void {
   if (!this._indexArrayNeedsUpdate) return;
 
-  const array = this._indexArray;
+  const array = this.instanceIndex.array;
   const instancesCount = this._instancesCount;
   let count = 0;
 
@@ -134,8 +134,8 @@ InstancedMesh2.prototype.updateRenderList = function (): void {
 };
 
 InstancedMesh2.prototype.BVHCulling = function (): void {
-  const array = this._indexArray;
-  const matrixArray = this._matrixArray;
+  const array = this.instanceIndex.array;
+  const matrixArray = this.matricesTexture._data as Float32Array;
   const instancesCount = this._instancesCount;
   const sortObjects = this._sortObjects;
   let count = 0;
@@ -158,8 +158,8 @@ InstancedMesh2.prototype.BVHCulling = function (): void {
 };
 
 InstancedMesh2.prototype.linearCulling = function (): void {
-  const array = this._indexArray;
-  const matrixArray = this._matrixArray;
+  const array = this.instanceIndex.array;
+  const matrixArray = this.matricesTexture._data as Float32Array;
   const bSphere = this._geometry.boundingSphere;
   const radius = bSphere.radius;
   const center = bSphere.center;
@@ -252,7 +252,7 @@ InstancedMesh2.prototype.frustumCullingLOD = function (renderList: LODRenderList
 
 InstancedMesh2.prototype.BVHCullingLOD = function (renderList: LODRenderList, sortObjects: boolean): void {
   const { count, indexes, levels } = renderList;
-  const matrixArray = this._matrixArray;
+  const matrixArray = this.matricesTexture._data as Float32Array;
   const instancesCount = this._instancesCount;
   const visibilityArray = this.visibilityArray;
 
@@ -281,7 +281,7 @@ InstancedMesh2.prototype.BVHCullingLOD = function (renderList: LODRenderList, so
 
 InstancedMesh2.prototype.linearCullingLOD = function (renderList: LODRenderList, sortObjects: boolean): void {
   const { count, indexes, levels } = renderList;
-  const matrixArray = this._matrixArray;
+  const matrixArray = this.matricesTexture._data as Float32Array;
   const bSphere = this._geometry.boundingSphere;
   const radius = bSphere.radius;
   const center = bSphere.center;
