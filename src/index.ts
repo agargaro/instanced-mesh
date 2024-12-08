@@ -11,7 +11,8 @@ export * from './core/utils/GLInstancedBufferAttribute.js';
 export * from './core/utils/InstancedRenderList.js';
 
 export * from './shaders/ShaderChunk.js';
-export * from './shaders/chunks/get_from_texture.glsl.js';
+export * from './shaders/chunks/instanced_color_pars_fragment.glsl.js';
+export * from './shaders/chunks/instanced_color_fragment.glsl.js';
 export * from './shaders/chunks/instanced_pars_vertex.glsl.js';
 export * from './shaders/chunks/instanced_vertex.glsl.js';
 

@@ -31,6 +31,9 @@ InstancedMesh2.prototype.resizeBuffers = function (capacity: number): InstancedM
   if (this.colorsTexture) {
     this.colorsTexture.resize(capacity);
     this._colorArray = this.colorsTexture.image.data as unknown as Float32Array;
+    if (capacity > oldCapacity) {
+      this._colorArray.fill(1, oldCapacity * 4);
+    }
   }
 
   if (this.morphTexture) { // test it
