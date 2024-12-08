@@ -17,4 +17,4 @@ title: "createTexture_uint"
 
 ## Defined in
 
-[src/utils/CreateTexture.ts:11](https://github.com/agargaro/instanced-mesh/blob/885e4bcb6a18860a783ace14f574e3f89257c5ee/src/utils/CreateTexture.ts#L11)
+[src/utils/CreateTexture.ts:11](https://github.com/agargaro/instanced-mesh/blob/ce4f7f0726405524f486e5047c492ee1975f20df/src/utils/CreateTexture.ts#L11)

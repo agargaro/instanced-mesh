@@ -1,0 +1,42 @@
+---
+import Loader from './Loader.astro';
+
+
+export async function getStaticPaths() {
+  const examples = import.meta.glob('../../../examples/**/index.ts');
+  const keys = Object.keys(examples) as string[];
+  const slugs = keys.map((key) => key.replace('../../../examples/', '').replace('/index.ts', ''));
+
+  return slugs.map((slug) => {
+    return {
+      params: { slug },
+    };
+  });
+}
+
+const slug = Astro.params.slug;
+---
+
+<!doctype html>
+<html lang="en">
+  <head> 
+    <Loader slug={slug} />
+  </head>;
+  <body></body>
+</html>
+
+<style>
+  body {
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+  }
+
+  div {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+  }
+</style>

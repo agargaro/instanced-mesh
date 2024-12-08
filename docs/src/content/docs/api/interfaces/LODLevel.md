@@ -17,7 +17,7 @@ title: "LODLevel"
 
 #### Defined in
 
-[src/core/feature/LOD.ts:27](https://github.com/agargaro/instanced-mesh/blob/885e4bcb6a18860a783ace14f574e3f89257c5ee/src/core/feature/LOD.ts#L27)
+[src/core/feature/LOD.ts:27](https://github.com/agargaro/instanced-mesh/blob/ce4f7f0726405524f486e5047c492ee1975f20df/src/core/feature/LOD.ts#L27)
 
 ***
 
@@ -27,7 +27,7 @@ title: "LODLevel"
 
 #### Defined in
 
-[src/core/feature/LOD.ts:28](https://github.com/agargaro/instanced-mesh/blob/885e4bcb6a18860a783ace14f574e3f89257c5ee/src/core/feature/LOD.ts#L28)
+[src/core/feature/LOD.ts:28](https://github.com/agargaro/instanced-mesh/blob/ce4f7f0726405524f486e5047c492ee1975f20df/src/core/feature/LOD.ts#L28)
 
 ***
 
@@ -37,4 +37,4 @@ title: "LODLevel"
 
 #### Defined in
 
-[src/core/feature/LOD.ts:29](https://github.com/agargaro/instanced-mesh/blob/885e4bcb6a18860a783ace14f574e3f89257c5ee/src/core/feature/LOD.ts#L29)
+[src/core/feature/LOD.ts:29](https://github.com/agargaro/instanced-mesh/blob/ce4f7f0726405524f486e5047c492ee1975f20df/src/core/feature/LOD.ts#L29)

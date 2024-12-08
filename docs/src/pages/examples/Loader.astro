@@ -1,0 +1,16 @@
+---
+const { slug } = Astro.props;
+
+// Mappatura dei moduli disponibili
+
+const modules = import.meta.glob('../../../examples/**/index.ts', { as: 'raw', eager: true });
+const modulePath = `../../../examples/${slug}/index.ts`;
+const print = ``;
+---
+
+<div example-code data-code={modulePath}>
+  <script type="module" is:inline>
+    // TODO - need to run this code
+    await import(document.querySelector('[example-code]')?.getAttribute('data-code') ?? '');
+  </script>
+</div>

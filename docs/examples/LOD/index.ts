@@ -1,7 +1,7 @@
 import { Main, PerspectiveCameraAuto } from '@three.ez/main';
 import { AmbientLight, DirectionalLight, MeshLambertMaterial, Scene, SphereGeometry } from 'three';
 import { OrbitControls } from 'three/examples/jsm/Addons.js';
-import { InstancedMesh2 } from '../../../../src/index.js';
+import { InstancedMesh2 } from '../../../src/index.js';
 import { PRNG } from '../objects/random.js';
 
 const spawnRange = 10000;

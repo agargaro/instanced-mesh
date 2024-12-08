@@ -51,7 +51,7 @@ MATERIAL CANNOT BE SHARED AND GEOMETRY IS CLONED IF ALREADY PATCHED
 
 #### Defined in
 
-[src/core/InstancedMesh2.ts:106](https://github.com/agargaro/instanced-mesh/blob/885e4bcb6a18860a783ace14f574e3f89257c5ee/src/core/InstancedMesh2.ts#L106)
+[src/core/InstancedMesh2.ts:106](https://github.com/agargaro/instanced-mesh/blob/ce4f7f0726405524f486e5047c492ee1975f20df/src/core/InstancedMesh2.ts#L106)
 
 ## Properties
 
@@ -81,7 +81,7 @@ node\_modules/@types/three/src/core/Object3D.d.ts:266
 
 #### Defined in
 
-[src/core/InstancedMesh2.ts:44](https://github.com/agargaro/instanced-mesh/blob/885e4bcb6a18860a783ace14f574e3f89257c5ee/src/core/InstancedMesh2.ts#L44)
+[src/core/InstancedMesh2.ts:44](https://github.com/agargaro/instanced-mesh/blob/ce4f7f0726405524f486e5047c492ee1975f20df/src/core/InstancedMesh2.ts#L44)
 
 ***
 
@@ -91,7 +91,7 @@ node\_modules/@types/three/src/core/Object3D.d.ts:266
 
 #### Defined in
 
-[src/core/InstancedMesh2.ts:45](https://github.com/agargaro/instanced-mesh/blob/885e4bcb6a18860a783ace14f574e3f89257c5ee/src/core/InstancedMesh2.ts#L45)
+[src/core/InstancedMesh2.ts:45](https://github.com/agargaro/instanced-mesh/blob/ce4f7f0726405524f486e5047c492ee1975f20df/src/core/InstancedMesh2.ts#L45)
 
 ***
 
@@ -101,7 +101,7 @@ node\_modules/@types/three/src/core/Object3D.d.ts:266
 
 #### Defined in
 
-[src/core/InstancedMesh2.ts:47](https://github.com/agargaro/instanced-mesh/blob/885e4bcb6a18860a783ace14f574e3f89257c5ee/src/core/InstancedMesh2.ts#L47)
+[src/core/InstancedMesh2.ts:47](https://github.com/agargaro/instanced-mesh/blob/ce4f7f0726405524f486e5047c492ee1975f20df/src/core/InstancedMesh2.ts#L47)
 
 ***
 
@@ -155,7 +155,7 @@ node\_modules/@types/three/src/core/Object3D.d.ts:145
 
 #### Defined in
 
-[src/core/InstancedMesh2.ts:42](https://github.com/agargaro/instanced-mesh/blob/885e4bcb6a18860a783ace14f574e3f89257c5ee/src/core/InstancedMesh2.ts#L42)
+[src/core/InstancedMesh2.ts:42](https://github.com/agargaro/instanced-mesh/blob/ce4f7f0726405524f486e5047c492ee1975f20df/src/core/InstancedMesh2.ts#L42)
 
 ***
 
@@ -171,7 +171,7 @@ Cursor style when interacting with the object.
 
 #### Defined in
 
-node\_modules/@three.ez/main/patch/Object3D.d.ts:33
+docs/node\_modules/@three.ez/main/src/patch/Object3D.d.ts:33
 
 ***
 
@@ -187,7 +187,7 @@ Cursor style when dragging the object.
 
 #### Defined in
 
-node\_modules/@three.ez/main/patch/Object3D.d.ts:35
+docs/node\_modules/@three.ez/main/src/patch/Object3D.d.ts:35
 
 ***
 
@@ -203,7 +203,7 @@ Cursor style when dropping an object onto this one.
 
 #### Defined in
 
-node\_modules/@three.ez/main/patch/Object3D.d.ts:37
+docs/node\_modules/@three.ez/main/src/patch/Object3D.d.ts:37
 
 ***
 
@@ -229,7 +229,7 @@ if you are modifying vertex positions in the vertex shader you must specify a cu
 
 #### Defined in
 
-[src/core/InstancedMesh2.ts:68](https://github.com/agargaro/instanced-mesh/blob/885e4bcb6a18860a783ace14f574e3f89257c5ee/src/core/InstancedMesh2.ts#L68)
+[src/core/InstancedMesh2.ts:68](https://github.com/agargaro/instanced-mesh/blob/ce4f7f0726405524f486e5047c492ee1975f20df/src/core/InstancedMesh2.ts#L68)
 
 ***
 
@@ -249,7 +249,7 @@ Same as [customDepthMaterial](../../../../../api/classes/instancedmesh2/#customd
 
 #### Defined in
 
-[src/core/InstancedMesh2.ts:69](https://github.com/agargaro/instanced-mesh/blob/885e4bcb6a18860a783ace14f574e3f89257c5ee/src/core/InstancedMesh2.ts#L69)
+[src/core/InstancedMesh2.ts:69](https://github.com/agargaro/instanced-mesh/blob/ce4f7f0726405524f486e5047c492ee1975f20df/src/core/InstancedMesh2.ts#L69)
 
 ***
 
@@ -259,7 +259,7 @@ Same as [customDepthMaterial](../../../../../api/classes/instancedmesh2/#customd
 
 #### Defined in
 
-[src/core/InstancedMesh2.ts:48](https://github.com/agargaro/instanced-mesh/blob/885e4bcb6a18860a783ace14f574e3f89257c5ee/src/core/InstancedMesh2.ts#L48)
+[src/core/InstancedMesh2.ts:48](https://github.com/agargaro/instanced-mesh/blob/ce4f7f0726405524f486e5047c492ee1975f20df/src/core/InstancedMesh2.ts#L48)
 
 ***
 
@@ -275,7 +275,7 @@ Indicates whether the object is draggable. Default is DEFAULT_DRAGGABLE (`false`
 
 #### Defined in
 
-node\_modules/@three.ez/main/patch/Object3D.d.ts:27
+docs/node\_modules/@three.ez/main/src/patch/Object3D.d.ts:27
 
 ***
 
@@ -291,7 +291,7 @@ Indicates which object will be dragged instead of this one.
 
 #### Defined in
 
-node\_modules/@three.ez/main/patch/Object3D.d.ts:23
+docs/node\_modules/@three.ez/main/src/patch/Object3D.d.ts:23
 
 ***
 
@@ -308,7 +308,7 @@ If set to true, it allows triggering all InteractionEvents; otherwise, events ar
 
 #### Defined in
 
-node\_modules/@three.ez/main/patch/Object3D.d.ts:14
+docs/node\_modules/@three.ez/main/src/patch/Object3D.d.ts:14
 
 ***
 
@@ -324,7 +324,7 @@ Determines when the object is dragged, whether it will have to search for any dr
 
 #### Defined in
 
-node\_modules/@three.ez/main/patch/Object3D.d.ts:29
+docs/node\_modules/@three.ez/main/src/patch/Object3D.d.ts:29
 
 ***
 
@@ -340,7 +340,7 @@ Indicates whether the object can receive focus. Default is DEFAULT_FOCUSABLE (`t
 
 #### Defined in
 
-node\_modules/@three.ez/main/patch/Object3D.d.ts:25
+docs/node\_modules/@three.ez/main/src/patch/Object3D.d.ts:25
 
 ***
 
@@ -377,7 +377,7 @@ Array of hitboxes for collision detection.
 
 #### Defined in
 
-node\_modules/@three.ez/main/patch/Object3D.d.ts:21
+docs/node\_modules/@three.ez/main/src/patch/Object3D.d.ts:21
 
 ***
 
@@ -408,7 +408,7 @@ node\_modules/@types/three/src/core/Object3D.d.ts:109
 
 #### Defined in
 
-[src/core/InstancedMesh2.ts:51](https://github.com/agargaro/instanced-mesh/blob/885e4bcb6a18860a783ace14f574e3f89257c5ee/src/core/InstancedMesh2.ts#L51)
+[src/core/InstancedMesh2.ts:51](https://github.com/agargaro/instanced-mesh/blob/ce4f7f0726405524f486e5047c492ee1975f20df/src/core/InstancedMesh2.ts#L51)
 
 ***
 
@@ -418,7 +418,7 @@ node\_modules/@types/three/src/core/Object3D.d.ts:109
 
 #### Defined in
 
-[src/core/InstancedMesh2.ts:40](https://github.com/agargaro/instanced-mesh/blob/885e4bcb6a18860a783ace14f574e3f89257c5ee/src/core/InstancedMesh2.ts#L40)
+[src/core/InstancedMesh2.ts:40](https://github.com/agargaro/instanced-mesh/blob/ce4f7f0726405524f486e5047c492ee1975f20df/src/core/InstancedMesh2.ts#L40)
 
 ***
 
@@ -428,7 +428,7 @@ node\_modules/@types/three/src/core/Object3D.d.ts:109
 
 #### Defined in
 
-[src/core/InstancedMesh2.ts:39](https://github.com/agargaro/instanced-mesh/blob/885e4bcb6a18860a783ace14f574e3f89257c5ee/src/core/InstancedMesh2.ts#L39)
+[src/core/InstancedMesh2.ts:39](https://github.com/agargaro/instanced-mesh/blob/ce4f7f0726405524f486e5047c492ee1975f20df/src/core/InstancedMesh2.ts#L39)
 
 ***
 
@@ -438,7 +438,7 @@ node\_modules/@types/three/src/core/Object3D.d.ts:109
 
 #### Defined in
 
-[src/core/InstancedMesh2.ts:46](https://github.com/agargaro/instanced-mesh/blob/885e4bcb6a18860a783ace14f574e3f89257c5ee/src/core/InstancedMesh2.ts#L46)
+[src/core/InstancedMesh2.ts:46](https://github.com/agargaro/instanced-mesh/blob/ce4f7f0726405524f486e5047c492ee1975f20df/src/core/InstancedMesh2.ts#L46)
 
 ***
 
@@ -460,7 +460,7 @@ DEFAULT_INTERCEPT_BY_RAYCASTER (true).
 
 #### Defined in
 
-node\_modules/@three.ez/main/patch/Object3D.d.ts:19
+docs/node\_modules/@three.ez/main/src/patch/Object3D.d.ts:19
 
 ***
 
@@ -470,7 +470,7 @@ node\_modules/@three.ez/main/patch/Object3D.d.ts:19
 
 #### Defined in
 
-[src/core/InstancedMesh2.ts:38](https://github.com/agargaro/instanced-mesh/blob/885e4bcb6a18860a783ace14f574e3f89257c5ee/src/core/InstancedMesh2.ts#L38)
+[src/core/InstancedMesh2.ts:38](https://github.com/agargaro/instanced-mesh/blob/ce4f7f0726405524f486e5047c492ee1975f20df/src/core/InstancedMesh2.ts#L38)
 
 ***
 
@@ -553,7 +553,7 @@ node\_modules/@types/three/src/core/Object3D.d.ts:226
 
 #### Defined in
 
-[src/core/InstancedMesh2.ts:41](https://github.com/agargaro/instanced-mesh/blob/885e4bcb6a18860a783ace14f574e3f89257c5ee/src/core/InstancedMesh2.ts#L41)
+[src/core/InstancedMesh2.ts:41](https://github.com/agargaro/instanced-mesh/blob/ce4f7f0726405524f486e5047c492ee1975f20df/src/core/InstancedMesh2.ts#L41)
 
 ***
 
@@ -731,7 +731,7 @@ node\_modules/@types/three/src/objects/Mesh.d.ts:71
 
 #### Defined in
 
-[src/core/InstancedMesh2.ts:43](https://github.com/agargaro/instanced-mesh/blob/885e4bcb6a18860a783ace14f574e3f89257c5ee/src/core/InstancedMesh2.ts#L43)
+[src/core/InstancedMesh2.ts:43](https://github.com/agargaro/instanced-mesh/blob/ce4f7f0726405524f486e5047c492ee1975f20df/src/core/InstancedMesh2.ts#L43)
 
 ***
 
@@ -771,7 +771,7 @@ Indicates whether the scene needs rendering.
 
 #### Defined in
 
-node\_modules/@three.ez/main/patch/Object3D.d.ts:39
+docs/node\_modules/@three.ez/main/src/patch/Object3D.d.ts:39
 
 ***
 
@@ -863,7 +863,7 @@ node\_modules/@types/three/src/core/Object3D.d.ts:169
 
 #### Defined in
 
-[src/core/InstancedMesh2.ts:49](https://github.com/agargaro/instanced-mesh/blob/885e4bcb6a18860a783ace14f574e3f89257c5ee/src/core/InstancedMesh2.ts#L49)
+[src/core/InstancedMesh2.ts:49](https://github.com/agargaro/instanced-mesh/blob/ce4f7f0726405524f486e5047c492ee1975f20df/src/core/InstancedMesh2.ts#L49)
 
 ***
 
@@ -965,7 +965,7 @@ Reference to the scene the object belongs to.
 
 #### Defined in
 
-node\_modules/@three.ez/main/patch/Object3D.d.ts:31
+docs/node\_modules/@three.ez/main/src/patch/Object3D.d.ts:31
 
 ***
 
@@ -981,7 +981,7 @@ Indicates the tags to be searched using the querySelector and `querySelectorAll`
 
 #### Defined in
 
-node\_modules/@three.ez/main/patch/Object3D.d.ts:41
+docs/node\_modules/@three.ez/main/src/patch/Object3D.d.ts:41
 
 ***
 
@@ -999,7 +999,7 @@ node\_modules/@three.ez/main/patch/Object3D.d.ts:41
 
 #### Defined in
 
-[src/core/InstancedMesh2.ts:37](https://github.com/agargaro/instanced-mesh/blob/885e4bcb6a18860a783ace14f574e3f89257c5ee/src/core/InstancedMesh2.ts#L37)
+[src/core/InstancedMesh2.ts:37](https://github.com/agargaro/instanced-mesh/blob/ce4f7f0726405524f486e5047c492ee1975f20df/src/core/InstancedMesh2.ts#L37)
 
 ***
 
@@ -1073,7 +1073,7 @@ node\_modules/@types/three/src/core/Object3D.d.ts:115
 
 #### Defined in
 
-[src/core/InstancedMesh2.ts:50](https://github.com/agargaro/instanced-mesh/blob/885e4bcb6a18860a783ace14f574e3f89257c5ee/src/core/InstancedMesh2.ts#L50)
+[src/core/InstancedMesh2.ts:50](https://github.com/agargaro/instanced-mesh/blob/ce4f7f0726405524f486e5047c492ee1975f20df/src/core/InstancedMesh2.ts#L50)
 
 ***
 
@@ -1176,7 +1176,7 @@ Indicates if the object is currently being clicked.
 
 #### Defined in
 
-node\_modules/@three.ez/main/patch/Object3D.d.ts:47
+docs/node\_modules/@three.ez/main/src/patch/Object3D.d.ts:47
 
 ***
 
@@ -1192,7 +1192,7 @@ node\_modules/@three.ez/main/patch/Object3D.d.ts:47
 
 #### Defined in
 
-[src/core/InstancedMesh2.ts:76](https://github.com/agargaro/instanced-mesh/blob/885e4bcb6a18860a783ace14f574e3f89257c5ee/src/core/InstancedMesh2.ts#L76)
+[src/core/InstancedMesh2.ts:76](https://github.com/agargaro/instanced-mesh/blob/ce4f7f0726405524f486e5047c492ee1975f20df/src/core/InstancedMesh2.ts#L76)
 
 ***
 
@@ -1214,7 +1214,7 @@ Retrieves the combined enabled state considering parent objects.
 
 #### Defined in
 
-node\_modules/@three.ez/main/patch/Object3D.d.ts:51
+docs/node\_modules/@three.ez/main/src/patch/Object3D.d.ts:51
 
 ***
 
@@ -1236,7 +1236,7 @@ Retrieves the first possible focusable object.
 
 #### Defined in
 
-node\_modules/@three.ez/main/patch/Object3D.d.ts:55
+docs/node\_modules/@three.ez/main/src/patch/Object3D.d.ts:55
 
 ***
 
@@ -1258,7 +1258,7 @@ Indicates if the object is currently focused.
 
 #### Defined in
 
-node\_modules/@three.ez/main/patch/Object3D.d.ts:45
+docs/node\_modules/@three.ez/main/src/patch/Object3D.d.ts:45
 
 ***
 
@@ -1302,7 +1302,7 @@ THREE.BufferGeometry | `new THREE.BufferGeometry()`.
 
 #### Defined in
 
-[src/core/InstancedMesh2.ts:92](https://github.com/agargaro/instanced-mesh/blob/885e4bcb6a18860a783ace14f574e3f89257c5ee/src/core/InstancedMesh2.ts#L92)
+[src/core/InstancedMesh2.ts:92](https://github.com/agargaro/instanced-mesh/blob/ce4f7f0726405524f486e5047c492ee1975f20df/src/core/InstancedMesh2.ts#L92)
 
 ***
 
@@ -1324,7 +1324,7 @@ Indicates if the primary pointer is over this object.
 
 #### Defined in
 
-node\_modules/@three.ez/main/patch/Object3D.d.ts:43
+docs/node\_modules/@three.ez/main/src/patch/Object3D.d.ts:43
 
 ***
 
@@ -1346,7 +1346,7 @@ Indicates if the object is currently being dragged.
 
 #### Defined in
 
-node\_modules/@three.ez/main/patch/Object3D.d.ts:49
+docs/node\_modules/@three.ez/main/src/patch/Object3D.d.ts:49
 
 ***
 
@@ -1390,7 +1390,7 @@ THREE.MeshBasicMaterial | `new THREE.MeshBasicMaterial()`.
 
 #### Defined in
 
-[src/core/InstancedMesh2.ts:99](https://github.com/agargaro/instanced-mesh/blob/885e4bcb6a18860a783ace14f574e3f89257c5ee/src/core/InstancedMesh2.ts#L99)
+[src/core/InstancedMesh2.ts:99](https://github.com/agargaro/instanced-mesh/blob/ce4f7f0726405524f486e5047c492ee1975f20df/src/core/InstancedMesh2.ts#L99)
 
 ***
 
@@ -1406,7 +1406,7 @@ THREE.MeshBasicMaterial | `new THREE.MeshBasicMaterial()`.
 
 #### Defined in
 
-[src/core/InstancedMesh2.ts:77](https://github.com/agargaro/instanced-mesh/blob/885e4bcb6a18860a783ace14f574e3f89257c5ee/src/core/InstancedMesh2.ts#L77)
+[src/core/InstancedMesh2.ts:77](https://github.com/agargaro/instanced-mesh/blob/ce4f7f0726405524f486e5047c492ee1975f20df/src/core/InstancedMesh2.ts#L77)
 
 ***
 
@@ -1434,7 +1434,7 @@ THREE.MeshBasicMaterial | `new THREE.MeshBasicMaterial()`.
 
 #### Defined in
 
-[src/core/InstancedMesh2.ts:79](https://github.com/agargaro/instanced-mesh/blob/885e4bcb6a18860a783ace14f574e3f89257c5ee/src/core/InstancedMesh2.ts#L79)
+[src/core/InstancedMesh2.ts:79](https://github.com/agargaro/instanced-mesh/blob/ce4f7f0726405524f486e5047c492ee1975f20df/src/core/InstancedMesh2.ts#L79)
 
 ***
 
@@ -1462,7 +1462,7 @@ THREE.MeshBasicMaterial | `new THREE.MeshBasicMaterial()`.
 
 #### Defined in
 
-[src/core/InstancedMesh2.ts:85](https://github.com/agargaro/instanced-mesh/blob/885e4bcb6a18860a783ace14f574e3f89257c5ee/src/core/InstancedMesh2.ts#L85)
+[src/core/InstancedMesh2.ts:85](https://github.com/agargaro/instanced-mesh/blob/ce4f7f0726405524f486e5047c492ee1975f20df/src/core/InstancedMesh2.ts#L85)
 
 ***
 
@@ -1484,7 +1484,7 @@ Retrieves the combined visibility state considering parent objects.
 
 #### Defined in
 
-node\_modules/@three.ez/main/patch/Object3D.d.ts:53
+docs/node\_modules/@three.ez/main/src/patch/Object3D.d.ts:53
 
 ## Methods
 
@@ -1576,7 +1576,7 @@ node\_modules/@types/three/src/core/EventDispatcher.d.ts:52
 
 #### Defined in
 
-[src/core/feature/LOD.ts:8](https://github.com/agargaro/instanced-mesh/blob/885e4bcb6a18860a783ace14f574e3f89257c5ee/src/core/feature/LOD.ts#L8)
+[src/core/feature/LOD.ts:8](https://github.com/agargaro/instanced-mesh/blob/ce4f7f0726405524f486e5047c492ee1975f20df/src/core/feature/LOD.ts#L8)
 
 ***
 
@@ -1598,7 +1598,7 @@ node\_modules/@types/three/src/core/EventDispatcher.d.ts:52
 
 #### Defined in
 
-[src/core/feature/LOD.ts:9](https://github.com/agargaro/instanced-mesh/blob/885e4bcb6a18860a783ace14f574e3f89257c5ee/src/core/feature/LOD.ts#L9)
+[src/core/feature/LOD.ts:9](https://github.com/agargaro/instanced-mesh/blob/ce4f7f0726405524f486e5047c492ee1975f20df/src/core/feature/LOD.ts#L9)
 
 ***
 
@@ -1618,7 +1618,7 @@ Applies blur (removes focus) from the object.
 
 #### Defined in
 
-node\_modules/@three.ez/main/patch/Object3D.d.ts:63
+docs/node\_modules/@three.ez/main/src/patch/Object3D.d.ts:63
 
 ***
 
@@ -1638,7 +1638,7 @@ Applies focus to the object.
 
 #### Defined in
 
-node\_modules/@three.ez/main/patch/Object3D.d.ts:59
+docs/node\_modules/@three.ez/main/src/patch/Object3D.d.ts:59
 
 ***
 
@@ -1758,7 +1758,7 @@ The instance of the object with the binding applied.
 
 #### Defined in
 
-node\_modules/@three.ez/main/patch/Object3D.d.ts:115
+docs/node\_modules/@three.ez/main/src/patch/Object3D.d.ts:115
 
 ***
 
@@ -1818,7 +1818,7 @@ node\_modules/@types/three/src/core/Object3D.d.ts:664
 
 #### Defined in
 
-[src/core/InstancedMesh2.ts:387](https://github.com/agargaro/instanced-mesh/blob/885e4bcb6a18860a783ace14f574e3f89257c5ee/src/core/InstancedMesh2.ts#L387)
+[src/core/InstancedMesh2.ts:387](https://github.com/agargaro/instanced-mesh/blob/ce4f7f0726405524f486e5047c492ee1975f20df/src/core/InstancedMesh2.ts#L387)
 
 ***
 
@@ -1832,7 +1832,7 @@ node\_modules/@types/three/src/core/Object3D.d.ts:664
 
 #### Defined in
 
-[src/core/InstancedMesh2.ts:405](https://github.com/agargaro/instanced-mesh/blob/885e4bcb6a18860a783ace14f574e3f89257c5ee/src/core/InstancedMesh2.ts#L405)
+[src/core/InstancedMesh2.ts:405](https://github.com/agargaro/instanced-mesh/blob/ce4f7f0726405524f486e5047c492ee1975f20df/src/core/InstancedMesh2.ts#L405)
 
 ***
 
@@ -1850,7 +1850,7 @@ node\_modules/@types/three/src/core/Object3D.d.ts:664
 
 #### Defined in
 
-[src/core/InstancedMesh2.ts:272](https://github.com/agargaro/instanced-mesh/blob/885e4bcb6a18860a783ace14f574e3f89257c5ee/src/core/InstancedMesh2.ts#L272)
+[src/core/InstancedMesh2.ts:272](https://github.com/agargaro/instanced-mesh/blob/ce4f7f0726405524f486e5047c492ee1975f20df/src/core/InstancedMesh2.ts#L272)
 
 ***
 
@@ -1883,7 +1883,7 @@ Event listeners and user-defined callbacks (.onAfterRender and .onBeforeRender) 
 
 #### Defined in
 
-[src/core/InstancedMesh2.ts:423](https://github.com/agargaro/instanced-mesh/blob/885e4bcb6a18860a783ace14f574e3f89257c5ee/src/core/InstancedMesh2.ts#L423)
+[src/core/InstancedMesh2.ts:423](https://github.com/agargaro/instanced-mesh/blob/ce4f7f0726405524f486e5047c492ee1975f20df/src/core/InstancedMesh2.ts#L423)
 
 ***
 
@@ -1903,7 +1903,7 @@ Event listeners and user-defined callbacks (.onAfterRender and .onBeforeRender) 
 
 #### Defined in
 
-[src/core/InstancedMesh2.ts:383](https://github.com/agargaro/instanced-mesh/blob/885e4bcb6a18860a783ace14f574e3f89257c5ee/src/core/InstancedMesh2.ts#L383)
+[src/core/InstancedMesh2.ts:383](https://github.com/agargaro/instanced-mesh/blob/ce4f7f0726405524f486e5047c492ee1975f20df/src/core/InstancedMesh2.ts#L383)
 
 ***
 
@@ -1921,7 +1921,7 @@ Event listeners and user-defined callbacks (.onAfterRender and .onBeforeRender) 
 
 #### Defined in
 
-[src/core/InstancedMesh2.ts:256](https://github.com/agargaro/instanced-mesh/blob/885e4bcb6a18860a783ace14f574e3f89257c5ee/src/core/InstancedMesh2.ts#L256)
+[src/core/InstancedMesh2.ts:256](https://github.com/agargaro/instanced-mesh/blob/ce4f7f0726405524f486e5047c492ee1975f20df/src/core/InstancedMesh2.ts#L256)
 
 ***
 
@@ -1948,7 +1948,7 @@ If true, calculate bindings for children as well (optional, default: `false`).
 
 #### Defined in
 
-node\_modules/@three.ez/main/patch/Object3D.d.ts:107
+docs/node\_modules/@three.ez/main/src/patch/Object3D.d.ts:107
 
 ***
 
@@ -1992,7 +1992,7 @@ node\_modules/@types/three/src/core/EventDispatcher.d.ts:81
 
 #### Defined in
 
-[src/core/InstancedMesh2.ts:447](https://github.com/agargaro/instanced-mesh/blob/885e4bcb6a18860a783ace14f574e3f89257c5ee/src/core/InstancedMesh2.ts#L447)
+[src/core/InstancedMesh2.ts:447](https://github.com/agargaro/instanced-mesh/blob/ce4f7f0726405524f486e5047c492ee1975f20df/src/core/InstancedMesh2.ts#L447)
 
 ***
 
@@ -2006,7 +2006,7 @@ node\_modules/@types/three/src/core/EventDispatcher.d.ts:81
 
 #### Defined in
 
-[src/core/InstancedMesh2.ts:278](https://github.com/agargaro/instanced-mesh/blob/885e4bcb6a18860a783ace14f574e3f89257c5ee/src/core/InstancedMesh2.ts#L278)
+[src/core/InstancedMesh2.ts:278](https://github.com/agargaro/instanced-mesh/blob/ce4f7f0726405524f486e5047c492ee1975f20df/src/core/InstancedMesh2.ts#L278)
 
 ***
 
@@ -2026,7 +2026,7 @@ node\_modules/@types/three/src/core/EventDispatcher.d.ts:81
 
 #### Defined in
 
-[src/core/InstancedMesh2.ts:324](https://github.com/agargaro/instanced-mesh/blob/885e4bcb6a18860a783ace14f574e3f89257c5ee/src/core/InstancedMesh2.ts#L324)
+[src/core/InstancedMesh2.ts:324](https://github.com/agargaro/instanced-mesh/blob/ce4f7f0726405524f486e5047c492ee1975f20df/src/core/InstancedMesh2.ts#L324)
 
 ***
 
@@ -2046,7 +2046,7 @@ node\_modules/@types/three/src/core/EventDispatcher.d.ts:81
 
 #### Defined in
 
-[src/core/InstancedMesh2.ts:294](https://github.com/agargaro/instanced-mesh/blob/885e4bcb6a18860a783ace14f574e3f89257c5ee/src/core/InstancedMesh2.ts#L294)
+[src/core/InstancedMesh2.ts:294](https://github.com/agargaro/instanced-mesh/blob/ce4f7f0726405524f486e5047c492ee1975f20df/src/core/InstancedMesh2.ts#L294)
 
 ***
 
@@ -2066,7 +2066,7 @@ node\_modules/@types/three/src/core/EventDispatcher.d.ts:81
 
 #### Defined in
 
-[src/core/InstancedMesh2.ts:349](https://github.com/agargaro/instanced-mesh/blob/885e4bcb6a18860a783ace14f574e3f89257c5ee/src/core/InstancedMesh2.ts#L349)
+[src/core/InstancedMesh2.ts:349](https://github.com/agargaro/instanced-mesh/blob/ce4f7f0726405524f486e5047c492ee1975f20df/src/core/InstancedMesh2.ts#L349)
 
 ***
 
@@ -2182,7 +2182,7 @@ node\_modules/@types/three/src/core/Object3D.d.ts:566
 
 #### Defined in
 
-[src/core/feature/LOD.ts:6](https://github.com/agargaro/instanced-mesh/blob/885e4bcb6a18860a783ace14f574e3f89257c5ee/src/core/feature/LOD.ts#L6)
+[src/core/feature/LOD.ts:6](https://github.com/agargaro/instanced-mesh/blob/ce4f7f0726405524f486e5047c492ee1975f20df/src/core/feature/LOD.ts#L6)
 
 ***
 
@@ -2265,7 +2265,7 @@ node\_modules/@types/three/src/objects/Mesh.d.ts:91
 
 #### Defined in
 
-[src/core/InstancedMesh2.ts:303](https://github.com/agargaro/instanced-mesh/blob/885e4bcb6a18860a783ace14f574e3f89257c5ee/src/core/InstancedMesh2.ts#L303)
+[src/core/InstancedMesh2.ts:303](https://github.com/agargaro/instanced-mesh/blob/ce4f7f0726405524f486e5047c492ee1975f20df/src/core/InstancedMesh2.ts#L303)
 
 ***
 
@@ -2405,7 +2405,7 @@ The callback function to check.
 
 #### Defined in
 
-node\_modules/@three.ez/main/patch/Object3D.d.ts:77
+docs/node\_modules/@three.ez/main/src/patch/Object3D.d.ts:77
 
 ***
 
@@ -2567,7 +2567,7 @@ The callback function to remove.
 
 #### Defined in
 
-node\_modules/@three.ez/main/patch/Object3D.d.ts:83
+docs/node\_modules/@three.ez/main/src/patch/Object3D.d.ts:83
 
 ***
 
@@ -2611,7 +2611,7 @@ A function to remove the event listener.
 
 #### Defined in
 
-node\_modules/@three.ez/main/patch/Object3D.d.ts:70
+docs/node\_modules/@three.ez/main/src/patch/Object3D.d.ts:70
 
 ***
 
@@ -2653,7 +2653,7 @@ and thus this callback is not executed for such objects.
 
 #### Defined in
 
-[src/core/InstancedMesh2.ts:139](https://github.com/agargaro/instanced-mesh/blob/885e4bcb6a18860a783ace14f574e3f89257c5ee/src/core/InstancedMesh2.ts#L139)
+[src/core/InstancedMesh2.ts:139](https://github.com/agargaro/instanced-mesh/blob/ce4f7f0726405524f486e5047c492ee1975f20df/src/core/InstancedMesh2.ts#L139)
 
 ***
 
@@ -2740,7 +2740,7 @@ and thus this callback is not executed for such objects.
 
 #### Defined in
 
-[src/core/InstancedMesh2.ts:134](https://github.com/agargaro/instanced-mesh/blob/885e4bcb6a18860a783ace14f574e3f89257c5ee/src/core/InstancedMesh2.ts#L134)
+[src/core/InstancedMesh2.ts:134](https://github.com/agargaro/instanced-mesh/blob/ce4f7f0726405524f486e5047c492ee1975f20df/src/core/InstancedMesh2.ts#L134)
 
 ***
 
@@ -2785,7 +2785,7 @@ and thus this callback is not executed for such objects.
 
 #### Defined in
 
-[src/core/InstancedMesh2.ts:130](https://github.com/agargaro/instanced-mesh/blob/885e4bcb6a18860a783ace14f574e3f89257c5ee/src/core/InstancedMesh2.ts#L130)
+[src/core/InstancedMesh2.ts:130](https://github.com/agargaro/instanced-mesh/blob/ce4f7f0726405524f486e5047c492ee1975f20df/src/core/InstancedMesh2.ts#L130)
 
 ***
 
@@ -2805,7 +2805,7 @@ and thus this callback is not executed for such objects.
 
 #### Defined in
 
-[src/core/feature/FrustumCulling.ts:13](https://github.com/agargaro/instanced-mesh/blob/885e4bcb6a18860a783ace14f574e3f89257c5ee/src/core/feature/FrustumCulling.ts#L13)
+[src/core/feature/FrustumCulling.ts:13](https://github.com/agargaro/instanced-mesh/blob/ce4f7f0726405524f486e5047c492ee1975f20df/src/core/feature/FrustumCulling.ts#L13)
 
 ***
 
@@ -2834,7 +2834,7 @@ The first Object3D element that matches the query, or undefined if no match is f
 
 #### Defined in
 
-node\_modules/@three.ez/main/patch/Object3D.d.ts:135
+docs/node\_modules/@three.ez/main/src/patch/Object3D.d.ts:135
 
 ***
 
@@ -2863,7 +2863,7 @@ An array of Object3D elements that match the query.
 
 #### Defined in
 
-node\_modules/@three.ez/main/patch/Object3D.d.ts:142
+docs/node\_modules/@three.ez/main/src/patch/Object3D.d.ts:142
 
 ***
 
@@ -3148,7 +3148,7 @@ node\_modules/@types/three/src/core/Object3D.d.ts:452
 
 #### Defined in
 
-[src/core/InstancedMesh2.ts:307](https://github.com/agargaro/instanced-mesh/blob/885e4bcb6a18860a783ace14f574e3f89257c5ee/src/core/InstancedMesh2.ts#L307)
+[src/core/InstancedMesh2.ts:307](https://github.com/agargaro/instanced-mesh/blob/ce4f7f0726405524f486e5047c492ee1975f20df/src/core/InstancedMesh2.ts#L307)
 
 ***
 
@@ -3168,7 +3168,7 @@ node\_modules/@types/three/src/core/Object3D.d.ts:452
 
 #### Defined in
 
-[src/core/feature/LOD.ts:7](https://github.com/agargaro/instanced-mesh/blob/885e4bcb6a18860a783ace14f574e3f89257c5ee/src/core/feature/LOD.ts#L7)
+[src/core/feature/LOD.ts:7](https://github.com/agargaro/instanced-mesh/blob/ce4f7f0726405524f486e5047c492ee1975f20df/src/core/feature/LOD.ts#L7)
 
 ***
 
@@ -3190,7 +3190,7 @@ Instead, they must be manually computed using the 'detectChanges' function.
 
 #### Defined in
 
-node\_modules/@three.ez/main/patch/Object3D.d.ts:101
+docs/node\_modules/@three.ez/main/src/patch/Object3D.d.ts:101
 
 ***
 
@@ -3210,7 +3210,7 @@ node\_modules/@three.ez/main/patch/Object3D.d.ts:101
 
 #### Defined in
 
-[src/core/InstancedMesh2.ts:282](https://github.com/agargaro/instanced-mesh/blob/885e4bcb6a18860a783ace14f574e3f89257c5ee/src/core/InstancedMesh2.ts#L282)
+[src/core/InstancedMesh2.ts:282](https://github.com/agargaro/instanced-mesh/blob/ce4f7f0726405524f486e5047c492ee1975f20df/src/core/InstancedMesh2.ts#L282)
 
 ***
 
@@ -3230,7 +3230,7 @@ node\_modules/@three.ez/main/patch/Object3D.d.ts:101
 
 #### Defined in
 
-[src/core/InstancedMesh2.ts:362](https://github.com/agargaro/instanced-mesh/blob/885e4bcb6a18860a783ace14f574e3f89257c5ee/src/core/InstancedMesh2.ts#L362)
+[src/core/InstancedMesh2.ts:362](https://github.com/agargaro/instanced-mesh/blob/ce4f7f0726405524f486e5047c492ee1975f20df/src/core/InstancedMesh2.ts#L362)
 
 ***
 
@@ -3364,7 +3364,7 @@ node\_modules/@types/three/src/core/Object3D.d.ts:417
 
 #### Defined in
 
-[src/core/InstancedMesh2.ts:328](https://github.com/agargaro/instanced-mesh/blob/885e4bcb6a18860a783ace14f574e3f89257c5ee/src/core/InstancedMesh2.ts#L328)
+[src/core/InstancedMesh2.ts:328](https://github.com/agargaro/instanced-mesh/blob/ce4f7f0726405524f486e5047c492ee1975f20df/src/core/InstancedMesh2.ts#L328)
 
 ***
 
@@ -3384,7 +3384,7 @@ node\_modules/@types/three/src/core/Object3D.d.ts:417
 
 #### Defined in
 
-[src/core/InstancedMesh2.ts:298](https://github.com/agargaro/instanced-mesh/blob/885e4bcb6a18860a783ace14f574e3f89257c5ee/src/core/InstancedMesh2.ts#L298)
+[src/core/InstancedMesh2.ts:298](https://github.com/agargaro/instanced-mesh/blob/ce4f7f0726405524f486e5047c492ee1975f20df/src/core/InstancedMesh2.ts#L298)
 
 ***
 
@@ -3647,7 +3647,7 @@ Optional event data to pass to the listeners.
 
 #### Defined in
 
-node\_modules/@three.ez/main/patch/Object3D.d.ts:89
+docs/node\_modules/@three.ez/main/src/patch/Object3D.d.ts:89
 
 ***
 
@@ -3681,7 +3681,7 @@ Optional event data to pass to the listeners.
 
 #### Defined in
 
-node\_modules/@three.ez/main/patch/Object3D.d.ts:95
+docs/node\_modules/@three.ez/main/src/patch/Object3D.d.ts:95
 
 ***
 
@@ -3715,7 +3715,7 @@ A Tween instance for further configuration.
 
 #### Defined in
 
-node\_modules/@three.ez/main/patch/Object3D.d.ts:128
+docs/node\_modules/@three.ez/main/src/patch/Object3D.d.ts:128
 
 ***
 
@@ -3747,7 +3747,7 @@ The instance of the object with the binding removed.
 
 #### Defined in
 
-node\_modules/@three.ez/main/patch/Object3D.d.ts:121
+docs/node\_modules/@three.ez/main/src/patch/Object3D.d.ts:121
 
 ***
 
@@ -3765,7 +3765,7 @@ node\_modules/@three.ez/main/patch/Object3D.d.ts:121
 
 #### Defined in
 
-[src/core/InstancedMesh2.ts:226](https://github.com/agargaro/instanced-mesh/blob/885e4bcb6a18860a783ace14f574e3f89257c5ee/src/core/InstancedMesh2.ts#L226)
+[src/core/InstancedMesh2.ts:226](https://github.com/agargaro/instanced-mesh/blob/ce4f7f0726405524f486e5047c492ee1975f20df/src/core/InstancedMesh2.ts#L226)
 
 ***
 
