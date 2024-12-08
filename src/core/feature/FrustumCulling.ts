@@ -146,7 +146,7 @@ InstancedMesh2.prototype.BVHCulling = function (): void {
     if (index < instancesCount && this.getVisibilityAt(index)) {
       if (sortObjects) {
         getPositionAt(index, matrixArray, _position);
-        const depth = _position.sub(_cameraPos).dot(_forward); // instancedMesh can be less precise than sphere.center
+        const depth = _position.sub(_cameraPos).dot(_forward);
         _renderList.push(depth, index);
       } else {
         array[count++] = index;
