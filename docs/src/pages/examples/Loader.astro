@@ -1,0 +1,7 @@
+---
+const { slug } = Astro.props;
+
+const path = `../../../examples/${slug}/main.ts`
+---
+
+<script type="module" src={path}></script>
