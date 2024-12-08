@@ -1,10 +1,11 @@
+<script type="module">
 import { Asset, Main, PerspectiveCameraAuto } from '@three.ez/main';
 import { ACESFilmicToneMapping, AmbientLight, BoxGeometry, BufferGeometry, DirectionalLight, FogExp2, Mesh, MeshLambertMaterial, MeshStandardMaterial, PCFSoftShadowMap, PlaneGeometry, Scene, Vector3 } from 'three';
 import { MapControls } from 'three/examples/jsm/controls/MapControls.js';
 import { GUI } from 'three/examples/jsm/libs/lil-gui.module.min.js';
 import { GLTF, GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { Sky } from 'three/examples/jsm/objects/Sky.js';
-import { InstancedMesh2 } from '../src/index.js';
+import { InstancedMesh2 } from '@three.ez/instanced-mesh';
 
 const count = 10000;
 const terrainSize = 1000;
@@ -95,3 +96,4 @@ const gui = new GUI();
 gui.add(trees.instances as any, 'length').name('instances total').disable();
 const treeCount = gui.add(trees, 'count').name('instances rendered').disable();
 gui.add(camera, 'far', 2000, 10000, 100).name('camera far').onChange(() => camera.updateProjectionMatrix());
+</script>

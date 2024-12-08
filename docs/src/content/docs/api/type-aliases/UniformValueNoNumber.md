@@ -9,4 +9,4 @@ title: "UniformValueNoNumber"
 
 ## Defined in
 
-[src/core/InstancedEntity.ts:4](https://github.com/agargaro/instanced-mesh/blob/ce4f7f0726405524f486e5047c492ee1975f20df/src/core/InstancedEntity.ts#L4)
+[src/core/InstancedEntity.ts:4](https://github.com/agargaro/instanced-mesh/blob/eb962593317d404ef77ad357a2929b15e9b35854/src/core/InstancedEntity.ts#L4)

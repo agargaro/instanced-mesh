@@ -1,8 +1,9 @@
+<script type="module">
 import { Asset, Main, PerspectiveCameraAuto } from '@three.ez/main';
 import { BoxGeometry, DoubleSide, NearestFilter, PlaneGeometry, Scene, Texture, TextureLoader, Vector2, Vector3 } from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { GUI } from 'three/examples/jsm/libs/lil-gui.module.min.js';
-import { InstancedMesh2 } from '../src/index.js';
+import { InstancedMesh2 } from '@three.ez/instanced-mesh';
 import { TileMaterial } from './objects/tileMaterial.js';
 
 const main = new Main(); // init renderer and other stuff
@@ -75,3 +76,4 @@ gui.add(boxes.instances as any, 'length').name('boxes instances total').disable(
 const boxesRenderedCount = gui.add(boxes, 'count').name('boxes instances rendered').disable();
 gui.add(plants.instances as any, 'length').name('plants instances total').disable();
 const plantsRenderedCount = gui.add(plants, 'count').name('plants instances rendered').disable();
+</script>

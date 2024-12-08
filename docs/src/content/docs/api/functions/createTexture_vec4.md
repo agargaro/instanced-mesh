@@ -17,4 +17,4 @@ title: "createTexture_vec4"
 
 ## Defined in
 
-[src/utils/CreateTexture.ts:27](https://github.com/agargaro/instanced-mesh/blob/ce4f7f0726405524f486e5047c492ee1975f20df/src/utils/CreateTexture.ts#L27)
+[src/utils/CreateTexture.ts:27](https://github.com/agargaro/instanced-mesh/blob/eb962593317d404ef77ad357a2929b15e9b35854/src/utils/CreateTexture.ts#L27)
