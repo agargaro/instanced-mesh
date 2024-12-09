@@ -244,8 +244,10 @@ export class InstancedMesh2<
 
       if (this.uniformsTexture) {
         // create varying vInstanceIndex
-        shader.vertexShader = shader.vertexShader.replace('void main() {', 'flat varying uint vInstanceIndex;\n void main() {\n vInstanceIndex = instanceIndex;');
-        shader.fragmentShader = shader.fragmentShader.replace('void main() {', 'flat varying uint vInstanceIndex;\n void main() {');
+        if (!shader.vertexShader.includes('varying uint vInstanceIndex')) {
+          shader.vertexShader = shader.vertexShader.replace('void main() {', 'flat varying uint vInstanceIndex;\n void main() {\n vInstanceIndex = instanceIndex;');
+          shader.fragmentShader = shader.fragmentShader.replace('void main() {', 'flat varying uint vInstanceIndex;\n void main() {');
+        }
 
         shader.uniforms.uniformsTexture = { value: this.uniformsTexture };
         const uniformsFragmentGLSL = this.uniformsTexture.getUniformsFragmentGLSL('uniformsTexture', 'vInstanceIndex');
