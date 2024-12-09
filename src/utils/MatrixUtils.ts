@@ -1,4 +1,3 @@
-import { FloatArray } from 'bvh.js';
 import { Vector3 } from 'three';
 
 export interface SphereTarget {
@@ -8,7 +7,7 @@ export interface SphereTarget {
   maxScale: number;
 }
 
-export function getSphereFromMatrix_centeredGeometry(id: number, array: FloatArray, target: SphereTarget): SphereTarget {
+export function getSphereFromMatrix_centeredGeometry(id: number, array: Float32Array, target: SphereTarget): SphereTarget {
   const offset = id * 16;
 
   const m0 = array[offset + 0];
@@ -35,7 +34,7 @@ export function getSphereFromMatrix_centeredGeometry(id: number, array: FloatArr
 }
 
 // TODO move it
-export function getPositionAt(index: number, array: FloatArray, target: Vector3): Vector3 {
+export function getPositionAt(index: number, array: Float32Array, target: Vector3): Vector3 {
   const offset = index * 16;
   target.x = array[offset + 12];
   target.y = array[offset + 13];
@@ -43,7 +42,7 @@ export function getPositionAt(index: number, array: FloatArray, target: Vector3)
   return target;
 }
 
-export function getMaxScaleOnAxisAt(index: number, array: FloatArray): number {
+export function getMaxScaleOnAxisAt(index: number, array: Float32Array): number {
   const offset = index * 16;
 
   const te0 = array[offset + 0];

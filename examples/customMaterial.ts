@@ -1,6 +1,6 @@
 import { Asset, Main, PerspectiveCameraAuto } from '@three.ez/main';
 import { createNoise2D } from 'simplex-noise';
-import { AmbientLight, BoxGeometry, DirectionalLight, NearestFilter, NearestMipMapLinearFilter, PlaneGeometry, Scene, Texture, TextureLoader, Vector2 } from 'three';
+import { AmbientLight, BoxGeometry, Color, DirectionalLight, NearestFilter, NearestMipMapLinearFilter, PlaneGeometry, Scene, Texture, TextureLoader, Vector2 } from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { InstancedMesh2 } from '../src/index.js';
 import { TileLambertMaterial } from './objects/tileLambertMaterial.js';
@@ -26,7 +26,7 @@ const dirLight = new DirectionalLight('white', 2);
 dirLight.position.set(0.5, 0.866, 0);
 const ambientLight = new AmbientLight('white', 0.8);
 
-const side = 512;
+const side = 256;
 const count = side ** 2;
 
 const cubeOffset = {
@@ -71,7 +71,10 @@ plants.computeBVH();
 
 plants.interceptByRaycaster = false;
 
+const white = new Color('white');
 boxes.on('pointerintersection', (e) => {
   const id = e.intersection.instanceId;
-  boxes.setColorAt(id, Math.random() * 0xffffff);
+  if (boxes.getColorAt(id).equals(white)) {
+    boxes.setColorAt(id, Math.random() * 0xffffff);
+  }
 });

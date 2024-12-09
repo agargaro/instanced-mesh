@@ -3,7 +3,7 @@ import { CustomSortCallback } from './feature/FrustumCulling.js';
 import { Entity } from './feature/Instances.js';
 import { LODInfo } from './feature/LOD.js';
 import { InstancedEntity } from './InstancedEntity.js';
-import { InstancedMeshBVH } from './InstancedMeshBVH.js';
+import { BVHParams, InstancedMeshBVH } from './InstancedMeshBVH.js';
 import { GLInstancedBufferAttribute } from './utils/GLInstancedBufferAttribute.js';
 import { SquareDataTexture } from './utils/SquareDataTexture.js';
 
@@ -40,13 +40,6 @@ export interface InstancedMesh2Params {
    * If not provided, buffers will be initialized during the first render, resulting in no instances being rendered initially.
    */
   renderer?: WebGLRenderer;
-}
-
-export interface BVHParams {
-  margin?: number;
-  highPrecision?: boolean;
-  getBBoxFromBSphere?: boolean;
-  accurateCulling?: boolean;
 }
 
 export class InstancedMesh2<
@@ -271,7 +264,7 @@ export class InstancedMesh2<
   }
 
   public computeBVH(config: BVHParams = {}): void {
-    if (!this.bvh) this.bvh = new InstancedMeshBVH(this, config.margin, config.highPrecision, config.getBBoxFromBSphere, config.accurateCulling);
+    if (!this.bvh) this.bvh = new InstancedMeshBVH(this, config.margin, config.getBBoxFromBSphere, config.accurateCulling);
     this.bvh.clear();
     this.bvh.create();
   }

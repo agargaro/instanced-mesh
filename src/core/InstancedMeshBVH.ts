@@ -1,4 +1,4 @@
-import { box3ToArray, BVH, BVHNode, FloatArray, HybridBuilder, onFrustumIntersectionCallback, onFrustumIntersectionLODCallback, onIntersectionCallback, onIntersectionRayCallback, vec3ToArray, WebGLCoordinateSystem } from 'bvh.js';
+import { box3ToArray, BVH, BVHNode, HybridBuilder, onFrustumIntersectionCallback, onFrustumIntersectionLODCallback, onIntersectionCallback, onIntersectionRayCallback, vec3ToArray, WebGLCoordinateSystem } from 'bvh.js';
 import { Box3, Matrix4, Raycaster, Sphere, Vector3 } from 'three';
 import { getSphereFromMatrix_centeredGeometry, SphereTarget } from '../utils/MatrixUtils.js';
 import { LODLevel } from './feature/LOD.js';
@@ -6,24 +6,29 @@ import { InstancedMesh2 } from './InstancedMesh2.js';
 
 // TODO getBoxFromSphere updated if change geometry (and create accessor)
 
+export interface BVHParams {
+  margin?: number;
+  getBBoxFromBSphere?: boolean;
+  accurateCulling?: boolean;
+}
+
 export class InstancedMeshBVH {
   public target: InstancedMesh2;
   public geoBoundingBox: Box3;
   public bvh: BVH<{}, number>;
   public nodesMap = new Map<number, BVHNode<{}, number>>();
   public accurateCulling: boolean;
-  protected LODsMap = new Map<LODLevel[], FloatArray>();
-  protected _arrayType: typeof Float32Array | typeof Float64Array;
+  protected LODsMap = new Map<LODLevel[], Float32Array>();
   protected _margin: number;
-  protected _origin: FloatArray;
-  protected _dir: FloatArray;
-  protected _boxArray: FloatArray;
-  protected _cameraPos: FloatArray;
+  protected _origin: Float32Array;
+  protected _dir: Float32Array;
+  protected _boxArray: Float32Array;
+  protected _cameraPos: Float32Array;
   protected _getBoxFromSphere: boolean;
   protected _geoBoundingSphere: Sphere = null;
   protected _sphereTarget: SphereTarget = null;
 
-  constructor(target: InstancedMesh2, margin = 0, highPrecision = false, getBoxFromSphere = false, accurateCulling = true) {
+  constructor(target: InstancedMesh2, margin = 0, getBoxFromSphere = false, accurateCulling = true) {
     this.target = target;
     this.accurateCulling = accurateCulling;
     this._margin = margin;
@@ -46,23 +51,22 @@ export class InstancedMeshBVH {
       }
     }
 
-    this._arrayType = highPrecision ? Float64Array : Float32Array;
-    this.bvh = new BVH(new HybridBuilder(highPrecision), WebGLCoordinateSystem);
-    this._origin = new this._arrayType(3);
-    this._dir = new this._arrayType(3);
-    this._cameraPos = new this._arrayType(3);
+    this.bvh = new BVH(new HybridBuilder(), WebGLCoordinateSystem);
+    this._origin = new Float32Array(3);
+    this._dir = new Float32Array(3);
+    this._cameraPos = new Float32Array(3);
     this._getBoxFromSphere = getBoxFromSphere;
   }
 
   public create(): void {
     const count = this.target._instancesCount;
-    const boxes: FloatArray[] = new Array(count); // test if single array and recreation inside node creation is faster due to memory location
+    const boxes: Float32Array[] = new Array(count); // test if single array and recreation inside node creation is faster due to memory location
     const objects: Uint32Array = new Uint32Array(count);
 
     this.clear();
 
     for (let i = 0; i < count; i++) {
-      boxes[i] = this.getBox(i, new this._arrayType(6));
+      boxes[i] = this.getBox(i, new Float32Array(6));
       objects[i] = i;
     }
 
@@ -72,16 +76,16 @@ export class InstancedMeshBVH {
   }
 
   public insert(id: number): void {
-    const node = this.bvh.insert(id, this.getBox(id, new this._arrayType(6)), this._margin);
+    const node = this.bvh.insert(id, this.getBox(id, new Float32Array(6)), this._margin);
     this.nodesMap.set(id, node);
   }
 
   public insertRange(ids: number[]): void {
     const count = ids.length;
-    const boxes: FloatArray[] = new Array(count);
+    const boxes: Float32Array[] = new Array(count);
 
     for (let i = 0; i < count; i++) {
-      boxes[i] = this.getBox(ids[i], new this._arrayType(6));
+      boxes[i] = this.getBox(ids[i], new Float32Array(6));
     }
 
     this.bvh.insertRange(ids, boxes, this._margin, (node) => {
@@ -92,7 +96,7 @@ export class InstancedMeshBVH {
   public move(id: number): void {
     const node = this.nodesMap.get(id);
     if (!node) return;
-    this.getBox(id, node.box); // this also updates box
+    this.getBox(id, node.box as Float32Array); // this also updates box
     this.bvh.move(node, this._margin);
   }
 
@@ -122,7 +126,7 @@ export class InstancedMeshBVH {
 
   public frustumCullingLOD(projScreenMatrix: Matrix4, cameraPosition: Vector3, levels: LODLevel[], onFrustumIntersection: onFrustumIntersectionLODCallback<{}, number>): void {
     if (!this.LODsMap.has(levels)) {
-      this.LODsMap.set(levels, new this._arrayType(levels.length));
+      this.LODsMap.set(levels, new Float32Array(levels.length));
     }
 
     const levelsArray = this.LODsMap.get(levels);
@@ -159,13 +163,13 @@ export class InstancedMeshBVH {
   }
 
   public intersectBox(target: Box3, onIntersection: onIntersectionCallback<number>): boolean {
-    if (!this._boxArray) this._boxArray = new this._arrayType(6);
+    if (!this._boxArray) this._boxArray = new Float32Array(6);
     const array = this._boxArray;
     box3ToArray(target, array);
     return this.bvh.intersectsBox(array, onIntersection);
   }
 
-  protected getBox(id: number, array: FloatArray): FloatArray {
+  protected getBox(id: number, array: Float32Array): Float32Array {
     if (this._getBoxFromSphere) {
       const matrixArray = this.target.matricesTexture._data as Float32Array;
       const { centerX, centerY, centerZ, maxScale } = getSphereFromMatrix_centeredGeometry(id, matrixArray, this._sphereTarget);
