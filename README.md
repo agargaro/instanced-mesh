@@ -5,6 +5,8 @@
     <em>Simplify your <b>three.js</b> application development with <b>three.ez</b>!</em>
   </p>
 
+⚠️ Version 0.3.0 will be released soon with some breaking changes and a lot of new features ⚠️
+
   <img src="public/banner.png" alt="three-ez-banner" /> <br />
 
   [![npm](https://img.shields.io/npm/v/@three.ez/instanced-mesh)](https://www.npmjs.com/package/@three.ez/instanced-mesh)
@@ -56,6 +58,7 @@ These examples use `vite`, and some mobile devices may run out of memory.
 - [Fast raycasting](https://stackblitz.com/edit/three-ezinstancedmesh2-fast-raycasting?file=src%2Fmain.ts&embed=1&hideDevTools=1&view=preview)
 - [LOD](https://stackblitz.com/edit/three-ezinstancedmesh2-instancedmeshlod?file=src%2Fmain.ts&embed=1&hideDevTools=1&view=preview)
 - [Shadow LOD](https://stackblitz.com/edit/three-ezinstancedmesh2-shadow-lod?file=src%2Fmain.ts&embed=1&hideDevTools=1&view=preview)
+- [Dynamic adding with BVH](https://glitch.com/edit/#!/three-ez-instanced-mesh-dynamic-adding-with-bvh?path=main.js)
 
 More examples will be added soon...
 
