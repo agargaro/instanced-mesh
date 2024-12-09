@@ -18,20 +18,22 @@
 
 `InstancedMesh2` is an alternative version of `InstancedMesh` that offers advantages:
 - *frustum culling for each instance*
-- *sorting*
+- *spatial indexing [(*BVH*)](https://en.wikipedia.org/wiki/Bounding_volume_hierarchy) for fast raycasting and frustum culling*
+- *dynamic capacity*
 - *visibility for each instance*
 - *each instance can have an object similar to `Object3D` to simplify its use*
-- *spatial indexing [(*BVH*)](https://en.wikipedia.org/wiki/Bounding_volume_hierarchy) for fast raycasting and frustum culling*
+- *sorting*
 - *LOD*
 - *shadow LOD*
+- *uniform per instance*
 
 ```ts
 import { InstancedMesh2 } from '@three.ez/instanced-mesh';
 
-const myInstancedMesh = new InstancedMesh2(renderer, count, geometry, material);
+const myInstancedMesh = new InstancedMesh2(geometry, material);
 
-myInstancedMesh.updateInstances((obj, index) => {
-  obj.position.z = index;
+myInstancedMesh.addInstances(count, (obj, index) => {
+  obj.position.x = index;
   obj.rotateY(Math.PI);
 });
 
@@ -56,6 +58,15 @@ These examples use `vite`, and some mobile devices may run out of memory.
 - [Shadow LOD](https://stackblitz.com/edit/three-ezinstancedmesh2-shadow-lod?file=src%2Fmain.ts&embed=1&hideDevTools=1&view=preview)
 
 More examples will be added soon...
+
+## Questions?
+
+If you have questions or need assistance, you can ask on our [discord server](https://discord.gg/MVTwrdX3JM) or open an issue on this repository.
+
+## Like it?
+
+If you find this project helpful, please consider to leave a star! 🌟<br />
+Thank you so much for your support!
 
 ## Frustum Culling
 
@@ -273,29 +284,14 @@ Or you can import it from CDN:
 <script type="importmap">
 {
   "imports": {
-    "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
-    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/",
-    "@three.ez/instanced-mesh": "https://cdn.jsdelivr.net/npm/@three.ez/instanced-mesh/index.js",
-    "bvh.js": "https://cdn.jsdelivr.net/npm/bvh.js/index.js"
+    "three": "https://cdn.jsdelivr.net/npm/three/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three/examples/jsm/",
+    "@three.ez/instanced-mesh": "https://cdn.jsdelivr.net/npm/@three.ez/instanced-mesh/build/index.js",
+    "bvh.js": "https://cdn.jsdelivr.net/npm/bvh.js/build/index.js"
   }
 }
 </script>
 ```
-
-## Questions?
-
-If you have questions or need assistance, you can ask on our [discord server](https://discord.gg/MVTwrdX3JM).
-
-## Future Work
-
-- Dynamic count
-- Simplify `SetUniformAt`
-
-## Like it?
-
-If you find this project helpful, I would greatly appreciate it if you could leave a star on this repository! <br />
-This helps me know that you appreciate my work and encourages me to continue improving it. <br />
-Thank you so much for your support! 🌟
 
 ## Special thanks to
 
