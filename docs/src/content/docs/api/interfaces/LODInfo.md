@@ -17,7 +17,7 @@ title: "LODInfo"
 
 #### Defined in
 
-[src/core/feature/LOD.ts:17](https://github.com/agargaro/instanced-mesh/blob/eb962593317d404ef77ad357a2929b15e9b35854/src/core/feature/LOD.ts#L17)
+[src/core/feature/LOD.ts:17](https://github.com/agargaro/instanced-mesh/blob/5ad9666a0beaed1f0631823bef7928480c66048b/src/core/feature/LOD.ts#L17)
 
 ***
 
@@ -27,7 +27,7 @@ title: "LODInfo"
 
 #### Defined in
 
-[src/core/feature/LOD.ts:15](https://github.com/agargaro/instanced-mesh/blob/eb962593317d404ef77ad357a2929b15e9b35854/src/core/feature/LOD.ts#L15)
+[src/core/feature/LOD.ts:15](https://github.com/agargaro/instanced-mesh/blob/5ad9666a0beaed1f0631823bef7928480c66048b/src/core/feature/LOD.ts#L15)
 
 ***
 
@@ -37,4 +37,4 @@ title: "LODInfo"
 
 #### Defined in
 
-[src/core/feature/LOD.ts:16](https://github.com/agargaro/instanced-mesh/blob/eb962593317d404ef77ad357a2929b15e9b35854/src/core/feature/LOD.ts#L16)
+[src/core/feature/LOD.ts:16](https://github.com/agargaro/instanced-mesh/blob/5ad9666a0beaed1f0631823bef7928480c66048b/src/core/feature/LOD.ts#L16)

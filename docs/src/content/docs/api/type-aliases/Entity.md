@@ -13,4 +13,4 @@ title: "Entity"
 
 ## Defined in
 
-[src/core/InstancedMesh2.ts:20](https://github.com/agargaro/instanced-mesh/blob/eb962593317d404ef77ad357a2929b15e9b35854/src/core/InstancedMesh2.ts#L20)
+[src/core/InstancedMesh2.ts:20](https://github.com/agargaro/instanced-mesh/blob/5ad9666a0beaed1f0631823bef7928480c66048b/src/core/InstancedMesh2.ts#L20)

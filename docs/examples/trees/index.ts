@@ -1,4 +1,3 @@
-<script type="module">
 import { Asset, Main, PerspectiveCameraAuto } from '@three.ez/main';
 import { ACESFilmicToneMapping, AmbientLight, BoxGeometry, BufferGeometry, DirectionalLight, FogExp2, Mesh, MeshLambertMaterial, MeshStandardMaterial, PCFSoftShadowMap, PlaneGeometry, Scene, Vector3 } from 'three';
 import { MapControls } from 'three/examples/jsm/controls/MapControls.js';
@@ -96,4 +95,3 @@ const gui = new GUI();
 gui.add(trees.instances as any, 'length').name('instances total').disable();
 const treeCount = gui.add(trees, 'count').name('instances rendered').disable();
 gui.add(camera, 'far', 2000, 10000, 100).name('camera far').onChange(() => camera.updateProjectionMatrix());
-</script>

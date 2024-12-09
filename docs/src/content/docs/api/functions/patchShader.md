@@ -17,4 +17,4 @@ title: "patchShader"
 
 ## Defined in
 
-[src/shaders/ShaderChunk.ts:25](https://github.com/agargaro/instanced-mesh/blob/eb962593317d404ef77ad357a2929b15e9b35854/src/shaders/ShaderChunk.ts#L25)
+[src/shaders/ShaderChunk.ts:25](https://github.com/agargaro/instanced-mesh/blob/5ad9666a0beaed1f0631823bef7928480c66048b/src/shaders/ShaderChunk.ts#L25)

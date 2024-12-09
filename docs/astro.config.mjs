@@ -7,6 +7,7 @@ import { resolve } from 'path';
 import mdx from '@astrojs/mdx';
 // https://astro.build/config
 export default defineConfig({
+  output: 'static',
   vite: {
     resolve: {
       alias: { $components: resolve('./src/components') },

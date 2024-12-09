@@ -1,5 +1,3 @@
-<script type="module">
-
   import { Main, PerspectiveCameraAuto } from '@three.ez/main';
   import { BoxGeometry, MeshNormalMaterial, Scene, Vector3 } from 'three';
   import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
@@ -63,4 +61,3 @@
   gui.add(config, 'customSort').name('custom sort').onChange((v) => {
     instancedMesh.customSort = v ? radixSort : null;
   });
-</script>

@@ -1,5 +1,5 @@
 ---
-import OpenInStackblitz from "./OpenInStackblitz.astro";
+import OpenInStackblitz from './OpenInStackblitz.astro';
 
 export const c = (...args: (string | boolean)[]) => {
   return args.filter(Boolean).join(' ');
@@ -9,32 +9,31 @@ interface Props {
   /**
    * The path to the entry App.svelte file relative to src/examples
    */
-  path: string
-  hideCode?: boolean
-  hidePreview?: boolean
-  iframe?: boolean
-  showFile?: string
-  expandCode?: boolean
-  previewClass?: string
-  hideStackblitz?: boolean
+  path: string;
+  hideCode?: boolean;
+  hidePreview?: boolean;
+  iframe?: boolean;
+  showFile?: string;
+  expandCode?: boolean;
+  previewClass?: string;
+  hideStackblitz?: boolean;
 }
 
- 
-const allModules = import.meta.glob('../../examples/**/*', {
+const allModules = import.meta.glob('../../../examples/**/*', {
   as: 'raw',
-  eager: true
+  eager: true,
 }) as Record<string, string>;
 
 for (const path in allModules) {
-  if (!path.replace('../../examples/', '').startsWith(Astro.props.path)) {
-    delete allModules[path]
+  if (!path.replace('../../../examples/', '').startsWith(Astro.props.path)) {
+    delete allModules[path];
   }
 }
 
-const files = Astro.props.files ?? {}
+const files = Astro.props.files ?? {};
 
 for (const modulePath in allModules) {
-  let relativePath = modulePath.replace('../../examples/', '').replace(Astro.props.path, '').slice(1);
+  let relativePath = modulePath.replace('../../../examples/', '').replace(Astro.props.path, '').slice(1);
   if (relativePath.startsWith('/')) {
     relativePath = relativePath.slice(1);
   }
@@ -45,50 +44,62 @@ const hideCodeResolved = Astro.props.hideCode ?? false;
 const hidePreview = Astro.props.hidePreview ?? false;
 ---
 
-<div class="example-component-wrapper">
-  { !hidePreview && (
-    <div class={c(Astro.props.previewClass)}>
-      { Astro.props.iframe != false ? (
-        <iframe
-          src={`/examples/${Astro.props.path}`}
-          title={Astro.props.path}
-          class="example-iframe"
-        />
-      ) : (
-        <div class="example-preview">
-          <!-- Render preview dynamically -->
+<div class="example-component-wrapper not-content">
+  {!hidePreview && <iframe src={`/examples/${Astro.props.path}?p=${Date.now()}`} title={Astro.props.path} class="example-iframe" />}
+
+  {
+    !Astro.props.hideStackblitz && (
+      <div class="open-in-stackblitz-btn">
+        <OpenInStackblitz files={files} />
+      </div>
+    )
+  }
+
+  {
+    !hideCodeResolved && (
+      <div class="code-wrapper">
+        <button class="toggle-code-button">Toggle Code</button>
+
+        <div class="code-wrapper-content">
           {Object.entries(files).map(([filePath, content]) => (
-            <div class="file-preview" data-path={filePath}>
-              <pre><code>{content}</code></pre>
+            <div class="code-file" data-path={filePath}>
+              <h4>{filePath}</h4>
+              <pre>
+                <code>{content}</code>
+              </pre>
             </div>
           ))}
         </div>
-      ) }
-
-      { !Astro.props.hideStackblitz && (
-         <OpenInStackblitz 
-        files={files}
-        />
-      ) }
-    </div>
-  )}
-
-  { !hideCodeResolved && (
-    <div class="code-wrapper">
-      <button
-        class="toggle-code-button"
-      >
-        Toggle Code
-      </button>
-
-      <div class="code-wrapper-content">
-        { Object.entries(files).map(([filePath, content]) => (
-          <div class="code-file" data-path={filePath}>
-            <h4>{filePath}</h4>
-            <pre><code>{content}</code></pre>
-          </div>
-        )) }
       </div>
-    </div>
-  )}
+    )
+  }
 </div>
+
+<style>
+  .example-component-wrapper {
+    border: 1px solid var(--sl-color-gray-5);
+    border-radius: 0.5rem;
+    width: 100%;
+    box-shadow: var(--sl-shadow-md);
+    position: relative;
+  }
+  .example-iframe {
+    border: 0;
+    height: 70vh;
+    width: 100%;
+    border-radius: 0.5rem 0.5rem 0 0;
+    flex: 1 0 100%;
+  }
+
+  .open-in-stackblitz-btn {
+    position: absolute;
+    height: auto;
+    top: 1rem;
+    right: 1rem;
+  }
+
+  .code-wrapper-content {
+    min-height: 5rem;
+    height: 100%;
+  }
+</style>

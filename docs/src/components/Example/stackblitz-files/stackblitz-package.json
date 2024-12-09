@@ -10,26 +10,12 @@
     "check": "svelte-check --tsconfig ./tsconfig.json"
   },
   "devDependencies": {
-    "@dimforge/rapier3d-compat": "*",
-    "@sveltejs/vite-plugin-svelte": "*",
-    "@theatre/core": "*",
-    "@theatre/studio": "*",
-    "@threlte/core": "latest",
-    "@threlte/extras": "latest",
-    "@threlte/rapier": "latest",
-    "@threlte/theatre": "latest",
-    "svelte-tweakpane-ui": "*",
-    "@threlte/xr": "latest",
-    "@tsconfig/svelte": "*",
-    "@tweakpane/core": "^1.1.0",
+    "@three.ez/instanced-mesh": "*",
+    "@three.ez/main": "*",
     "@types/three": "*",
-    "postprocessing": "*",
-    "svelte": "*",
-    "svelte-check": "*",
     "three": "*",
     "tslib": "*",
     "typescript": "*",
-    "vite": "*",
-    "tweakpane": "^3.1.0"
+    "vite": "*"
   }
 }

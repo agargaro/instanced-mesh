@@ -4,6 +4,7 @@ interface Props {
 }
 
 const { files } = Astro.props;
+
 ---
 
 <button type="button" open-stackblitz-btn data-files={JSON.stringify(files)}>
@@ -45,7 +46,7 @@ const { files } = Astro.props;
   const files: Record<string, string> = JSON.parse(buttons[0].getAttribute('data-files') ?? '{}');
   const projectFiles: Record<string, string> = {};
   for (const path in files) {
-    const newPath = `src/example/${path}`;
+    const newPath = `src/${path}`;
     projectFiles[newPath] = files[path];
   }
   const onClick = () => {
@@ -60,10 +61,22 @@ const { files } = Astro.props;
         template: 'node',
       },
       {
-        openFile: 'src/example/App.svelte',
+        openFile: 'src/index.ts',
       }
     );
   };
   // Add event listeners to fire confetti when a button is clicked.
   buttons[0].addEventListener('click', () => onClick());
 </script>
+
+<style>
+  button:hover {
+    cursor:pointer;
+  }
+
+  svg{
+    display: block;
+    max-width: 100%;
+    height: auto;
+  }
+</style>

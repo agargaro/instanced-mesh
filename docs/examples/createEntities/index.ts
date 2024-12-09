@@ -1,4 +1,3 @@
-<script type="module">
 import { Main, PerspectiveCameraAuto } from '@three.ez/main';
 import { MeshNormalMaterial, Scene, SphereGeometry, Vector3 } from 'three';
 import { FlyControls } from 'three/examples/jsm/controls/FlyControls.js';
@@ -39,5 +38,3 @@ const gui = new GUI();
 gui.add(spheres.instances as any, 'length').name('instances total').disable();
 const spheresCount = gui.add(spheres, 'count').name('instances rendered').disable();
 gui.add(camera, 'far', 100, 5000, 100).name('camera far').onChange(() => camera.updateProjectionMatrix());
-
-</script>

@@ -1,7 +1,5 @@
 ---
-const { slug } = Astro.props;
-
-const path = `../../../examples/${slug}/main.ts`
+const path = `../../../examples/${Astro.props.slug}/index.ts`;
 ---
 
-<script type="module" src={path}></script>
+<script type="module" is:inline src={path}></script>

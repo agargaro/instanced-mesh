@@ -1,13 +1,3 @@
 {
   "extends": "astro/tsconfigs/strict",
-  "compilerOptions": {
-    "paths": {
-      "@three.ez/instanced-mesh": [
-        "../src/index.ts"
-      ],
-      "./objects/*": [
-        "../objects/*"
-      ]
-    }
-  }
 }

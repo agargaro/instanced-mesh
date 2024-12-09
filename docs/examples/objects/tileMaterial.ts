@@ -1,5 +1,5 @@
 import { ShaderMaterial, ShaderMaterialParameters, Texture, Vector2 } from 'three';
-import { createTexture_vec2 } from '../@three.ez/instanced-mesh';
+import { createTexture_vec2 } from '@three.ez/instanced-mesh';
 
 export class TileMaterial extends ShaderMaterial {
   public override vertexShader = `
