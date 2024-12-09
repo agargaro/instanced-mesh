@@ -1,6 +1,6 @@
 import { Intersection, Material } from 'three';
 import { InstancedRenderItem } from '../core/utils/InstancedRenderList.js';
-import { radixSort, RadixSortOptions } from 'three/examples/jsm/utils/SortUtils.js';
+import { radixSort, RadixSortOptions } from 'three/addons/utils/SortUtils.js';
 import { InstancedMesh2 } from '../core/InstancedMesh2.js';
 
 // REFERENCE: https://github.com/mrdoob/three.js/blob/master/examples/webgl_mesh_batch.html#L291
