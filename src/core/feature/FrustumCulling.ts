@@ -20,9 +20,9 @@ declare module '../InstancedMesh2.js' {
     /** @internal */ BVHCulling(): void;
     /** @internal */ linearCulling(): void;
 
-    /** @internal */ frustumCullingLOD(renderList: LODRenderList, objects: InstancedMesh2[], camera: Camera, cameraLOD: Camera): void;
-    /** @internal */ BVHCullingLOD(renderList: LODRenderList, sortObjects: boolean): void;
-    /** @internal */ linearCullingLOD(renderList: LODRenderList, sortObjects: boolean): void;
+    /** @internal */ frustumCullingLOD(LODrenderList: LODRenderList, objects: InstancedMesh2[], camera: Camera, cameraLOD: Camera): void;
+    /** @internal */ BVHCullingLOD(LODrenderList: LODRenderList, indexes: Uint32Array[], sortObjects: boolean): void;
+    /** @internal */ linearCullingLOD(LODrenderList: LODRenderList, indexes: Uint32Array[], sortObjects: boolean): void;
   }
 }
 
@@ -39,10 +39,10 @@ const _sphere = new Sphere();
 InstancedMesh2.prototype.performFrustumCulling = function (camera: Camera, cameraLOD = camera): void {
   const info = this.LODinfo;
   const isShadowRendering = camera !== cameraLOD;
-  let renderList: LODRenderList;
+  let LODrenderList: LODRenderList;
 
   if (info) {
-    renderList = !isShadowRendering ? info.render : (info.shadowRender ?? info.render);
+    LODrenderList = !isShadowRendering ? info.render : (info.shadowRender ?? info.render);
 
     // Hide all LODs except this one. They will be shown after frustum culling if at least one instance is visible.
     for (const object of info.objects) {
@@ -51,7 +51,7 @@ InstancedMesh2.prototype.performFrustumCulling = function (camera: Camera, camer
     }
   }
 
-  if (renderList?.levels.length > 0) this.frustumCullingLOD(renderList, info.objects, camera, cameraLOD);
+  if (LODrenderList?.levels.length > 0) this.frustumCullingLOD(LODrenderList, info.objects, camera, cameraLOD);
   else if (!this._parentLOD) this.frustumCulling(camera);
 
   this.instanceIndex.update(this._renderer, this._count);
@@ -88,12 +88,12 @@ InstancedMesh2.prototype.frustumCulling = function (camera: Camera): void {
     const customSort = this.customSort;
 
     if (customSort === null) {
-      _renderList.list.sort(!(this._material as Material)?.transparent ? sortOpaque : sortTransparent);
+      _renderList.array.sort(!(this._material as Material)?.transparent ? sortOpaque : sortTransparent);
     } else {
-      customSort(_renderList.list);
+      customSort(_renderList.array);
     }
 
-    const list = _renderList.list;
+    const list = _renderList.array;
     const count = list.length;
     for (let i = 0; i < count; i++) {
       array[i] = list[i].index;
@@ -195,8 +195,8 @@ InstancedMesh2.prototype.linearCulling = function (): void {
   this._count = count;
 };
 
-InstancedMesh2.prototype.frustumCullingLOD = function (renderList: LODRenderList, objects: InstancedMesh2[], camera: Camera, cameraLOD: Camera): void {
-  const { count, levels } = renderList;
+InstancedMesh2.prototype.frustumCullingLOD = function (LODrenderList: LODRenderList, objects: InstancedMesh2[], camera: Camera, cameraLOD: Camera): void {
+  const { count, levels } = LODrenderList;
   const isShadowRendering = camera !== cameraLOD;
   const sortObjects = !isShadowRendering && this._sortObjects; // sort is disabled when render shadows
 
@@ -213,13 +213,14 @@ InstancedMesh2.prototype.frustumCullingLOD = function (renderList: LODRenderList
   _cameraPos.setFromMatrixPosition(camera.matrixWorld).applyMatrix4(_invMatrixWorld);
   _cameraLODPos.setFromMatrixPosition(cameraLOD.matrixWorld).applyMatrix4(_invMatrixWorld);
 
-  if (this.bvh) this.BVHCullingLOD(renderList, sortObjects);
-  else this.linearCullingLOD(renderList, sortObjects);
+  const indexes = LODrenderList.levels.map((x) => x.object.instanceIndex.array) as Uint32Array[];
+
+  if (this.bvh) this.BVHCullingLOD(LODrenderList, indexes, sortObjects);
+  else this.linearCullingLOD(LODrenderList, indexes, sortObjects);
 
   if (sortObjects) {
     const customSort = this.customSort;
-    const list = _renderList.list; // TODO better name...
-    const indexes = renderList.indexes;
+    const list = _renderList.array;
     let levelIndex = 0;
     let levelDistance = levels[1].distance;
 
@@ -250,8 +251,8 @@ InstancedMesh2.prototype.frustumCullingLOD = function (renderList: LODRenderList
   }
 };
 
-InstancedMesh2.prototype.BVHCullingLOD = function (renderList: LODRenderList, sortObjects: boolean): void {
-  const { count, indexes, levels } = renderList;
+InstancedMesh2.prototype.BVHCullingLOD = function (LODrenderList: LODRenderList, indexes: Uint32Array[], sortObjects: boolean): void {
+  const { count, levels } = LODrenderList;
   const matrixArray = this.matricesTexture._data as Float32Array;
   const instancesCount = this._instancesCount;
   const visibilityArray = this.visibilityArray;
@@ -279,8 +280,8 @@ InstancedMesh2.prototype.BVHCullingLOD = function (renderList: LODRenderList, so
   }
 };
 
-InstancedMesh2.prototype.linearCullingLOD = function (renderList: LODRenderList, sortObjects: boolean): void {
-  const { count, indexes, levels } = renderList;
+InstancedMesh2.prototype.linearCullingLOD = function (LODrenderList: LODRenderList, indexes: Uint32Array[], sortObjects: boolean): void {
+  const { count, levels } = LODrenderList;
   const matrixArray = this.matricesTexture._data as Float32Array;
   const bSphere = this._geometry.boundingSphere;
   const radius = bSphere.radius;

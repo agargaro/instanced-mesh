@@ -22,4 +22,6 @@ const materials = [
 const boxes = new InstancedMesh2(new BoxGeometry(), materials);
 scene.add(boxes);
 
-boxes.addInstances(1, () => {});
+boxes.addInstances(1, (obj) => {
+  obj.position.random();
+});

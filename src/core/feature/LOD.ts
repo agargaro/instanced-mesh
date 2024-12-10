@@ -19,7 +19,6 @@ export interface LODInfo<TCustomData = {}> {
 
 export interface LODRenderList<TCustomData = {}> {
   levels: LODLevel<TCustomData>[];
-  indexes: Uint32Array[];
   count: number[];
 }
 
@@ -52,7 +51,6 @@ InstancedMesh2.prototype.setFirstLODDistance = function (distance = 0, hysteresi
   if (!this.LODinfo.render) {
     this.LODinfo.render = {
       levels: [{ distance, hysteresis, object: this }],
-      indexes: [this.instanceIndex.array as Uint32Array], // TODO FIX LOD
       count: [0]
     };
   }
@@ -89,7 +87,7 @@ InstancedMesh2.prototype.addShadowLOD = function (geometry: BufferGeometry, dist
   }
 
   if (!this.LODinfo.shadowRender) {
-    this.LODinfo.shadowRender = { levels: [], indexes: [], count: [] };
+    this.LODinfo.shadowRender = { levels: [], count: [] };
   }
 
   const object = this.addLevel(this.LODinfo.shadowRender, geometry, null, distance, hysteresis);
@@ -123,7 +121,6 @@ InstancedMesh2.prototype.addLevel = function (renderList: LODRenderList, geometr
 
   levels.splice(index, 0, { distance, hysteresis, object });
   renderList.count.push(0);
-  renderList.indexes.splice(index, 0, object.instanceIndex.array as Uint32Array);
 
   return object;
 };

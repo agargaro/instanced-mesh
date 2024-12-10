@@ -1,12 +1,12 @@
 export type InstancedRenderItem = { index: number; depth: number; depthSort: number };
 
 export class InstancedRenderList {
-  public list: InstancedRenderItem[] = [];
+  public array: InstancedRenderItem[] = [];
   protected pool: InstancedRenderItem[] = [];
 
   public push(depth: number, index: number): void {
     const pool = this.pool;
-    const list = this.list;
+    const list = this.array;
     const count = list.length;
 
     if (count >= pool.length) {
@@ -21,6 +21,6 @@ export class InstancedRenderList {
   }
 
   public reset(): void {
-    this.list.length = 0;
+    this.array.length = 0;
   }
 }
