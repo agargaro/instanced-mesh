@@ -1,4 +1,5 @@
 ---
+import { Code } from '@astrojs/starlight/components'
 import OpenInStackblitz from './OpenInStackblitz.astro';
 
 export const c = (...args: (string | boolean)[]) => {
@@ -58,15 +59,13 @@ const hidePreview = Astro.props.hidePreview ?? false;
   {
     !hideCodeResolved && (
       <div class="code-wrapper">
-        <button class="toggle-code-button">Toggle Code</button>
+        <button class="code-toggle-btn">Toggle Code</button>
 
         <div class="code-wrapper-content">
           {Object.entries(files).map(([filePath, content]) => (
             <div class="code-file" data-path={filePath}>
-              <h4>{filePath}</h4>
-              <pre>
-                <code>{content}</code>
-              </pre>
+            <!-- TODO maybe we can apply some title and highlights  -->
+                <Code code={content as string} title={filePath} lang='ts'></Code>
             </div>
           ))}
         </div>
@@ -99,7 +98,23 @@ const hidePreview = Astro.props.hidePreview ?? false;
   }
 
   .code-wrapper-content {
-    min-height: 5rem;
+    max-height: 5rem;
     height: 100%;
+    overflow: hidden;
+    ::before{
+      box-shadow:inset 0px 11px 3px 2px black
+    }
+  }
+
+  .code-wrapper-content--open{
+    height: 100%;
+  }
+
+  .code-toggle-btn{
+    position: absolute;
+    height: auto;
+    top: 1rem;
+    right: 50%;
+    left:50%
   }
 </style>
