@@ -7,6 +7,7 @@ import { BVHParams, InstancedMeshBVH } from './InstancedMeshBVH.js';
 import { GLInstancedBufferAttribute } from './utils/GLInstancedBufferAttribute.js';
 import { SquareDataTexture } from './utils/SquareDataTexture.js';
 
+// TODO Add check to not update partial texture if needsuupdate already true
 // TODO if bvh present, can override?
 // TODO: Use BVH only for raycasting
 // TODO LOD: instancedMeshLOD rendering first nearest levels, look out to transparent
@@ -135,7 +136,6 @@ export class InstancedMesh2<
     this._tempInstance = new InstancedEntity(this, -1, allowsEuler);
     this._parentLOD = LOD;
     this.visibilityArray = LOD?.visibilityArray ?? new Array(capacity).fill(true);
-    this.frustumCulled = false;
 
     this.initIndexAttribute();
     this.initMatricesTexture();
@@ -151,15 +151,37 @@ export class InstancedMesh2<
   }
 
   public override onBeforeRender(renderer: WebGLRenderer, scene: Scene, camera: Camera, geometry: BufferGeometry, material: Material, group: Group): void {
+    if (!this.instanceIndex) {
+      this._renderer = renderer;
+      return;
+    }
+
+    if (group && material !== this.getFirstVisibleMaterial()) return; // multi material
+
     this.matricesTexture.update(renderer);
     this.colorsTexture?.update(renderer);
     this.uniformsTexture?.update(renderer);
-    if (this.instanceIndex) this.performFrustumCulling(camera);
-    else this._renderer = renderer;
+    this.performFrustumCulling(camera);
   }
 
   public override onAfterRender(renderer: WebGLRenderer, scene: Scene, camera: Camera, geometry: BufferGeometry, material: Material, group: Group): void {
-    if (!this.instanceIndex) this.initIndexAttribute();
+    if (this.instanceIndex || (group && material !== this.getLastVisibleMaterial())) return;
+    this.initIndexAttribute();
+  }
+
+  protected getFirstVisibleMaterial(): Material {
+    const materials = this.material as Material[];
+    for (const material of materials) {
+      if (material.visible) return material;
+    }
+  }
+
+  protected getLastVisibleMaterial(): Material {
+    const materials = this.material as Material[];
+    for (let i = materials.length - 1; i >= 0; i--) {
+      const material = materials[i];
+      if (material.visible) return material;
+    }
   }
 
   protected initIndexAttribute(): void {
@@ -177,7 +199,7 @@ export class InstancedMesh2<
     }
 
     this.instanceIndex = new GLInstancedBufferAttribute(gl, gl.UNSIGNED_INT, 1, 4, array);
-    this._geometry?.setAttribute('instanceIndex', this.instanceIndex as unknown as BufferAttribute);
+    this._geometry.setAttribute('instanceIndex', this.instanceIndex as unknown as BufferAttribute);
   }
 
   protected initMatricesTexture(): void {
