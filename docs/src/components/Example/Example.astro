@@ -102,7 +102,8 @@ const hidePreview = Astro.props.hidePreview ?? false;
     height: 100%;
     overflow: hidden;
     ::before{
-      box-shadow:inset 0px 11px 3px 2px black
+      box-shadow:inset 0px 11px 30px 2px black;
+      z-index: 99;
     }
   }
 
