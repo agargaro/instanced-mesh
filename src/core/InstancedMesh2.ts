@@ -1,4 +1,4 @@
-import { Box3, BufferAttribute, BufferGeometry, Camera, Color, ColorManagement, ColorRepresentation, DataTexture, FloatType, Group, InstancedBufferAttribute, Material, Matrix4, Mesh, MeshDepthMaterial, MeshDistanceMaterial, Object3D, Object3DEventMap, RGBADepthPacking, RedFormat, Scene, Sphere, WebGLRenderer } from 'three';
+import { Box3, BufferAttribute, BufferGeometry, Camera, Color, ColorManagement, ColorRepresentation, DataTexture, FloatType, InstancedBufferAttribute, Material, Matrix4, Mesh, MeshDepthMaterial, MeshDistanceMaterial, Object3D, Object3DEventMap, RGBADepthPacking, RedFormat, Scene, Sphere, WebGLRenderer } from 'three';
 import { CustomSortCallback } from './feature/FrustumCulling.js';
 import { Entity } from './feature/Instances.js';
 import { LODInfo } from './feature/LOD.js';
@@ -146,41 +146,53 @@ export class InstancedMesh2<
     if (createInstances) this.createInstances();
   }
 
-  public override onBeforeShadow(renderer: WebGLRenderer, scene: Scene, camera: Camera, shadowCamera: Camera, geometry: BufferGeometry, depthMaterial: Material, group: Group): void {
-    if (this.instanceIndex) this.performFrustumCulling(shadowCamera, camera);
+  public override onBeforeShadow(renderer: WebGLRenderer, scene: Scene, camera: Camera, shadowCamera: Camera, geometry: BufferGeometry, depthMaterial: Material, group: any): void {
+    if (!this.instanceIndex || (group && !this.isFirstGroup(group.materialIndex))) return;
+
+    this.matricesTexture.update(renderer);
+    this.colorsTexture?.update(renderer);
+    this.uniformsTexture?.update(renderer);
+
+    this.performFrustumCulling(shadowCamera, camera);
   }
 
-  public override onBeforeRender(renderer: WebGLRenderer, scene: Scene, camera: Camera, geometry: BufferGeometry, material: Material, group: Group): void {
+  public override onBeforeRender(renderer: WebGLRenderer, scene: Scene, camera: Camera, geometry: BufferGeometry, material: Material, group: any): void {
     if (!this.instanceIndex) {
       this._renderer = renderer;
       return;
     }
 
-    if (group && material !== this.getFirstVisibleMaterial()) return; // multi material
+    if (group && !this.isFirstGroup(group.materialIndex)) return; // multi material
 
     this.matricesTexture.update(renderer);
     this.colorsTexture?.update(renderer);
     this.uniformsTexture?.update(renderer);
+
     this.performFrustumCulling(camera);
   }
 
-  public override onAfterRender(renderer: WebGLRenderer, scene: Scene, camera: Camera, geometry: BufferGeometry, material: Material, group: Group): void {
-    if (this.instanceIndex || (group && material !== this.getLastVisibleMaterial())) return;
+  public override onAfterRender(renderer: WebGLRenderer, scene: Scene, camera: Camera, geometry: BufferGeometry, material: Material, group: any): void {
+    // TODO fix group d.ts
+    if (this.instanceIndex || (group && !this.isLastGroup(group.materialIndex))) return;
     this.initIndexAttribute();
   }
 
-  protected getFirstVisibleMaterial(): Material {
+  protected isFirstGroup(materialIndex: number): boolean {
     const materials = this.material as Material[];
-    for (const material of materials) {
-      if (material.visible) return material;
+
+    for (let i = 0; i <= materialIndex; i++) {
+      if (materials[i].visible) {
+        return i === materialIndex;
+      }
     }
   }
 
-  protected getLastVisibleMaterial(): Material {
+  protected isLastGroup(materialIndex: number): boolean {
     const materials = this.material as Material[];
-    for (let i = materials.length - 1; i >= 0; i--) {
-      const material = materials[i];
-      if (material.visible) return material;
+    for (let i = materials.length - 1; i >= materialIndex; i--) {
+      if (materials[i].visible) {
+        return i === materialIndex;
+      }
     }
   }
 
