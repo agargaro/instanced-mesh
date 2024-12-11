@@ -13,7 +13,7 @@ title: "SphereTarget"
 
 #### Defined in
 
-[src/utils/MatrixUtils.ts:5](https://github.com/agargaro/instanced-mesh/blob/5ad9666a0beaed1f0631823bef7928480c66048b/src/utils/MatrixUtils.ts#L5)
+[src/utils/MatrixUtils.ts:5](https://github.com/agargaro/instanced-mesh/blob/6b4aafb234e44b872be8f20e0304628a1f2217cf/src/utils/MatrixUtils.ts#L5)
 
 ***
 
@@ -23,7 +23,7 @@ title: "SphereTarget"
 
 #### Defined in
 
-[src/utils/MatrixUtils.ts:6](https://github.com/agargaro/instanced-mesh/blob/5ad9666a0beaed1f0631823bef7928480c66048b/src/utils/MatrixUtils.ts#L6)
+[src/utils/MatrixUtils.ts:6](https://github.com/agargaro/instanced-mesh/blob/6b4aafb234e44b872be8f20e0304628a1f2217cf/src/utils/MatrixUtils.ts#L6)
 
 ***
 
@@ -33,7 +33,7 @@ title: "SphereTarget"
 
 #### Defined in
 
-[src/utils/MatrixUtils.ts:7](https://github.com/agargaro/instanced-mesh/blob/5ad9666a0beaed1f0631823bef7928480c66048b/src/utils/MatrixUtils.ts#L7)
+[src/utils/MatrixUtils.ts:7](https://github.com/agargaro/instanced-mesh/blob/6b4aafb234e44b872be8f20e0304628a1f2217cf/src/utils/MatrixUtils.ts#L7)
 
 ***
 
@@ -43,4 +43,4 @@ title: "SphereTarget"
 
 #### Defined in
 
-[src/utils/MatrixUtils.ts:8](https://github.com/agargaro/instanced-mesh/blob/5ad9666a0beaed1f0631823bef7928480c66048b/src/utils/MatrixUtils.ts#L8)
+[src/utils/MatrixUtils.ts:8](https://github.com/agargaro/instanced-mesh/blob/6b4aafb234e44b872be8f20e0304628a1f2217cf/src/utils/MatrixUtils.ts#L8)

@@ -17,4 +17,4 @@ title: "createRadixSort"
 
 ## Defined in
 
-[src/utils/SortingUtils.ts:8](https://github.com/agargaro/instanced-mesh/blob/5ad9666a0beaed1f0631823bef7928480c66048b/src/utils/SortingUtils.ts#L8)
+[src/utils/SortingUtils.ts:8](https://github.com/agargaro/instanced-mesh/blob/6b4aafb234e44b872be8f20e0304628a1f2217cf/src/utils/SortingUtils.ts#L8)

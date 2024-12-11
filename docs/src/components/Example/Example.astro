@@ -59,8 +59,6 @@ const hidePreview = Astro.props.hidePreview ?? false;
   {
     !hideCodeResolved && (
       <div class="code-wrapper">
-        <button class="code-toggle-btn">Toggle Code</button>
-
         <div class="code-wrapper-content">
           {Object.entries(files).map(([filePath, content]) => (
             <div class="code-file" data-path={filePath}>
@@ -69,10 +67,22 @@ const hidePreview = Astro.props.hidePreview ?? false;
             </div>
           ))}
         </div>
+        <button class="code-toggle-btn">Toggle Code</button>
       </div>
     )
   }
 </div>
+
+<script>
+  const codeWrapper = document.querySelector('.code-wrapper');
+  const button = document.querySelector('#code-toggle-btn');
+
+  const onClick = () => {
+    codeWrapper?.classList.toggle('code-wrapper-content--open');
+  };
+  // Add event listeners to fire confetti when a button is clicked.
+  button?.addEventListener('click', () => onClick());
+</script>
 
 <style>
   .example-component-wrapper {
@@ -87,7 +97,7 @@ const hidePreview = Astro.props.hidePreview ?? false;
     height: 70vh;
     width: 100%;
     border-radius: 0.5rem 0.5rem 0 0;
-    flex: 1 0 100%;
+    margin-bottom: -8px;
   }
 
   .open-in-stackblitz-btn {
@@ -97,8 +107,9 @@ const hidePreview = Astro.props.hidePreview ?? false;
     right: 1rem;
   }
 
-  .code-wrapper-content {
+  .code-wrapper {
     max-height: 5rem;
+    position: relative;
     height: 100%;
     overflow: hidden;
     ::before{
@@ -107,15 +118,17 @@ const hidePreview = Astro.props.hidePreview ?? false;
     }
   }
 
-  .code-wrapper-content--open{
+  .code-wrapper--open{
     height: 100%;
   }
 
   .code-toggle-btn{
     position: absolute;
     height: auto;
-    top: 1rem;
-    right: 50%;
-    left:50%
+    bottom: 0.3rem;
+    margin: auto;
+    left: 0;
+    width: max-content;
+    right: 0;
   }
 </style>

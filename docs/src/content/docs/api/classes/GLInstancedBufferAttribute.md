@@ -39,7 +39,7 @@ title: "GLInstancedBufferAttribute"
 
 #### Defined in
 
-[src/core/utils/GLInstancedBufferAttribute.ts:10](https://github.com/agargaro/instanced-mesh/blob/5ad9666a0beaed1f0631823bef7928480c66048b/src/core/utils/GLInstancedBufferAttribute.ts#L10)
+[src/core/utils/GLInstancedBufferAttribute.ts:10](https://github.com/agargaro/instanced-mesh/blob/6b4aafb234e44b872be8f20e0304628a1f2217cf/src/core/utils/GLInstancedBufferAttribute.ts#L10)
 
 ## Properties
 
@@ -49,7 +49,7 @@ title: "GLInstancedBufferAttribute"
 
 #### Defined in
 
-[src/core/utils/GLInstancedBufferAttribute.ts:7](https://github.com/agargaro/instanced-mesh/blob/5ad9666a0beaed1f0631823bef7928480c66048b/src/core/utils/GLInstancedBufferAttribute.ts#L7)
+[src/core/utils/GLInstancedBufferAttribute.ts:7](https://github.com/agargaro/instanced-mesh/blob/6b4aafb234e44b872be8f20e0304628a1f2217cf/src/core/utils/GLInstancedBufferAttribute.ts#L7)
 
 ***
 
@@ -154,7 +154,7 @@ node\_modules/@types/three/src/core/GLBufferAttribute.d.ts:29
 
 #### Defined in
 
-[src/core/utils/GLInstancedBufferAttribute.ts:5](https://github.com/agargaro/instanced-mesh/blob/5ad9666a0beaed1f0631823bef7928480c66048b/src/core/utils/GLInstancedBufferAttribute.ts#L5)
+[src/core/utils/GLInstancedBufferAttribute.ts:5](https://github.com/agargaro/instanced-mesh/blob/6b4aafb234e44b872be8f20e0304628a1f2217cf/src/core/utils/GLInstancedBufferAttribute.ts#L5)
 
 ***
 
@@ -164,7 +164,7 @@ node\_modules/@types/three/src/core/GLBufferAttribute.d.ts:29
 
 #### Defined in
 
-[src/core/utils/GLInstancedBufferAttribute.ts:4](https://github.com/agargaro/instanced-mesh/blob/5ad9666a0beaed1f0631823bef7928480c66048b/src/core/utils/GLInstancedBufferAttribute.ts#L4)
+[src/core/utils/GLInstancedBufferAttribute.ts:4](https://github.com/agargaro/instanced-mesh/blob/6b4aafb234e44b872be8f20e0304628a1f2217cf/src/core/utils/GLInstancedBufferAttribute.ts#L4)
 
 ***
 
@@ -195,7 +195,7 @@ node\_modules/@types/three/src/core/GLBufferAttribute.d.ts:64
 
 #### Defined in
 
-[src/core/utils/GLInstancedBufferAttribute.ts:6](https://github.com/agargaro/instanced-mesh/blob/5ad9666a0beaed1f0631823bef7928480c66048b/src/core/utils/GLInstancedBufferAttribute.ts#L6)
+[src/core/utils/GLInstancedBufferAttribute.ts:6](https://github.com/agargaro/instanced-mesh/blob/6b4aafb234e44b872be8f20e0304628a1f2217cf/src/core/utils/GLInstancedBufferAttribute.ts#L6)
 
 ***
 
@@ -308,7 +308,7 @@ node\_modules/@types/three/src/core/GLBufferAttribute.d.ts:100
 
 #### Defined in
 
-[src/core/utils/GLInstancedBufferAttribute.ts:31](https://github.com/agargaro/instanced-mesh/blob/5ad9666a0beaed1f0631823bef7928480c66048b/src/core/utils/GLInstancedBufferAttribute.ts#L31)
+[src/core/utils/GLInstancedBufferAttribute.ts:31](https://github.com/agargaro/instanced-mesh/blob/6b4aafb234e44b872be8f20e0304628a1f2217cf/src/core/utils/GLInstancedBufferAttribute.ts#L31)
 
 ***
 
@@ -426,4 +426,4 @@ node\_modules/@types/three/src/core/GLBufferAttribute.d.ts:110
 
 #### Defined in
 
-[src/core/utils/GLInstancedBufferAttribute.ts:21](https://github.com/agargaro/instanced-mesh/blob/5ad9666a0beaed1f0631823bef7928480c66048b/src/core/utils/GLInstancedBufferAttribute.ts#L21)
+[src/core/utils/GLInstancedBufferAttribute.ts:21](https://github.com/agargaro/instanced-mesh/blob/6b4aafb234e44b872be8f20e0304628a1f2217cf/src/core/utils/GLInstancedBufferAttribute.ts#L21)
