@@ -67,7 +67,9 @@ const hidePreview = Astro.props.hidePreview ?? false;
             </div>
           ))}
         </div>
-        <button class="code-toggle-btn">Toggle Code</button>
+        <div class="code-toggle-container-btn">
+         <button class="code-toggle-btn">Toggle Code</button>
+        </div>
       </div>
     )
   }
@@ -112,20 +114,23 @@ const hidePreview = Astro.props.hidePreview ?? false;
     position: relative;
     height: 100%;
     overflow: hidden;
-    ::before{
-      box-shadow:inset 0px 11px 30px 2px black;
-      z-index: 99;
-    }
+  }
+  .code-toggle-container-btn{
+    background-image:linear-gradient(to top, rgb(38, 38, 38), rgba(38, 38, 38, 0.5));
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 99;
   }
 
-  .code-wrapper--open{
+  .code-wrapper--open {
     height: 100%;
   }
 
   .code-toggle-btn{
     position: absolute;
     height: auto;
-    bottom: 0.3rem;
+    bottom: 1rem;
     margin: auto;
     left: 0;
     width: max-content;
