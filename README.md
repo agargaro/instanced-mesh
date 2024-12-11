@@ -59,6 +59,7 @@ These examples use `vite`, and some mobile devices may run out of memory.
 - [LOD](https://stackblitz.com/edit/three-ezinstancedmesh2-instancedmeshlod?file=src%2Fmain.ts&embed=1&hideDevTools=1&view=preview)
 - [Shadow LOD](https://stackblitz.com/edit/three-ezinstancedmesh2-shadow-lod?file=src%2Fmain.ts&embed=1&hideDevTools=1&view=preview)
 - [Dynamic adding with BVH](https://glitch.com/edit/#!/three-ez-instanced-mesh-dynamic-adding-with-bvh?path=main.js)
+- [React-three-fiber demo](https://stackblitz.com/edit/vitejs-vite-zahmbaan?file=src%2FApp.tsx)
 
 More examples will be added soon...
 
