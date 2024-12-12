@@ -1,6 +1,5 @@
 import { BVHNode } from 'bvh.js';
 import { Camera, Frustum, Material, Matrix4, Sphere, Vector3 } from 'three';
-import { getMaxScaleOnAxisAt, getPositionAt } from '../../utils/MatrixUtils.js';
 import { sortOpaque, sortTransparent } from '../../utils/SortingUtils.js';
 import { InstancedMesh2 } from '../InstancedMesh2.js';
 import { InstancedRenderItem, InstancedRenderList } from '../utils/InstancedRenderList.js';
@@ -135,7 +134,6 @@ InstancedMesh2.prototype.updateRenderList = function (): void {
 
 InstancedMesh2.prototype.BVHCulling = function (): void {
   const array = this.instanceIndex.array;
-  const matrixArray = this.matricesTexture._data as Float32Array;
   const instancesCount = this._instancesCount;
   const sortObjects = this._sortObjects;
   let count = 0;
@@ -145,7 +143,7 @@ InstancedMesh2.prototype.BVHCulling = function (): void {
 
     if (index < instancesCount && this.getVisibilityAt(index)) {
       if (sortObjects) {
-        getPositionAt(index, matrixArray, _position);
+        this.getPositionAt(index, _position);
         const depth = _position.sub(_cameraPos).dot(_forward);
         _renderList.push(depth, index);
       } else {
@@ -159,7 +157,6 @@ InstancedMesh2.prototype.BVHCulling = function (): void {
 
 InstancedMesh2.prototype.linearCulling = function (): void {
   const array = this.instanceIndex.array;
-  const matrixArray = this.matricesTexture._data as Float32Array;
   const bSphere = this._geometry.boundingSphere;
   const radius = bSphere.radius;
   const center = bSphere.center;
@@ -174,8 +171,8 @@ InstancedMesh2.prototype.linearCulling = function (): void {
     if (!this.getVisibilityAt(i)) continue;
 
     if (geometryCentered) {
-      getPositionAt(i, matrixArray, _sphere.center);
-      _sphere.radius = radius * getMaxScaleOnAxisAt(i, matrixArray);
+      this.getPositionAt(i, _sphere.center);
+      _sphere.radius = radius * this.getMaxScaleOnAxisAt(i);
     } else {
       const matrix = this.getMatrixAt(i); // TODO: can be a little improved
       _sphere.center.copy(center).applyMatrix4(matrix);
@@ -253,7 +250,6 @@ InstancedMesh2.prototype.frustumCullingLOD = function (LODrenderList: LODRenderL
 
 InstancedMesh2.prototype.BVHCullingLOD = function (LODrenderList: LODRenderList, indexes: Uint32Array[], sortObjects: boolean): void {
   const { count, levels } = LODrenderList;
-  const matrixArray = this.matricesTexture._data as Float32Array;
   const instancesCount = this._instancesCount;
   const visibilityArray = this.visibilityArray;
 
@@ -261,7 +257,7 @@ InstancedMesh2.prototype.BVHCullingLOD = function (LODrenderList: LODRenderList,
     this.bvh.frustumCulling(_projScreenMatrix, (node: BVHNode<{}, number>) => {
       const index = node.object;
       if (index < instancesCount && visibilityArray[index]) {
-        const distance = getPositionAt(index, matrixArray, _position).distanceToSquared(_cameraLODPos); // TODO use DOT instead of distance
+        const distance = this.getPositionAt(index).distanceToSquared(_cameraLODPos); // TODO use DOT instead of distance
         _renderList.push(distance, index);
       }
     });
@@ -270,7 +266,7 @@ InstancedMesh2.prototype.BVHCullingLOD = function (LODrenderList: LODRenderList,
       const index = node.object;
       if (index < instancesCount && visibilityArray[index]) {
         if (level === null) {
-          const distance = getPositionAt(index, matrixArray, _position).distanceToSquared(_cameraLODPos); // distance can be get by BVH
+          const distance = this.getPositionAt(index).distanceToSquared(_cameraLODPos); // distance can be get by BVH
           level = this.getObjectLODIndexForDistance(levels, distance);
         }
 
@@ -282,7 +278,6 @@ InstancedMesh2.prototype.BVHCullingLOD = function (LODrenderList: LODRenderList,
 
 InstancedMesh2.prototype.linearCullingLOD = function (LODrenderList: LODRenderList, indexes: Uint32Array[], sortObjects: boolean): void {
   const { count, levels } = LODrenderList;
-  const matrixArray = this.matricesTexture._data as Float32Array;
   const bSphere = this._geometry.boundingSphere;
   const radius = bSphere.radius;
   const center = bSphere.center;
@@ -295,8 +290,8 @@ InstancedMesh2.prototype.linearCullingLOD = function (LODrenderList: LODRenderLi
     if (!this.visibilityArray[i]) continue; // TODO check if getVisibleTo has same perf and use that instead
 
     if (geometryCentered) {
-      getPositionAt(i, matrixArray, _sphere.center);
-      _sphere.radius = radius * getMaxScaleOnAxisAt(i, matrixArray);
+      this.getPositionAt(i, _sphere.center);
+      _sphere.radius = radius * this.getMaxScaleOnAxisAt(i);
     } else {
       const matrix = this.getMatrixAt(i); // TODO opt instancedMesh getting only pos and scale
       _sphere.center.copy(center).applyMatrix4(matrix);

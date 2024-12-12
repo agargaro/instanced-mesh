@@ -16,7 +16,6 @@ export * from './shaders/chunks/instanced_color_fragment.glsl.js';
 export * from './shaders/chunks/instanced_pars_vertex.glsl.js';
 export * from './shaders/chunks/instanced_vertex.glsl.js';
 
-export * from './utils/MatrixUtils.js';
 export * from './utils/SortingUtils.js';
 
 /** @internal */

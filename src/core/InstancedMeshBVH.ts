@@ -1,6 +1,5 @@
 import { box3ToArray, BVH, BVHNode, HybridBuilder, onFrustumIntersectionCallback, onFrustumIntersectionLODCallback, onIntersectionCallback, onIntersectionRayCallback, vec3ToArray, WebGLCoordinateSystem } from 'bvh.js';
 import { Box3, Matrix4, Raycaster, Sphere, Vector3 } from 'three';
-import { getSphereFromMatrix_centeredGeometry, SphereTarget } from '../utils/MatrixUtils.js';
 import { LODLevel } from './feature/LOD.js';
 import { InstancedMesh2 } from './InstancedMesh2.js';
 
@@ -32,6 +31,13 @@ export interface BVHParams {
    * @default true
    */
   accurateCulling?: boolean;
+}
+
+interface SphereTarget {
+  centerX: number;
+  centerY: number;
+  centerZ: number;
+  maxScale: number;
 }
 
 /**
@@ -265,7 +271,7 @@ export class InstancedMeshBVH {
   protected getBox(id: number, array: Float32Array): Float32Array {
     if (this._getBoxFromSphere) {
       const matrixArray = this.target.matricesTexture._data as Float32Array;
-      const { centerX, centerY, centerZ, maxScale } = getSphereFromMatrix_centeredGeometry(id, matrixArray, this._sphereTarget);
+      const { centerX, centerY, centerZ, maxScale } = this.getSphereFromMatrix_centeredGeometry(id, matrixArray, this._sphereTarget);
       const radius = this._geoBoundingSphere.radius * maxScale;
       array[0] = centerX - radius;
       array[1] = centerX + radius;
@@ -279,6 +285,32 @@ export class InstancedMeshBVH {
     }
 
     return array;
+  }
+
+  protected getSphereFromMatrix_centeredGeometry(id: number, array: Float32Array, target: SphereTarget): SphereTarget {
+    const offset = id * 16;
+
+    const m0 = array[offset + 0];
+    const m1 = array[offset + 1];
+    const m2 = array[offset + 2];
+    const m4 = array[offset + 4];
+    const m5 = array[offset + 5];
+    const m6 = array[offset + 6];
+    const m8 = array[offset + 8];
+    const m9 = array[offset + 9];
+    const m10 = array[offset + 10];
+
+    const scaleXSq = m0 * m0 + m1 * m1 + m2 * m2;
+    const scaleYSq = m4 * m4 + m5 * m5 + m6 * m6;
+    const scaleZSq = m8 * m8 + m9 * m9 + m10 * m10;
+
+    target.maxScale = Math.sqrt(Math.max(scaleXSq, scaleYSq, scaleZSq));
+
+    target.centerX = array[offset + 12];
+    target.centerY = array[offset + 13];
+    target.centerZ = array[offset + 14];
+
+    return target;
   }
 }
 

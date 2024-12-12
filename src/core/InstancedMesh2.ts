@@ -1,4 +1,4 @@
-import { Box3, BufferAttribute, BufferGeometry, Camera, Color, ColorManagement, ColorRepresentation, DataTexture, FloatType, InstancedBufferAttribute, Material, Matrix4, Mesh, MeshDepthMaterial, MeshDistanceMaterial, Object3D, Object3DEventMap, RGBADepthPacking, RedFormat, Scene, Sphere, WebGLRenderer } from 'three';
+import { Box3, BufferAttribute, BufferGeometry, Camera, Color, ColorManagement, ColorRepresentation, DataTexture, FloatType, InstancedBufferAttribute, Material, Matrix4, Mesh, MeshDepthMaterial, MeshDistanceMaterial, Object3D, Object3DEventMap, RGBADepthPacking, RedFormat, Scene, Sphere, Vector3, WebGLRenderer } from 'three';
 import { CustomSortCallback } from './feature/FrustumCulling.js';
 import { Entity } from './feature/Instances.js';
 import { LODInfo } from './feature/LOD.js';
@@ -438,11 +438,55 @@ export class InstancedMesh2<
   /**
    * Gets the local transformation matrix of a specific instance.
    * @param id The index of the instance.
-   * @param matrix Optional `Matrix4` to store the result in.
+   * @param matrix Optional `Matrix4` to store the result.
    * @returns The transformation matrix of the instance.
    */
   public getMatrixAt(id: number, matrix = _tempMat4): Matrix4 {
     return matrix.fromArray(this.matricesTexture._data, id * 16);
+  }
+
+  /**
+   * Retrieves the position of a specific instance.
+   * @param index The index of the instance.
+   * @param target Optional `Vector3` to store the result.
+   * @returns The position of the instance as a `Vector3`.
+   */
+  public getPositionAt(index: number, target = _position): Vector3 {
+    const offset = index * 16;
+    const array = this.matricesTexture._data;
+
+    target.x = array[offset + 12];
+    target.y = array[offset + 13];
+    target.z = array[offset + 14];
+
+    return target;
+  }
+
+  /**
+   * Calculates the maximum scale on any axis for a specific instance.
+   * @param index The index of the instance.
+   * @returns The maximum scale on any axis as a number.
+   */
+  public getMaxScaleOnAxisAt(index: number): number {
+    const offset = index * 16;
+    const array = this.matricesTexture._data;
+
+    const te0 = array[offset + 0];
+    const te1 = array[offset + 1];
+    const te2 = array[offset + 2];
+    const scaleXSq = te0 * te0 + te1 * te1 + te2 * te2;
+
+    const te4 = array[offset + 4];
+    const te5 = array[offset + 5];
+    const te6 = array[offset + 6];
+    const scaleYSq = te4 * te4 + te5 * te5 + te6 * te6;
+
+    const te8 = array[offset + 8];
+    const te9 = array[offset + 9];
+    const te10 = array[offset + 10];
+    const scaleZSq = te8 * te8 + te9 * te9 + te10 * te10;
+
+    return Math.sqrt(Math.max(scaleXSq, scaleYSq, scaleZSq));
   }
 
   /**
@@ -486,7 +530,7 @@ export class InstancedMesh2<
   /**
    * Gets the color of a specific instance.
    * @param id The index of the instance.
-   * @param color Optional `Color` to store the result in.
+   * @param color Optional `Color` to store the result.
    * @returns The color of the instance.
    */
   public getColorAt(id: number, color = _tempCol): Color {
@@ -657,3 +701,4 @@ const _sphere = new Sphere();
 const _tempMat4 = new Matrix4();
 const _tempCol = new Color();
 const _tempMesh = new Mesh();
+const _position = new Vector3();
