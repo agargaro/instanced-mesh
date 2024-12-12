@@ -210,13 +210,16 @@ export class InstancedMesh2<
     this.patchMaterials(value);
   }
 
+  /** @internal */
+  // eslint-disable-next-line @typescript-eslint/unified-signatures
+  constructor(geometry: TGeometry, material: TMaterial, params?: InstancedMesh2Params, LOD?: InstancedMesh2);
+  constructor(geometry: TGeometry, material: TMaterial, params?: InstancedMesh2Params);
   /**
    * @remarks Geometries and materials cannot be shared. If reused, they will be cloned.
    * @param geometry An instance of `BufferGeometry`.
    * @param material A single or an array of `Material`.
    * @param params Optional configuration parameters object. See `InstancedMesh2Params` for details.
    */
-  constructor(geometry: TGeometry, material: TMaterial, params?: InstancedMesh2Params);
   constructor(geometry: TGeometry, material: TMaterial, params: InstancedMesh2Params = {}, LOD?: InstancedMesh2) {
     if (!geometry) throw new Error('"geometry" is mandatory.');
     if (!material) throw new Error('"material" is mandatory.');
