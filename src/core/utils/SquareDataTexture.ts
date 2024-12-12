@@ -1,15 +1,42 @@
 import { DataTexture, FloatType, IntType, PixelFormat, RedFormat, RedIntegerFormat, RGBAFormat, RGBAIntegerFormat, RGFormat, RGIntegerFormat, TextureDataType, TypedArray, UnsignedIntType, WebGLRenderer, WebGLUtils } from 'three';
 import { UniformMap, UniformValue, UniformValueObj } from '../feature/Uniforms.js';
 
+/**
+ * Represents the number of elements per pixel.
+ */
 export type ChannelSize = 1 | 2 | 3 | 4;
+/**
+ * A constructor signature for creating TypedArray.
+ */
 export type TypedArrayConstructor = new (count: number) => TypedArray;
+/**
+ * Represents the texture information including its data, size, format, and data type.
+ */
 export type TextureInfo = { array: TypedArray; size: number; format: PixelFormat; type: TextureDataType };
+/**
+ * Represents information for updating rows in the texture, including the row index and number of rows.
+ */
 export type UpdateRowInfo = { row: number; count: number };
 
+/**
+ * Calculates the square texture size based on the capacity and pixels per instance.
+ * This ensures the texture is large enough to store all instances in a square layout.
+ * @param capacity The maximum number of instances allowed in the texture.
+ * @param pixelsPerInstance The number of pixels required for each instance.
+ * @returns The size of the square texture needed to store all the instances.
+ */
 export function getSquareTextureSize(capacity: number, pixelsPerInstance: number): number {
   return Math.max(pixelsPerInstance, Math.ceil(Math.sqrt(capacity / pixelsPerInstance)) * pixelsPerInstance);
 }
 
+/**
+ * Generates texture information (size, format, type) for a square texture based on the provided parameters.
+ * @param arrayType The constructor for the TypedArray.
+ * @param channels The number of channels in the texture.
+ * @param pixelsPerInstance The number of pixels required for each instance.
+ * @param capacity The maximum number of instances allowed in the texture.
+ * @returns An object containing the texture's array, size, format, and data type.
+ */
 export function getSquareTextureInfo(arrayType: TypedArrayConstructor, channels: ChannelSize, pixelsPerInstance: number, capacity: number): TextureInfo {
   if (channels === 3) {
     console.warn('"channels" cannot be 3. Set to 4. More info: https://github.com/mrdoob/three.js/pull/23228');
@@ -38,8 +65,20 @@ export function getSquareTextureInfo(arrayType: TypedArrayConstructor, channels:
   return { array, size, type, format };
 }
 
+/**
+ * A class that extends `DataTexture` to manage a square texture optimized for instances rendering.
+ * It supports dynamic resizing, partial update based on rows, and allows setting/getting uniforms per instance.
+ */
 export class SquareDataTexture extends DataTexture {
+  /**
+   * Whether to enable partial texture updates by row. If `false`, the entire texture will be updated.
+   * @default true.
+   */
   public partialUpdate = true;
+  /**
+   * The maximum number of update calls per frame.
+   * @default 100
+   */
   public maxUpdateCalls = 100;
   /** @internal */ _data: TypedArray;
   protected _channels: ChannelSize;
@@ -51,6 +90,13 @@ export class SquareDataTexture extends DataTexture {
   protected _gl: WebGL2RenderingContext = null;
   protected _utils: WebGLUtils = null;
 
+  /**
+   * @param arrayType The constructor for the TypedArray.
+   * @param channels The number of channels in the texture.
+   * @param pixelsPerInstance The number of pixels required for each instance.
+   * @param capacity The total number of instances.
+   * @param uniformMap Optional map for handling uniform values.
+   */
   constructor(arrayType: TypedArrayConstructor, channels: ChannelSize, pixelsPerInstance: number, capacity: number, uniformMap?: UniformMap) {
     const { array, format, size, type } = getSquareTextureInfo(arrayType, channels, pixelsPerInstance, capacity);
     super(array, size, size, format, type);
@@ -63,6 +109,10 @@ export class SquareDataTexture extends DataTexture {
     this.needsUpdate = true;
   }
 
+  /**
+   * Resizes the texture to accommodate a new number of instances.
+   * @param count The new total number of instances.
+   */
   public resize(count: number): void {
     const size = getSquareTextureSize(count, this._pixelsPerInstance);
     if (size === this.image.width) return;
@@ -81,6 +131,11 @@ export class SquareDataTexture extends DataTexture {
     this._data = data;
   }
 
+  /**
+   * Marks a row of the texture for update during the next render cycle.
+   * This helps in optimizing texture updates by only modifying the rows that have changed.
+   * @param index The index of the instance to update.
+   */
   public enqueueUpdate(index: number): void {
     if (!this.partialUpdate) {
       this.needsUpdate = true;
@@ -92,6 +147,11 @@ export class SquareDataTexture extends DataTexture {
     this._rowToUpdate[rowIndex] = true;
   }
 
+  /**
+   * Updates the texture data based on the rows that need updating.
+   * This method is optimized to only update the rows that have changed, improving performance.
+   * @param renderer The WebGLRenderer used for rendering.
+   */
   public update(renderer: WebGLRenderer): void {
     if (!this.partialUpdate) return;
     const rowsInfo = this.getUpdateRowsInfo();
@@ -130,7 +190,7 @@ export class SquareDataTexture extends DataTexture {
     if (!this._utils) this._utils = new WebGLUtils(this._gl, renderer.extensions);
   }
 
-  // @reference: https://github.com/mrdoob/three.js/blob/master/src/renderers/WebGLRenderer.js#L2569
+  // Reference: https://github.com/mrdoob/three.js/blob/master/src/renderers/WebGLRenderer.js#L2569
   protected updateRows(info: UpdateRowInfo[]): void {
     const state = this._renderer.state;
     const gl = this._gl;
@@ -172,6 +232,12 @@ export class SquareDataTexture extends DataTexture {
     state.unbindTexture();
   }
 
+  /**
+   * Sets a uniform value at the specified instance ID in the texture.
+   * @param id The instance ID to set the uniform for.
+   * @param name The name of the uniform.
+   * @param value The value to set for the uniform.
+   */
   public setUniformAt(id: number, name: string, value: UniformValue): void {
     const { offset, size } = this._uniformMap.get(name);
     const stride = this._stride;
@@ -183,6 +249,13 @@ export class SquareDataTexture extends DataTexture {
     }
   }
 
+  /**
+   * Retrieves a uniform value at the specified instance ID from the texture.
+   * @param id The instance ID to retrieve the uniform from.
+   * @param name The name of the uniform.
+   * @param target Optional target object to store the uniform value.
+   * @returns The uniform value for the specified instance.
+   */
   public getUniformAt(id: number, name: string, target?: UniformValueObj): UniformValue {
     const { offset, size } = this._uniformMap.get(name);
     const stride = this._stride;
@@ -194,6 +267,12 @@ export class SquareDataTexture extends DataTexture {
     return target.fromArray(this._data, id * stride + offset);
   }
 
+  /**
+   * Generates the GLSL code for accessing the uniform data stored in the texture.
+   * @param textureName The name of the texture in the GLSL shader.
+   * @param indexName The name of the index in the GLSL shader.
+   * @returns The GLSL code to access the uniform data.
+   */
   public getUniformsFragmentGLSL(textureName: string, indexName: string): string {
     // TODO override uniform also in vertex shader
     const pixelsPerInstance = this._pixelsPerInstance;

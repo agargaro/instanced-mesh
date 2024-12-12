@@ -32,37 +32,98 @@ export interface InstancedMesh2Params {
   createInstances?: boolean;
   /**
    * Determines whether `InstancedEntity` can use the `rotation` property.
-   * If **true** `quaternion` and `rotation` will be synchronized, affecting performance.
+   * If `true` `quaternion` and `rotation` will be synchronized, affecting performance.
    * @default false
    */
   allowsEuler?: boolean;
   /**
    * WebGL renderer instance.
    * If not provided, buffers will be initialized during the first render, resulting in no instances being rendered initially.
+   * @default null
    */
   renderer?: WebGLRenderer;
 }
 
+/**
+ * Alternative `InstancedMesh` class to support additional features like frustum culling, fast raycasting, LOD and more.
+ * @template TData Type for additional instance data.
+ * @template TGeometry Type extending `BufferGeometry`.
+ * @template TMaterial Type extending `Material` or an array of `Material`.
+ * @template TEventMap Type extending `Object3DEventMap`.
+ */
 export class InstancedMesh2<
   TData = {},
   TGeometry extends BufferGeometry = BufferGeometry,
   TMaterial extends Material | Material[] = Material | Material[],
   TEventMap extends Object3DEventMap = Object3DEventMap
 > extends Mesh<TGeometry, TMaterial, TEventMap> {
+  /**
+   * @defaultValue `InstancedMesh2`
+   */
   public override readonly type = 'InstancedMesh2';
+  /**
+   * Indicates if this is an `InstancedMesh2`.
+   */
   public readonly isInstancedMesh2 = true;
+  /**
+   * An array of `Entity` representing individual instances.
+   * This array is only initialized if `createInstances` is set to `true` in the constructor parameters.
+   */
   public instances: Entity<TData>[] = null;
+  /**
+   * Attribute storing indices of the instances to be rendered.
+   */
   public instanceIndex: GLInstancedBufferAttribute;
+  /**
+   * Texture storing matrices for instances.
+   */
   public matricesTexture: SquareDataTexture;
+  /**
+   * Texture storing colors for instances.
+   */
   public colorsTexture: SquareDataTexture = null;
+  /**
+   * Texture storing morph target influences for instances.
+   */
   public morphTexture: DataTexture = null;
+  /**
+   * Texture storing custom uniforms per instance.
+   */
   public uniformsTexture: SquareDataTexture = null;
+  /**
+   * This bounding box encloses all instances, which can be calculated with `computeBoundingBox` method.
+   * Bounding box isn't computed by default. It needs to be explicitly computed, otherwise it's `null`.
+   */
   public boundingBox: Box3 = null;
+  /**
+   * This bounding sphere encloses all instances, which can be calculated with `computeBoundingSphere` method.
+   * Bounding sphere is computed during its first render. You may need to recompute it if an instance is transformed.
+   */
   public boundingSphere: Sphere = null;
+  /**
+   * BVH structure for optimized culling and intersection testing.
+   * It's possible to create the BVH using the `computeBVH` method. Once created it will be updated automatically.
+   */
   public bvh: InstancedMeshBVH = null;
+  /**
+   * Custom sort function for instances.
+   * It's possible to create the radix sort using the `createRadixSort` method.
+   * @default null
+  */
   public customSort: CustomSortCallback = null;
+  /**
+   * Flag indicating if raycasting should only consider the last frame frustum culled instances.
+   * This is ignored if the bvh has been created.
+   * @default false
+   */
   public raycastOnlyFrustum = false;
+  /**
+   * Array storing visibility for instances.
+   */
   public visibilityArray: boolean[];
+  /**
+   * Contains data for managing LOD, allowing different levels of detail for rendering and shadow casting.
+   */
   public LODinfo: LODInfo<TData> = null;
   /** @internal */ _renderer: WebGLRenderer = null;
   /** @internal */ _instancesCount = 0;
@@ -78,32 +139,60 @@ export class InstancedMesh2<
   protected readonly _tempInstance: InstancedEntity;
   protected _useOpacity = false;
 
+  /**
+   * @defaultValue `new MeshDepthMaterial({ depthPacking: RGBADepthPacking })`
+   */
   public override customDepthMaterial = new MeshDepthMaterial({ depthPacking: RGBADepthPacking });
+  /**
+   * @defaultValue `new MeshDistanceMaterial()`
+   */
   public override customDistanceMaterial = new MeshDistanceMaterial();
 
   // HACK TO MAKE IT WORK WITHOUT UPDATE CORE
-  private readonly isInstancedMesh = true; // must be set to use instancing rendering
-  private readonly instanceMatrix = new InstancedBufferAttribute(new Float32Array(0), 16); // must be init to avoid exception
-  private readonly instanceColor = null; // must be null to avoid exception
+  /** @internal */ isInstancedMesh = true; // must be set to use instancing rendering
+  /** @internal */ instanceMatrix = new InstancedBufferAttribute(new Float32Array(0), 16); // must be init to avoid exception
+  /** @internal */ instanceColor = null; // must be null to avoid exception
 
+  /**
+   * The capacity of the instance buffers.
+   */
   public get capacity(): number { return this._capacity; }
+
+  /**
+   * The number of instances rendered in the last frame.
+   */
   public get count(): number { return this._count; }
 
+  /**
+   * The number of active instances.
+   * If a number greater than the `capacity` is set, the `capacity` will be increased automatically.
+   */
   public get instancesCount(): number { return this._instancesCount; }
   public set instancesCount(value: number) { this.setInstancesCount(value); }
 
+  /**
+   * Determines if per-instance frustum culling is enabled.
+   * @default true
+   */
   public get perObjectFrustumCulled(): boolean { return this._perObjectFrustumCulled; }
   public set perObjectFrustumCulled(value: boolean) {
     this._perObjectFrustumCulled = value;
     this._indexArrayNeedsUpdate = true;
   }
 
+  /**
+   * Determines if objects should be sorted before rendering.
+   * @default false
+   */
   public get sortObjects(): boolean { return this._sortObjects; }
   public set sortObjects(value: boolean) {
     this._sortObjects = value;
     this._indexArrayNeedsUpdate = true;
   }
 
+  /**
+   * An instance of `BufferGeometry` (or derived classes), defining the object's structure.
+   */
   // @ts-expect-error it's defined as a property, but is overridden as an accessor.
   public override get geometry(): TGeometry { return this._geometry; }
   public override set geometry(value: TGeometry) {
@@ -111,6 +200,9 @@ export class InstancedMesh2<
     this.patchGeometry(value);
   }
 
+  /**
+   * An instance of `material` (or derived classes) or an array of materials, defining the object's appearance.
+   */
   // @ts-expect-error it's defined as a property, but is overridden as an accessor.
   public override get material(): TMaterial { return this._material; }
   public override set material(value: TMaterial) {
@@ -118,7 +210,16 @@ export class InstancedMesh2<
     this.patchMaterials(value);
   }
 
-  /** MATERIAL CANNOT BE SHARED AND GEOMETRY IS CLONED IF ALREADY PATCHED */
+  /** @internal */
+  // eslint-disable-next-line @typescript-eslint/unified-signatures
+  constructor(geometry: TGeometry, material: TMaterial, params?: InstancedMesh2Params, LOD?: InstancedMesh2);
+  constructor(geometry: TGeometry, material: TMaterial, params?: InstancedMesh2Params);
+  /**
+   * @remarks Geometries and materials cannot be shared. If reused, they will be cloned.
+   * @param geometry An instance of `BufferGeometry`.
+   * @param material A single or an array of `Material`.
+   * @param params Optional configuration parameters object. See `InstancedMesh2Params` for details.
+   */
   constructor(geometry: TGeometry, material: TMaterial, params: InstancedMesh2Params = {}, LOD?: InstancedMesh2) {
     if (!geometry) throw new Error('"geometry" is mandatory.');
     if (!material) throw new Error('"material" is mandatory.');
@@ -230,12 +331,13 @@ export class InstancedMesh2<
 
   protected patchGeometry(geometry: TGeometry): void {
     if (geometry.hasAttribute('instanceIndex')) {
+      console.warn('The geometry has been cloned because it was already used.');
       geometry = geometry.clone();
       geometry.deleteAttribute('instanceIndex');
     }
 
     if (this.instanceIndex) {
-      geometry.setAttribute('instanceIndex', this.instanceIndex as unknown as BufferAttribute);
+      geometry.setAttribute('instanceIndex', this.instanceIndex as unknown as BufferAttribute); // Fix d.ts
     }
   }
 
@@ -297,16 +399,30 @@ export class InstancedMesh2<
     material.isInstancedMeshPatched = true;
   }
 
+  /**
+   * Creates and computes the BVH (Bounding Volume Hierarchy) for the instances.
+   * It's recommended to create it when all the instance matrices have been assigned.
+   * Once created it will be updated automatically.
+   * @param config Optional configuration parameters object. See `BVHParams` for details.
+   */
   public computeBVH(config: BVHParams = {}): void {
     if (!this.bvh) this.bvh = new InstancedMeshBVH(this, config.margin, config.getBBoxFromBSphere, config.accurateCulling);
     this.bvh.clear();
     this.bvh.create();
   }
 
+  /**
+   * Disposes of the BVH structure.
+   */
   public disposeBVH(): void {
     this.bvh = null;
   }
 
+  /**
+   * Sets the local transformation matrix for a specific instance.
+   * @param id The index of the instance.
+   * @param matrix A `Matrix4` representing the local transformation to apply to the instance.
+   */
   public setMatrixAt(id: number, matrix: Matrix4): void {
     matrix.toArray(this.matricesTexture._data, id * 16);
 
@@ -319,19 +435,40 @@ export class InstancedMesh2<
     this.bvh?.move(id);
   }
 
+  /**
+   * Gets the local transformation matrix of a specific instance.
+   * @param id The index of the instance.
+   * @param matrix Optional `Matrix4` to store the result in.
+   * @returns The transformation matrix of the instance.
+   */
   public getMatrixAt(id: number, matrix = _tempMat4): Matrix4 {
     return matrix.fromArray(this.matricesTexture._data, id * 16);
   }
 
+  /**
+   * Sets the visibility of a specific instance.
+   * @param id The index of the instance.
+   * @param visible Whether the instance should be visible.
+   */
   public setVisibilityAt(id: number, visible: boolean): void {
     this.visibilityArray[id] = visible;
     this._indexArrayNeedsUpdate = true;
   }
 
+  /**
+   * Gets the visibility of a specific instance.
+   * @param id The index of the instance.
+   * @returns Whether the instance is visible.
+   */
   public getVisibilityAt(id: number): boolean {
     return this.visibilityArray[id];
   }
 
+  /**
+   * Sets the color of a specific instance.
+   * @param id The index of the instance.
+   * @param color The color to assign to the instance.
+   */
   public setColorAt(id: number, color: ColorRepresentation): void {
     if (this.colorsTexture === null) {
       this.initColorsTexture();
@@ -346,10 +483,21 @@ export class InstancedMesh2<
     this.colorsTexture.enqueueUpdate(id);
   }
 
+  /**
+   * Gets the color of a specific instance.
+   * @param id The index of the instance.
+   * @param color Optional `Color` to store the result in.
+   * @returns The color of the instance.
+   */
   public getColorAt(id: number, color = _tempCol): Color {
     return color.fromArray(this.colorsTexture._data, id * 4);
   }
 
+  /**
+   * Sets the opacity of a specific instance.
+   * @param id The index of the instance.
+   * @param value The opacity value to assign.
+   */
   public setOpacityAt(id: number, value: number): void {
     if (this.colorsTexture === null) {
       this.initColorsTexture();
@@ -360,10 +508,21 @@ export class InstancedMesh2<
     this.colorsTexture.enqueueUpdate(id);
   }
 
+  /**
+   * Gets the opacity of a specific instance.
+   * @param id The index of the instance.
+   * @returns The opacity of the instance.
+   */
   public getOpacityAt(id: number): number {
     return this.colorsTexture._data[id * 4 + 3];
   }
 
+  /**
+   * Gets the morph target data for a specific instance.
+   * @param index The index of the instance.
+   * @param object Optional `Mesh` to store the morph target data.
+   * @returns The mesh object with updated morph target influences.
+   */
   public getMorphAt(index: number, object = _tempMesh): Mesh {
     const objectInfluences = object.morphTargetInfluences;
     const array = this.morphTexture.source.data.data;
@@ -377,6 +536,11 @@ export class InstancedMesh2<
     return object;
   }
 
+  /**
+   * Sets the morph target influences for a specific instance.
+   * @param index The index of the instance.
+   * @param object The `Mesh` containing the morph target influences to apply.
+   */
   public setMorphAt(index: number, object: Mesh): void {
     const objectInfluences = object.morphTargetInfluences;
     const len = objectInfluences.length + 1; // morphBaseInfluence + all influences
@@ -399,10 +563,18 @@ export class InstancedMesh2<
     this.morphTexture.needsUpdate = true;
   }
 
+  /**
+   * Copies `position`, `quaternion`, and `scale` of a specific instance to the specified target `Object3D`.
+   * @param id The index of the instance.
+   * @param target The `Object3D` where to copy transformation data.
+   */
   public copyTo(id: number, target: Object3D): void {
     this.getMatrixAt(id, target.matrix).decompose(target.position, target.quaternion, target.scale);
   }
 
+  /**
+   * Computes the bounding box that encloses all instances, and updates the `boundingBox` attribute.
+   */
   public computeBoundingBox(): void {
     const geometry = this._geometry;
     const count = this._instancesCount;
@@ -421,6 +593,9 @@ export class InstancedMesh2<
     }
   }
 
+  /**
+   * Computes the bounding sphere that encloses all instances, and updates the `boundingSphere` attribute.
+   */
   public computeBoundingSphere(): void {
     const geometry = this._geometry;
     const count = this._instancesCount;
@@ -463,15 +638,16 @@ export class InstancedMesh2<
     return this;
   }
 
-  public dispose(): this {
+  /**
+   * Frees the GPU-related resources allocated.
+   */
+  public dispose(): void {
     this.dispatchEvent<any>({ type: 'dispose' });
 
     this.matricesTexture.dispose();
     this.colorsTexture?.dispose();
     this.morphTexture?.dispose();
     this.uniformsTexture?.dispose();
-
-    return this;
   }
 }
 
