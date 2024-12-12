@@ -9,6 +9,11 @@ ShaderChunk['instanced_vertex'] = instanced_vertex;
 ShaderChunk['instanced_color_pars_fragment'] = instanced_color_pars_fragment;
 ShaderChunk['instanced_color_fragment'] = instanced_color_fragment;
 
+/**
+ * Patches the given shader string by adding a condition for indirect instancing support.
+ * @param shader The shader code to modify.
+ * @returns The modified shader code with the additional instancing condition.
+ */
 export function patchShader(shader: string): string {
   return shader.replace('#ifdef USE_INSTANCING', '#if defined USE_INSTANCING || defined USE_INSTANCING_INDIRECT');
 }
