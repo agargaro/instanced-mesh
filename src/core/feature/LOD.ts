@@ -1,31 +1,96 @@
 import { BufferGeometry, Material, ShaderMaterial } from 'three';
 import { InstancedMesh2, InstancedMesh2Params } from '../InstancedMesh2.js';
 
-declare module '../InstancedMesh2.js' {
-  interface InstancedMesh2 {
-    getObjectLODIndexForDistance(levels: LODLevel[], distance: number): number;
-    setFirstLODDistance(distance?: number, hysteresis?: number): this;
-    addLOD(geometry: BufferGeometry, material: Material, distance?: number, hysteresis?: number): this;
-    addShadowLOD(geometry: BufferGeometry, distance?: number, hysteresis?: number): this;
-    /** @internal */ addLevel(renderList: LODRenderList, geometry: BufferGeometry, material: Material, distance: number, hysteresis: number): InstancedMesh2;
-  }
+// TODO check squaured distance in comments and code
+
+/**
+ * Represents information about Level of Detail (LOD).
+ * @template TData Type for additional instance data.
+ */
+export interface LODInfo<TData = {}> {
+  /**
+   * Render settings for the LOD.
+   */
+  render: LODRenderList<TData>;
+  /**
+   * Shadow rendering settings for the LOD.
+   */
+  shadowRender: LODRenderList<TData>;
+  /**
+   * List of `InstancedMesh2` associated to LODs.
+   */
+  objects: InstancedMesh2<TData>[];
 }
 
-export interface LODInfo<TCustomData = {}> {
-  render: LODRenderList<TCustomData>;
-  shadowRender: LODRenderList<TCustomData>;
-  objects: InstancedMesh2<TCustomData>[];
-}
-
-export interface LODRenderList<TCustomData = {}> {
-  levels: LODLevel<TCustomData>[];
+/**
+ * Represents a list of render levels for LOD.
+ * @template TData Type for additional instance data.
+ */
+export interface LODRenderList<TData = {}> {
+  /**
+   * Array of LOD levels.
+   */
+  levels: LODLevel<TData>[];
+  /**
+   * Array of instance counts per LOD level, used internally.
+   */
   count: number[];
 }
 
-export interface LODLevel<TCustomData = {}> {
+/**
+ * Represents a single LOD level.
+ * @template TData Type for additional instance data.
+ */
+export interface LODLevel<TData = {}> {
+  /**
+   * The squared distance at which this LOD level becomes active.
+   */
   distance: number;
+  /**
+   * Hysteresis value to prevent LOD flickering when transitioning.
+   */
   hysteresis: number;
-  object: InstancedMesh2<TCustomData>;
+  /**
+   * The `InstancedMesh2` object associated with this LOD level.
+   */
+  object: InstancedMesh2<TData>;
+}
+
+declare module '../InstancedMesh2.js' {
+  interface InstancedMesh2 {
+    /**
+     * Retrieves the index of the LOD level for a given distance.
+     * @param levels The array of LOD levels.
+     * @param distance The squared distance from the camera to the object.
+     * @returns The index of the LOD level that should be used.
+     */
+    getObjectLODIndexForDistance(levels: LODLevel[], distance: number): number;
+    /**
+     * Sets the first LOD (using current geometry) distance and hysteresis.
+     * @param distance The distance for the first LOD.
+     * @param hysteresis The hysteresis value for the first LOD.
+     * @returns The current `InstancedMesh2` instance.
+     */
+    setFirstLODDistance(distance?: number, hysteresis?: number): this;
+    /**
+     * Adds a new LOD level with the given geometry, material, and distance.
+     * @param geometry The geometry for the LOD level.
+     * @param material The material for the LOD level.
+     * @param distance The distance for this LOD level.
+     * @param hysteresis The hysteresis value for this LOD level.
+     * @returns The current `InstancedMesh2` instance.
+     */
+    addLOD(geometry: BufferGeometry, material: Material, distance?: number, hysteresis?: number): this;
+    /**
+     * Adds a shadow-specific LOD level with the given geometry and distance.
+     * @param geometry The geometry for the shadow LOD.
+     * @param distance The distance for this LOD level.
+     * @param hysteresis The hysteresis value for this LOD level.
+     * @returns The current `InstancedMesh2` instance.
+     */
+    addShadowLOD(geometry: BufferGeometry, distance?: number, hysteresis?: number): this;
+    /** @internal */ addLevel(renderList: LODRenderList, geometry: BufferGeometry, material: Material, distance: number, hysteresis: number): InstancedMesh2;
+  }
 }
 
 InstancedMesh2.prototype.getObjectLODIndexForDistance = function (levels: LODLevel[], distance: number): number {

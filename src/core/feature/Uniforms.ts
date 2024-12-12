@@ -1,18 +1,9 @@
-import { Color, Matrix3, Matrix4, Vector2, Vector3, Vector4 } from 'three';
-import { ChannelSize, SquareDataTexture } from '../utils/SquareDataTexture.js';
 import { InstancedMesh2 } from '../InstancedMesh2.js';
+import { ChannelSize, SquareDataTexture, UniformMap, UniformMapType, UniformType, UniformValue, UniformValueObj } from '../utils/SquareDataTexture.js';
 
-export type UniformType = 'float' | 'vec2' | 'vec3' | 'vec4' | 'mat3' | 'mat4';
-export type UniformValueObj = Vector2 | Vector3 | Vector4 | Matrix3 | Matrix4 | Color;
-export type UniformValue = number | UniformValueObj;
-type UniformMapType = { offset: number; size: number; type: UniformType };
-/** @internal */ export type UniformMap = Map<string, UniformMapType>;
+type UniformSchema = { [x: string]: UniformType };
 
-/** @internal */
-export type UniformSchema = { [x: string]: UniformType };
-
-/** @internal */
-export interface UniformSchemaResult {
+interface UniformSchemaResult {
   channels: ChannelSize;
   pixelsPerInstance: number;
   uniformMap: UniformMap;
@@ -20,8 +11,25 @@ export interface UniformSchemaResult {
 
 declare module '../InstancedMesh2.js' {
   interface InstancedMesh2 {
+    /**
+     * Retrieves a uniform value for a specific instance.
+     * @param id The index of the instance.
+     * @param name The name of the uniform.
+     * @param target Optional target object to store the uniform value.
+     * @returns The uniform value for the specified instance.
+     */
     getUniformAt(id: number, name: string, target?: UniformValueObj): UniformValue;
+    /**
+     * Sets a uniform value for a specific instance.
+     * @param id The index of the instance.
+     * @param name The name of the uniform.
+     * @param value The value to set for the uniform.
+     */
     setUniformAt(id: number, name: string, value: UniformValue): void;
+    /**
+     * Initializes per-instance uniforms using a schema.
+     * @param schema The schema defining the uniforms.
+     */
     initUniformsPerInstance(schema: UniformSchema): void;
     /** @internal */ getUniforSchemaResult(schema: UniformSchema): UniformSchemaResult;
     /** @internal */ getUniformOffset(size: number, tempOffset: number[]): number;

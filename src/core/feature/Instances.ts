@@ -1,16 +1,36 @@
 import { InstancedEntity } from '../InstancedEntity.js';
 import { InstancedMesh2 } from '../InstancedMesh2.js';
 
+// TODO: removeInstances(count: number): void;
+
+/**
+ * Represents an extended entity type with custom data.
+ */
 export type Entity<T> = InstancedEntity & T;
+/**
+ * A callback function used to update or initialize an entity.
+ */
 export type UpdateEntityCallback<T = InstancedEntity> = (obj: Entity<T>, index: number) => void;
 
 declare module '../InstancedMesh2.js' {
   interface InstancedMesh2<TData = {}> {
+    /**
+     * Updates instances by applying a callback function to each instance.
+     * @param onUpdate A callback function to update each entity.
+     * @param start The starting index of the instances to update. Defaults to 0.
+     * @param count The number of instances to update. Defaults to the total instance count.
+     * @returns The current `InstancedMesh2` instance.
+     */
+    updateInstances(onUpdate: UpdateEntityCallback<Entity<TData>>, start?: number, count?: number): this;
+    /**
+     * Adds new instances and optionally initializes them using a callback function.
+     * @param count The number of new instances to add.
+     * @param onCreation A callback function to initialize each new entity.
+     * @returns The current `InstancedMesh2` instance.
+     */
+    addInstances(count: number, onCreation?: UpdateEntityCallback<Entity<TData>>): this;
     /** @internal */ clearInstance(instance: InstancedEntity, index: number): InstancedEntity;
     /** @internal */ createInstances(start?: number, count?: number): this;
-    updateInstances(onUpdate: UpdateEntityCallback<Entity<TData>>, start?: number, count?: number): this;
-    addInstances(count: number, onCreation?: UpdateEntityCallback<Entity<TData>>): this;
-    // removeInstances(count: number): void;
   }
 }
 

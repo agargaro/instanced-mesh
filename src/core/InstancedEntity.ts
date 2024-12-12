@@ -1,6 +1,6 @@
 import { Color, ColorRepresentation, Euler, Matrix4, Mesh, Object3D, Quaternion, Vector3 } from 'three';
 import { InstancedMesh2 } from './InstancedMesh2.js';
-import { UniformValue, UniformValueObj } from './feature/Uniforms.js';
+import { UniformValue, UniformValueObj } from './utils/SquareDataTexture.js';
 
 // TODO add other object3D methods
 // TODO implement parent
