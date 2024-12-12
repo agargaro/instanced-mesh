@@ -18,10 +18,8 @@ const materials = [
   new MeshNormalMaterial(),
   new MeshNormalMaterial()
 ];
-const boxes = new InstancedMesh2(new BoxGeometry(), materials, { renderer: main.renderer });
+const boxes = new InstancedMesh2(new BoxGeometry(), materials);
 scene.add(boxes);
-
-boxes.addLOD(new BoxGeometry(), new MeshBasicMaterial(), 50);
 
 boxes.addInstances(100000, (o) => {
   o.position.randomDirection().multiplyScalar(Math.random() * 1000 + 20);
