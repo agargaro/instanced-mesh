@@ -1,5 +1,4 @@
-import { DataTexture, FloatType, IntType, PixelFormat, RedFormat, RedIntegerFormat, RGBAFormat, RGBAIntegerFormat, RGFormat, RGIntegerFormat, TextureDataType, TypedArray, UnsignedIntType, WebGLRenderer, WebGLUtils } from 'three';
-import { UniformMap, UniformValue, UniformValueObj } from '../feature/Uniforms.js';
+import { Color, DataTexture, FloatType, IntType, Matrix3, Matrix4, PixelFormat, RedFormat, RedIntegerFormat, RGBAFormat, RGBAIntegerFormat, RGFormat, RGIntegerFormat, TextureDataType, TypedArray, UnsignedIntType, Vector2, Vector3, Vector4, WebGLRenderer, WebGLUtils } from 'three';
 
 /**
  * Represents the number of elements per pixel.
@@ -17,6 +16,26 @@ export type TextureInfo = { array: TypedArray; size: number; format: PixelFormat
  * Represents information for updating rows in the texture, including the row index and number of rows.
  */
 export type UpdateRowInfo = { row: number; count: number };
+/**
+ * Defines the possible types of uniforms that can be used in shaders.
+ */
+export type UniformType = 'float' | 'vec2' | 'vec3' | 'vec4' | 'mat3' | 'mat4';
+/**
+ * Represents a value that can be used as a uniform.
+ */
+export type UniformValueObj = Vector2 | Vector3 | Vector4 | Matrix3 | Matrix4 | Color;
+/**
+ * Defines a uniform value as either a number or a compatible Three.js object.
+ */
+export type UniformValue = number | UniformValueObj;
+/**
+ * Represents the schema for a uniform, defining its offset, size, and type.
+ */
+export type UniformMapType = { offset: number; size: number; type: UniformType };
+/**
+ * Represents a map of uniform names to their schema definitions.
+ */
+export type UniformMap = Map<string, UniformMapType>;
 
 /**
  * Calculates the square texture size based on the capacity and pixels per instance.
