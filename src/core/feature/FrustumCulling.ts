@@ -7,10 +7,18 @@ import { LODRenderList } from './LOD.js';
 
 // TODO: fix shadowMap LOD sorting objects?
 
+/**
+ * A custom sorting callback for render items.
+ */
 export type CustomSortCallback = (list: InstancedRenderItem[]) => void;
 
 declare module '../InstancedMesh2.js' {
   interface InstancedMesh2 {
+    /**
+     * Performs frustum culling and manages LOD visibility.
+     * @param camera The main camera used for rendering.
+     * @param cameraLOD An optional camera for LOD calculations. Defaults to the main camera.
+     */
     performFrustumCulling(camera: Camera, cameraLOD?: Camera): void;
 
     /** @internal */ frustumCulling(camera: Camera): void;
