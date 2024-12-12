@@ -17,4 +17,4 @@ title: "createTexture_float"
 
 ## Defined in
 
-[src/utils/CreateTexture.ts:3](https://github.com/agargaro/instanced-mesh/blob/6b4aafb234e44b872be8f20e0304628a1f2217cf/src/utils/CreateTexture.ts#L3)
+[src/utils/CreateTexture.ts:3](https://github.com/agargaro/instanced-mesh/blob/09034c570fc8bedebf7b7757d2f658100710378c/src/utils/CreateTexture.ts#L3)

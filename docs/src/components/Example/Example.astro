@@ -1,6 +1,7 @@
 ---
-import { Code } from '@astrojs/starlight/components'
+import { Code } from '@astrojs/starlight/components';
 import OpenInStackblitz from './OpenInStackblitz.astro';
+import CodeWrapper from './CodeWrapper.astro';
 
 export const c = (...args: (string | boolean)[]) => {
   return args.filter(Boolean).join(' ');
@@ -47,7 +48,6 @@ const hidePreview = Astro.props.hidePreview ?? false;
 
 <div class="example-component-wrapper not-content">
   {!hidePreview && <iframe src={`/examples/${Astro.props.path}?p=${Date.now()}`} title={Astro.props.path} class="example-iframe" />}
-
   {
     !Astro.props.hideStackblitz && (
       <div class="open-in-stackblitz-btn">
@@ -55,36 +55,8 @@ const hidePreview = Astro.props.hidePreview ?? false;
       </div>
     )
   }
-
-  {
-    !hideCodeResolved && (
-      <div class="code-wrapper">
-        <div class="code-wrapper-content">
-          {Object.entries(files).map(([filePath, content]) => (
-            <div class="code-file" data-path={filePath}>
-            <!-- TODO maybe we can apply some title and highlights  -->
-                <Code code={content as string} title={filePath} lang='ts'></Code>
-            </div>
-          ))}
-        </div>
-        <div class="code-toggle-container-btn">
-         <button class="code-toggle-btn">Toggle Code</button>
-        </div>
-      </div>
-    )
-  }
+  {!hideCodeResolved && <CodeWrapper files={files} />}
 </div>
-
-<script>
-  const codeWrapper = document.querySelector('.code-wrapper');
-  const button = document.querySelector('#code-toggle-btn');
-
-  const onClick = () => {
-    codeWrapper?.classList.toggle('code-wrapper-content--open');
-  };
-  // Add event listeners to fire confetti when a button is clicked.
-  button?.addEventListener('click', () => onClick());
-</script>
 
 <style>
   .example-component-wrapper {
@@ -107,33 +79,5 @@ const hidePreview = Astro.props.hidePreview ?? false;
     height: auto;
     top: 1rem;
     right: 1rem;
-  }
-
-  .code-wrapper {
-    max-height: 5rem;
-    position: relative;
-    height: 100%;
-    overflow: hidden;
-  }
-  .code-toggle-container-btn{
-    background-image:linear-gradient(to top, rgb(38, 38, 38), rgba(38, 38, 38, 0.5));
-    content: '';
-    position: absolute;
-    inset: 0;
-    z-index: 99;
-  }
-
-  .code-wrapper--open {
-    height: 100%;
-  }
-
-  .code-toggle-btn{
-    position: absolute;
-    height: auto;
-    bottom: 1rem;
-    margin: auto;
-    left: 0;
-    width: max-content;
-    right: 0;
   }
 </style>

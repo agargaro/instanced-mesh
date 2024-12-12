@@ -18,7 +18,6 @@ export default defineConfig({
       imports: ['./src/components/Example/Example.astro'],
     }),
     starlight({
-      disable404Route: true,
       plugins: [
         // Generate the documentation.
         starlightTypeDoc({

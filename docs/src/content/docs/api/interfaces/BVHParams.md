@@ -13,7 +13,7 @@ title: "BVHParams"
 
 #### Defined in
 
-[src/core/InstancedMesh2.ts:27](https://github.com/agargaro/instanced-mesh/blob/6b4aafb234e44b872be8f20e0304628a1f2217cf/src/core/InstancedMesh2.ts#L27)
+[src/core/InstancedMesh2.ts:27](https://github.com/agargaro/instanced-mesh/blob/09034c570fc8bedebf7b7757d2f658100710378c/src/core/InstancedMesh2.ts#L27)
 
 ***
 
@@ -23,7 +23,7 @@ title: "BVHParams"
 
 #### Defined in
 
-[src/core/InstancedMesh2.ts:26](https://github.com/agargaro/instanced-mesh/blob/6b4aafb234e44b872be8f20e0304628a1f2217cf/src/core/InstancedMesh2.ts#L26)
+[src/core/InstancedMesh2.ts:26](https://github.com/agargaro/instanced-mesh/blob/09034c570fc8bedebf7b7757d2f658100710378c/src/core/InstancedMesh2.ts#L26)
 
 ***
 
@@ -33,7 +33,7 @@ title: "BVHParams"
 
 #### Defined in
 
-[src/core/InstancedMesh2.ts:25](https://github.com/agargaro/instanced-mesh/blob/6b4aafb234e44b872be8f20e0304628a1f2217cf/src/core/InstancedMesh2.ts#L25)
+[src/core/InstancedMesh2.ts:25](https://github.com/agargaro/instanced-mesh/blob/09034c570fc8bedebf7b7757d2f658100710378c/src/core/InstancedMesh2.ts#L25)
 
 ***
 
@@ -43,4 +43,4 @@ title: "BVHParams"
 
 #### Defined in
 
-[src/core/InstancedMesh2.ts:28](https://github.com/agargaro/instanced-mesh/blob/6b4aafb234e44b872be8f20e0304628a1f2217cf/src/core/InstancedMesh2.ts#L28)
+[src/core/InstancedMesh2.ts:28](https://github.com/agargaro/instanced-mesh/blob/09034c570fc8bedebf7b7757d2f658100710378c/src/core/InstancedMesh2.ts#L28)
