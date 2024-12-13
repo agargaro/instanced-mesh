@@ -5,9 +5,13 @@ prev: false
 title: "LODRenderList"
 ---
 
+Represents a list of render levels for LOD.
+
 ## Type Parameters
 
-• **TCustomData** = `object`
+• **TData** = `object`
+
+Type for additional instance data.
 
 ## Properties
 
@@ -15,26 +19,20 @@ title: "LODRenderList"
 
 > **count**: `number`[]
 
-#### Defined in
-
-[src/core/feature/LOD.ts:23](https://github.com/agargaro/instanced-mesh/blob/09034c570fc8bedebf7b7757d2f658100710378c/src/core/feature/LOD.ts#L23)
-
-***
-
-### indexes
-
-> **indexes**: (`Uint16Array` \| `Uint32Array`)[]
+Array of instance counts per LOD level, used internally.
 
 #### Defined in
 
-[src/core/feature/LOD.ts:22](https://github.com/agargaro/instanced-mesh/blob/09034c570fc8bedebf7b7757d2f658100710378c/src/core/feature/LOD.ts#L22)
+[src/core/feature/LOD.ts:37](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/feature/LOD.ts#L37)
 
 ***
 
 ### levels
 
-> **levels**: [`LODLevel`](/api/interfaces/lodlevel/)\<`TCustomData`\>[]
+> **levels**: [`LODLevel`](/api/interfaces/lodlevel/)\<`TData`\>[]
+
+Array of LOD levels.
 
 #### Defined in
 
-[src/core/feature/LOD.ts:21](https://github.com/agargaro/instanced-mesh/blob/09034c570fc8bedebf7b7757d2f658100710378c/src/core/feature/LOD.ts#L21)
+[src/core/feature/LOD.ts:33](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/feature/LOD.ts#L33)

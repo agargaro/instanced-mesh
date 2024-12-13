@@ -5,36 +5,46 @@ prev: false
 title: "LODInfo"
 ---
 
+Represents information about Level of Detail (LOD).
+
 ## Type Parameters
 
-• **TCustomData** = `object`
+• **TData** = `object`
+
+Type for additional instance data.
 
 ## Properties
 
 ### objects
 
-> **objects**: [`InstancedMesh2`](/api/classes/instancedmesh2/)\<`TCustomData`, `BufferGeometry`\<`NormalBufferAttributes`\>, `Material` \| `Material`[], `Object3DEventMap`\>[]
+> **objects**: [`InstancedMesh2`](/api/classes/instancedmesh2/)\<`TData`, `BufferGeometry`\<`NormalBufferAttributes`\>, `Material` \| `Material`[], `Object3DEventMap`\>[]
+
+List of `InstancedMesh2` associated to LODs.
 
 #### Defined in
 
-[src/core/feature/LOD.ts:17](https://github.com/agargaro/instanced-mesh/blob/09034c570fc8bedebf7b7757d2f658100710378c/src/core/feature/LOD.ts#L17)
+[src/core/feature/LOD.ts:22](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/feature/LOD.ts#L22)
 
 ***
 
 ### render
 
-> **render**: [`LODRenderList`](/api/interfaces/lodrenderlist/)\<`TCustomData`\>
+> **render**: [`LODRenderList`](/api/interfaces/lodrenderlist/)\<`TData`\>
+
+Render settings for the LOD.
 
 #### Defined in
 
-[src/core/feature/LOD.ts:15](https://github.com/agargaro/instanced-mesh/blob/09034c570fc8bedebf7b7757d2f658100710378c/src/core/feature/LOD.ts#L15)
+[src/core/feature/LOD.ts:14](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/feature/LOD.ts#L14)
 
 ***
 
 ### shadowRender
 
-> **shadowRender**: [`LODRenderList`](/api/interfaces/lodrenderlist/)\<`TCustomData`\>
+> **shadowRender**: [`LODRenderList`](/api/interfaces/lodrenderlist/)\<`TData`\>
+
+Shadow rendering settings for the LOD.
 
 #### Defined in
 
-[src/core/feature/LOD.ts:16](https://github.com/agargaro/instanced-mesh/blob/09034c570fc8bedebf7b7757d2f658100710378c/src/core/feature/LOD.ts#L16)
+[src/core/feature/LOD.ts:18](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/feature/LOD.ts#L18)

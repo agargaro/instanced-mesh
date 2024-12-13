@@ -7,9 +7,11 @@ title: "UpdateEntityCallback"
 
 > **UpdateEntityCallback**\<`T`\>: (`obj`, `index`) => `void`
 
+A callback function used to update or initialize an entity.
+
 ## Type Parameters
 
-• **T**
+• **T** = [`InstancedEntity`](/api/classes/instancedentity/)
 
 ## Parameters
 
@@ -23,4 +25,4 @@ title: "UpdateEntityCallback"
 
 ## Defined in
 
-[src/core/InstancedMesh2.ts:21](https://github.com/agargaro/instanced-mesh/blob/09034c570fc8bedebf7b7757d2f658100710378c/src/core/InstancedMesh2.ts#L21)
+[src/core/feature/Instances.ts:13](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/feature/Instances.ts#L13)

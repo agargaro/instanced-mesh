@@ -5,25 +5,46 @@ prev: false
 title: "BVHParams"
 ---
 
+Parameters for configuring the BVH (Bounding Volume Hierarchy).
+
 ## Properties
+
+### accurateCulling?
+
+> `optional` **accurateCulling**: `boolean`
+
+Enables accurate frustum culling by checking intersections without applying margin to the bounding box.
+
+#### Default
+
+```ts
+true
+```
+
+#### Defined in
+
+[src/core/InstancedMeshBVH.ts:33](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/InstancedMeshBVH.ts#L33)
+
+***
 
 ### getBBoxFromBSphere?
 
 > `optional` **getBBoxFromBSphere**: `boolean`
 
+Uses the geometry bounding sphere to compute instance bounding boxes.
+Otherwise it's calculated by applying the object's matrix to all 8 bounding box points.
+This is faster but less precise. Useful for moving objects.
+Only works if the geometry's bounding sphere is centered at the origin.
+
+#### Default
+
+```ts
+false
+```
+
 #### Defined in
 
-[src/core/InstancedMesh2.ts:27](https://github.com/agargaro/instanced-mesh/blob/09034c570fc8bedebf7b7757d2f658100710378c/src/core/InstancedMesh2.ts#L27)
-
-***
-
-### highPrecision?
-
-> `optional` **highPrecision**: `boolean`
-
-#### Defined in
-
-[src/core/InstancedMesh2.ts:26](https://github.com/agargaro/instanced-mesh/blob/09034c570fc8bedebf7b7757d2f658100710378c/src/core/InstancedMesh2.ts#L26)
+[src/core/InstancedMeshBVH.ts:28](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/InstancedMeshBVH.ts#L28)
 
 ***
 
@@ -31,16 +52,16 @@ title: "BVHParams"
 
 > `optional` **margin**: `number`
 
+Margin applied to accommodate animated or moving objects.
+Improves BVH update performance but slows down frustum culling and raycasting.
+For static objects, set to 0 to optimize culling and raycasting efficiency.
+
+#### Default
+
+```ts
+0
+```
+
 #### Defined in
 
-[src/core/InstancedMesh2.ts:25](https://github.com/agargaro/instanced-mesh/blob/09034c570fc8bedebf7b7757d2f658100710378c/src/core/InstancedMesh2.ts#L25)
-
-***
-
-### multiplier?
-
-> `optional` **multiplier**: `number`
-
-#### Defined in
-
-[src/core/InstancedMesh2.ts:28](https://github.com/agargaro/instanced-mesh/blob/09034c570fc8bedebf7b7757d2f658100710378c/src/core/InstancedMesh2.ts#L28)
+[src/core/InstancedMeshBVH.ts:20](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/InstancedMeshBVH.ts#L20)

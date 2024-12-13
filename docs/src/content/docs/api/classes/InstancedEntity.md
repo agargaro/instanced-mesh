@@ -5,19 +5,31 @@ prev: false
 title: "InstancedEntity"
 ---
 
+Represents an instance in an `InstancedMesh2`.
+This class stores transformation data (position, rotation, scale) and provides methods to manipulate them.
+
 ## Constructors
 
 ### new InstancedEntity()
 
 > **new InstancedEntity**(`owner`, `id`, `useEuler`): [`InstancedEntity`](/api/classes/instancedentity/)
 
+This object is instantiated automatically by setting `createInstances` to `true` in the `InstancedMesh2` constructor parameters.
+Dont instantiate this manually.
+
 #### Parameters
 
 • **owner**: [`InstancedMesh2`](/api/classes/instancedmesh2/)\<`object`, `BufferGeometry`\<`NormalBufferAttributes`\>, `Material` \| `Material`[], `Object3DEventMap`\>
 
+The `InstancedMesh2` that owns this instance.
+
 • **id**: `number`
 
+The unique identifier for this instance within the `InstancedMesh2`.
+
 • **useEuler**: `boolean`
+
+Whether to use Euler rotations in addition to quaternion rotations.
 
 #### Returns
 
@@ -25,7 +37,7 @@ title: "InstancedEntity"
 
 #### Defined in
 
-[src/core/InstancedEntity.ts:29](https://github.com/agargaro/instanced-mesh/blob/09034c570fc8bedebf7b7757d2f658100710378c/src/core/InstancedEntity.ts#L29)
+[src/core/InstancedEntity.ts:84](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/InstancedEntity.ts#L84)
 
 ## Properties
 
@@ -33,9 +45,11 @@ title: "InstancedEntity"
 
 > `readonly` **id**: `number`
 
+The unique identifier for this instance (relative to the `InstancedMesh2` it references).
+
 #### Defined in
 
-[src/core/InstancedEntity.ts:9](https://github.com/agargaro/instanced-mesh/blob/09034c570fc8bedebf7b7757d2f658100710378c/src/core/InstancedEntity.ts#L9)
+[src/core/InstancedEntity.ts:20](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/InstancedEntity.ts#L20)
 
 ***
 
@@ -43,9 +57,11 @@ title: "InstancedEntity"
 
 > `readonly` **isInstanceEntity**: `true` = `true`
 
+Indicates if this is an `InstancedEntity`.
+
 #### Defined in
 
-[src/core/InstancedEntity.ts:8](https://github.com/agargaro/instanced-mesh/blob/09034c570fc8bedebf7b7757d2f658100710378c/src/core/InstancedEntity.ts#L8)
+[src/core/InstancedEntity.ts:16](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/InstancedEntity.ts#L16)
 
 ***
 
@@ -53,9 +69,11 @@ title: "InstancedEntity"
 
 > `readonly` **owner**: [`InstancedMesh2`](/api/classes/instancedmesh2/)\<`object`, `BufferGeometry`\<`NormalBufferAttributes`\>, `Material` \| `Material`[], `Object3DEventMap`\>
 
+`InstancedMesh2` to which this instance refers.
+
 #### Defined in
 
-[src/core/InstancedEntity.ts:10](https://github.com/agargaro/instanced-mesh/blob/09034c570fc8bedebf7b7757d2f658100710378c/src/core/InstancedEntity.ts#L10)
+[src/core/InstancedEntity.ts:24](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/InstancedEntity.ts#L24)
 
 ***
 
@@ -63,9 +81,11 @@ title: "InstancedEntity"
 
 > **position**: `Vector3`
 
+The local position.
+
 #### Defined in
 
-[src/core/InstancedEntity.ts:11](https://github.com/agargaro/instanced-mesh/blob/09034c570fc8bedebf7b7757d2f658100710378c/src/core/InstancedEntity.ts#L11)
+[src/core/InstancedEntity.ts:28](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/InstancedEntity.ts#L28)
 
 ***
 
@@ -73,9 +93,11 @@ title: "InstancedEntity"
 
 > **quaternion**: `Quaternion`
 
+The local rotation as `Quaternion`.
+
 #### Defined in
 
-[src/core/InstancedEntity.ts:13](https://github.com/agargaro/instanced-mesh/blob/09034c570fc8bedebf7b7757d2f658100710378c/src/core/InstancedEntity.ts#L13)
+[src/core/InstancedEntity.ts:36](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/InstancedEntity.ts#L36)
 
 ***
 
@@ -83,9 +105,12 @@ title: "InstancedEntity"
 
 > **rotation**: `Euler`
 
+The local rotation as `Euler`.
+This works only if `allowsEuler` is set to `true` in the `InstancedMesh2` constructor parameters.
+
 #### Defined in
 
-[src/core/InstancedEntity.ts:14](https://github.com/agargaro/instanced-mesh/blob/09034c570fc8bedebf7b7757d2f658100710378c/src/core/InstancedEntity.ts#L14)
+[src/core/InstancedEntity.ts:41](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/InstancedEntity.ts#L41)
 
 ***
 
@@ -93,9 +118,11 @@ title: "InstancedEntity"
 
 > **scale**: `Vector3`
 
+The local scale.
+
 #### Defined in
 
-[src/core/InstancedEntity.ts:12](https://github.com/agargaro/instanced-mesh/blob/09034c570fc8bedebf7b7757d2f658100710378c/src/core/InstancedEntity.ts#L12)
+[src/core/InstancedEntity.ts:32](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/InstancedEntity.ts#L32)
 
 ## Accessors
 
@@ -104,6 +131,8 @@ title: "InstancedEntity"
 #### Get Signature
 
 > **get** **color**(): `Color`
+
+Color set and got from `owner.colorsTexture`.
 
 ##### Returns
 
@@ -123,7 +152,7 @@ title: "InstancedEntity"
 
 #### Defined in
 
-[src/core/InstancedEntity.ts:20](https://github.com/agargaro/instanced-mesh/blob/09034c570fc8bedebf7b7757d2f658100710378c/src/core/InstancedEntity.ts#L20)
+[src/core/InstancedEntity.ts:52](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/InstancedEntity.ts#L52)
 
 ***
 
@@ -133,13 +162,15 @@ title: "InstancedEntity"
 
 > **get** **matrix**(): `Matrix4`
 
+The local transform matrix got from `owner.matricesTexture`.
+
 ##### Returns
 
 `Matrix4`
 
 #### Defined in
 
-[src/core/InstancedEntity.ts:26](https://github.com/agargaro/instanced-mesh/blob/09034c570fc8bedebf7b7757d2f658100710378c/src/core/InstancedEntity.ts#L26)
+[src/core/InstancedEntity.ts:70](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/InstancedEntity.ts#L70)
 
 ***
 
@@ -149,13 +180,15 @@ title: "InstancedEntity"
 
 > **get** **matrixWorld**(): `Matrix4`
 
+The world transform matrix got by multiplying the matrix got from `owner.matricesTexture` and `this.owner.matrixWorld`.
+
 ##### Returns
 
 `Matrix4`
 
 #### Defined in
 
-[src/core/InstancedEntity.ts:27](https://github.com/agargaro/instanced-mesh/blob/09034c570fc8bedebf7b7757d2f658100710378c/src/core/InstancedEntity.ts#L27)
+[src/core/InstancedEntity.ts:75](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/InstancedEntity.ts#L75)
 
 ***
 
@@ -164,6 +197,8 @@ title: "InstancedEntity"
 #### Get Signature
 
 > **get** **morph**(): `Mesh`\<`BufferGeometry`\<`NormalBufferAttributes`\>, `Material` \| `Material`[], `Object3DEventMap`\>
+
+Morph target influences set and got from `owner.morphTexture`.
 
 ##### Returns
 
@@ -183,7 +218,37 @@ title: "InstancedEntity"
 
 #### Defined in
 
-[src/core/InstancedEntity.ts:23](https://github.com/agargaro/instanced-mesh/blob/09034c570fc8bedebf7b7757d2f658100710378c/src/core/InstancedEntity.ts#L23)
+[src/core/InstancedEntity.ts:64](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/InstancedEntity.ts#L64)
+
+***
+
+### opacity
+
+#### Get Signature
+
+> **get** **opacity**(): `number`
+
+Opacity set and got from `owner.colorsTexture`.
+
+##### Returns
+
+`number`
+
+#### Set Signature
+
+> **set** **opacity**(`value`): `void`
+
+##### Parameters
+
+• **value**: `number`
+
+##### Returns
+
+`void`
+
+#### Defined in
+
+[src/core/InstancedEntity.ts:58](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/InstancedEntity.ts#L58)
 
 ***
 
@@ -192,6 +257,8 @@ title: "InstancedEntity"
 #### Get Signature
 
 > **get** **visible**(): `boolean`
+
+The visibility state set and got from `owner.visibilityArray`.
 
 ##### Returns
 
@@ -211,7 +278,7 @@ title: "InstancedEntity"
 
 #### Defined in
 
-[src/core/InstancedEntity.ts:17](https://github.com/agargaro/instanced-mesh/blob/09034c570fc8bedebf7b7757d2f658100710378c/src/core/InstancedEntity.ts#L17)
+[src/core/InstancedEntity.ts:46](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/InstancedEntity.ts#L46)
 
 ## Methods
 
@@ -219,17 +286,23 @@ title: "InstancedEntity"
 
 > **applyMatrix4**(`m`): `this`
 
+Applies the matrix transform to the object and updates the object's position, rotation and scale.
+
 #### Parameters
 
 • **m**: `Matrix4`
+
+The matrix to apply.
 
 #### Returns
 
 `this`
 
+The instance of the object.
+
 #### Defined in
 
-[src/core/InstancedEntity.ts:109](https://github.com/agargaro/instanced-mesh/blob/09034c570fc8bedebf7b7757d2f658100710378c/src/core/InstancedEntity.ts#L109)
+[src/core/InstancedEntity.ts:197](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/InstancedEntity.ts#L197)
 
 ***
 
@@ -237,17 +310,23 @@ title: "InstancedEntity"
 
 > **applyQuaternion**(`q`): `this`
 
+Applies the rotation represented by the quaternion to the object.
+
 #### Parameters
 
 • **q**: `Quaternion`
+
+The quaternion representing the rotation to apply.
 
 #### Returns
 
 `this`
 
+The instance of the object.
+
 #### Defined in
 
-[src/core/InstancedEntity.ts:114](https://github.com/agargaro/instanced-mesh/blob/09034c570fc8bedebf7b7757d2f658100710378c/src/core/InstancedEntity.ts#L114)
+[src/core/InstancedEntity.ts:207](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/InstancedEntity.ts#L207)
 
 ***
 
@@ -255,9 +334,13 @@ title: "InstancedEntity"
 
 > **copyTo**(`target`): `void`
 
+Copies the transformation properties (`position`, `scale`, `quaternion`) of this instance to the specified `Object3D`.
+
 #### Parameters
 
 • **target**: `Object3D`\<`Object3DEventMap`\>
+
+The `Object3D` where the transformation properties will be copied.
 
 #### Returns
 
@@ -265,7 +348,35 @@ title: "InstancedEntity"
 
 #### Defined in
 
-[src/core/InstancedEntity.ts:102](https://github.com/agargaro/instanced-mesh/blob/09034c570fc8bedebf7b7757d2f658100710378c/src/core/InstancedEntity.ts#L102)
+[src/core/InstancedEntity.ts:185](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/InstancedEntity.ts#L185)
+
+***
+
+### getUniform()
+
+> **getUniform**(`name`, `target`?): `UniformValue`
+
+Retrieves the uniform value associated with the given name.
+
+#### Parameters
+
+• **name**: `string`
+
+The name of the uniform to retrieve.
+
+• **target?**: `UniformValueObj`
+
+Optional target object where the uniform value will be written.
+
+#### Returns
+
+`UniformValue`
+
+The retrieved uniform value.
+
+#### Defined in
+
+[src/core/InstancedEntity.ts:168](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/InstancedEntity.ts#L168)
 
 ***
 
@@ -273,19 +384,27 @@ title: "InstancedEntity"
 
 > **rotateOnAxis**(`axis`, `angle`): `this`
 
+Rotate an object along an axis in object space. The axis is assumed to be normalized.
+
 #### Parameters
 
 • **axis**: `Vector3`
 
+A normalized vector in object space.
+
 • **angle**: `number`
+
+The angle in radians.
 
 #### Returns
 
 `this`
 
+The instance of the object.
+
 #### Defined in
 
-[src/core/InstancedEntity.ts:119](https://github.com/agargaro/instanced-mesh/blob/09034c570fc8bedebf7b7757d2f658100710378c/src/core/InstancedEntity.ts#L119)
+[src/core/InstancedEntity.ts:218](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/InstancedEntity.ts#L218)
 
 ***
 
@@ -293,19 +412,27 @@ title: "InstancedEntity"
 
 > **rotateOnWorldAxis**(`axis`, `angle`): `this`
 
+Rotate an object along an axis in world space. The axis is assumed to be normalized. Method Assumes no rotated parent.
+
 #### Parameters
 
 • **axis**: `Vector3`
 
+A normalized vector in world space.
+
 • **angle**: `number`
+
+The angle in radians.
 
 #### Returns
 
 `this`
 
+The instance of the object.
+
 #### Defined in
 
-[src/core/InstancedEntity.ts:125](https://github.com/agargaro/instanced-mesh/blob/09034c570fc8bedebf7b7757d2f658100710378c/src/core/InstancedEntity.ts#L125)
+[src/core/InstancedEntity.ts:230](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/InstancedEntity.ts#L230)
 
 ***
 
@@ -313,17 +440,23 @@ title: "InstancedEntity"
 
 > **rotateX**(`angle`): `this`
 
+Rotates the object around x axis in local space.
+
 #### Parameters
 
 • **angle**: `number`
+
+The angle to rotate in radians.
 
 #### Returns
 
 `this`
 
+The instance of the object.
+
 #### Defined in
 
-[src/core/InstancedEntity.ts:131](https://github.com/agargaro/instanced-mesh/blob/09034c570fc8bedebf7b7757d2f658100710378c/src/core/InstancedEntity.ts#L131)
+[src/core/InstancedEntity.ts:241](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/InstancedEntity.ts#L241)
 
 ***
 
@@ -331,17 +464,23 @@ title: "InstancedEntity"
 
 > **rotateY**(`angle`): `this`
 
+Rotates the object around y axis in local space.
+
 #### Parameters
 
 • **angle**: `number`
+
+The angle to rotate in radians.
 
 #### Returns
 
 `this`
 
+The instance of the object.
+
 #### Defined in
 
-[src/core/InstancedEntity.ts:135](https://github.com/agargaro/instanced-mesh/blob/09034c570fc8bedebf7b7757d2f658100710378c/src/core/InstancedEntity.ts#L135)
+[src/core/InstancedEntity.ts:250](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/InstancedEntity.ts#L250)
 
 ***
 
@@ -349,17 +488,23 @@ title: "InstancedEntity"
 
 > **rotateZ**(`angle`): `this`
 
+Rotates the object around z axis in local space.
+
 #### Parameters
 
 • **angle**: `number`
+
+The angle to rotate in radians.
 
 #### Returns
 
 `this`
 
+The instance of the object.
+
 #### Defined in
 
-[src/core/InstancedEntity.ts:139](https://github.com/agargaro/instanced-mesh/blob/09034c570fc8bedebf7b7757d2f658100710378c/src/core/InstancedEntity.ts#L139)
+[src/core/InstancedEntity.ts:259](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/InstancedEntity.ts#L259)
 
 ***
 
@@ -367,11 +512,17 @@ title: "InstancedEntity"
 
 > **setUniform**(`name`, `value`): `void`
 
+Sets the uniform value for the given name
+
 #### Parameters
 
 • **name**: `string`
 
-• **value**: [`UniformValue`](/api/type-aliases/uniformvalue/)
+The name of the uniform to set.
+
+• **value**: `UniformValue`
+
+The new value for the uniform.
 
 #### Returns
 
@@ -379,7 +530,7 @@ title: "InstancedEntity"
 
 #### Defined in
 
-[src/core/InstancedEntity.ts:98](https://github.com/agargaro/instanced-mesh/blob/09034c570fc8bedebf7b7757d2f658100710378c/src/core/InstancedEntity.ts#L98)
+[src/core/InstancedEntity.ts:177](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/InstancedEntity.ts#L177)
 
 ***
 
@@ -387,19 +538,27 @@ title: "InstancedEntity"
 
 > **translateOnAxis**(`axis`, `distance`): `this`
 
+Translate an object by distance along an axis in object space. The axis is assumed to be normalized.
+
 #### Parameters
 
 • **axis**: `Vector3`
 
+A normalized vector in object space.
+
 • **distance**: `number`
+
+The distance to translate.
 
 #### Returns
 
 `this`
 
+The instance of the object.
+
 #### Defined in
 
-[src/core/InstancedEntity.ts:143](https://github.com/agargaro/instanced-mesh/blob/09034c570fc8bedebf7b7757d2f658100710378c/src/core/InstancedEntity.ts#L143)
+[src/core/InstancedEntity.ts:269](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/InstancedEntity.ts#L269)
 
 ***
 
@@ -407,17 +566,23 @@ title: "InstancedEntity"
 
 > **translateX**(`distance`): `this`
 
+Translates object along x axis in object space by distance units.
+
 #### Parameters
 
 • **distance**: `number`
+
+The distance to translate.
 
 #### Returns
 
 `this`
 
+The instance of the object.
+
 #### Defined in
 
-[src/core/InstancedEntity.ts:149](https://github.com/agargaro/instanced-mesh/blob/09034c570fc8bedebf7b7757d2f658100710378c/src/core/InstancedEntity.ts#L149)
+[src/core/InstancedEntity.ts:280](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/InstancedEntity.ts#L280)
 
 ***
 
@@ -425,17 +590,23 @@ title: "InstancedEntity"
 
 > **translateY**(`distance`): `this`
 
+Translates object along y axis in object space by distance units.
+
 #### Parameters
 
 • **distance**: `number`
+
+The distance to translate.
 
 #### Returns
 
 `this`
 
+The instance of the object.
+
 #### Defined in
 
-[src/core/InstancedEntity.ts:153](https://github.com/agargaro/instanced-mesh/blob/09034c570fc8bedebf7b7757d2f658100710378c/src/core/InstancedEntity.ts#L153)
+[src/core/InstancedEntity.ts:289](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/InstancedEntity.ts#L289)
 
 ***
 
@@ -443,17 +614,23 @@ title: "InstancedEntity"
 
 > **translateZ**(`distance`): `this`
 
+Translates object along z axis in object space by distance units.
+
 #### Parameters
 
 • **distance**: `number`
+
+The distance to translate.
 
 #### Returns
 
 `this`
 
+The instance of the object.
+
 #### Defined in
 
-[src/core/InstancedEntity.ts:157](https://github.com/agargaro/instanced-mesh/blob/09034c570fc8bedebf7b7757d2f658100710378c/src/core/InstancedEntity.ts#L157)
+[src/core/InstancedEntity.ts:298](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/InstancedEntity.ts#L298)
 
 ***
 
@@ -461,13 +638,16 @@ title: "InstancedEntity"
 
 > **updateMatrix**(): `void`
 
+Updates the transformation matrix with its current position, quaternion, and scale.
+The updated matrix is stored in the `owner.matricesTexture`.
+
 #### Returns
 
 `void`
 
 #### Defined in
 
-[src/core/InstancedEntity.ts:42](https://github.com/agargaro/instanced-mesh/blob/09034c570fc8bedebf7b7757d2f658100710378c/src/core/InstancedEntity.ts#L42)
+[src/core/InstancedEntity.ts:101](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/InstancedEntity.ts#L101)
 
 ***
 
@@ -475,10 +655,14 @@ title: "InstancedEntity"
 
 > **updateMatrixPosition**(): `void`
 
+Updates only the position component of the transformation matrix.
+This is useful if only position changes, avoiding recalculating the full matrix.
+The updated matrix is stored in the `owner.matricesTexture`.
+
 #### Returns
 
 `void`
 
 #### Defined in
 
-[src/core/InstancedEntity.ts:83](https://github.com/agargaro/instanced-mesh/blob/09034c570fc8bedebf7b7757d2f658100710378c/src/core/InstancedEntity.ts#L83)
+[src/core/InstancedEntity.ts:147](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/InstancedEntity.ts#L147)

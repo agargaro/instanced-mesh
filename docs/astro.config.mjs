@@ -24,11 +24,12 @@ export default defineConfig({
           entryPoints: ['../src/index.ts'],
           typeDoc: {
             skipErrorChecking: true,
+            excludeExternals: true,
           },
           tsconfig: '../tsconfig.json',
         }),
       ],
-      title: 'Instanced Mesh Docs',
+      title: 'three.ez/instanced-mesh',
       social: {
         github: 'https://github.com/agargaro/instanced-mesh',
         discord: 'https://discord.gg/MVTwrdX3JM',

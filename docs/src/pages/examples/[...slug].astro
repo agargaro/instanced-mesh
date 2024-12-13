@@ -21,14 +21,15 @@ const slug = Astro.params.slug;
   <head>
     <!-- TODO: @agargaro pls check the cdn package version -->
     <script type="importmap">
-      {
-        "imports": {
-          "@three.ez/main": "https://cdn.jsdelivr.net/npm/@three.ez/main/index.js",
-          "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
-          "@three.ez/instanced-mesh": "https://cdn.jsdelivr.net/npm/@three.ez/instanced-mesh/build/index.cjs",
-          "bvh.js": "https://cdn.jsdelivr.net/npm/bvh.js/index.js"
-        }
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three/examples/jsm/",
+        "@three.ez/main": "https://cdn.jsdelivr.net/npm/@three.ez/main/index.js",
+        "@three.ez/instanced-mesh": "https://cdn.jsdelivr.net/npm/@three.ez/instanced-mesh/build/index.js",
+        "bvh.js": "https://cdn.jsdelivr.net/npm/bvh.js/build/index.js"
       }
+    }
     </script>
     <Loader slug={slug} />
   </head>

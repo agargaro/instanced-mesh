@@ -7,10 +7,12 @@ title: "Entity"
 
 > **Entity**\<`T`\>: [`InstancedEntity`](/api/classes/instancedentity/) & `T`
 
+Represents an extended entity type with custom data.
+
 ## Type Parameters
 
 • **T**
 
 ## Defined in
 
-[src/core/InstancedMesh2.ts:20](https://github.com/agargaro/instanced-mesh/blob/09034c570fc8bedebf7b7757d2f658100710378c/src/core/InstancedMesh2.ts#L20)
+[src/core/feature/Instances.ts:9](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/feature/Instances.ts#L9)

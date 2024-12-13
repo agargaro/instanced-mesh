@@ -23,4 +23,4 @@ title: "InstancedRenderItem"
 
 ## Defined in
 
-[src/core/utils/InstancedRenderList.ts:1](https://github.com/agargaro/instanced-mesh/blob/09034c570fc8bedebf7b7757d2f658100710378c/src/core/utils/InstancedRenderList.ts#L1)
+[src/core/utils/InstancedRenderList.ts:1](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/utils/InstancedRenderList.ts#L1)

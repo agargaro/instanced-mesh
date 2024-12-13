@@ -1,20 +1,17 @@
 {
-  "name": "vite-svelte-ts-starter-test2",
-  "private": true,
-  "version": "0.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview",
-    "check": "svelte-check --tsconfig ./tsconfig.json"
+    "build": "tsc && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@three.ez/main": "*",
+    "@three.ez/instanced-mesh": "*",
+    "three": "*"
   },
   "devDependencies": {
-    "@three.ez/instanced-mesh": "*",
-    "@three.ez/main": "*",
     "@types/three": "*",
-    "three": "*",
-    "tslib": "*",
     "typescript": "*",
     "vite": "*"
   }
