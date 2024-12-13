@@ -21,6 +21,6 @@ export * from './utils/SortingUtils.js';
 /** @internal */
 declare module 'three' {
   export interface Material {
-    isInstancedMeshPatched: boolean;
+    isInstancedMesh2Patched: boolean;
   }
 }

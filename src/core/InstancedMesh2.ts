@@ -226,16 +226,16 @@ export class InstancedMesh2<
 
     const { allowsEuler, renderer, createInstances } = params;
 
-    super(geometry, material);
+    super(geometry, null);
 
     const capacity = params.capacity > 0 ? params.capacity : _defaultCapacity;
     this._renderer = renderer;
     this._capacity = capacity;
+    this._parentLOD = LOD;
     this._geometry = geometry;
-    this._material = material;
+    this.material = material;
     this._allowsEuler = allowsEuler ?? false;
     this._tempInstance = new InstancedEntity(this, -1, allowsEuler);
-    this._parentLOD = LOD;
     this.visibilityArray = LOD?.visibilityArray ?? new Array(capacity).fill(true);
 
     this.initIndexAttribute();
@@ -355,7 +355,13 @@ export class InstancedMesh2<
   }
 
   protected patchMaterial(material: Material): void {
-    if (material.isInstancedMeshPatched) throw new Error('Cannot reuse already patched material.');
+    if (material.isInstancedMesh2Patched) {
+      if (!this.isMaterialUsedByLOD(material)) {
+        console.warn('The material has been cloned because it was already used.');
+        material = material.clone();
+        material.isInstancedMesh2Patched = false;
+      }
+    }
 
     const onBeforeCompile = material.onBeforeCompile.bind(material);
 
@@ -396,7 +402,15 @@ export class InstancedMesh2<
       }
     };
 
-    material.isInstancedMeshPatched = true;
+    material.isInstancedMesh2Patched = true;
+  }
+
+  protected isMaterialUsedByLOD(material: Material): boolean {
+    if (this._parentLOD) {
+      for (const obj of this._parentLOD.LODinfo.objects) {
+        if (obj.material === material) return true;
+      }
+    }
   }
 
   /**

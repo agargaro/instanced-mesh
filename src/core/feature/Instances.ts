@@ -23,6 +23,15 @@ declare module '../InstancedMesh2.js' {
      */
     updateInstances(onUpdate: UpdateEntityCallback<Entity<TData>>, start?: number, count?: number): this;
     /**
+     * Updates instances position by applying a callback function to each instance.
+     * This method updates only the position attributes of the matrix.
+     * @param onUpdate A callback function to update each entity.
+     * @param start The starting index of the instances to update. Defaults to 0.
+     * @param count The number of instances to update. Defaults to the total instance count.
+     * @returns The current `InstancedMesh2` instance.
+     */
+    updateInstancesPosition(onUpdate: UpdateEntityCallback<Entity<TData>>, start?: number, count?: number): this;
+    /**
      * Adds new instances and optionally initializes them using a callback function.
      * @param count The number of new instances to add.
      * @param onCreation A callback function to initialize each new entity.
@@ -52,6 +61,20 @@ InstancedMesh2.prototype.updateInstances = function (this: InstancedMesh2, onUpd
     const instance = instances ? instances[i] : this.clearInstance(tempInstance, i);
     onUpdate(instance, i);
     instance.updateMatrix();
+  }
+
+  return this;
+};
+
+InstancedMesh2.prototype.updateInstancesPosition = function (this: InstancedMesh2, onUpdate?: UpdateEntityCallback, start = 0, count = this._instancesCount): InstancedMesh2 {
+  const end = start + count;
+  const instances = this.instances;
+  const tempInstance = this._tempInstance;
+
+  for (let i = start; i < end; i++) {
+    const instance = instances ? instances[i] : this.clearInstance(tempInstance, i);
+    onUpdate(instance, i);
+    instance.updateMatrixPosition();
   }
 
   return this;

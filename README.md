@@ -5,51 +5,40 @@
     <em>Simplify your <b>three.js</b> application development with <b>three.ez</b>!</em>
   </p>
 
-⚠️ Version 0.3.0 will be released soon with some breaking changes and a lot of new features ⚠️
+  <img src="public/banner.png" alt="three-ez-banner" /> <br>
 
-  <img src="public/banner.png" alt="three-ez-banner" /> <br />
-
+  [![Discord](https://img.shields.io/badge/chat-discord-blue?style=flat&logo=discord)](https://discord.gg/MVTwrdX3JM)
   [![npm](https://img.shields.io/npm/v/@three.ez/instanced-mesh)](https://www.npmjs.com/package/@three.ez/instanced-mesh)
-  [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=agargaro_instanced-mesh&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=agargaro_instanced-mesh)
-  [![DeepScan grade](https://deepscan.io/api/teams/21196/projects/27990/branches/896898/badge/grade.svg)](https://deepscan.io/dashboard#view=project&tid=21196&pid=27990&bid=896898)
   [![Stars](https://badgen.net/github/stars/three-ez/instanced-mesh)](https://github.com/three-ez/instanced-mesh)
   [![BundlePhobia](https://badgen.net/bundlephobia/min/@three.ez/instanced-mesh)](https://bundlephobia.com/package/@three.ez/instanced-mesh)
-  [![Discord](https://img.shields.io/discord/1150091562227859457)](https://discord.gg/MVTwrdX3JM)
+  [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=agargaro_instanced-mesh&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=agargaro_instanced-mesh)
+  [![DeepScan grade](https://deepscan.io/api/teams/21196/projects/27990/branches/896898/badge/grade.svg)](https://deepscan.io/dashboard#view=project&tid=21196&pid=27990&bid=896898)
 
 </div>
 
-`InstancedMesh2` is an alternative version of `InstancedMesh` that offers advantages:
-- *frustum culling for each instance*
-- *spatial indexing [(*BVH*)](https://en.wikipedia.org/wiki/Bounding_volume_hierarchy) for fast raycasting and frustum culling*
-- *dynamic capacity*
-- *visibility for each instance*
-- *each instance can have an object similar to `Object3D` to simplify its use*
-- *sorting*
-- *LOD*
-- *shadow LOD*
-- *uniform per instance*
+`InstancedMesh2` is an alternative version of `InstancedMesh` with enhanced features for performance and usability:
+- [**Per-instance frustum culling**](#per-instance-frustum-culling): *skip rendering for out-of-view instances.*
+- [**Sorting**](#sorting): *reduce overdraw and manage transparent objects efficiently.*
+- [**Spatial indexing (dynamic BVH)**](#spatial-indexing-dynamic-bvh): *speed up raycasting and frustum culling.*
+- [**Dynamic capacity**](#dynamic-capacity): *add or remove instances seamlessly.*
+- [**Per-instance visibility**](#per-instance-visibility): *toggle visibility for each instance individually.*
+- [**Per-instance opacity**](#per-instance-opacity): *set opacity for each instance individually.*
+- [**Object3D-like instances**](#object3d-like-instances): *use instances like `Object3D` with transforms and custom data.*
+- [**Per-instance uniforms**](#per-instance-uniforms): *assign unique shader data to individual instances.*
+- [**Level of Detail (LOD)**](#level-of-detail-lod): *dynamically adjust instance detail based on distance.*
+- [**Shadow LOD**](#shadow-lod): *optimize shadow rendering with lower detail for distant instances.*
 
 ```ts
-import { InstancedMesh2 } from '@three.ez/instanced-mesh';
-
 const myInstancedMesh = new InstancedMesh2(geometry, material);
 
 myInstancedMesh.addInstances(count, (obj, index) => {
   obj.position.x = index;
-  obj.rotateY(Math.PI);
 });
-
-myInstancedMesh.computeBVH();
 ```
 
-This library has two dependencies: 
-- `three.js r159+`
-- [`bvh.js`](https://github.com/agargaro/BVH.js)
+## 🧑‍💻 Live Examples
 
-## Live Examples
-
-These examples use `vite`, and some mobile devices may run out of memory.
-
+**Stackblitz (Vite + Typescript)**
 - [1kk static trees](https://stackblitz.com/edit/three-ezinstancedmesh2-1kk-static-trees?file=src%2Fmain.ts&embed=1&hideDevTools=1&view=preview)
 - [Instances array dynamic](https://stackblitz.com/edit/three-ezinstancedmesh2-instances-array-dynamic?file=src%2Fmain.ts&embed=1&hideDevTools=1&view=preview)
 - [Sorting](https://stackblitz.com/edit/three-ezinstancedmesh2-sorting?file=src%2Fmain.ts&embed=1&hideDevTools=1&view=preview)
@@ -58,223 +47,21 @@ These examples use `vite`, and some mobile devices may run out of memory.
 - [Fast raycasting](https://stackblitz.com/edit/three-ezinstancedmesh2-fast-raycasting?file=src%2Fmain.ts&embed=1&hideDevTools=1&view=preview)
 - [LOD](https://stackblitz.com/edit/three-ezinstancedmesh2-instancedmeshlod?file=src%2Fmain.ts&embed=1&hideDevTools=1&view=preview)
 - [Shadow LOD](https://stackblitz.com/edit/three-ezinstancedmesh2-shadow-lod?file=src%2Fmain.ts&embed=1&hideDevTools=1&view=preview)
+
+**Glitch (Javascript)**
 - [Dynamic adding with BVH](https://glitch.com/edit/#!/three-ez-instanced-mesh-dynamic-adding-with-bvh?path=main.js)
-- [React-three-fiber demo](https://stackblitz.com/edit/vitejs-vite-zahmbaan?file=src%2FApp.tsx)
 
-More examples will be added soon...
+**Frameworks**
+- Threlte
+- [React-three-fiber](https://stackblitz.com/edit/vitejs-vite-zahmbaan?file=src%2FApp.tsx)
 
-## Questions?
 
-If you have questions or need assistance, you can ask on our [discord server](https://discord.gg/MVTwrdX3JM) or open an issue on this repository.
+## 📚 Documentation
 
-## Like it?
+The tutorial is available here. <br>
+The API documentation is available here.
 
-If you find this project helpful, please consider to leave a star! 🌟<br />
-Thank you so much for your support!
-
-## Frustum Culling
-
-Avoiding rendering objects outside the camera frustum can drastically improve performance (especially for complex geometries). <br /> <br />
-***Frustum culling by default is performed by iterating all instances***, [but it is possible to speed up this process by creating a spatial indexing data structure **(BVH)**](#spatial-indexing-data-structure-dynamic-bvh). <br /> <br />
-By default `perObjectFrustumCulled` is **true**.
-
-## Sorting
-
-Sorting should be used to decrease overdraw and render transparent objects. <br /> <br />
-By default `sortObjects` is **false**.
-
-```ts
-import { createRadixSort } from '@three.ez/instanced-mesh';
-
-myInstancedMesh.sortObjects = true;
-myInstancedMesh.customSort = createRadixSort(myInstancedMesh);
-```
-
-## Visibility
-
-Set the visibility status of each instance like this:
-
-```ts
-myInstancedMesh.setVisibilityAt(false, 0);
-myInstancedMesh.instances[0].visible = false; // if instances array is created
-```
-
-## Instances Array
-
-It is possible to create an array of ***InstancedEntity (Object3D-like)*** in order to easily change the visibility, apply transformations and add custom data to each instance, ***using more memory***.
-
-```ts
-myInstancedMesh.createInstances((obj, index) => {
-  obj.position.random();
-});
-
-myInstancedMesh.instances[0].visible = false;
-
-myInstancedMesh.instances[1].userData = {};
-
-myInstancedMesh.instances[2].position.random();
-myInstancedMesh.instances[2].quaternion.random();
-myInstancedMesh.instances[2].scale.random();
-myInstancedMesh.instances[2].updateMatrix(); // necessary after transformations
-
-myInstancedMesh.instances[3].rotateX(Math.PI);
-myInstancedMesh.instances[3].updateMatrix(); // necessary after transformations
-```     
-
-## Spatial Indexing Data Structure (Dynamic BVH)
-
-To speed up raycasting and frustum culling, a spatial indexing data structure can be created to contain the boundingBoxes of all instances. <br />
-This works very well if the instances are mostly static (updating a BVH can be expensive) and scattered in world space.
-
-```ts
-// call this function after all instances have been valued
-myInstancedMesh.computeBVH({ margin: 0, highPrecision: false });
-```
-
-If all instances are static set the margin to 0. <br /> <br />
-***Setting a margin makes BVH updating faster***, but may make raycasting and frustum culling slightly slower.
-
-## LOD 
-
-Work in progress...
-
-## Shadow LOD 
-
-Work in progress...
-
-## Raycasting tips
-
-If you are not using a BVH, you can set the `raycastOnlyFrustum` property to **true** to avoid iterating over all instances.
-
-It's also highly recommended to use [three-mesh-bvh](https://github.com/gkjohnson/three-mesh-bvh) to create a geometry BVH.
-
-## API
-
-<details>
-  <summary>InstancedMesh2</summary>
-  
-  ```ts
-  export type Entity<T> = InstancedEntity & T;
-  export type UpdateEntityCallback<T> = (obj: Entity<T>, index: number) => void;
-
-  export interface BVHParams {
-      margin?: number;
-      highPrecision?: boolean;
-  }
-
-  export declare class InstancedMesh2<TCustomData = {}, TGeometry extends BufferGeometry = BufferGeometry, TMaterial extends Material | Material[] = Material, TEventMap extends Object3DEventMap = Object3DEventMap> extends Mesh<TGeometry, TMaterial, TEventMap> {
-      type: 'InstancedMesh2';
-      isInstancedMesh2: true;
-      instances: Entity<TCustomData>[];
-      instanceIndex: GLInstancedBufferAttribute;
-      matricesTexture: DataTexture;
-      colorsTexture: DataTexture;
-      morphTexture: DataTexture;
-      boundingBox: Box3;
-      boundingSphere: Sphere;
-      instancesCount: number;
-      bvh: InstancedMeshBVH;
-      perObjectFrustumCulled: boolean;
-      sortObjects: boolean;
-      customSort: any;
-      raycastOnlyFrustum: boolean;
-      visibilityArray: boolean[];
-      customDepthMaterial: MeshDepthMaterial;
-      customDistanceMaterial: MeshDistanceMaterial;
-      get count(): number;
-      get maxCount(): number;
-      get material(): TMaterial;
-      set material(value: TMaterial);
-      /** THIS MATERIAL AND GEOMETRY CANNOT BE SHARED */
-      constructor(renderer: WebGLRenderer, count: number, geometry: TGeometry, material?: TMaterial);
-      updateInstances(onUpdate: UpdateEntityCallback<Entity<TCustomData>>): void;
-      createInstances(onInstanceCreation?: UpdateEntityCallback<Entity<TCustomData>>): void;
-      computeBVH(config?: BVHParams): void;
-      disposeBVH(): void;
-      setMatrixAt(id: number, matrix: Matrix4): void;
-      getMatrixAt(id: number, matrix?: Matrix4): Matrix4;
-      setVisibilityAt(id: number, visible: boolean): void;
-      getVisibilityAt(id: number): boolean;
-      setColorAt(id: number, color: ColorRepresentation): void;
-      getColorAt(id: number, color?: Color): Color;
-      setUniformAt(id: number, name: string, value: UniformValue): void;
-      getMorphAt(index: number, object: Mesh): void;
-      setMorphAt(index: number, object: Mesh): void;
-      raycast(raycaster: Raycaster, result: Intersection[]): void;
-      computeBoundingBox(): void;
-      computeBoundingSphere(): void;
-      copy(source: InstancedMesh2, recursive?: boolean): this;
-      dispose(): this;
-  }
-  ```
-
-</details>
-
-<details>
-  <summary>InstancedEntity</summary>
-  
-  ```ts
-  export type UniformValueNoNumber = Vector2 | Vector3 | Vector4 | Matrix3 | Matrix4;
-  export type UniformValue = number | UniformValueNoNumber;
-
-  export declare class InstancedEntity {
-      isInstanceEntity: true;
-      readonly id: number;
-      readonly owner: InstancedMesh2;
-      position: Vector3;
-      scale: Vector3;
-      quaternion: Quaternion;
-      get visible(): boolean;
-      set visible(value: boolean);
-      get color(): Color;
-      set color(value: ColorRepresentation);
-      get matrix(): Matrix4;
-      get matrixWorld(): Matrix4;
-      constructor(owner: InstancedMesh2<any, any, any>, index: number);
-      updateMatrix(): void;
-      setUniform(name: string, value: UniformValue): void;
-      copyTo(target: Mesh): void;
-      applyMatrix4(m: Matrix4): this;
-      applyQuaternion(q: Quaternion): this;
-      rotateOnAxis(axis: Vector3, angle: number): this;
-      rotateOnWorldAxis(axis: Vector3, angle: number): this;
-      rotateX(angle: number): this;
-      rotateY(angle: number): this;
-      rotateZ(angle: number): this;
-      translateOnAxis(axis: Vector3, distance: number): this;
-      translateX(distance: number): this;
-      translateY(distance: number): this;
-      translateZ(distance: number): this;
-  }
-  ```
-
-</details>
-
-<details>
-  <summary>Utils</summary>
-  
-  ```ts
-  export declare function patchShader(shader: string): string;
-
-  export declare function createRadixSort(target: InstancedMesh2): typeof radixSort<InstancedRenderItem>;
-
-  export declare function createTexture_float(count: number): DataTexture;
-  export declare function createTexture_vec2(count: number): DataTexture;
-  export declare function createTexture_vec3(count: number): DataTexture;
-  export declare function createTexture_vec4(count: number): DataTexture;
-  export declare function createTexture_mat3(count: number): DataTexture;
-  export declare function createTexture_mat4(count: number): DataTexture;
-  ```
-
-</details>
-
-## How Does It Work?
-
-It works similarly to `BatchedMesh`: ***matrices, colors, etc.*** are stored in `Texture` instead of `InstancedAttribute`. <br />
-The only `InstancedAttribute` is used to store the indices of the instances to be rendered. <br /> <br />
-***If you create a custom material, you will need to use `Texture` instead of `InstancedBufferAttribute` (don't worry, there are utility methods).***
-
-## Installation
+## ⬇️ Installation
 
 You can install it via npm using the following command:
 
@@ -297,13 +84,135 @@ Or you can import it from CDN:
 </script>
 ```
 
-## Special thanks to
+## ❔ Questions?
+
+Need help? Join us on [Discord](https://discord.gg/MVTwrdX3JM) or open an issue on GitHub.
+
+## ⭐ Like it?
+
+If you like this project, please leave a star. Thank you! ❤️
+
+## 🚀 Features
+
+### Per-instance frustum culling
+
+Avoiding rendering objects outside the camera frustum can drastically improve performance (especially for complex geometries). <br>
+Frustum culling by default is performed by iterating all instances, [but it is possible to speed up this process by creating a spatial indexing data structure **(BVH)**](#spatial-indexing-dynamic-bvh). <br>
+
+By default `perObjectFrustumCulled` is `true`.
+
+### Sorting
+
+Sorting can be used to decrease overdraw and render transparent objects. <br>
+
+It's possible to improve sort performance adding a `customSort`, like built-in `createRadixSort`.
+
+By default `sortObjects` is `false`. <br>
+
+```ts
+import { createRadixSort } from '@three.ez/instanced-mesh';
+
+myInstancedMesh.sortObjects = true;
+myInstancedMesh.customSort = createRadixSort(myInstancedMesh);
+```
+
+### Spatial indexing (dynamic BVH)
+
+**To speed up raycasting and frustum culling**, a spatial indexing data structure can be created to contain the boundingBoxes of all instances. <br>
+This works very well if the instances are **mostly static** (updating a BVH can be expensive) and scattered in world space. <br>
+Setting a margin makes BVH updating faster, but may make raycasting and frustum culling slightly slower.
+```ts
+myInstancedMesh.computeBVH({ margin: 0 });
+```
+
+### Dynamic capacity
+
+Manage a dynamic number of instances, automatically expanding the data buffers as needed to accommodate additional instances. <br>
+
+If not specified, `capacity` is `1000`. <br>
+
+```ts
+const myInstancedMesh = new InstancedMesh2(geometry, material, { capacity: count }); 
+
+myInstancedMesh.addInstances(count, (obj, index) => { ... }); // add instances and expand buffer if necessary
+
+myInstancedMesh.instancesCount = 10; // change instances count
+```
+
+### Per-instance visibility
+
+Set the visibility status of each instance:
+
+```ts
+myInstancedMesh.setVisibilityAt(index, false);
+myInstancedMesh.instances[0].visible = false; // if instances array is created
+```
+
+### Per-instance opacity
+
+Set the opacity of each instance:
+
+```ts
+myInstancedMesh.setOpacityAt(index, 0.5);
+myInstancedMesh.instances[0].opacity = 0.5; // if instances array is created
+```
+
+### Object3D-like instances
+
+It's possible to create an array of `InstancedEntity` **(Object3D-like)** in order to easily manipulate instances, using more memory.
+
+```ts
+const myInstancedMesh = new InstancedMesh2(geometry, material, { createInstances: true });
+
+myInstancedMesh.instances[0].customData = {};
+myInstancedMesh.instances[0].position.random();
+myInstancedMesh.instances[0].rotateX(Math.PI);
+myInstancedMesh.instances[0].updateMatrix(); // necessary after transformations
+```     
+
+### Per-instance uniforms
+
+Assign unique shader uniforms to each instance, working with every materials.
+
+```ts
+myInstancedMesh.initUniformsPerInstance(({ metalness: 'float', roughness: 'float', emissive: 'vec3' }));
+
+myInstancedMesh.setUniformAt(index, 'metalness', 0.5);
+myInstancedMesh.instances[0].setUniform('emissive', new Color('white')); // if instances array is created
+```
+
+### Level of Detail (LOD)
+
+Improve rendering performance by dynamically adjusting the detail level of instances based on their distance from the camera. <br>
+Use simplified geometries for distant objects to optimize resources.
+
+```ts
+myInstancedMesh.addLOD(geometryMid, material, 50);
+myInstancedMesh.addLOD(geometryLow, material, 200);
+```     
+
+### Shadow LOD
+
+Optimize shadow rendering by reducing the detail level of instances casting shadows based on their distance from the camera.
+
+```ts
+myInstancedMesh.addShadowLOD(geometryMid);
+myInstancedMesh.addShadowLOD(geometryLow, 100);
+```    
+
+### Raycasting tips
+
+If you are not using a BVH, you can set the `raycastOnlyFrustum` property to **true** to avoid iterating over all instances.
+
+It's recommended to use [three-mesh-bvh](https://github.com/gkjohnson/three-mesh-bvh) to create a geometry BVH.
+
+## 🤝 Special thanks to
 
 - [gkjohnson](https://github.com/gkjohnson)
 - [manthrax](https://github.com/manthrax)
 - [jungle_hacker](https://github.com/lambocorp)
 
-## References
+## 📖 References
 
 - [three-mesh-bvh](https://github.com/gkjohnson/three-mesh-bvh)
 - [ErinCatto_DynamicBVH](https://box2d.org/files/ErinCatto_DynamicBVH_Full.pdf)
