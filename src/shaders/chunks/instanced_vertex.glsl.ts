@@ -1,10 +1,9 @@
 export default /* glsl */`
 #ifdef USE_INSTANCING_INDIRECT
-  mat4 instanceMatrix = getMat4FromTexture( matricesTexture, instanceIndex );
+  mat4 instanceMatrix = getInstancedMatrix();
 
-  #ifdef USE_INSTANCING_COLOR_INDIRECT
-    vec3 instanceColor = getVec3FromTexture( colorsTexture, instanceIndex );
-    vColor.xyz *= instanceColor.xyz;
+  #if defined( USE_INSTANCING_COLOR_INDIRECT ) || defined( USE_INSTANCING_COLOR_ALPHA_INDIRECT )
+    vColor = getColorTexture();
   #endif
 #endif
 `;

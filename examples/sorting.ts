@@ -48,7 +48,7 @@ main.createView({ scene, camera, enabled: false, backgroundColor: 'white', onAft
 const gui = new GUI();
 gui.add(instancedMesh, 'maxCount').name('instances max count').disable();
 const spheresCount = gui.add(instancedMesh, 'count').name('instances rendered').disable();
-gui.add(config, 'count', 0, instancedMesh.maxCount).name('instances count').onChange((v) => instancedMesh.instancesCount = v);
+gui.add(config, 'count', 0, instancedMesh.capacity).name('instances count').onChange((v) => instancedMesh.instancesCount = v);
 gui.add(config, 'animatedCount', 0, 10000).name('instances animated');
 gui.add(instancedMesh, 'perObjectFrustumCulled');
 gui.add(instancedMesh, 'sortObjects');
