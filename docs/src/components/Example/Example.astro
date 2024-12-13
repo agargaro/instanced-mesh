@@ -1,7 +1,6 @@
 ---
-import { Code } from '@astrojs/starlight/components';
-import OpenInStackblitz from './OpenInStackblitz.astro';
 import CodeWrapper from './CodeWrapper.astro';
+import OpenInStackblitz from './OpenInStackblitz.astro';
 
 export const c = (...args: (string | boolean)[]) => {
   return args.filter(Boolean).join(' ');
