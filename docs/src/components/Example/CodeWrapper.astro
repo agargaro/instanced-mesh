@@ -1,0 +1,76 @@
+---
+import { Code } from '@astrojs/starlight/components';
+
+interface Props {
+    files:{[key:string]:string};
+}
+
+const filesEntries = Object.entries(Astro.props.files);
+
+---
+<style>
+    .code-wrapper {
+      position: relative;
+      height: 5rem;
+      overflow: hidden;
+      display:block;
+      transition: height 300ms ease-out;
+    }
+    .code-wrapper--open {
+      height: 100%;
+      .code-toggle-container-btn {
+        background: transparent;
+        display: none;
+      }
+    }
+    .code-toggle-container-btn {
+      background:linear-gradient(to top, rgb(38, 38, 38), rgba(38, 38, 38, 0.5));
+      content: '';
+      position: absolute;
+      inset: 0;
+      z-index: 9;
+      cursor: pointer;
+
+      &:hover{
+        .code-toggle-btn{
+            width: 4rem;
+            transition: width 300ms ease-out;
+        }
+      }
+    }
+    .code-toggle-btn{
+      position: absolute;
+      height: auto;
+      bottom: 1rem;
+      margin: auto;
+      left: 0;
+      width: 2rem;
+      right: 0;
+      cursor:pointer;
+      transition: width 300ms 0.5s ease-out;
+    }
+</style>
+    
+<code-wrapper class="code-wrapper">
+    <div class="code-toggle-container-btn" title="Expand code">
+        <button type="button" class="code-toggle-btn"></button>
+    </div>
+    {filesEntries.map(([filePath, content]) => (
+        <!-- TODO maybe we can apply some title and highlights  -->
+        <Code code={content as string} title={filesEntries.length>1?filePath:undefined} lang='ts'></Code>
+    ))}
+
+  </code-wrapper>
+<script>
+    class CodeWrapper extends HTMLElement {
+      connectedCallback() {
+        const button = this.querySelector('.code-toggle-container-btn')!;
+        button.addEventListener('pointerdown', () => {
+          this?.classList.toggle('code-wrapper--open');
+        });
+      }
+    }
+  
+    customElements.define('code-wrapper', CodeWrapper);
+</script>
+  

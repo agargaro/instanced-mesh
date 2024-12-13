@@ -1,0 +1,18 @@
+{
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@three.ez/main": "*",
+    "@three.ez/instanced-mesh": "*",
+    "three": "*"
+  },
+  "devDependencies": {
+    "@types/three": "*",
+    "typescript": "*",
+    "vite": "*"
+  }
+}

@@ -1,0 +1,53 @@
+---
+import Loader from './Loader.astro';
+
+export async function getStaticPaths() {
+  const examples = import.meta.glob('../../../examples/**/index.ts');
+  const keys = Object.keys(examples) as string[];
+  const slugs = keys.map((key) => key.replace('../../../examples/', '').replace('/index.ts', ''));
+
+  return slugs.map((slug) => {
+    return {
+      params: { slug },
+    };
+  });
+}
+
+const slug = Astro.params.slug;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <!-- TODO: @agargaro pls check the cdn package version -->
+    <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three/examples/jsm/",
+        "@three.ez/main": "https://cdn.jsdelivr.net/npm/@three.ez/main/index.js",
+        "@three.ez/instanced-mesh": "https://cdn.jsdelivr.net/npm/@three.ez/instanced-mesh/build/index.js",
+        "bvh.js": "https://cdn.jsdelivr.net/npm/bvh.js/build/index.js"
+      }
+    }
+    </script>
+    <Loader slug={slug} />
+  </head>
+  <body></body>
+</html>
+
+<style>
+  body {
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+  }
+
+  div {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+  }
+</style>

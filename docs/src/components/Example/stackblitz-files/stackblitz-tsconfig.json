@@ -1,0 +1,13 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "strict": true,
+    "noImplicitOverride": true,
+    "strictNullChecks": false,
+    "stripInternal": true,
+    "esModuleInterop": true,
+    "noImplicitAny": false
+  }
+}
