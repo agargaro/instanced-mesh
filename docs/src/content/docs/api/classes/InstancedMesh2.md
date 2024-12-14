@@ -63,7 +63,7 @@ Geometries and materials cannot be shared. If reused, they will be cloned.
 
 #### Defined in
 
-[src/core/InstancedMesh2.ts:216](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/InstancedMesh2.ts#L216)
+[src/core/InstancedMesh2.ts:216](https://github.com/agargaro/instanced-mesh/blob/1764d29737a254f52685fad96d0cc8ced649dde1/src/core/InstancedMesh2.ts#L216)
 
 ## Properties
 
@@ -76,7 +76,7 @@ Bounding box isn't computed by default. It needs to be explicitly computed, othe
 
 #### Defined in
 
-[src/core/InstancedMesh2.ts:97](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/InstancedMesh2.ts#L97)
+[src/core/InstancedMesh2.ts:97](https://github.com/agargaro/instanced-mesh/blob/1764d29737a254f52685fad96d0cc8ced649dde1/src/core/InstancedMesh2.ts#L97)
 
 ***
 
@@ -89,7 +89,7 @@ Bounding sphere is computed during its first render. You may need to recompute i
 
 #### Defined in
 
-[src/core/InstancedMesh2.ts:102](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/InstancedMesh2.ts#L102)
+[src/core/InstancedMesh2.ts:102](https://github.com/agargaro/instanced-mesh/blob/1764d29737a254f52685fad96d0cc8ced649dde1/src/core/InstancedMesh2.ts#L102)
 
 ***
 
@@ -102,7 +102,7 @@ It's possible to create the BVH using the `computeBVH` method. Once created it w
 
 #### Defined in
 
-[src/core/InstancedMesh2.ts:107](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/InstancedMesh2.ts#L107)
+[src/core/InstancedMesh2.ts:107](https://github.com/agargaro/instanced-mesh/blob/1764d29737a254f52685fad96d0cc8ced649dde1/src/core/InstancedMesh2.ts#L107)
 
 ***
 
@@ -114,7 +114,7 @@ Texture storing colors for instances.
 
 #### Defined in
 
-[src/core/InstancedMesh2.ts:84](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/InstancedMesh2.ts#L84)
+[src/core/InstancedMesh2.ts:84](https://github.com/agargaro/instanced-mesh/blob/1764d29737a254f52685fad96d0cc8ced649dde1/src/core/InstancedMesh2.ts#L84)
 
 ***
 
@@ -132,7 +132,7 @@ Texture storing colors for instances.
 
 #### Defined in
 
-[src/core/InstancedMesh2.ts:145](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/InstancedMesh2.ts#L145)
+[src/core/InstancedMesh2.ts:145](https://github.com/agargaro/instanced-mesh/blob/1764d29737a254f52685fad96d0cc8ced649dde1/src/core/InstancedMesh2.ts#L145)
 
 ***
 
@@ -150,7 +150,7 @@ Texture storing colors for instances.
 
 #### Defined in
 
-[src/core/InstancedMesh2.ts:149](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/InstancedMesh2.ts#L149)
+[src/core/InstancedMesh2.ts:149](https://github.com/agargaro/instanced-mesh/blob/1764d29737a254f52685fad96d0cc8ced649dde1/src/core/InstancedMesh2.ts#L149)
 
 ***
 
@@ -169,7 +169,7 @@ null
 
 #### Defined in
 
-[src/core/InstancedMesh2.ts:113](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/InstancedMesh2.ts#L113)
+[src/core/InstancedMesh2.ts:113](https://github.com/agargaro/instanced-mesh/blob/1764d29737a254f52685fad96d0cc8ced649dde1/src/core/InstancedMesh2.ts#L113)
 
 ***
 
@@ -181,7 +181,7 @@ Attribute storing indices of the instances to be rendered.
 
 #### Defined in
 
-[src/core/InstancedMesh2.ts:76](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/InstancedMesh2.ts#L76)
+[src/core/InstancedMesh2.ts:76](https://github.com/agargaro/instanced-mesh/blob/1764d29737a254f52685fad96d0cc8ced649dde1/src/core/InstancedMesh2.ts#L76)
 
 ***
 
@@ -194,7 +194,7 @@ This array is only initialized if `createInstances` is set to `true` in the cons
 
 #### Defined in
 
-[src/core/InstancedMesh2.ts:72](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/InstancedMesh2.ts#L72)
+[src/core/InstancedMesh2.ts:72](https://github.com/agargaro/instanced-mesh/blob/1764d29737a254f52685fad96d0cc8ced649dde1/src/core/InstancedMesh2.ts#L72)
 
 ***
 
@@ -206,7 +206,7 @@ Indicates if this is an `InstancedMesh2`.
 
 #### Defined in
 
-[src/core/InstancedMesh2.ts:67](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/InstancedMesh2.ts#L67)
+[src/core/InstancedMesh2.ts:67](https://github.com/agargaro/instanced-mesh/blob/1764d29737a254f52685fad96d0cc8ced649dde1/src/core/InstancedMesh2.ts#L67)
 
 ***
 
@@ -218,7 +218,7 @@ Contains data for managing LOD, allowing different levels of detail for renderin
 
 #### Defined in
 
-[src/core/InstancedMesh2.ts:127](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/InstancedMesh2.ts#L127)
+[src/core/InstancedMesh2.ts:127](https://github.com/agargaro/instanced-mesh/blob/1764d29737a254f52685fad96d0cc8ced649dde1/src/core/InstancedMesh2.ts#L127)
 
 ***
 
@@ -230,7 +230,7 @@ Texture storing matrices for instances.
 
 #### Defined in
 
-[src/core/InstancedMesh2.ts:80](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/InstancedMesh2.ts#L80)
+[src/core/InstancedMesh2.ts:80](https://github.com/agargaro/instanced-mesh/blob/1764d29737a254f52685fad96d0cc8ced649dde1/src/core/InstancedMesh2.ts#L80)
 
 ***
 
@@ -242,7 +242,7 @@ Texture storing morph target influences for instances.
 
 #### Defined in
 
-[src/core/InstancedMesh2.ts:88](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/InstancedMesh2.ts#L88)
+[src/core/InstancedMesh2.ts:88](https://github.com/agargaro/instanced-mesh/blob/1764d29737a254f52685fad96d0cc8ced649dde1/src/core/InstancedMesh2.ts#L88)
 
 ***
 
@@ -261,7 +261,7 @@ false
 
 #### Defined in
 
-[src/core/InstancedMesh2.ts:119](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/InstancedMesh2.ts#L119)
+[src/core/InstancedMesh2.ts:119](https://github.com/agargaro/instanced-mesh/blob/1764d29737a254f52685fad96d0cc8ced649dde1/src/core/InstancedMesh2.ts#L119)
 
 ***
 
@@ -279,7 +279,7 @@ false
 
 #### Defined in
 
-[src/core/InstancedMesh2.ts:63](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/InstancedMesh2.ts#L63)
+[src/core/InstancedMesh2.ts:63](https://github.com/agargaro/instanced-mesh/blob/1764d29737a254f52685fad96d0cc8ced649dde1/src/core/InstancedMesh2.ts#L63)
 
 ***
 
@@ -291,7 +291,7 @@ Texture storing custom uniforms per instance.
 
 #### Defined in
 
-[src/core/InstancedMesh2.ts:92](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/InstancedMesh2.ts#L92)
+[src/core/InstancedMesh2.ts:92](https://github.com/agargaro/instanced-mesh/blob/1764d29737a254f52685fad96d0cc8ced649dde1/src/core/InstancedMesh2.ts#L92)
 
 ***
 
@@ -303,7 +303,7 @@ Array storing visibility for instances.
 
 #### Defined in
 
-[src/core/InstancedMesh2.ts:123](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/InstancedMesh2.ts#L123)
+[src/core/InstancedMesh2.ts:123](https://github.com/agargaro/instanced-mesh/blob/1764d29737a254f52685fad96d0cc8ced649dde1/src/core/InstancedMesh2.ts#L123)
 
 ## Accessors
 
@@ -321,7 +321,7 @@ The capacity of the instance buffers.
 
 #### Defined in
 
-[src/core/InstancedMesh2.ts:159](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/InstancedMesh2.ts#L159)
+[src/core/InstancedMesh2.ts:159](https://github.com/agargaro/instanced-mesh/blob/1764d29737a254f52685fad96d0cc8ced649dde1/src/core/InstancedMesh2.ts#L159)
 
 ***
 
@@ -339,7 +339,7 @@ The number of instances rendered in the last frame.
 
 #### Defined in
 
-[src/core/InstancedMesh2.ts:164](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/InstancedMesh2.ts#L164)
+[src/core/InstancedMesh2.ts:164](https://github.com/agargaro/instanced-mesh/blob/1764d29737a254f52685fad96d0cc8ced649dde1/src/core/InstancedMesh2.ts#L164)
 
 ***
 
@@ -379,7 +379,7 @@ THREE.BufferGeometry | `new THREE.BufferGeometry()`.
 
 #### Defined in
 
-[src/core/InstancedMesh2.ts:197](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/InstancedMesh2.ts#L197)
+[src/core/InstancedMesh2.ts:197](https://github.com/agargaro/instanced-mesh/blob/1764d29737a254f52685fad96d0cc8ced649dde1/src/core/InstancedMesh2.ts#L197)
 
 ***
 
@@ -410,7 +410,7 @@ If a number greater than the `capacity` is set, the `capacity` will be increased
 
 #### Defined in
 
-[src/core/InstancedMesh2.ts:170](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/InstancedMesh2.ts#L170)
+[src/core/InstancedMesh2.ts:170](https://github.com/agargaro/instanced-mesh/blob/1764d29737a254f52685fad96d0cc8ced649dde1/src/core/InstancedMesh2.ts#L170)
 
 ***
 
@@ -450,7 +450,7 @@ THREE.MeshBasicMaterial | `new THREE.MeshBasicMaterial()`.
 
 #### Defined in
 
-[src/core/InstancedMesh2.ts:207](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/InstancedMesh2.ts#L207)
+[src/core/InstancedMesh2.ts:207](https://github.com/agargaro/instanced-mesh/blob/1764d29737a254f52685fad96d0cc8ced649dde1/src/core/InstancedMesh2.ts#L207)
 
 ***
 
@@ -486,7 +486,7 @@ true
 
 #### Defined in
 
-[src/core/InstancedMesh2.ts:177](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/InstancedMesh2.ts#L177)
+[src/core/InstancedMesh2.ts:177](https://github.com/agargaro/instanced-mesh/blob/1764d29737a254f52685fad96d0cc8ced649dde1/src/core/InstancedMesh2.ts#L177)
 
 ***
 
@@ -522,7 +522,7 @@ false
 
 #### Defined in
 
-[src/core/InstancedMesh2.ts:187](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/InstancedMesh2.ts#L187)
+[src/core/InstancedMesh2.ts:187](https://github.com/agargaro/instanced-mesh/blob/1764d29737a254f52685fad96d0cc8ced649dde1/src/core/InstancedMesh2.ts#L187)
 
 ## Methods
 
@@ -550,7 +550,7 @@ The current `InstancedMesh2` instance.
 
 #### Defined in
 
-[src/core/feature/Instances.ts:40](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/feature/Instances.ts#L40)
+[src/core/feature/Instances.ts:40](https://github.com/agargaro/instanced-mesh/blob/1764d29737a254f52685fad96d0cc8ced649dde1/src/core/feature/Instances.ts#L40)
 
 ***
 
@@ -586,7 +586,7 @@ The current `InstancedMesh2` instance.
 
 #### Defined in
 
-[src/core/feature/LOD.ts:83](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/feature/LOD.ts#L83)
+[src/core/feature/LOD.ts:83](https://github.com/agargaro/instanced-mesh/blob/1764d29737a254f52685fad96d0cc8ced649dde1/src/core/feature/LOD.ts#L83)
 
 ***
 
@@ -618,7 +618,7 @@ The current `InstancedMesh2` instance.
 
 #### Defined in
 
-[src/core/feature/LOD.ts:91](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/feature/LOD.ts#L91)
+[src/core/feature/LOD.ts:91](https://github.com/agargaro/instanced-mesh/blob/1764d29737a254f52685fad96d0cc8ced649dde1/src/core/feature/LOD.ts#L91)
 
 ***
 
@@ -634,7 +634,7 @@ Computes the bounding box that encloses all instances, and updates the `bounding
 
 #### Defined in
 
-[src/core/InstancedMesh2.ts:636](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/InstancedMesh2.ts#L636)
+[src/core/InstancedMesh2.ts:636](https://github.com/agargaro/instanced-mesh/blob/1764d29737a254f52685fad96d0cc8ced649dde1/src/core/InstancedMesh2.ts#L636)
 
 ***
 
@@ -650,7 +650,7 @@ Computes the bounding sphere that encloses all instances, and updates the `bound
 
 #### Defined in
 
-[src/core/InstancedMesh2.ts:657](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/InstancedMesh2.ts#L657)
+[src/core/InstancedMesh2.ts:657](https://github.com/agargaro/instanced-mesh/blob/1764d29737a254f52685fad96d0cc8ced649dde1/src/core/InstancedMesh2.ts#L657)
 
 ***
 
@@ -674,7 +674,7 @@ Optional configuration parameters object. See `BVHParams` for details.
 
 #### Defined in
 
-[src/core/InstancedMesh2.ts:422](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/InstancedMesh2.ts#L422)
+[src/core/InstancedMesh2.ts:422](https://github.com/agargaro/instanced-mesh/blob/1764d29737a254f52685fad96d0cc8ced649dde1/src/core/InstancedMesh2.ts#L422)
 
 ***
 
@@ -707,7 +707,7 @@ Event listeners and user-defined callbacks (.onAfterRender and .onBeforeRender) 
 
 #### Defined in
 
-[src/core/InstancedMesh2.ts:675](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/InstancedMesh2.ts#L675)
+[src/core/InstancedMesh2.ts:675](https://github.com/agargaro/instanced-mesh/blob/1764d29737a254f52685fad96d0cc8ced649dde1/src/core/InstancedMesh2.ts#L675)
 
 ***
 
@@ -733,7 +733,7 @@ The `Object3D` where to copy transformation data.
 
 #### Defined in
 
-[src/core/InstancedMesh2.ts:629](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/InstancedMesh2.ts#L629)
+[src/core/InstancedMesh2.ts:629](https://github.com/agargaro/instanced-mesh/blob/1764d29737a254f52685fad96d0cc8ced649dde1/src/core/InstancedMesh2.ts#L629)
 
 ***
 
@@ -749,7 +749,7 @@ Frees the GPU-related resources allocated.
 
 #### Defined in
 
-[src/core/InstancedMesh2.ts:702](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/InstancedMesh2.ts#L702)
+[src/core/InstancedMesh2.ts:702](https://github.com/agargaro/instanced-mesh/blob/1764d29737a254f52685fad96d0cc8ced649dde1/src/core/InstancedMesh2.ts#L702)
 
 ***
 
@@ -765,7 +765,7 @@ Disposes of the BVH structure.
 
 #### Defined in
 
-[src/core/InstancedMesh2.ts:431](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/InstancedMesh2.ts#L431)
+[src/core/InstancedMesh2.ts:431](https://github.com/agargaro/instanced-mesh/blob/1764d29737a254f52685fad96d0cc8ced649dde1/src/core/InstancedMesh2.ts#L431)
 
 ***
 
@@ -793,7 +793,7 @@ The color of the instance.
 
 #### Defined in
 
-[src/core/InstancedMesh2.ts:550](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/InstancedMesh2.ts#L550)
+[src/core/InstancedMesh2.ts:550](https://github.com/agargaro/instanced-mesh/blob/1764d29737a254f52685fad96d0cc8ced649dde1/src/core/InstancedMesh2.ts#L550)
 
 ***
 
@@ -821,7 +821,7 @@ The transformation matrix of the instance.
 
 #### Defined in
 
-[src/core/InstancedMesh2.ts:458](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/InstancedMesh2.ts#L458)
+[src/core/InstancedMesh2.ts:458](https://github.com/agargaro/instanced-mesh/blob/1764d29737a254f52685fad96d0cc8ced649dde1/src/core/InstancedMesh2.ts#L458)
 
 ***
 
@@ -845,7 +845,7 @@ The maximum scale on any axis as a number.
 
 #### Defined in
 
-[src/core/InstancedMesh2.ts:484](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/InstancedMesh2.ts#L484)
+[src/core/InstancedMesh2.ts:484](https://github.com/agargaro/instanced-mesh/blob/1764d29737a254f52685fad96d0cc8ced649dde1/src/core/InstancedMesh2.ts#L484)
 
 ***
 
@@ -873,7 +873,7 @@ The mesh object with updated morph target influences.
 
 #### Defined in
 
-[src/core/InstancedMesh2.ts:584](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/InstancedMesh2.ts#L584)
+[src/core/InstancedMesh2.ts:584](https://github.com/agargaro/instanced-mesh/blob/1764d29737a254f52685fad96d0cc8ced649dde1/src/core/InstancedMesh2.ts#L584)
 
 ***
 
@@ -901,7 +901,7 @@ The index of the LOD level that should be used.
 
 #### Defined in
 
-[src/core/feature/LOD.ts:67](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/feature/LOD.ts#L67)
+[src/core/feature/LOD.ts:67](https://github.com/agargaro/instanced-mesh/blob/1764d29737a254f52685fad96d0cc8ced649dde1/src/core/feature/LOD.ts#L67)
 
 ***
 
@@ -925,7 +925,7 @@ The opacity of the instance.
 
 #### Defined in
 
-[src/core/InstancedMesh2.ts:574](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/InstancedMesh2.ts#L574)
+[src/core/InstancedMesh2.ts:574](https://github.com/agargaro/instanced-mesh/blob/1764d29737a254f52685fad96d0cc8ced649dde1/src/core/InstancedMesh2.ts#L574)
 
 ***
 
@@ -953,7 +953,7 @@ The position of the instance as a `Vector3`.
 
 #### Defined in
 
-[src/core/InstancedMesh2.ts:468](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/InstancedMesh2.ts#L468)
+[src/core/InstancedMesh2.ts:468](https://github.com/agargaro/instanced-mesh/blob/1764d29737a254f52685fad96d0cc8ced649dde1/src/core/InstancedMesh2.ts#L468)
 
 ***
 
@@ -985,7 +985,7 @@ The uniform value for the specified instance.
 
 #### Defined in
 
-[src/core/feature/Uniforms.ts:21](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/feature/Uniforms.ts#L21)
+[src/core/feature/Uniforms.ts:21](https://github.com/agargaro/instanced-mesh/blob/1764d29737a254f52685fad96d0cc8ced649dde1/src/core/feature/Uniforms.ts#L21)
 
 ***
 
@@ -1009,7 +1009,7 @@ Whether the instance is visible.
 
 #### Defined in
 
-[src/core/InstancedMesh2.ts:521](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/InstancedMesh2.ts#L521)
+[src/core/InstancedMesh2.ts:521](https://github.com/agargaro/instanced-mesh/blob/1764d29737a254f52685fad96d0cc8ced649dde1/src/core/InstancedMesh2.ts#L521)
 
 ***
 
@@ -1031,7 +1031,7 @@ The schema defining the uniforms.
 
 #### Defined in
 
-[src/core/feature/Uniforms.ts:33](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/feature/Uniforms.ts#L33)
+[src/core/feature/Uniforms.ts:33](https://github.com/agargaro/instanced-mesh/blob/1764d29737a254f52685fad96d0cc8ced649dde1/src/core/feature/Uniforms.ts#L33)
 
 ***
 
@@ -1073,7 +1073,7 @@ and thus this callback is not executed for such objects.
 
 #### Defined in
 
-[src/core/InstancedMesh2.ts:275](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/InstancedMesh2.ts#L275)
+[src/core/InstancedMesh2.ts:275](https://github.com/agargaro/instanced-mesh/blob/1764d29737a254f52685fad96d0cc8ced649dde1/src/core/InstancedMesh2.ts#L275)
 
 ***
 
@@ -1115,7 +1115,7 @@ and thus this callback is not executed for such objects.
 
 #### Defined in
 
-[src/core/InstancedMesh2.ts:260](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/InstancedMesh2.ts#L260)
+[src/core/InstancedMesh2.ts:260](https://github.com/agargaro/instanced-mesh/blob/1764d29737a254f52685fad96d0cc8ced649dde1/src/core/InstancedMesh2.ts#L260)
 
 ***
 
@@ -1160,7 +1160,7 @@ and thus this callback is not executed for such objects.
 
 #### Defined in
 
-[src/core/InstancedMesh2.ts:250](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/InstancedMesh2.ts#L250)
+[src/core/InstancedMesh2.ts:250](https://github.com/agargaro/instanced-mesh/blob/1764d29737a254f52685fad96d0cc8ced649dde1/src/core/InstancedMesh2.ts#L250)
 
 ***
 
@@ -1186,7 +1186,7 @@ An optional camera for LOD calculations. Defaults to the main camera.
 
 #### Defined in
 
-[src/core/feature/FrustumCulling.ts:22](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/feature/FrustumCulling.ts#L22)
+[src/core/feature/FrustumCulling.ts:22](https://github.com/agargaro/instanced-mesh/blob/1764d29737a254f52685fad96d0cc8ced649dde1/src/core/feature/FrustumCulling.ts#L22)
 
 ***
 
@@ -1211,7 +1211,7 @@ The current `InstancedMesh2` instance.
 
 #### Defined in
 
-[src/core/feature/Capacity.ts:12](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/feature/Capacity.ts#L12)
+[src/core/feature/Capacity.ts:12](https://github.com/agargaro/instanced-mesh/blob/1764d29737a254f52685fad96d0cc8ced649dde1/src/core/feature/Capacity.ts#L12)
 
 ***
 
@@ -1237,7 +1237,7 @@ The color to assign to the instance.
 
 #### Defined in
 
-[src/core/InstancedMesh2.ts:530](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/InstancedMesh2.ts#L530)
+[src/core/InstancedMesh2.ts:530](https://github.com/agargaro/instanced-mesh/blob/1764d29737a254f52685fad96d0cc8ced649dde1/src/core/InstancedMesh2.ts#L530)
 
 ***
 
@@ -1265,7 +1265,7 @@ The current `InstancedMesh2` instance.
 
 #### Defined in
 
-[src/core/feature/LOD.ts:74](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/feature/LOD.ts#L74)
+[src/core/feature/LOD.ts:74](https://github.com/agargaro/instanced-mesh/blob/1764d29737a254f52685fad96d0cc8ced649dde1/src/core/feature/LOD.ts#L74)
 
 ***
 
@@ -1287,7 +1287,7 @@ The desired number of instances.
 
 #### Defined in
 
-[src/core/feature/Capacity.ts:17](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/feature/Capacity.ts#L17)
+[src/core/feature/Capacity.ts:17](https://github.com/agargaro/instanced-mesh/blob/1764d29737a254f52685fad96d0cc8ced649dde1/src/core/feature/Capacity.ts#L17)
 
 ***
 
@@ -1313,7 +1313,7 @@ A `Matrix4` representing the local transformation to apply to the instance.
 
 #### Defined in
 
-[src/core/InstancedMesh2.ts:440](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/InstancedMesh2.ts#L440)
+[src/core/InstancedMesh2.ts:440](https://github.com/agargaro/instanced-mesh/blob/1764d29737a254f52685fad96d0cc8ced649dde1/src/core/InstancedMesh2.ts#L440)
 
 ***
 
@@ -1339,7 +1339,7 @@ The `Mesh` containing the morph target influences to apply.
 
 #### Defined in
 
-[src/core/InstancedMesh2.ts:602](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/InstancedMesh2.ts#L602)
+[src/core/InstancedMesh2.ts:602](https://github.com/agargaro/instanced-mesh/blob/1764d29737a254f52685fad96d0cc8ced649dde1/src/core/InstancedMesh2.ts#L602)
 
 ***
 
@@ -1365,7 +1365,7 @@ The opacity value to assign.
 
 #### Defined in
 
-[src/core/InstancedMesh2.ts:559](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/InstancedMesh2.ts#L559)
+[src/core/InstancedMesh2.ts:559](https://github.com/agargaro/instanced-mesh/blob/1764d29737a254f52685fad96d0cc8ced649dde1/src/core/InstancedMesh2.ts#L559)
 
 ***
 
@@ -1395,7 +1395,7 @@ The value to set for the uniform.
 
 #### Defined in
 
-[src/core/feature/Uniforms.ts:28](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/feature/Uniforms.ts#L28)
+[src/core/feature/Uniforms.ts:28](https://github.com/agargaro/instanced-mesh/blob/1764d29737a254f52685fad96d0cc8ced649dde1/src/core/feature/Uniforms.ts#L28)
 
 ***
 
@@ -1421,7 +1421,7 @@ Whether the instance should be visible.
 
 #### Defined in
 
-[src/core/InstancedMesh2.ts:511](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/InstancedMesh2.ts#L511)
+[src/core/InstancedMesh2.ts:511](https://github.com/agargaro/instanced-mesh/blob/1764d29737a254f52685fad96d0cc8ced649dde1/src/core/InstancedMesh2.ts#L511)
 
 ***
 
@@ -1453,7 +1453,7 @@ The current `InstancedMesh2` instance.
 
 #### Defined in
 
-[src/core/feature/Instances.ts:24](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/feature/Instances.ts#L24)
+[src/core/feature/Instances.ts:24](https://github.com/agargaro/instanced-mesh/blob/1764d29737a254f52685fad96d0cc8ced649dde1/src/core/feature/Instances.ts#L24)
 
 ***
 
@@ -1486,4 +1486,4 @@ The current `InstancedMesh2` instance.
 
 #### Defined in
 
-[src/core/feature/Instances.ts:33](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/feature/Instances.ts#L33)
+[src/core/feature/Instances.ts:33](https://github.com/agargaro/instanced-mesh/blob/1764d29737a254f52685fad96d0cc8ced649dde1/src/core/feature/Instances.ts#L33)

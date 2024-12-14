@@ -25,4 +25,4 @@ A radix sort function.
 
 ## Defined in
 
-[src/utils/SortingUtils.ts:14](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/utils/SortingUtils.ts#L14)
+[src/utils/SortingUtils.ts:14](https://github.com/agargaro/instanced-mesh/blob/1764d29737a254f52685fad96d0cc8ced649dde1/src/utils/SortingUtils.ts#L14)

@@ -23,7 +23,7 @@ List of `InstancedMesh2` associated to LODs.
 
 #### Defined in
 
-[src/core/feature/LOD.ts:22](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/feature/LOD.ts#L22)
+[src/core/feature/LOD.ts:22](https://github.com/agargaro/instanced-mesh/blob/1764d29737a254f52685fad96d0cc8ced649dde1/src/core/feature/LOD.ts#L22)
 
 ***
 
@@ -35,7 +35,7 @@ Render settings for the LOD.
 
 #### Defined in
 
-[src/core/feature/LOD.ts:14](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/feature/LOD.ts#L14)
+[src/core/feature/LOD.ts:14](https://github.com/agargaro/instanced-mesh/blob/1764d29737a254f52685fad96d0cc8ced649dde1/src/core/feature/LOD.ts#L14)
 
 ***
 
@@ -47,4 +47,4 @@ Shadow rendering settings for the LOD.
 
 #### Defined in
 
-[src/core/feature/LOD.ts:18](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/feature/LOD.ts#L18)
+[src/core/feature/LOD.ts:18](https://github.com/agargaro/instanced-mesh/blob/1764d29737a254f52685fad96d0cc8ced649dde1/src/core/feature/LOD.ts#L18)

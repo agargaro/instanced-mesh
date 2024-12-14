@@ -55,7 +55,7 @@ The number of meshes that share the same attribute data.
 
 #### Defined in
 
-[src/core/utils/GLInstancedBufferAttribute.ts:35](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/utils/GLInstancedBufferAttribute.ts#L35)
+[src/core/utils/GLInstancedBufferAttribute.ts:35](https://github.com/agargaro/instanced-mesh/blob/1764d29737a254f52685fad96d0cc8ced649dde1/src/core/utils/GLInstancedBufferAttribute.ts#L35)
 
 ## Properties
 
@@ -67,7 +67,7 @@ The data array that holds the attribute values.
 
 #### Defined in
 
-[src/core/utils/GLInstancedBufferAttribute.ts:20](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/utils/GLInstancedBufferAttribute.ts#L20)
+[src/core/utils/GLInstancedBufferAttribute.ts:20](https://github.com/agargaro/instanced-mesh/blob/1764d29737a254f52685fad96d0cc8ced649dde1/src/core/utils/GLInstancedBufferAttribute.ts#L20)
 
 ***
 
@@ -79,7 +79,7 @@ Indicates if this is an `isGLInstancedBufferAttribute`.
 
 #### Defined in
 
-[src/core/utils/GLInstancedBufferAttribute.ts:12](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/utils/GLInstancedBufferAttribute.ts#L12)
+[src/core/utils/GLInstancedBufferAttribute.ts:12](https://github.com/agargaro/instanced-mesh/blob/1764d29737a254f52685fad96d0cc8ced649dde1/src/core/utils/GLInstancedBufferAttribute.ts#L12)
 
 ***
 
@@ -91,7 +91,7 @@ The number of meshes that share the same attribute data.
 
 #### Defined in
 
-[src/core/utils/GLInstancedBufferAttribute.ts:16](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/utils/GLInstancedBufferAttribute.ts#L16)
+[src/core/utils/GLInstancedBufferAttribute.ts:16](https://github.com/agargaro/instanced-mesh/blob/1764d29737a254f52685fad96d0cc8ced649dde1/src/core/utils/GLInstancedBufferAttribute.ts#L16)
 
 ## Methods
 
@@ -119,4 +119,4 @@ The number of elements to update in the buffer.
 
 #### Defined in
 
-[src/core/utils/GLInstancedBufferAttribute.ts:54](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/utils/GLInstancedBufferAttribute.ts#L54)
+[src/core/utils/GLInstancedBufferAttribute.ts:54](https://github.com/agargaro/instanced-mesh/blob/1764d29737a254f52685fad96d0cc8ced649dde1/src/core/utils/GLInstancedBufferAttribute.ts#L54)
