@@ -4,12 +4,14 @@ description: instanced mesh is an module of @three.ez.
 template: splash
 hero:
   tagline: Enhanced InstancedMesh with frustum culling, fast raycasting (using BVH), sorting, visibility management and more.
+  image:
+   file: ../../assets/samoyed-mascot-moved.png
   actions:
     - text: Example Guide
-      link: /guides/example/
+      link: ./guides/example
       icon: right-arrow
     - text: Go to github
-      link: https://github.com/three-ez/instanced-mesh
+      link: https://github.com/agargaro/instanced-mesh
       icon: external
       variant: minimal
 ---
@@ -18,15 +20,15 @@ import { Card, CardGrid } from '@astrojs/starlight/components';
 
 ## Features
 
-<CardGrid stagger>
-  <Card title="Per-instance frustum culling">Skip rendering for out-of-view instances.</Card>
-  <Card title="Sorting">Reduce overdraw and manage transparent objects efficiently.</Card>
-  <Card title="Spatial indexing (dynamic BVH)">Speed up raycasting and frustum culling.</Card>
-  <Card title="Dynamic capacity">Add or remove instances seamlessly.</Card>
-  <Card title="Per-instance visibility">Toggle visibility for each instance individually.</Card>
-  <Card title="Per-instance opacity">Set opacity for each instance individually.</Card>
-  <Card title="Object3D-like instances">Use instances like Object3D with transforms and custom data.</Card>
-  <Card title="Per-instance uniforms">Assign unique shader data to individual instances.</Card>
-  <Card title="Level of Detail (LOD)">Dynamically adjust instance detail based on distance.</Card>
-  <Card title="Shadow LOD">Optimize shadow rendering with lower detail for distant instances.</Card>
+<CardGrid>
+  <Card title="Per-instance frustum culling" icon="external">Skip rendering for out-of-view instances.</Card>
+  <Card title="Sorting" icon="external">Reduce overdraw and manage transparent objects efficiently.</Card>
+  <Card title="Spatial indexing (dynamic BVH)" icon="external">Speed up raycasting and frustum culling.</Card>
+  <Card title="Dynamic capacity" icon="external">Add or remove instances seamlessly.</Card>
+  <Card title="Per-instance visibility" icon="external">Toggle visibility for each instance individually.</Card>
+  <Card title="Per-instance opacity" icon="external">Set opacity for each instance individually.</Card>
+  <Card title="Object3D-like instances" icon="external">Use instances like Object3D with transforms and custom data.</Card>
+  <Card title="Per-instance uniforms" icon="external">Assign unique shader data to individual instances.</Card>
+  <Card title="Level of Detail (LOD)" icon="external">Dynamically adjust instance detail based on distance.</Card>
+  <Card title="Shadow LOD" icon="external">Optimize shadow rendering with lower detail for distant instances.</Card>
 </CardGrid>
