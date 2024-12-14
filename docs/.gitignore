@@ -6,6 +6,9 @@ dist/
 # dependencies
 node_modules/
 
+# generated api
+src/content/api/
+
 # logs
 npm-debug.log*
 yarn-debug.log*
