@@ -24,7 +24,7 @@ false
 
 #### Defined in
 
-[src/core/InstancedMesh2.ts:38](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/InstancedMesh2.ts#L38)
+[src/core/InstancedMesh2.ts:38](https://github.com/agargaro/instanced-mesh/blob/1764d29737a254f52685fad96d0cc8ced649dde1/src/core/InstancedMesh2.ts#L38)
 
 ***
 
@@ -43,7 +43,7 @@ The buffers will be expanded automatically if necessary.
 
 #### Defined in
 
-[src/core/InstancedMesh2.ts:27](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/InstancedMesh2.ts#L27)
+[src/core/InstancedMesh2.ts:27](https://github.com/agargaro/instanced-mesh/blob/1764d29737a254f52685fad96d0cc8ced649dde1/src/core/InstancedMesh2.ts#L27)
 
 ***
 
@@ -61,7 +61,7 @@ false
 
 #### Defined in
 
-[src/core/InstancedMesh2.ts:32](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/InstancedMesh2.ts#L32)
+[src/core/InstancedMesh2.ts:32](https://github.com/agargaro/instanced-mesh/blob/1764d29737a254f52685fad96d0cc8ced649dde1/src/core/InstancedMesh2.ts#L32)
 
 ***
 
@@ -80,4 +80,4 @@ null
 
 #### Defined in
 
-[src/core/InstancedMesh2.ts:44](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/InstancedMesh2.ts#L44)
+[src/core/InstancedMesh2.ts:44](https://github.com/agargaro/instanced-mesh/blob/1764d29737a254f52685fad96d0cc8ced649dde1/src/core/InstancedMesh2.ts#L44)

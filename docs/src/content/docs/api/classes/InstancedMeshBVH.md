@@ -38,7 +38,7 @@ Flag to enable accurate frustum culling without considering margin (default is t
 
 #### Defined in
 
-[src/core/InstancedMeshBVH.ts:84](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/InstancedMeshBVH.ts#L84)
+[src/core/InstancedMeshBVH.ts:84](https://github.com/agargaro/instanced-mesh/blob/1764d29737a254f52685fad96d0cc8ced649dde1/src/core/InstancedMeshBVH.ts#L84)
 
 ## Properties
 
@@ -50,7 +50,7 @@ Enables accurate frustum culling by checking intersections without applying marg
 
 #### Defined in
 
-[src/core/InstancedMeshBVH.ts:67](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/InstancedMeshBVH.ts#L67)
+[src/core/InstancedMeshBVH.ts:67](https://github.com/agargaro/instanced-mesh/blob/1764d29737a254f52685fad96d0cc8ced649dde1/src/core/InstancedMeshBVH.ts#L67)
 
 ***
 
@@ -62,7 +62,7 @@ The BVH instance used to organize bounding volumes.
 
 #### Defined in
 
-[src/core/InstancedMeshBVH.ts:59](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/InstancedMeshBVH.ts#L59)
+[src/core/InstancedMeshBVH.ts:59](https://github.com/agargaro/instanced-mesh/blob/1764d29737a254f52685fad96d0cc8ced649dde1/src/core/InstancedMeshBVH.ts#L59)
 
 ***
 
@@ -74,7 +74,7 @@ The geometry bounding box of the target.
 
 #### Defined in
 
-[src/core/InstancedMeshBVH.ts:55](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/InstancedMeshBVH.ts#L55)
+[src/core/InstancedMeshBVH.ts:55](https://github.com/agargaro/instanced-mesh/blob/1764d29737a254f52685fad96d0cc8ced649dde1/src/core/InstancedMeshBVH.ts#L55)
 
 ***
 
@@ -86,7 +86,7 @@ A map that stores the BVH nodes for each instance.
 
 #### Defined in
 
-[src/core/InstancedMeshBVH.ts:63](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/InstancedMeshBVH.ts#L63)
+[src/core/InstancedMeshBVH.ts:63](https://github.com/agargaro/instanced-mesh/blob/1764d29737a254f52685fad96d0cc8ced649dde1/src/core/InstancedMeshBVH.ts#L63)
 
 ***
 
@@ -98,7 +98,7 @@ The target `InstancedMesh2` object that the BVH is managing.
 
 #### Defined in
 
-[src/core/InstancedMeshBVH.ts:51](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/InstancedMeshBVH.ts#L51)
+[src/core/InstancedMeshBVH.ts:51](https://github.com/agargaro/instanced-mesh/blob/1764d29737a254f52685fad96d0cc8ced649dde1/src/core/InstancedMeshBVH.ts#L51)
 
 ## Methods
 
@@ -114,7 +114,7 @@ Clears the BVH.
 
 #### Defined in
 
-[src/core/InstancedMeshBVH.ts:186](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/InstancedMeshBVH.ts#L186)
+[src/core/InstancedMeshBVH.ts:186](https://github.com/agargaro/instanced-mesh/blob/1764d29737a254f52685fad96d0cc8ced649dde1/src/core/InstancedMeshBVH.ts#L186)
 
 ***
 
@@ -131,7 +131,7 @@ This approach is more efficient and accurate compared to incremental methods, wh
 
 #### Defined in
 
-[src/core/InstancedMeshBVH.ts:118](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/InstancedMeshBVH.ts#L118)
+[src/core/InstancedMeshBVH.ts:118](https://github.com/agargaro/instanced-mesh/blob/1764d29737a254f52685fad96d0cc8ced649dde1/src/core/InstancedMeshBVH.ts#L118)
 
 ***
 
@@ -153,7 +153,7 @@ The id of the instance to delete.
 
 #### Defined in
 
-[src/core/InstancedMeshBVH.ts:176](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/InstancedMeshBVH.ts#L176)
+[src/core/InstancedMeshBVH.ts:176](https://github.com/agargaro/instanced-mesh/blob/1764d29737a254f52685fad96d0cc8ced649dde1/src/core/InstancedMeshBVH.ts#L176)
 
 ***
 
@@ -179,7 +179,7 @@ Callback function invoked when an instance intersects the frustum.
 
 #### Defined in
 
-[src/core/InstancedMeshBVH.ts:196](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/InstancedMeshBVH.ts#L196)
+[src/core/InstancedMeshBVH.ts:196](https://github.com/agargaro/instanced-mesh/blob/1764d29737a254f52685fad96d0cc8ced649dde1/src/core/InstancedMeshBVH.ts#L196)
 
 ***
 
@@ -213,7 +213,7 @@ Callback function invoked when an instance intersects the frustum.
 
 #### Defined in
 
-[src/core/InstancedMeshBVH.ts:215](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/InstancedMeshBVH.ts#L215)
+[src/core/InstancedMeshBVH.ts:215](https://github.com/agargaro/instanced-mesh/blob/1764d29737a254f52685fad96d0cc8ced649dde1/src/core/InstancedMeshBVH.ts#L215)
 
 ***
 
@@ -235,7 +235,7 @@ The id of the instance to insert.
 
 #### Defined in
 
-[src/core/InstancedMeshBVH.ts:139](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/InstancedMeshBVH.ts#L139)
+[src/core/InstancedMeshBVH.ts:139](https://github.com/agargaro/instanced-mesh/blob/1764d29737a254f52685fad96d0cc8ced649dde1/src/core/InstancedMeshBVH.ts#L139)
 
 ***
 
@@ -257,7 +257,7 @@ An array of ids to insert.
 
 #### Defined in
 
-[src/core/InstancedMeshBVH.ts:148](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/InstancedMeshBVH.ts#L148)
+[src/core/InstancedMeshBVH.ts:148](https://github.com/agargaro/instanced-mesh/blob/1764d29737a254f52685fad96d0cc8ced649dde1/src/core/InstancedMeshBVH.ts#L148)
 
 ***
 
@@ -285,7 +285,7 @@ Callback function invoked when an intersection occurs.
 
 #### Defined in
 
-[src/core/InstancedMeshBVH.ts:264](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/InstancedMeshBVH.ts#L264)
+[src/core/InstancedMeshBVH.ts:264](https://github.com/agargaro/instanced-mesh/blob/1764d29737a254f52685fad96d0cc8ced649dde1/src/core/InstancedMeshBVH.ts#L264)
 
 ***
 
@@ -307,7 +307,7 @@ The id of the instance to move.
 
 #### Defined in
 
-[src/core/InstancedMeshBVH.ts:165](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/InstancedMeshBVH.ts#L165)
+[src/core/InstancedMeshBVH.ts:165](https://github.com/agargaro/instanced-mesh/blob/1764d29737a254f52685fad96d0cc8ced649dde1/src/core/InstancedMeshBVH.ts#L165)
 
 ***
 
@@ -333,4 +333,4 @@ Callback function invoked when a ray intersects an instance.
 
 #### Defined in
 
-[src/core/InstancedMeshBVH.ts:246](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/InstancedMeshBVH.ts#L246)
+[src/core/InstancedMeshBVH.ts:246](https://github.com/agargaro/instanced-mesh/blob/1764d29737a254f52685fad96d0cc8ced649dde1/src/core/InstancedMeshBVH.ts#L246)

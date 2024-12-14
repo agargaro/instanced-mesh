@@ -23,4 +23,4 @@ The modified shader code with the additional instancing condition.
 
 ## Defined in
 
-[src/shaders/ShaderChunk.ts:17](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/shaders/ShaderChunk.ts#L17)
+[src/shaders/ShaderChunk.ts:17](https://github.com/agargaro/instanced-mesh/blob/1764d29737a254f52685fad96d0cc8ced649dde1/src/shaders/ShaderChunk.ts#L17)

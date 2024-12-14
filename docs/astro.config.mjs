@@ -23,6 +23,7 @@ export default defineConfig({
         starlightTypeDoc({
           entryPoints: ['../src/index.ts'],
           typeDoc: {
+            exclude: ['./examples/**/*'],
             skipErrorChecking: true,
             excludeExternals: true,
           },

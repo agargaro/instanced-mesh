@@ -23,7 +23,7 @@ The squared distance at which this LOD level becomes active.
 
 #### Defined in
 
-[src/core/feature/LOD.ts:48](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/feature/LOD.ts#L48)
+[src/core/feature/LOD.ts:48](https://github.com/agargaro/instanced-mesh/blob/1764d29737a254f52685fad96d0cc8ced649dde1/src/core/feature/LOD.ts#L48)
 
 ***
 
@@ -35,7 +35,7 @@ Hysteresis value to prevent LOD flickering when transitioning.
 
 #### Defined in
 
-[src/core/feature/LOD.ts:52](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/feature/LOD.ts#L52)
+[src/core/feature/LOD.ts:52](https://github.com/agargaro/instanced-mesh/blob/1764d29737a254f52685fad96d0cc8ced649dde1/src/core/feature/LOD.ts#L52)
 
 ***
 
@@ -47,4 +47,4 @@ The `InstancedMesh2` object associated with this LOD level.
 
 #### Defined in
 
-[src/core/feature/LOD.ts:56](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/feature/LOD.ts#L56)
+[src/core/feature/LOD.ts:56](https://github.com/agargaro/instanced-mesh/blob/1764d29737a254f52685fad96d0cc8ced649dde1/src/core/feature/LOD.ts#L56)

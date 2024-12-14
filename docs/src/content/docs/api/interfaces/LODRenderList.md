@@ -23,7 +23,7 @@ Array of instance counts per LOD level, used internally.
 
 #### Defined in
 
-[src/core/feature/LOD.ts:37](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/feature/LOD.ts#L37)
+[src/core/feature/LOD.ts:37](https://github.com/agargaro/instanced-mesh/blob/1764d29737a254f52685fad96d0cc8ced649dde1/src/core/feature/LOD.ts#L37)
 
 ***
 
@@ -35,4 +35,4 @@ Array of LOD levels.
 
 #### Defined in
 
-[src/core/feature/LOD.ts:33](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/feature/LOD.ts#L33)
+[src/core/feature/LOD.ts:33](https://github.com/agargaro/instanced-mesh/blob/1764d29737a254f52685fad96d0cc8ced649dde1/src/core/feature/LOD.ts#L33)

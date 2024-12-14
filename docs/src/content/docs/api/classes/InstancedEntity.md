@@ -37,7 +37,7 @@ Whether to use Euler rotations in addition to quaternion rotations.
 
 #### Defined in
 
-[src/core/InstancedEntity.ts:84](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/InstancedEntity.ts#L84)
+[src/core/InstancedEntity.ts:84](https://github.com/agargaro/instanced-mesh/blob/1764d29737a254f52685fad96d0cc8ced649dde1/src/core/InstancedEntity.ts#L84)
 
 ## Properties
 
@@ -49,7 +49,7 @@ The unique identifier for this instance (relative to the `InstancedMesh2` it ref
 
 #### Defined in
 
-[src/core/InstancedEntity.ts:20](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/InstancedEntity.ts#L20)
+[src/core/InstancedEntity.ts:20](https://github.com/agargaro/instanced-mesh/blob/1764d29737a254f52685fad96d0cc8ced649dde1/src/core/InstancedEntity.ts#L20)
 
 ***
 
@@ -61,7 +61,7 @@ Indicates if this is an `InstancedEntity`.
 
 #### Defined in
 
-[src/core/InstancedEntity.ts:16](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/InstancedEntity.ts#L16)
+[src/core/InstancedEntity.ts:16](https://github.com/agargaro/instanced-mesh/blob/1764d29737a254f52685fad96d0cc8ced649dde1/src/core/InstancedEntity.ts#L16)
 
 ***
 
@@ -73,7 +73,7 @@ Indicates if this is an `InstancedEntity`.
 
 #### Defined in
 
-[src/core/InstancedEntity.ts:24](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/InstancedEntity.ts#L24)
+[src/core/InstancedEntity.ts:24](https://github.com/agargaro/instanced-mesh/blob/1764d29737a254f52685fad96d0cc8ced649dde1/src/core/InstancedEntity.ts#L24)
 
 ***
 
@@ -85,7 +85,7 @@ The local position.
 
 #### Defined in
 
-[src/core/InstancedEntity.ts:28](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/InstancedEntity.ts#L28)
+[src/core/InstancedEntity.ts:28](https://github.com/agargaro/instanced-mesh/blob/1764d29737a254f52685fad96d0cc8ced649dde1/src/core/InstancedEntity.ts#L28)
 
 ***
 
@@ -97,7 +97,7 @@ The local rotation as `Quaternion`.
 
 #### Defined in
 
-[src/core/InstancedEntity.ts:36](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/InstancedEntity.ts#L36)
+[src/core/InstancedEntity.ts:36](https://github.com/agargaro/instanced-mesh/blob/1764d29737a254f52685fad96d0cc8ced649dde1/src/core/InstancedEntity.ts#L36)
 
 ***
 
@@ -110,7 +110,7 @@ This works only if `allowsEuler` is set to `true` in the `InstancedMesh2` constr
 
 #### Defined in
 
-[src/core/InstancedEntity.ts:41](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/InstancedEntity.ts#L41)
+[src/core/InstancedEntity.ts:41](https://github.com/agargaro/instanced-mesh/blob/1764d29737a254f52685fad96d0cc8ced649dde1/src/core/InstancedEntity.ts#L41)
 
 ***
 
@@ -122,7 +122,7 @@ The local scale.
 
 #### Defined in
 
-[src/core/InstancedEntity.ts:32](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/InstancedEntity.ts#L32)
+[src/core/InstancedEntity.ts:32](https://github.com/agargaro/instanced-mesh/blob/1764d29737a254f52685fad96d0cc8ced649dde1/src/core/InstancedEntity.ts#L32)
 
 ## Accessors
 
@@ -152,7 +152,7 @@ Color set and got from `owner.colorsTexture`.
 
 #### Defined in
 
-[src/core/InstancedEntity.ts:52](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/InstancedEntity.ts#L52)
+[src/core/InstancedEntity.ts:52](https://github.com/agargaro/instanced-mesh/blob/1764d29737a254f52685fad96d0cc8ced649dde1/src/core/InstancedEntity.ts#L52)
 
 ***
 
@@ -170,7 +170,7 @@ The local transform matrix got from `owner.matricesTexture`.
 
 #### Defined in
 
-[src/core/InstancedEntity.ts:70](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/InstancedEntity.ts#L70)
+[src/core/InstancedEntity.ts:70](https://github.com/agargaro/instanced-mesh/blob/1764d29737a254f52685fad96d0cc8ced649dde1/src/core/InstancedEntity.ts#L70)
 
 ***
 
@@ -188,7 +188,7 @@ The world transform matrix got by multiplying the matrix got from `owner.matrice
 
 #### Defined in
 
-[src/core/InstancedEntity.ts:75](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/InstancedEntity.ts#L75)
+[src/core/InstancedEntity.ts:75](https://github.com/agargaro/instanced-mesh/blob/1764d29737a254f52685fad96d0cc8ced649dde1/src/core/InstancedEntity.ts#L75)
 
 ***
 
@@ -218,7 +218,7 @@ Morph target influences set and got from `owner.morphTexture`.
 
 #### Defined in
 
-[src/core/InstancedEntity.ts:64](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/InstancedEntity.ts#L64)
+[src/core/InstancedEntity.ts:64](https://github.com/agargaro/instanced-mesh/blob/1764d29737a254f52685fad96d0cc8ced649dde1/src/core/InstancedEntity.ts#L64)
 
 ***
 
@@ -248,7 +248,7 @@ Opacity set and got from `owner.colorsTexture`.
 
 #### Defined in
 
-[src/core/InstancedEntity.ts:58](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/InstancedEntity.ts#L58)
+[src/core/InstancedEntity.ts:58](https://github.com/agargaro/instanced-mesh/blob/1764d29737a254f52685fad96d0cc8ced649dde1/src/core/InstancedEntity.ts#L58)
 
 ***
 
@@ -278,7 +278,7 @@ The visibility state set and got from `owner.visibilityArray`.
 
 #### Defined in
 
-[src/core/InstancedEntity.ts:46](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/InstancedEntity.ts#L46)
+[src/core/InstancedEntity.ts:46](https://github.com/agargaro/instanced-mesh/blob/1764d29737a254f52685fad96d0cc8ced649dde1/src/core/InstancedEntity.ts#L46)
 
 ## Methods
 
@@ -302,7 +302,7 @@ The instance of the object.
 
 #### Defined in
 
-[src/core/InstancedEntity.ts:197](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/InstancedEntity.ts#L197)
+[src/core/InstancedEntity.ts:197](https://github.com/agargaro/instanced-mesh/blob/1764d29737a254f52685fad96d0cc8ced649dde1/src/core/InstancedEntity.ts#L197)
 
 ***
 
@@ -326,7 +326,7 @@ The instance of the object.
 
 #### Defined in
 
-[src/core/InstancedEntity.ts:207](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/InstancedEntity.ts#L207)
+[src/core/InstancedEntity.ts:207](https://github.com/agargaro/instanced-mesh/blob/1764d29737a254f52685fad96d0cc8ced649dde1/src/core/InstancedEntity.ts#L207)
 
 ***
 
@@ -348,7 +348,7 @@ The `Object3D` where the transformation properties will be copied.
 
 #### Defined in
 
-[src/core/InstancedEntity.ts:185](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/InstancedEntity.ts#L185)
+[src/core/InstancedEntity.ts:185](https://github.com/agargaro/instanced-mesh/blob/1764d29737a254f52685fad96d0cc8ced649dde1/src/core/InstancedEntity.ts#L185)
 
 ***
 
@@ -376,7 +376,7 @@ The retrieved uniform value.
 
 #### Defined in
 
-[src/core/InstancedEntity.ts:168](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/InstancedEntity.ts#L168)
+[src/core/InstancedEntity.ts:168](https://github.com/agargaro/instanced-mesh/blob/1764d29737a254f52685fad96d0cc8ced649dde1/src/core/InstancedEntity.ts#L168)
 
 ***
 
@@ -404,7 +404,7 @@ The instance of the object.
 
 #### Defined in
 
-[src/core/InstancedEntity.ts:218](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/InstancedEntity.ts#L218)
+[src/core/InstancedEntity.ts:218](https://github.com/agargaro/instanced-mesh/blob/1764d29737a254f52685fad96d0cc8ced649dde1/src/core/InstancedEntity.ts#L218)
 
 ***
 
@@ -432,7 +432,7 @@ The instance of the object.
 
 #### Defined in
 
-[src/core/InstancedEntity.ts:230](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/InstancedEntity.ts#L230)
+[src/core/InstancedEntity.ts:230](https://github.com/agargaro/instanced-mesh/blob/1764d29737a254f52685fad96d0cc8ced649dde1/src/core/InstancedEntity.ts#L230)
 
 ***
 
@@ -456,7 +456,7 @@ The instance of the object.
 
 #### Defined in
 
-[src/core/InstancedEntity.ts:241](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/InstancedEntity.ts#L241)
+[src/core/InstancedEntity.ts:241](https://github.com/agargaro/instanced-mesh/blob/1764d29737a254f52685fad96d0cc8ced649dde1/src/core/InstancedEntity.ts#L241)
 
 ***
 
@@ -480,7 +480,7 @@ The instance of the object.
 
 #### Defined in
 
-[src/core/InstancedEntity.ts:250](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/InstancedEntity.ts#L250)
+[src/core/InstancedEntity.ts:250](https://github.com/agargaro/instanced-mesh/blob/1764d29737a254f52685fad96d0cc8ced649dde1/src/core/InstancedEntity.ts#L250)
 
 ***
 
@@ -504,7 +504,7 @@ The instance of the object.
 
 #### Defined in
 
-[src/core/InstancedEntity.ts:259](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/InstancedEntity.ts#L259)
+[src/core/InstancedEntity.ts:259](https://github.com/agargaro/instanced-mesh/blob/1764d29737a254f52685fad96d0cc8ced649dde1/src/core/InstancedEntity.ts#L259)
 
 ***
 
@@ -530,7 +530,7 @@ The new value for the uniform.
 
 #### Defined in
 
-[src/core/InstancedEntity.ts:177](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/InstancedEntity.ts#L177)
+[src/core/InstancedEntity.ts:177](https://github.com/agargaro/instanced-mesh/blob/1764d29737a254f52685fad96d0cc8ced649dde1/src/core/InstancedEntity.ts#L177)
 
 ***
 
@@ -558,7 +558,7 @@ The instance of the object.
 
 #### Defined in
 
-[src/core/InstancedEntity.ts:269](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/InstancedEntity.ts#L269)
+[src/core/InstancedEntity.ts:269](https://github.com/agargaro/instanced-mesh/blob/1764d29737a254f52685fad96d0cc8ced649dde1/src/core/InstancedEntity.ts#L269)
 
 ***
 
@@ -582,7 +582,7 @@ The instance of the object.
 
 #### Defined in
 
-[src/core/InstancedEntity.ts:280](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/InstancedEntity.ts#L280)
+[src/core/InstancedEntity.ts:280](https://github.com/agargaro/instanced-mesh/blob/1764d29737a254f52685fad96d0cc8ced649dde1/src/core/InstancedEntity.ts#L280)
 
 ***
 
@@ -606,7 +606,7 @@ The instance of the object.
 
 #### Defined in
 
-[src/core/InstancedEntity.ts:289](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/InstancedEntity.ts#L289)
+[src/core/InstancedEntity.ts:289](https://github.com/agargaro/instanced-mesh/blob/1764d29737a254f52685fad96d0cc8ced649dde1/src/core/InstancedEntity.ts#L289)
 
 ***
 
@@ -630,7 +630,7 @@ The instance of the object.
 
 #### Defined in
 
-[src/core/InstancedEntity.ts:298](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/InstancedEntity.ts#L298)
+[src/core/InstancedEntity.ts:298](https://github.com/agargaro/instanced-mesh/blob/1764d29737a254f52685fad96d0cc8ced649dde1/src/core/InstancedEntity.ts#L298)
 
 ***
 
@@ -647,7 +647,7 @@ The updated matrix is stored in the `owner.matricesTexture`.
 
 #### Defined in
 
-[src/core/InstancedEntity.ts:101](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/InstancedEntity.ts#L101)
+[src/core/InstancedEntity.ts:101](https://github.com/agargaro/instanced-mesh/blob/1764d29737a254f52685fad96d0cc8ced649dde1/src/core/InstancedEntity.ts#L101)
 
 ***
 
@@ -665,4 +665,4 @@ The updated matrix is stored in the `owner.matricesTexture`.
 
 #### Defined in
 
-[src/core/InstancedEntity.ts:147](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/InstancedEntity.ts#L147)
+[src/core/InstancedEntity.ts:147](https://github.com/agargaro/instanced-mesh/blob/1764d29737a254f52685fad96d0cc8ced649dde1/src/core/InstancedEntity.ts#L147)

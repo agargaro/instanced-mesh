@@ -23,7 +23,7 @@ true
 
 #### Defined in
 
-[src/core/InstancedMeshBVH.ts:33](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/InstancedMeshBVH.ts#L33)
+[src/core/InstancedMeshBVH.ts:33](https://github.com/agargaro/instanced-mesh/blob/1764d29737a254f52685fad96d0cc8ced649dde1/src/core/InstancedMeshBVH.ts#L33)
 
 ***
 
@@ -44,7 +44,7 @@ false
 
 #### Defined in
 
-[src/core/InstancedMeshBVH.ts:28](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/InstancedMeshBVH.ts#L28)
+[src/core/InstancedMeshBVH.ts:28](https://github.com/agargaro/instanced-mesh/blob/1764d29737a254f52685fad96d0cc8ced649dde1/src/core/InstancedMeshBVH.ts#L28)
 
 ***
 
@@ -64,4 +64,4 @@ For static objects, set to 0 to optimize culling and raycasting efficiency.
 
 #### Defined in
 
-[src/core/InstancedMeshBVH.ts:20](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/InstancedMeshBVH.ts#L20)
+[src/core/InstancedMeshBVH.ts:20](https://github.com/agargaro/instanced-mesh/blob/1764d29737a254f52685fad96d0cc8ced649dde1/src/core/InstancedMeshBVH.ts#L20)

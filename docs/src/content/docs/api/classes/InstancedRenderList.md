@@ -27,7 +27,7 @@ The main array that holds the list of render items for instanced rendering.
 
 #### Defined in
 
-[src/core/utils/InstancedRenderList.ts:10](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/utils/InstancedRenderList.ts#L10)
+[src/core/utils/InstancedRenderList.ts:10](https://github.com/agargaro/instanced-mesh/blob/1764d29737a254f52685fad96d0cc8ced649dde1/src/core/utils/InstancedRenderList.ts#L10)
 
 ## Methods
 
@@ -53,7 +53,7 @@ The unique instance id of the render item.
 
 #### Defined in
 
-[src/core/utils/InstancedRenderList.ts:18](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/utils/InstancedRenderList.ts#L18)
+[src/core/utils/InstancedRenderList.ts:18](https://github.com/agargaro/instanced-mesh/blob/1764d29737a254f52685fad96d0cc8ced649dde1/src/core/utils/InstancedRenderList.ts#L18)
 
 ***
 
@@ -69,4 +69,4 @@ Resets the render list by clearing the array.
 
 #### Defined in
 
-[src/core/utils/InstancedRenderList.ts:37](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/utils/InstancedRenderList.ts#L37)
+[src/core/utils/InstancedRenderList.ts:37](https://github.com/agargaro/instanced-mesh/blob/1764d29737a254f52685fad96d0cc8ced649dde1/src/core/utils/InstancedRenderList.ts#L37)

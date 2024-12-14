@@ -6,7 +6,7 @@ export const c = (...args: (string | boolean)[]) => {
   return args.filter(Boolean).join(' ');
 };
 
-interface Props {
+export interface Props {
   /**
    * The path to the entry App.svelte file relative to src/examples
    */
@@ -20,8 +20,7 @@ interface Props {
   hideStackblitz?: boolean;
 }
 
-const allModules = import.meta.glob('../../../examples/**/*', {
-  as: 'raw',
+const allModules = import.meta.glob('../../../examples/**/*?raw', {
   eager: true,
 }) as Record<string, string>;
 

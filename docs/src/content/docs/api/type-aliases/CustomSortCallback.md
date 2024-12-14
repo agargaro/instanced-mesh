@@ -19,4 +19,4 @@ A custom sorting callback for render items.
 
 ## Defined in
 
-[src/core/feature/FrustumCulling.ts:13](https://github.com/three-ez/instanced-mesh/blob/85018850a35ef66e53e9b7df12c8fcc2c395066b/src/core/feature/FrustumCulling.ts#L13)
+[src/core/feature/FrustumCulling.ts:13](https://github.com/agargaro/instanced-mesh/blob/1764d29737a254f52685fad96d0cc8ced649dde1/src/core/feature/FrustumCulling.ts#L13)
