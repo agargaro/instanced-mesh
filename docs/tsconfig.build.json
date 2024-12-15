@@ -7,7 +7,7 @@
     "noImplicitOverride": true,
     "strictNullChecks": false,
     "stripInternal": true,
-    "outDir": "dist/examples",
+    "outDir": "public/examples",
     "noImplicitAny": false,
     "noUnusedLocals": false,
     "skipLibCheck": true,

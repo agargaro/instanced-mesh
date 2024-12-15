@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "astro dev",
     "start": "astro dev",
+    "prebuild": "tsc --build tsconfig.build.json",
     "build": "astro check && astro build",
     "preview": "astro preview",
     "astro": "astro"

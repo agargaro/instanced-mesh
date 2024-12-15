@@ -47,7 +47,7 @@ const hidePreview = Astro.props.hidePreview ?? false;
 ---
 
 <div class="example-component-wrapper not-content">
-  {!hidePreview && <iframe src={`/examples/${Astro.props.path}?p=${Date.now()}`} title={Astro.props.path} class="example-iframe" />}
+  {!hidePreview && <iframe src={`/instanced-mesh/examples/${Astro.props.path}?p=${Date.now()}`} title={Astro.props.path} class="example-iframe" />}
   {
     !Astro.props.hideStackblitz && (
       <div class="open-in-stackblitz-btn">

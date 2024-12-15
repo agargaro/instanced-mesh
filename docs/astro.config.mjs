@@ -8,15 +8,11 @@ import mdx from '@astrojs/mdx';
 // https://astro.build/config
 export default defineConfig({
   site: 'https://agargaro.github.io/instanced-mesh',
+  base: 'instanced-mesh',
   output: 'static',
   vite: {
     resolve: {
       alias: { $components: resolve('./src/components') },
-    },
-    build: {
-      rollupOptions: {
-        external: [/@three.ez/],
-      },
     },
   },
   integrations: [
