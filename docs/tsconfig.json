@@ -9,6 +9,7 @@
     }
   },
   "exclude": [
+    "src/examples",
     "src/components/Example/stackblitz-files",
     "src/components/Example/stackblitz-template.ts",
     "dist"
