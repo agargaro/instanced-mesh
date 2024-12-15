@@ -20,12 +20,14 @@ export interface Props {
   hideStackblitz?: boolean;
 }
 
-const allModules = import.meta.glob('../../../examples/**/*?raw', {
+const allModules = import.meta.glob('../../examples/**/*', {
+  query: '?raw',
+  import: 'default',
   eager: true,
 }) as Record<string, string>;
 
 for (const path in allModules) {
-  if (!path.replace('../../../examples/', '').startsWith(Astro.props.path)) {
+  if (!path.replace('../../examples/', '').startsWith(Astro.props.path)) {
     delete allModules[path];
   }
 }
@@ -33,7 +35,7 @@ for (const path in allModules) {
 const files = Astro.props.files ?? {};
 
 for (const modulePath in allModules) {
-  let relativePath = modulePath.replace('../../../examples/', '').replace(Astro.props.path, '').slice(1);
+  let relativePath = modulePath.replace('../../examples/', '').replace(Astro.props.path, '').slice(1);
   if (relativePath.startsWith('/')) {
     relativePath = relativePath.slice(1);
   }

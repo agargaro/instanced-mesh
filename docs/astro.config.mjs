@@ -13,6 +13,11 @@ export default defineConfig({
     resolve: {
       alias: { $components: resolve('./src/components') },
     },
+    build: {
+      rollupOptions: {
+        external: [/@three.ez/],
+      },
+    },
   },
   integrations: [
     AutoImport({
