@@ -7,12 +7,16 @@ import { resolve } from 'path';
 import mdx from '@astrojs/mdx';
 // https://astro.build/config
 export default defineConfig({
-  site: 'https://agargaro.github.io',
-  base: '/instanced-mesh',
+  site: 'https://agargaro.github.io/instanced-mesh',
   output: 'static',
   vite: {
     resolve: {
       alias: { $components: resolve('./src/components') },
+    },
+    build: {
+      rollupOptions: {
+        external: [/@three.ez/],
+      },
     },
   },
   integrations: [
@@ -33,6 +37,11 @@ export default defineConfig({
         }),
       ],
       title: 'three.ez/instanced-mesh',
+      logo: {
+        src: './src/assets/samoyed-mascot.png',
+        alt: 'logo-samoyed-mascot',
+      },
+      favicon: './favicon.ico',
       social: {
         github: 'https://github.com/agargaro/instanced-mesh',
         discord: 'https://discord.gg/MVTwrdX3JM',

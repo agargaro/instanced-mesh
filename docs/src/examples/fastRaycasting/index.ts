@@ -1,7 +1,7 @@
 import { Main, PerspectiveCameraAuto } from '@three.ez/main';
 import { AmbientLight, BoxGeometry, Color, DirectionalLight, MeshLambertMaterial, Scene } from 'three';
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
-import { GUI } from 'three/examples/jsm/libs/lil-gui.module.min.js';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
 import { InstancedMesh2 } from '@three.ez/instanced-mesh';
 
 const config = { useBVH: true };

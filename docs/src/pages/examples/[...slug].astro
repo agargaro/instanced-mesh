@@ -2,9 +2,9 @@
 import Loader from './Loader.astro';
 
 export async function getStaticPaths() {
-  const examples = import.meta.glob('../../../examples/**/index.ts');
+  const examples = import.meta.glob('../../examples/**/index.ts');
   const keys = Object.keys(examples) as string[];
-  const slugs = keys.map((key) => key.replace('../../../examples/', '').replace('/index.ts', ''));
+  const slugs = keys.map((key) => key.replace('../../examples/', '').replace('/index.ts', ''));
 
   return slugs.map((slug) => {
     return {
@@ -20,15 +20,15 @@ const slug = Astro.params.slug;
 <html lang="en">
   <head>
     <script type="importmap" is:inline>
-    {
-      "imports": {
-        "three": "https://cdn.jsdelivr.net/npm/three/build/three.module.js",
-        "three/addons/": "https://cdn.jsdelivr.net/npm/three/examples/jsm/",
-        "@three.ez/main": "https://cdn.jsdelivr.net/npm/@three.ez/main/index.js",
-        "@three.ez/instanced-mesh": "https://cdn.jsdelivr.net/npm/@three.ez/instanced-mesh@latest/build/index.js",
-        "bvh.js": "https://cdn.jsdelivr.net/npm/bvh.js/build/index.js"
+      {
+        "imports": {
+          "three": "https://cdn.jsdelivr.net/npm/three/build/three.module.js",
+          "three/addons/": "https://cdn.jsdelivr.net/npm/three/examples/jsm/",
+          "@three.ez/main": "https://cdn.jsdelivr.net/npm/@three.ez/main/build/index.js",
+          "@three.ez/instanced-mesh": "https://cdn.jsdelivr.net/npm/@three.ez/instanced-mesh@latest/build/index.js",
+          "bvh.js": "https://cdn.jsdelivr.net/npm/bvh.js/build/index.js"
+        }
       }
-    }
     </script>
     <Loader slug={slug} />
   </head>

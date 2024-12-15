@@ -7,7 +7,7 @@ dist/
 node_modules/
 
 # generated api
-src/content/api/
+src/content/docs/api/
 
 # logs
 npm-debug.log*
