@@ -2,11 +2,6 @@
   "extends": "astro/tsconfigs/strict",
   "compilerOptions": {
     "strictNullChecks": false,
-    "paths": {
-      "@three.ez/instanced-mesh": [
-        "../src/index.js"
-      ],
-    }
   },
   "exclude": [
     "src/examples",
