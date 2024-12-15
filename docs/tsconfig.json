@@ -4,7 +4,8 @@
     "strictNullChecks": false,
   },
   "exclude": [
-    "src/public/examples",
+    "public/examples",
+    "src/examples",
     "src/components/Example/stackblitz-files",
     "src/components/Example/stackblitz-template.ts",
     "dist"
