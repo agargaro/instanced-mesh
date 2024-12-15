@@ -6,7 +6,6 @@
     "dev": "astro dev",
     "start": "astro dev",
     "build": "astro check && astro build",
-    "postbuild": "tsc --build tsconfig.build.json",
     "preview": "astro preview",
     "astro": "astro"
   },
