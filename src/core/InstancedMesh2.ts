@@ -394,10 +394,18 @@ export class InstancedMesh2<
 
         shader.uniforms.colorsTexture = { value: this.colorsTexture };
 
+        shader.vertexShader = shader.vertexShader.replace('<color_vertex>', '<instanced_color_vertex>');
+
+        shader.defines['USE_INSTANCING_COLOR_INDIRECT'] = '';
+
+        if (shader.vertexColors) {
+          shader.defines['USE_VERTEX_COLOR'] = '';
+        }
+
         if (this._useOpacity) {
-          shader.defines['USE_INSTANCING_COLOR_ALPHA_INDIRECT'] = '';
+          shader.defines['USE_COLOR_ALPHA'] = '';
         } else {
-          shader.defines['USE_INSTANCING_COLOR_INDIRECT'] = '';
+          shader.defines['USE_COLOR'] = '';
         }
       }
     };
