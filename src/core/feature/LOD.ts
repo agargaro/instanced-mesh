@@ -90,6 +90,7 @@ declare module '../InstancedMesh2.js' {
      */
     addShadowLOD(geometry: BufferGeometry, distance?: number, hysteresis?: number): this;
     /** @internal */ addLevel(renderList: LODRenderList, geometry: BufferGeometry, material: Material, distance: number, hysteresis: number): InstancedMesh2;
+    /** @internal */ patchLevel(obj: InstancedMesh2): void;
   }
 }
 
@@ -105,8 +106,7 @@ InstancedMesh2.prototype.getObjectLODIndexForDistance = function (levels: LODLev
 
 InstancedMesh2.prototype.setFirstLODDistance = function (distance = 0, hysteresis = 0): InstancedMesh2 {
   if (this._parentLOD) {
-    console.error('Cannot create LOD for this InstancedMesh2.');
-    return;
+    throw new Error('Cannot create LOD for this InstancedMesh2.');
   }
 
   if (!this.LODinfo) {
@@ -125,16 +125,14 @@ InstancedMesh2.prototype.setFirstLODDistance = function (distance = 0, hysteresi
 
 InstancedMesh2.prototype.addLOD = function (geometry: BufferGeometry, material: Material, distance = 0, hysteresis = 0): InstancedMesh2 {
   if (this._parentLOD) {
-    console.error('Cannot create LOD for this InstancedMesh2.');
-    return;
+    throw new Error('Cannot create LOD for this InstancedMesh2.');
   }
 
   if (!this.LODinfo?.render && distance === 0) {
-    console.error('Cannot set distance to 0 for the first LOD. Use "setFirstLODDistance" before use "addLOD".');
-    return;
-  } else {
-    this.setFirstLODDistance(0, hysteresis);
+    throw new Error('Cannot set distance to 0 for the first LOD. Use "setFirstLODDistance" before use "addLOD".');
   }
+
+  this.setFirstLODDistance(0, hysteresis);
 
   this.addLevel(this.LODinfo.render, geometry, material, distance, hysteresis);
 
@@ -143,8 +141,7 @@ InstancedMesh2.prototype.addLOD = function (geometry: BufferGeometry, material: 
 
 InstancedMesh2.prototype.addShadowLOD = function (geometry: BufferGeometry, distance = 0, hysteresis = 0): InstancedMesh2 {
   if (this._parentLOD) {
-    console.error('Cannot create LOD for this InstancedMesh2.');
-    return;
+    throw new Error('Cannot create LOD for this InstancedMesh2.');
   }
 
   if (!this.LODinfo) {
@@ -174,6 +171,7 @@ InstancedMesh2.prototype.addLevel = function (renderList: LODRenderList, geometr
     const params: InstancedMesh2Params = { capacity: this._capacity, renderer: this._renderer };
     object = new InstancedMesh2(geometry, material ?? new ShaderMaterial(), params, this);
     object.frustumCulled = false;
+    this.patchLevel(object);
     objectsList.push(object);
     this.add(object); // TODO handle render order?
   } else {
@@ -189,4 +187,32 @@ InstancedMesh2.prototype.addLevel = function (renderList: LODRenderList, geometr
   renderList.count.push(0);
 
   return object;
+};
+
+InstancedMesh2.prototype.patchLevel = function (obj: InstancedMesh2): void {
+  Object.defineProperty(obj, 'matricesTexture', {
+    get(this: InstancedMesh2) {
+      return this._parentLOD.matricesTexture;
+    }
+  });
+
+  Object.defineProperty(obj, 'colorsTexture', {
+    get(this: InstancedMesh2) {
+      return this._parentLOD.colorsTexture;
+    }
+  });
+
+  Object.defineProperty(obj, 'uniformsTexture', {
+    get(this: InstancedMesh2) {
+      return this._parentLOD.uniformsTexture;
+    }
+  });
+
+  Object.defineProperty(obj, 'morphTexture', {
+    get(this: InstancedMesh2) {
+      return this._parentLOD.morphTexture;
+    }
+  });
+
+  // TODO add skeleton also here
 };
