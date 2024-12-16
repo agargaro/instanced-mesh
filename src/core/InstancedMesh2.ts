@@ -13,7 +13,6 @@ import { SquareDataTexture } from './utils/SquareDataTexture.js';
 // TODO LOD: instancedMeshLOD rendering first nearest levels, look out to transparent
 // TODO LOD: shared customDepthMaterial and customDistanceMaterial?
 // TODO LOD: BVH and handle raycastOnlyFrustum?;
-// TODO LOD: sync all textures private property (colorsArray, colorsTexture, etc) to prevent to create unnecesary textures
 
 /**
  * Parameters for configuring an `InstancedMesh2` instance.
@@ -316,17 +315,17 @@ export class InstancedMesh2<
   }
 
   protected initMatricesTexture(): void {
-    if (this._parentLOD) {
-      this.matricesTexture = this._parentLOD.matricesTexture;
-    } else {
+    if (!this._parentLOD) {
       this.matricesTexture = new SquareDataTexture(Float32Array, 4, 4, this._capacity);
     }
   }
 
   protected initColorsTexture(): void {
-    this.colorsTexture = new SquareDataTexture(Float32Array, 4, 1, this._capacity);
-    this.colorsTexture.colorSpace = ColorManagement.workingColorSpace;
-    this.colorsTexture._data.fill(1);
+    if (!this._parentLOD) {
+      this.colorsTexture = new SquareDataTexture(Float32Array, 4, 1, this._capacity);
+      this.colorsTexture.colorSpace = ColorManagement.workingColorSpace;
+      this.colorsTexture._data.fill(1);
+    }
   }
 
   protected patchGeometry(geometry: TGeometry): void {
@@ -604,14 +603,14 @@ export class InstancedMesh2<
 
   /**
    * Sets the morph target influences for a specific instance.
-   * @param index The index of the instance.
+   * @param id The index of the instance.
    * @param object The `Mesh` containing the morph target influences to apply.
    */
-  public setMorphAt(index: number, object: Mesh): void {
+  public setMorphAt(id: number, object: Mesh): void {
     const objectInfluences = object.morphTargetInfluences;
-    const len = objectInfluences.length + 1; // morphBaseInfluence + all influences
+    const len = objectInfluences.length + 1;
 
-    if (this.morphTexture === null) {
+    if (this.morphTexture === null && !this._parentLOD) {
       this.morphTexture = new DataTexture(new Float32Array(len * this._capacity), len, this._capacity, RedFormat, FloatType);
     }
 
@@ -623,7 +622,7 @@ export class InstancedMesh2<
     }
 
     const morphBaseInfluence = this._geometry.morphTargetsRelative ? 1 : 1 - morphInfluencesSum;
-    const dataIndex = len * index;
+    const dataIndex = len * id;
     array[dataIndex] = morphBaseInfluence;
     array.set(objectInfluences, dataIndex + 1);
     this.morphTexture.needsUpdate = true;
