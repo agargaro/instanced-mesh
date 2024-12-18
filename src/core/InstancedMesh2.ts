@@ -1,4 +1,4 @@
-import { Box3, BufferAttribute, BufferGeometry, Camera, Color, ColorManagement, ColorRepresentation, DataTexture, FloatType, InstancedBufferAttribute, Material, Matrix4, Mesh, MeshDepthMaterial, MeshDistanceMaterial, Object3D, Object3DEventMap, RGBADepthPacking, RedFormat, Scene, Sphere, Vector3, WebGLRenderer } from 'three';
+import { Box3, BufferAttribute, BufferGeometry, Camera, Color, ColorManagement, ColorRepresentation, DataTexture, InstancedBufferAttribute, Material, Matrix4, Mesh, MeshDepthMaterial, MeshDistanceMaterial, Object3D, Object3DEventMap, RGBADepthPacking, Scene, Sphere, Vector3, WebGLRenderer } from 'three';
 import { CustomSortCallback } from './feature/FrustumCulling.js';
 import { Entity } from './feature/Instances.js';
 import { LODInfo } from './feature/LOD.js';
@@ -124,6 +124,11 @@ export class InstancedMesh2<
    * Contains data for managing LOD, allowing different levels of detail for rendering and shadow casting.
    */
   public LODinfo: LODInfo<TData> = null;
+  /**
+   * Flag indicating whether to automatically perform frustum culling before rendering.
+   * @default true
+   */
+  public autoUpdate = true;
   /** @internal */ _renderer: WebGLRenderer = null;
   /** @internal */ _instancesCount = 0;
   /** @internal */ _count = 0;
@@ -253,7 +258,9 @@ export class InstancedMesh2<
     this.colorsTexture?.update(renderer);
     this.uniformsTexture?.update(renderer);
 
-    this.performFrustumCulling(shadowCamera, camera);
+    if (this.autoUpdate) {
+      this.performFrustumCulling(shadowCamera, camera);
+    }
   }
 
   public override onBeforeRender(renderer: WebGLRenderer, scene: Scene, camera: Camera, geometry: BufferGeometry, material: Material, group: any): void {
@@ -268,7 +275,9 @@ export class InstancedMesh2<
     this.colorsTexture?.update(renderer);
     this.uniformsTexture?.update(renderer);
 
-    this.performFrustumCulling(camera);
+    if (this.autoUpdate) {
+      this.performFrustumCulling(camera);
+    }
   }
 
   public override onAfterRender(renderer: WebGLRenderer, scene: Scene, camera: Camera, geometry: BufferGeometry, material: Material, group: any): void {
@@ -583,52 +592,6 @@ export class InstancedMesh2<
   }
 
   /**
-   * Gets the morph target data for a specific instance.
-   * @param index The index of the instance.
-   * @param object Optional `Mesh` to store the morph target data.
-   * @returns The mesh object with updated morph target influences.
-   */
-  public getMorphAt(index: number, object = _tempMesh): Mesh {
-    const objectInfluences = object.morphTargetInfluences;
-    const array = this.morphTexture.source.data.data;
-    const len = objectInfluences.length + 1; // All influences + the baseInfluenceSum
-    const dataIndex = index * len + 1; // Skip the baseInfluenceSum at the beginning
-
-    for (let i = 0; i < objectInfluences.length; i++) {
-      objectInfluences[i] = array[dataIndex + i];
-    }
-
-    return object;
-  }
-
-  /**
-   * Sets the morph target influences for a specific instance.
-   * @param id The index of the instance.
-   * @param object The `Mesh` containing the morph target influences to apply.
-   */
-  public setMorphAt(id: number, object: Mesh): void {
-    const objectInfluences = object.morphTargetInfluences;
-    const len = objectInfluences.length + 1;
-
-    if (this.morphTexture === null && !this._parentLOD) {
-      this.morphTexture = new DataTexture(new Float32Array(len * this._capacity), len, this._capacity, RedFormat, FloatType);
-    }
-
-    const array = this.morphTexture.source.data.data;
-    let morphInfluencesSum = 0;
-
-    for (const objectInfluence of objectInfluences) {
-      morphInfluencesSum += objectInfluence;
-    }
-
-    const morphBaseInfluence = this._geometry.morphTargetsRelative ? 1 : 1 - morphInfluencesSum;
-    const dataIndex = len * id;
-    array[dataIndex] = morphBaseInfluence;
-    array.set(objectInfluences, dataIndex + 1);
-    this.morphTexture.needsUpdate = true;
-  }
-
-  /**
    * Copies `position`, `quaternion`, and `scale` of a specific instance to the specified target `Object3D`.
    * @param id The index of the instance.
    * @param target The `Object3D` where to copy transformation data.
@@ -721,5 +684,4 @@ const _box3 = new Box3();
 const _sphere = new Sphere();
 const _tempMat4 = new Matrix4();
 const _tempCol = new Color();
-const _tempMesh = new Mesh();
 const _position = new Vector3();
