@@ -124,6 +124,11 @@ export class InstancedMesh2<
    * Contains data for managing LOD, allowing different levels of detail for rendering and shadow casting.
    */
   public LODinfo: LODInfo<TData> = null;
+  /**
+   * Flag indicating whether to automatically perform frustum culling before rendering.
+   * @default true
+   */
+  public autoUpdate = true;
   /** @internal */ _renderer: WebGLRenderer = null;
   /** @internal */ _instancesCount = 0;
   /** @internal */ _count = 0;
@@ -253,7 +258,9 @@ export class InstancedMesh2<
     this.colorsTexture?.update(renderer);
     this.uniformsTexture?.update(renderer);
 
-    this.performFrustumCulling(shadowCamera, camera);
+    if (this.autoUpdate) {
+      this.performFrustumCulling(shadowCamera, camera);
+    }
   }
 
   public override onBeforeRender(renderer: WebGLRenderer, scene: Scene, camera: Camera, geometry: BufferGeometry, material: Material, group: any): void {
@@ -268,7 +275,9 @@ export class InstancedMesh2<
     this.colorsTexture?.update(renderer);
     this.uniformsTexture?.update(renderer);
 
-    this.performFrustumCulling(camera);
+    if (this.autoUpdate) {
+      this.performFrustumCulling(camera);
+    }
   }
 
   public override onAfterRender(renderer: WebGLRenderer, scene: Scene, camera: Camera, geometry: BufferGeometry, material: Material, group: any): void {
