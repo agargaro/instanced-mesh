@@ -38,7 +38,7 @@ myInstancedMesh.addInstances(count, (obj, index) => {
 
 ## 🧑‍💻 Live Examples
 
-**Stackblitz (Vite + Typescript)**
+**Stackblitz (Vite + Typescript + Vanilla)**
 - [1kk static trees](https://stackblitz.com/edit/three-ezinstancedmesh2-1kk-static-trees?file=src%2Fmain.ts&embed=1&hideDevTools=1&view=preview)
 - [Instances array dynamic](https://stackblitz.com/edit/three-ezinstancedmesh2-instances-array-dynamic?file=src%2Fmain.ts&embed=1&hideDevTools=1&view=preview)
 - [Sorting](https://stackblitz.com/edit/three-ezinstancedmesh2-sorting?file=src%2Fmain.ts&embed=1&hideDevTools=1&view=preview)
@@ -47,6 +47,7 @@ myInstancedMesh.addInstances(count, (obj, index) => {
 - [Fast raycasting](https://stackblitz.com/edit/three-ezinstancedmesh2-fast-raycasting?file=src%2Fmain.ts&embed=1&hideDevTools=1&view=preview)
 - [LOD](https://stackblitz.com/edit/three-ezinstancedmesh2-instancedmeshlod?file=src%2Fmain.ts&embed=1&hideDevTools=1&view=preview)
 - [Shadow LOD](https://stackblitz.com/edit/three-ezinstancedmesh2-shadow-lod?file=src%2Fmain.ts&embed=1&hideDevTools=1&view=preview)
+- [Vanilla](https://stackblitz.com/edit/stackblitz-starters-au96fmqz?file=index.html)
 
 **Glitch (Javascript)**
 - [Dynamic adding with BVH](https://glitch.com/edit/#!/three-ez-instanced-mesh-dynamic-adding-with-bvh?path=main.js)
