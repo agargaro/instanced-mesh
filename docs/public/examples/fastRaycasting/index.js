@@ -1,12 +1,11 @@
-//@ts-check
 import { Main, PerspectiveCameraAuto } from '@three.ez/main';
-import { AmbientLight, BoxGeometry, Color, DirectionalLight, MeshLambertMaterial, Scene } from 'three';
+import { AmbientLight, BoxGeometry, DirectionalLight, MeshLambertMaterial, Scene } from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
 import { InstancedMesh2 } from '@three.ez/instanced-mesh';
+import { white } from './instanced-mesh.js';
 const config = { useBVH: true };
 const main = new Main();
-const white = new Color('white');
 const camera = new PerspectiveCameraAuto(70, 0.1, 30).translateZ(3);
 const scene = new Scene();
 scene.continuousRaycasting = true;

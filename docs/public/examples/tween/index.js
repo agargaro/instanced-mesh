@@ -1,4 +1,3 @@
-//@ts-check
 import { Main, PerspectiveCameraAuto } from '@three.ez/main';
 import { AmbientLight, BoxGeometry, Color, DirectionalLight, MeshLambertMaterial, Scene } from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
