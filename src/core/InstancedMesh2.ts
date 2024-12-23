@@ -492,12 +492,8 @@ export class InstancedMesh2<
     return target;
   }
 
-  /**
-   * Calculates the maximum scale on any axis for a specific instance.
-   * @param index The index of the instance.
-   * @returns The maximum scale on any axis as a number.
-   */
-  public getMaxScaleOnAxisAt(index: number): number {
+  /** @internal */
+  public getPositionAndMaxScaleOnAxisAt(index: number, position: Vector3): number {
     const offset = index * 16;
     const array = this.matricesTexture._data;
 
@@ -516,7 +512,50 @@ export class InstancedMesh2<
     const te10 = array[offset + 10];
     const scaleZSq = te8 * te8 + te9 * te9 + te10 * te10;
 
+    position.x = array[offset + 12];
+    position.y = array[offset + 13];
+    position.z = array[offset + 14];
+
     return Math.sqrt(Math.max(scaleXSq, scaleYSq, scaleZSq));
+  }
+
+  /** @internal */
+  public applyMatrixToSphereAt(index: number, sphere: Sphere, center: Vector3, radius: number): void {
+    const offset = index * 16;
+    const array = this.matricesTexture._data;
+
+    const te0 = array[offset + 0];
+    const te1 = array[offset + 1];
+    const te2 = array[offset + 2];
+    const te3 = array[offset + 3];
+    const te4 = array[offset + 4];
+    const te5 = array[offset + 5];
+    const te6 = array[offset + 6];
+    const te7 = array[offset + 7];
+    const te8 = array[offset + 8];
+    const te9 = array[offset + 9];
+    const te10 = array[offset + 10];
+    const te11 = array[offset + 11];
+    const te12 = array[offset + 12];
+    const te13 = array[offset + 13];
+    const te14 = array[offset + 14];
+    const te15 = array[offset + 15];
+
+    const position = sphere.center;
+    const x = center.x;
+    const y = center.y;
+    const z = center.z;
+    const w = 1 / (te3 * x + te7 * y + te11 * z + te15);
+
+    position.x = (te0 * x + te4 * y + te8 * z + te12) * w;
+    position.y = (te1 * x + te5 * y + te9 * z + te13) * w;
+    position.z = (te2 * x + te6 * y + te10 * z + te14) * w;
+
+    const scaleXSq = te0 * te0 + te1 * te1 + te2 * te2;
+    const scaleYSq = te4 * te4 + te5 * te5 + te6 * te6;
+    const scaleZSq = te8 * te8 + te9 * te9 + te10 * te10;
+
+    sphere.radius = radius * Math.sqrt(Math.max(scaleXSq, scaleYSq, scaleZSq));
   }
 
   /**
@@ -642,19 +681,18 @@ export class InstancedMesh2<
     }
   }
 
+  public override clone(recursive?: boolean): this { // wrong three d.ts
+    const params: InstancedMesh2Params = {
+      capacity: this._capacity,
+      renderer: this._renderer,
+      allowsEuler: this._allowsEuler,
+      createInstances: !!this.instances
+    };
+    return new (this as any).constructor(this.geometry, this.material, params).copy(this, recursive);
+  }
+
   public override copy(source: InstancedMesh2, recursive?: boolean): this {
     super.copy(source, recursive);
-
-    // this.instanceIndex.copy(source.instanceIndex);
-    this.matricesTexture = source.matricesTexture.clone();
-
-    // this._matricesTexture = source._matricesTexture.clone();
-    // this._matricesTexture.image.data = this._matricesTexture.image.data.slice();
-
-    if (source.colorsTexture !== null) this.colorsTexture = source.colorsTexture.clone();
-    if (source.morphTexture !== null) this.morphTexture = source.morphTexture.clone();
-
-    // TODO copy uniform?
 
     this._instancesCount = source._instancesCount;
     this._count = source._capacity;
@@ -662,6 +700,26 @@ export class InstancedMesh2<
 
     if (source.boundingBox !== null) this.boundingBox = source.boundingBox.clone();
     if (source.boundingSphere !== null) this.boundingSphere = source.boundingSphere.clone();
+
+    this.matricesTexture = source.matricesTexture.clone(); // TODO we can avoid cloning it because it already exists
+    this.matricesTexture.image.data = this.matricesTexture.image.data.slice();
+
+    if (source.colorsTexture !== null) {
+      this.colorsTexture = source.colorsTexture.clone();
+      this.colorsTexture.image.data = this.colorsTexture.image.data.slice();
+    }
+
+    if (source.uniformsTexture !== null) {
+      this.uniformsTexture = source.uniformsTexture.clone();
+      this.uniformsTexture.image.data = this.uniformsTexture.image.data.slice();
+    }
+
+    if (source.morphTexture !== null) {
+      this.morphTexture = source.morphTexture.clone();
+      this.morphTexture.image.data = this.morphTexture.image.data.slice();
+    }
+
+    // TODO copies and handle LOD?
 
     return this;
   }

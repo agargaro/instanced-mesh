@@ -1,5 +1,5 @@
 import { Main, PerspectiveCameraAuto } from '@three.ez/main';
-import { AmbientLight, Color, DirectionalLight, MeshPhongMaterial, MeshStandardMaterial, Scene, SphereGeometry } from 'three';
+import { AmbientLight, Color, DirectionalLight, MeshLambertMaterial, Scene, SphereGeometry } from 'three';
 import { OrbitControls } from 'three/examples/jsm/Addons.js';
 import { InstancedMesh2 } from '../src/index.js';
 import { PRNG } from './objects/random.js';
@@ -14,11 +14,11 @@ main.createView({ scene, camera });
 const controls = new OrbitControls(camera, main.renderer.domElement);
 controls.update();
 
-const instancedMeshLOD = new InstancedMesh2(new SphereGeometry(5, 30, 15), new MeshStandardMaterial(), { capacity: 1000000 });
+const instancedMeshLOD = new InstancedMesh2(new SphereGeometry(5, 30, 15), new MeshLambertMaterial(), { capacity: 1000000 });
 
-instancedMeshLOD.addLOD(new SphereGeometry(5, 20, 10), new MeshStandardMaterial(), 50);
-instancedMeshLOD.addLOD(new SphereGeometry(5, 10, 5), new MeshPhongMaterial(), 500);
-instancedMeshLOD.addLOD(new SphereGeometry(5, 5, 3), new MeshPhongMaterial(), 1000);
+instancedMeshLOD.addLOD(new SphereGeometry(5, 20, 10), new MeshLambertMaterial(), 50);
+instancedMeshLOD.addLOD(new SphereGeometry(5, 10, 5), new MeshLambertMaterial(), 500);
+instancedMeshLOD.addLOD(new SphereGeometry(5, 5, 3), new MeshLambertMaterial(), 1000);
 
 instancedMeshLOD.addInstances(1000000, (object, index) => {
   object.position.x = random.range(-spawnRange, spawnRange);
