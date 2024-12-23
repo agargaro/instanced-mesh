@@ -339,6 +339,23 @@ export class SquareDataTexture extends DataTexture {
 
     return components;
   }
+
+  public override copy(source: SquareDataTexture): this {
+    super.copy(source);
+
+    this.partialUpdate = source.partialUpdate;
+    this.maxUpdateCalls = source.maxUpdateCalls;
+    this._channels = source._channels;
+    this._pixelsPerInstance = source._pixelsPerInstance;
+    this._stride = source._stride;
+    this._rowToUpdate = source._rowToUpdate;
+    this._uniformMap = source._uniformMap;
+    this._renderer = source._renderer;
+    this._gl = source._gl;
+    this._utils = source._utils;
+
+    return this;
+  }
 }
 
 const componentsArray = ['r', 'g', 'b', 'a'];

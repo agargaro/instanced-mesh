@@ -133,8 +133,7 @@ InstancedMesh2.prototype.updateRenderList = function (): void {
 
   for (let i = 0; i < instancesCount; i++) {
     if (this.getVisibilityAt(i)) {
-      const matrix = this.getMatrixAt(i); // TODO improve avoiding copy
-      const depth = _position.setFromMatrixPosition(matrix).sub(_cameraPos).dot(_forward);
+      const depth = this.getPositionAt(i).sub(_cameraPos).dot(_forward);
       _renderList.push(depth, i);
     }
   }
@@ -151,8 +150,7 @@ InstancedMesh2.prototype.BVHCulling = function (): void {
 
     if (index < instancesCount && this.getVisibilityAt(index)) {
       if (sortObjects) {
-        this.getPositionAt(index, _position);
-        const depth = _position.sub(_cameraPos).dot(_forward);
+        const depth = this.getPositionAt(index).sub(_cameraPos).dot(_forward);
         _renderList.push(depth, index);
       } else {
         array[count++] = index;
@@ -179,12 +177,10 @@ InstancedMesh2.prototype.linearCulling = function (): void {
     if (!this.getVisibilityAt(i)) continue;
 
     if (geometryCentered) {
-      this.getPositionAt(i, _sphere.center);
-      _sphere.radius = radius * this.getMaxScaleOnAxisAt(i);
+      const maxScale = this.getPositionAndMaxScaleOnAxisAt(i, _sphere.center);
+      _sphere.radius = radius * maxScale;
     } else {
-      const matrix = this.getMatrixAt(i); // TODO: can be a little improved
-      _sphere.center.copy(center).applyMatrix4(matrix);
-      _sphere.radius = radius * matrix.getMaxScaleOnAxis();
+      this.applyMatrixToSphereAt(i, _sphere, center, radius);
     }
 
     if (_frustum.intersectsSphere(_sphere)) {
@@ -259,22 +255,21 @@ InstancedMesh2.prototype.frustumCullingLOD = function (LODrenderList: LODRenderL
 InstancedMesh2.prototype.BVHCullingLOD = function (LODrenderList: LODRenderList, indexes: Uint32Array[], sortObjects: boolean): void {
   const { count, levels } = LODrenderList;
   const instancesCount = this._instancesCount;
-  const visibilityArray = this.visibilityArray;
 
   if (sortObjects) {
     this.bvh.frustumCulling(_projScreenMatrix, (node: BVHNode<{}, number>) => {
       const index = node.object;
-      if (index < instancesCount && visibilityArray[index]) {
-        const distance = this.getPositionAt(index).distanceToSquared(_cameraLODPos); // TODO use DOT instead of distance
+      if (index < instancesCount && this.getVisibilityAt(index)) {
+        const distance = this.getPositionAt(index).distanceToSquared(_cameraLODPos);
         _renderList.push(distance, index);
       }
     });
   } else {
     this.bvh.frustumCullingLOD(_projScreenMatrix, _cameraLODPos, levels, (node: BVHNode<{}, number>, level: number) => {
       const index = node.object;
-      if (index < instancesCount && visibilityArray[index]) {
+      if (index < instancesCount && this.getVisibilityAt(index)) {
         if (level === null) {
-          const distance = this.getPositionAt(index).distanceToSquared(_cameraLODPos); // distance can be get by BVH
+          const distance = this.getPositionAt(index).distanceToSquared(_cameraLODPos); // distance can be get by BVH, but is not the distance from center
           level = this.getObjectLODIndexForDistance(levels, distance);
         }
 
@@ -295,15 +290,13 @@ InstancedMesh2.prototype.linearCullingLOD = function (LODrenderList: LODRenderLi
   _frustum.setFromProjectionMatrix(_projScreenMatrix);
 
   for (let i = 0; i < instancesCount; i++) {
-    if (!this.visibilityArray[i]) continue; // TODO check if getVisibleTo has same perf and use that instead
+    if (!this.getVisibilityAt(i)) continue; // TODO check getVisibilityAt performance vs access to direct array
 
     if (geometryCentered) {
-      this.getPositionAt(i, _sphere.center);
-      _sphere.radius = radius * this.getMaxScaleOnAxisAt(i);
+      const maxScale = this.getPositionAndMaxScaleOnAxisAt(i, _sphere.center);
+      _sphere.radius = radius * maxScale;
     } else {
-      const matrix = this.getMatrixAt(i); // TODO opt instancedMesh getting only pos and scale
-      _sphere.center.copy(center).applyMatrix4(matrix);
-      _sphere.radius = radius * matrix.getMaxScaleOnAxis();
+      this.applyMatrixToSphereAt(i, _sphere, center, radius);
     }
 
     if (_frustum.intersectsSphere(_sphere)) {

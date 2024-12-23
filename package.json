@@ -8,7 +8,7 @@
   "module": "build/index.js",
   "main": "build/index.cjs",
   "types": "src/index.d.ts",
-  "homepage": "https://github.com/three-ez/instanced-mesh#readme",
+  "homepage": "https://agargaro.github.io/instanced-mesh",
   "repository": "https://github.com/three-ez/instanced-mesh",
   "exports": {
     ".": {
@@ -26,7 +26,7 @@
     "three",
     "three.js",
     "threejs",
-    "InstancedMesh",
+    "instancedMesh",
     "frustum-culling",
     "instance-management",
     "sorting",
@@ -36,7 +36,8 @@
     "raycasting",
     "LOD",
     "shadow-LOD",
-    "InstancedMesh2"
+    "uniform-per-instance",
+    "instancedMesh2"
   ],
   "scripts": {
     "start": "vite",
