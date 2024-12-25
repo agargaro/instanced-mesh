@@ -180,7 +180,7 @@ InstancedMesh2.prototype.linearCulling = function (): void {
       const maxScale = this.getPositionAndMaxScaleOnAxisAt(i, _sphere.center);
       _sphere.radius = radius * maxScale;
     } else {
-      this.applyMatrixToSphereAt(i, _sphere, center, radius);
+      this.applyMatrixAtToSphere(i, _sphere, center, radius);
     }
 
     if (_frustum.intersectsSphere(_sphere)) {
@@ -296,7 +296,7 @@ InstancedMesh2.prototype.linearCullingLOD = function (LODrenderList: LODRenderLi
       const maxScale = this.getPositionAndMaxScaleOnAxisAt(i, _sphere.center);
       _sphere.radius = radius * maxScale;
     } else {
-      this.applyMatrixToSphereAt(i, _sphere, center, radius);
+      this.applyMatrixAtToSphere(i, _sphere, center, radius);
     }
 
     if (_frustum.intersectsSphere(_sphere)) {

@@ -65,6 +65,10 @@ export class InstancedMesh2<
    */
   public readonly isInstancedMesh2 = true;
   /**
+   * Indicates if this is a `SkinnedMesh`. TODO check if necessary
+   */
+  public isSkinnedMesh = false;
+  /**
    * An array of `Entity` representing individual instances.
    * This array is only initialized if `createInstances` is set to `true` in the constructor parameters.
    */
@@ -85,6 +89,10 @@ export class InstancedMesh2<
    * Texture storing morph target influences for instances.
    */
   public morphTexture: DataTexture = null;
+  /**
+   * Texture storing bones for instances.
+   */
+  public boneTexture: SquareDataTexture = null;
   /**
    * Texture storing custom uniforms per instance.
    */
@@ -142,6 +150,7 @@ export class InstancedMesh2<
   protected readonly _allowsEuler: boolean;
   protected readonly _tempInstance: InstancedEntity;
   protected _useOpacity = false;
+  protected _bonesCount: number = null;
 
   /**
    * @defaultValue `new MeshDepthMaterial({ depthPacking: RGBADepthPacking })`
@@ -257,6 +266,8 @@ export class InstancedMesh2<
     this.matricesTexture.update(renderer);
     this.colorsTexture?.update(renderer);
     this.uniformsTexture?.update(renderer);
+    // TODO convert also morph texture to squared texture?
+    this.boneTexture?.update(renderer);
 
     if (this.autoUpdate) {
       this.performFrustumCulling(shadowCamera, camera);
@@ -416,6 +427,12 @@ export class InstancedMesh2<
           shader.defines['USE_COLOR'] = '';
         }
       }
+
+      if (this.boneTexture) {
+        shader.defines['USE_INSTANCING_SKINNING'] = '';
+        shader.uniforms.bonesPerInstance = { value: this._bonesCount };
+        shader.uniforms.boneTexture = { value: this.boneTexture };
+      }
     };
 
     material.isInstancedMesh2Patched = true;
@@ -520,7 +537,7 @@ export class InstancedMesh2<
   }
 
   /** @internal */
-  public applyMatrixToSphereAt(index: number, sphere: Sphere, center: Vector3, radius: number): void {
+  public applyMatrixAtToSphere(index: number, sphere: Sphere, center: Vector3, radius: number): void {
     const offset = index * 16;
     const array = this.matricesTexture._data;
 
@@ -719,6 +736,11 @@ export class InstancedMesh2<
       this.morphTexture.image.data = this.morphTexture.image.data.slice();
     }
 
+    if (source.boneTexture !== null) {
+      this.boneTexture = source.boneTexture.clone();
+      this.boneTexture.image.data = this.boneTexture.image.data.slice();
+    }
+
     // TODO copies and handle LOD?
 
     return this;
@@ -733,6 +755,7 @@ export class InstancedMesh2<
     this.matricesTexture.dispose();
     this.colorsTexture?.dispose();
     this.morphTexture?.dispose();
+    this.boneTexture?.dispose();
     this.uniformsTexture?.dispose();
   }
 }
