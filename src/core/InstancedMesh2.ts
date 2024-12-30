@@ -338,14 +338,18 @@ export class InstancedMesh2<
   }
 
   protected patchGeometry(geometry: TGeometry): void {
-    if (geometry.hasAttribute('instanceIndex')) {
+    const instanceIndex = geometry.getAttribute('instanceIndex') as unknown as GLInstancedBufferAttribute; // TODO fix d.ts
+
+    if (instanceIndex) {
+      if (instanceIndex === this.instanceIndex) return;
+
       console.warn('The geometry has been cloned because it was already used.');
       geometry = geometry.clone();
-      geometry.deleteAttribute('instanceIndex');
+      geometry.deleteAttribute('instanceIndex'); // TODO rename it it ez_instancedIndex
     }
 
     if (this.instanceIndex) {
-      geometry.setAttribute('instanceIndex', this.instanceIndex as unknown as BufferAttribute); // Fix d.ts
+      geometry.setAttribute('instanceIndex', this.instanceIndex as unknown as BufferAttribute); // TODO fix d.ts
     }
   }
 

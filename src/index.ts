@@ -25,8 +25,4 @@ declare module 'three' {
   export interface Material {
     ez_patchOwner: InstancedMesh2;
   }
-
-  export interface BufferGeometry {
-    ez_patchOwner: InstancedMesh2;
-  }
 }
