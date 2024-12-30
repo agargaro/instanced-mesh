@@ -39,22 +39,22 @@ myInstancedMesh.addInstances(count, (obj, index) => {
 ## 🧑‍💻 Live Examples
 
 **Vanilla**
-- <img src="public/js.png" alt="js" width="16" /> [Dynamic adding with BVH](https://stackblitz.com/edit/stackblitz-starters-au96fmqz?file=index.html) (thanks to [Saumac](https://github.com/saumac))
+- <img src="public/js.png" alt="js" width="12" /> [Dynamic adding with BVH](https://stackblitz.com/edit/stackblitz-starters-au96fmqz?file=index.html) (thanks to [Saumac](https://github.com/saumac))
 
 **Using three.ez/main**
-- <img src="public/ts.png" alt="ts" width="16" /> [1kk static trees](https://stackblitz.com/edit/three-ezinstancedmesh2-1kk-static-trees?file=src%2Fmain.ts&embed=1&hideDevTools=1&view=preview)
-- <img src="public/ts.png" alt="ts" width="16" /> [Instances array dynamic](https://stackblitz.com/edit/three-ezinstancedmesh2-instances-array-dynamic?file=src%2Fmain.ts&embed=1&hideDevTools=1&view=preview)
-- <img src="public/ts.png" alt="ts" width="16" /> [Sorting](https://stackblitz.com/edit/three-ezinstancedmesh2-sorting?file=src%2Fmain.ts&embed=1&hideDevTools=1&view=preview)
-- <img src="public/ts.png" alt="ts" width="16" /> [Custom material](https://stackblitz.com/edit/three-ezinstancedmesh2-custom-material?file=src%2Fmain.ts&embed=1&hideDevTools=1&view=preview)
-- <img src="public/ts.png" alt="ts" width="16" /> [Dynamic BVH (no vite)](https://stackblitz.com/edit/three-ezinstancedmesh2-dynamic-bvh?file=index.ts&embed=1&hideDevTools=1&view=preview)
-- <img src="public/ts.png" alt="ts" width="16" /> [Fast raycasting](https://stackblitz.com/edit/three-ezinstancedmesh2-fast-raycasting?file=src%2Fmain.ts&embed=1&hideDevTools=1&view=preview)
-- <img src="public/ts.png" alt="ts" width="16" /> [LOD](https://stackblitz.com/edit/three-ezinstancedmesh2-instancedmeshlod?file=src%2Fmain.ts&embed=1&hideDevTools=1&view=preview)
-- <img src="public/ts.png" alt="ts" width="16" /> [Shadow LOD](https://stackblitz.com/edit/three-ezinstancedmesh2-shadow-lod?file=src%2Fmain.ts&embed=1&hideDevTools=1&view=preview)
-- <img src="public/js.png" alt="js" width="16" /> [Dynamic adding with BVH](https://glitch.com/edit/#!/three-ez-instanced-mesh-dynamic-adding-with-bvh?path=main.js)
+- <img src="public/ts.png" alt="ts" width="12" /> [1kk static trees](https://stackblitz.com/edit/three-ezinstancedmesh2-1kk-static-trees?file=src%2Fmain.ts&embed=1&hideDevTools=1&view=preview)
+- <img src="public/ts.png" alt="ts" width="12" /> [Instances array dynamic](https://stackblitz.com/edit/three-ezinstancedmesh2-instances-array-dynamic?file=src%2Fmain.ts&embed=1&hideDevTools=1&view=preview)
+- <img src="public/ts.png" alt="ts" width="12" /> [Sorting](https://stackblitz.com/edit/three-ezinstancedmesh2-sorting?file=src%2Fmain.ts&embed=1&hideDevTools=1&view=preview)
+- <img src="public/ts.png" alt="ts" width="12" /> [Custom material](https://stackblitz.com/edit/three-ezinstancedmesh2-custom-material?file=src%2Fmain.ts&embed=1&hideDevTools=1&view=preview)
+- <img src="public/ts.png" alt="ts" width="12" /> [Dynamic BVH (no vite)](https://stackblitz.com/edit/three-ezinstancedmesh2-dynamic-bvh?file=index.ts&embed=1&hideDevTools=1&view=preview)
+- <img src="public/ts.png" alt="ts" width="12" /> [Fast raycasting](https://stackblitz.com/edit/three-ezinstancedmesh2-fast-raycasting?file=src%2Fmain.ts&embed=1&hideDevTools=1&view=preview)
+- <img src="public/ts.png" alt="ts" width="12" /> [LOD](https://stackblitz.com/edit/three-ezinstancedmesh2-instancedmeshlod?file=src%2Fmain.ts&embed=1&hideDevTools=1&view=preview)
+- <img src="public/ts.png" alt="ts" width="12" /> [Shadow LOD](https://stackblitz.com/edit/three-ezinstancedmesh2-shadow-lod?file=src%2Fmain.ts&embed=1&hideDevTools=1&view=preview)
+- <img src="public/js.png" alt="js" width="12" /> [Dynamic adding with BVH](https://glitch.com/edit/#!/three-ez-instanced-mesh-dynamic-adding-with-bvh?path=main.js)
 
 **Using other libraries**
 - Threlte
-- [React-three-fiber](https://stackblitz.com/edit/vitejs-vite-zahmbaan?file=src%2FApp.tsx) (thanks to [Saumac](https://github.com/saumac))
+- <img src="public/ts.png" alt="ts" width="12" /> [React-three-fiber](https://stackblitz.com/edit/vitejs-vite-zahmbaan?file=src%2FApp.tsx) (thanks to [Saumac](https://github.com/saumac))
 
 
 ## 📚 Documentation
