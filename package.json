@@ -58,7 +58,7 @@
     "simplex-noise": "^4.0.3",
     "three-hex-tiling": "^0.1.4",
     "typescript": "^5.7.2",
-    "typescript-eslint": "^8.18.0",
+    "typescript-eslint": "^8.19.0",
     "vite": "^5.4.11",
     "vite-plugin-externalize-deps": "^0.8.0",
     "vite-plugin-static-copy": "^1.0.6"
