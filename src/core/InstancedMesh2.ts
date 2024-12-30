@@ -363,12 +363,13 @@ export class InstancedMesh2<
   }
 
   protected patchMaterial(material: Material): void {
-    if (material.isInstancedMesh2Patched) {
-      if (!this.isMaterialUsedByLOD(material)) {
-        console.warn('The material has been cloned because it was already used.');
-        material = material.clone();
-        material.isInstancedMesh2Patched = false;
-      }
+    if (material.ez_patchOwner === this) return;
+
+    if (material.ez_patchOwner) {
+      if (this.isMaterialUsedByLOD(material)) return; // TODO add check if morph or skeletal
+
+      console.warn('The material has been cloned because it was already used.');
+      material = material.clone();
     }
 
     const onBeforeCompile = material.onBeforeCompile.bind(material);
@@ -418,7 +419,7 @@ export class InstancedMesh2<
       }
     };
 
-    material.isInstancedMesh2Patched = true;
+    material.ez_patchOwner = this;
   }
 
   protected isMaterialUsedByLOD(material: Material): boolean {
@@ -520,7 +521,7 @@ export class InstancedMesh2<
   }
 
   /** @internal */
-  public applyMatrixToSphereAt(index: number, sphere: Sphere, center: Vector3, radius: number): void {
+  public applyMatrixAtToSphere(index: number, sphere: Sphere, center: Vector3, radius: number): void {
     const offset = index * 16;
     const array = this.matricesTexture._data;
 
