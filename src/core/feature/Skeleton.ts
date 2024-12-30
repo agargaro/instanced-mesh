@@ -21,18 +21,19 @@ InstancedMesh2.prototype.setSkeletonAt = function (id: number, skeleton: Skeleto
 
   if (this.boneTexture === null && !this._parentLOD) {
     const size = bones.length;
-    this._bonesCount = size; // TODO togliere
+    this._bonesCount = size;
     this.boneTexture = new SquareDataTexture(Float32Array, 4, 4 * size, this._capacity);
     this.isSkinnedMesh = true;
   }
 
   const boneInverses = skeleton.boneInverses;
   const boneArray = this.boneTexture._data;
+  const boneOffset = id * bones.length;
 
-  for (let i = 0, l = bones.length; i < l; i++) {  //  TODO fix
+  for (let i = 0, l = bones.length; i < l; i++) {
     const matrix = bones[i] ? bones[i].matrixWorld : _identityMatrix;
     _offsetMatrix.multiplyMatrices(matrix, boneInverses[i]);
-    _offsetMatrix.toArray(boneArray, (id * bones.length + i) * 16);
+    _offsetMatrix.toArray(boneArray, (boneOffset + i) * 16);
   }
 
   this.boneTexture.enqueueUpdate(id);
