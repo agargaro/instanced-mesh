@@ -1,3 +1,5 @@
+import { type InstancedMesh2 } from './core/InstancedMesh2.js';
+
 export * from './core/InstancedEntity.js';
 export * from './core/InstancedMesh2.js';
 export * from './core/InstancedMeshBVH.js';
@@ -21,6 +23,6 @@ export * from './utils/SortingUtils.js';
 /** @internal */
 declare module 'three' {
   export interface Material {
-    isInstancedMesh2Patched: boolean;
+    ez_patchOwner: InstancedMesh2;
   }
 }
