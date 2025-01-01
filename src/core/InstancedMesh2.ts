@@ -349,14 +349,18 @@ export class InstancedMesh2<
   }
 
   protected patchGeometry(geometry: TGeometry): void {
-    if (geometry.hasAttribute('instanceIndex')) {
+    const instanceIndex = geometry.getAttribute('instanceIndex') as unknown as GLInstancedBufferAttribute; // TODO fix d.ts
+
+    if (instanceIndex) {
+      if (instanceIndex === this.instanceIndex) return;
+
       console.warn('The geometry has been cloned because it was already used.');
       geometry = geometry.clone();
-      geometry.deleteAttribute('instanceIndex');
+      geometry.deleteAttribute('instanceIndex'); // TODO rename it it ez_instancedIndex
     }
 
     if (this.instanceIndex) {
-      geometry.setAttribute('instanceIndex', this.instanceIndex as unknown as BufferAttribute); // Fix d.ts
+      geometry.setAttribute('instanceIndex', this.instanceIndex as unknown as BufferAttribute); // TODO fix d.ts
     }
   }
 
@@ -374,12 +378,13 @@ export class InstancedMesh2<
   }
 
   protected patchMaterial(material: Material): void {
-    if (material.isInstancedMesh2Patched) {
-      if (!this.isMaterialUsedByLOD(material)) {
-        console.warn('The material has been cloned because it was already used.');
-        material = material.clone();
-        material.isInstancedMesh2Patched = false;
-      }
+    if (material.ez_patchOwner === this) return;
+
+    if (material.ez_patchOwner) {
+      if (this.isMaterialUsedByLOD(material)) return; // TODO add check if morph or skeletal
+
+      console.warn('The material has been cloned because it was already used.');
+      material = material.clone();
     }
 
     const onBeforeCompile = material.onBeforeCompile.bind(material);
@@ -435,7 +440,7 @@ export class InstancedMesh2<
       }
     };
 
-    material.isInstancedMesh2Patched = true;
+    material.ez_patchOwner = this;
   }
 
   protected isMaterialUsedByLOD(material: Material): boolean {

@@ -5,7 +5,7 @@
     <em>Simplify your <b>three.js</b> application development with <b>three.ez</b>!</em>
   </p>
 
-  <img src="public/banner.png" alt="three-ez-banner" /> <br>
+  <img src="public/banner.png" alt="banner" /> <br>
 
   [![Discord](https://img.shields.io/badge/chat-discord-blue?style=flat&logo=discord)](https://discord.gg/MVTwrdX3JM)
   [![npm](https://img.shields.io/npm/v/@three.ez/instanced-mesh)](https://www.npmjs.com/package/@three.ez/instanced-mesh)
@@ -38,29 +38,29 @@ myInstancedMesh.addInstances(count, (obj, index) => {
 
 ## 🧑‍💻 Live Examples
 
-**Stackblitz (Vite + Typescript + Vanilla)**
-- [1kk static trees](https://stackblitz.com/edit/three-ezinstancedmesh2-1kk-static-trees?file=src%2Fmain.ts&embed=1&hideDevTools=1&view=preview)
-- [Instances array dynamic](https://stackblitz.com/edit/three-ezinstancedmesh2-instances-array-dynamic?file=src%2Fmain.ts&embed=1&hideDevTools=1&view=preview)
-- [Sorting](https://stackblitz.com/edit/three-ezinstancedmesh2-sorting?file=src%2Fmain.ts&embed=1&hideDevTools=1&view=preview)
-- [Custom material](https://stackblitz.com/edit/three-ezinstancedmesh2-custom-material?file=src%2Fmain.ts&embed=1&hideDevTools=1&view=preview)
-- [Dynamic BVH (no vite)](https://stackblitz.com/edit/three-ezinstancedmesh2-dynamic-bvh?file=index.ts&embed=1&hideDevTools=1&view=preview)
-- [Fast raycasting](https://stackblitz.com/edit/three-ezinstancedmesh2-fast-raycasting?file=src%2Fmain.ts&embed=1&hideDevTools=1&view=preview)
-- [LOD](https://stackblitz.com/edit/three-ezinstancedmesh2-instancedmeshlod?file=src%2Fmain.ts&embed=1&hideDevTools=1&view=preview)
-- [Shadow LOD](https://stackblitz.com/edit/three-ezinstancedmesh2-shadow-lod?file=src%2Fmain.ts&embed=1&hideDevTools=1&view=preview)
-- [Vanilla](https://stackblitz.com/edit/stackblitz-starters-au96fmqz?file=index.html)
+**Vanilla**
+- <img src="public/js.png" alt="js" width="16" /> [Dynamic adding with BVH](https://stackblitz.com/edit/stackblitz-starters-au96fmqz?file=index.html) (thanks to [Saumac](https://github.com/saumac))
 
-**Glitch (Javascript)**
-- [Dynamic adding with BVH](https://glitch.com/edit/#!/three-ez-instanced-mesh-dynamic-adding-with-bvh?path=main.js)
+**Using three.ez/main**
+- <img src="public/ts.png" alt="ts" width="16" /> [1kk static trees](https://stackblitz.com/edit/three-ezinstancedmesh2-1kk-static-trees?file=src%2Fmain.ts&embed=1&hideDevTools=1&view=preview)
+- <img src="public/ts.png" alt="ts" width="16" /> [Instances array dynamic](https://stackblitz.com/edit/three-ezinstancedmesh2-instances-array-dynamic?file=src%2Fmain.ts&embed=1&hideDevTools=1&view=preview)
+- <img src="public/ts.png" alt="ts" width="16" /> [Sorting](https://stackblitz.com/edit/three-ezinstancedmesh2-sorting?file=src%2Fmain.ts&embed=1&hideDevTools=1&view=preview)
+- <img src="public/ts.png" alt="ts" width="16" /> [Custom material](https://stackblitz.com/edit/three-ezinstancedmesh2-custom-material?file=src%2Fmain.ts&embed=1&hideDevTools=1&view=preview)
+- <img src="public/ts.png" alt="ts" width="16" /> [Dynamic BVH (no vite)](https://stackblitz.com/edit/three-ezinstancedmesh2-dynamic-bvh?file=index.ts&embed=1&hideDevTools=1&view=preview)
+- <img src="public/ts.png" alt="ts" width="16" /> [Fast raycasting](https://stackblitz.com/edit/three-ezinstancedmesh2-fast-raycasting?file=src%2Fmain.ts&embed=1&hideDevTools=1&view=preview)
+- <img src="public/ts.png" alt="ts" width="16" /> [LOD](https://stackblitz.com/edit/three-ezinstancedmesh2-instancedmeshlod?file=src%2Fmain.ts&embed=1&hideDevTools=1&view=preview)
+- <img src="public/ts.png" alt="ts" width="16" /> [Shadow LOD](https://stackblitz.com/edit/three-ezinstancedmesh2-shadow-lod?file=src%2Fmain.ts&embed=1&hideDevTools=1&view=preview)
+- <img src="public/js.png" alt="js" width="16" /> [Dynamic adding with BVH](https://glitch.com/edit/#!/three-ez-instanced-mesh-dynamic-adding-with-bvh?path=main.js)
 
-**Frameworks**
+**Using other libraries**
 - Threlte
-- [React-three-fiber](https://stackblitz.com/edit/vitejs-vite-zahmbaan?file=src%2FApp.tsx)
+- <img src="public/ts.png" alt="ts" width="16" /> [React-three-fiber](https://stackblitz.com/edit/vitejs-vite-zahmbaan?file=src%2FApp.tsx) (thanks to [Saumac](https://github.com/saumac))
 
 
 ## 📚 Documentation
 
-The tutorial is available here. <br>
-The API documentation is available here.
+<!-- The tutorial is available here. <br> -->
+The API documentation is available [here](https://agargaro.github.io/instanced-mesh/api/classes/instancedmesh2/).
 
 ## ⬇️ Installation
 
@@ -217,4 +217,3 @@ It's recommended to use [three-mesh-bvh](https://github.com/gkjohnson/three-mesh
 
 - [three-mesh-bvh](https://github.com/gkjohnson/three-mesh-bvh)
 - [ErinCatto_DynamicBVH](https://box2d.org/files/ErinCatto_DynamicBVH_Full.pdf)
-- [BatchedMesh](https://threejs.org/docs/#api/en/objects/BatchedMesh)
