@@ -3,10 +3,9 @@ import { AnimationMixer, DirectionalLight, HemisphereLight, Scene, SkinnedMesh }
 import { GLTF, GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { InstancedMesh2 } from '../src/index.js';
 
-const count = 100000;
-const spawnSize = 100000;
+const count = 3;
 
-const camera = new PerspectiveCameraAuto().translateZ(10);
+const camera = new PerspectiveCameraAuto().translateZ(-5).rotateY(Math.PI);
 const scene = new Scene();
 const main = new Main();
 main.createView({ scene, camera, enabled: false, backgroundColor: 0x99DDFF });
@@ -18,30 +17,54 @@ light.position.set(200, 1000, 50);
 const glb = await Asset.load<GLTF>(GLTFLoader, 'https://threejs.org/examples/models/gltf/Soldier.glb');
 const dummy = glb.scene.children[0].children[0] as SkinnedMesh;
 
-// dummy.visible = false;
-// glb.scene.children[0].children[1].visible = false;
+dummy.visible = false;
+glb.scene.children[0].children[1].visible = false;
 
-// const soldiers = new InstancedMesh2(dummy.geometry, dummy.material, { capacity: count });
+const soldiers = new InstancedMesh2(dummy.geometry, dummy.material, { capacity: count });
 
-// soldiers.addInstances(count, (obj, index) => {
-//   obj.scale.copy(glb.scene.children[0].scale);
-//   obj.quaternion.copy(glb.scene.children[0].quaternion);
-//   obj.position.set(spawnSize * Math.random() - spawnSize / 2, 0, spawnSize * Math.random() - spawnSize / 2);
-//   obj.color = `hsl(${Math.random() * 360}, 50%, 66%)`;
-// });
-
-const mixer = new AnimationMixer(glb.scene);
-const action = mixer.clipAction(glb.animations[1]);
-action.play();
-
-scene.on('animate', (e) => {
-  //   for (let i = 0; i < soldiers.instancesCount; i++) {
-  mixer.update(e.delta);
-  //     soldiers.setSkeletonAt(i, dummy.skeleton);
-  //   }
+soldiers.addInstances(count, (obj, index) => {
+  obj.position.copy(dummy.position);
+  obj.position.x += index * 100 - 100;
+  obj.quaternion.copy(dummy.quaternion);
+  obj.scale.copy(dummy.scale);
 });
 
-scene.add(light, hemi, glb.scene);
-// scene.add(light, hemi, soldiers, glb.scene);
+const mixer = new AnimationMixer(glb.scene);
+const action = mixer.clipAction(glb.animations[0]);
+action.play();
 
-// soldiers.skeleton = { update: () => { } };
+// const mixer2 = new AnimationMixer(glb.scene);
+// const action2 = mixer2.clipAction(glb.animations[1]);
+// action2.play();
+
+// const mixer3 = new AnimationMixer(glb.scene);
+// const action3 = mixer3.clipAction(glb.animations[3]);
+// action3.play();
+
+mixer.update(0);
+soldiers.setSkeletonAt(0, dummy.skeleton);
+soldiers.setSkeletonAt(1, dummy.skeleton);
+soldiers.setSkeletonAt(2, dummy.skeleton);
+// mixer2.update(0);
+// soldiers.setSkeletonAt(1, dummy.skeleton);
+// mixer3.update(0);
+// soldiers.setSkeletonAt(2, dummy.skeleton);
+
+const offset = [1, 1, 1];
+
+scene.on('animate', (e) => {
+  debugger
+  mixer.setTime(e.total * offset[0]);
+  soldiers.setSkeletonAt(0, dummy.skeleton);
+  mixer.setTime(e.total * offset[1]);
+  soldiers.setSkeletonAt(1, dummy.skeleton);
+  mixer.setTime(e.total * offset[2]);
+  soldiers.setSkeletonAt(2, dummy.skeleton);
+  // mixer2.setTime(e.total);
+  // soldiers.setSkeletonAt(1, dummy.skeleton);
+  // mixer3.setTime(e.total);
+  // soldiers.setSkeletonAt(2, dummy.skeleton);
+});
+
+glb.scene.children[0].add(soldiers);
+scene.add(light, hemi, glb.scene);

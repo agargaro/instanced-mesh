@@ -1,4 +1,4 @@
-import { Box3, BufferAttribute, BufferGeometry, Camera, Color, ColorManagement, ColorRepresentation, DataTexture, InstancedBufferAttribute, Material, Matrix4, Mesh, MeshDepthMaterial, MeshDistanceMaterial, Object3D, Object3DEventMap, RGBADepthPacking, Scene, Sphere, Vector3, WebGLRenderer } from 'three';
+import { AttachedBindMode, BindMode, Box3, BufferAttribute, BufferGeometry, Camera, Color, ColorManagement, ColorRepresentation, DataTexture, DetachedBindMode, InstancedBufferAttribute, Material, Matrix4, Mesh, MeshDepthMaterial, MeshDistanceMaterial, Object3D, Object3DEventMap, RGBADepthPacking, Scene, Skeleton, Sphere, Vector3, WebGLRenderer } from 'three';
 import { CustomSortCallback } from './feature/FrustumCulling.js';
 import { Entity } from './feature/Instances.js';
 import { LODInfo } from './feature/LOD.js';
@@ -7,8 +7,8 @@ import { BVHParams, InstancedMeshBVH } from './InstancedMeshBVH.js';
 import { GLInstancedBufferAttribute } from './utils/GLInstancedBufferAttribute.js';
 import { SquareDataTexture } from './utils/SquareDataTexture.js';
 
-// TODO Add check to not update partial texture if needsuupdate already true
-// TODO if bvh present, can override?
+// TODO: Add check to not update partial texture if needsuupdate already true
+// TODO: if bvh present, can override?
 // TODO: Use BVH only for raycasting
 // TODO LOD: instancedMeshLOD rendering first nearest levels, look out to transparent
 // TODO LOD: shared customDepthMaterial and customDistanceMaterial?
@@ -64,10 +64,6 @@ export class InstancedMesh2<
    * Indicates if this is an `InstancedMesh2`.
    */
   public readonly isInstancedMesh2 = true;
-  /**
-   * Indicates if this is a `SkinnedMesh`. TODO check if necessary
-   */
-  public isSkinnedMesh = false;
   /**
    * An array of `Entity` representing individual instances.
    * This array is only initialized if `createInstances` is set to `true` in the constructor parameters.
@@ -137,6 +133,24 @@ export class InstancedMesh2<
    * @default true
    */
   public autoUpdate = true;
+  /**
+   * Either `AttachedBindMode` or `DetachedBindMode`. `AttachedBindMode` means the skinned mesh shares the same world space as the skeleton.
+   * This is not true when using `DetachedBindMode` which is useful when sharing a skeleton across multiple skinned meshes.
+   * @default `AttachedBindMode`
+   */
+  public bindMode: BindMode = AttachedBindMode;
+  /**
+   * The base matrix that is used for the bound bone transforms.
+   */
+  public bindMatrix: Matrix4 = null;
+  /**
+   * The base matrix that is used for resetting the bound bone transforms.
+   */
+  public bindMatrixInverse: Matrix4 = null;
+  /**
+   * Skeleton representing the bone hierarchy of the skinned mesh.
+   */
+  public skeleton: Skeleton = null;
   /** @internal */ _renderer: WebGLRenderer = null;
   /** @internal */ _instancesCount = 0;
   /** @internal */ _count = 0;
@@ -150,7 +164,6 @@ export class InstancedMesh2<
   protected readonly _allowsEuler: boolean;
   protected readonly _tempInstance: InstancedEntity;
   protected _useOpacity = false;
-  protected _bonesCount: number = null;
 
   /**
    * @defaultValue `new MeshDepthMaterial({ depthPacking: RGBADepthPacking })`
@@ -266,8 +279,8 @@ export class InstancedMesh2<
     this.matricesTexture.update(renderer);
     this.colorsTexture?.update(renderer);
     this.uniformsTexture?.update(renderer);
-    // TODO convert also morph texture to squared texture?
     this.boneTexture?.update(renderer);
+    // TODO convert also morph texture to squared texture?
 
     if (this.autoUpdate) {
       this.performFrustumCulling(shadowCamera, camera);
@@ -285,6 +298,8 @@ export class InstancedMesh2<
     this.matricesTexture.update(renderer);
     this.colorsTexture?.update(renderer);
     this.uniformsTexture?.update(renderer);
+    this.boneTexture?.update(renderer);
+    // TODO convert also morph texture to squared texture?
 
     if (this.autoUpdate) {
       this.performFrustumCulling(camera);
@@ -434,8 +449,11 @@ export class InstancedMesh2<
       }
 
       if (this.boneTexture) {
+        shader.defines['USE_SKINNING'] = '';
         shader.defines['USE_INSTANCING_SKINNING'] = '';
-        shader.uniforms.bonesPerInstance = { value: this._bonesCount };
+        shader.uniforms.bindMatrix = { value: this.bindMatrix };
+        shader.uniforms.bindMatrixInverse = { value: this.bindMatrixInverse };
+        shader.uniforms.bonesPerInstance = { value: this.skeleton.bones.length };
         shader.uniforms.boneTexture = { value: this.boneTexture };
       }
     };
@@ -762,6 +780,20 @@ export class InstancedMesh2<
     this.morphTexture?.dispose();
     this.boneTexture?.dispose();
     this.uniformsTexture?.dispose();
+  }
+
+  public override updateMatrixWorld(force?: boolean): void {
+    super.updateMatrixWorld(force);
+
+    if (!this.bindMatrixInverse) return;
+
+    if (this.bindMode === AttachedBindMode) {
+      this.bindMatrixInverse.copy(this.matrixWorld).invert();
+    } else if (this.bindMode === DetachedBindMode) {
+      this.bindMatrixInverse.copy(this.bindMatrix).invert();
+    } else {
+      console.warn('Unrecognized bindMode: ' + this.bindMode);
+    }
   }
 }
 
