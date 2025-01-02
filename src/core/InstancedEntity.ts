@@ -1,4 +1,4 @@
-import { Color, ColorRepresentation, Euler, Matrix4, Mesh, Object3D, Quaternion, Vector3 } from 'three';
+import { Color, ColorRepresentation, Euler, Matrix4, Mesh, Object3D, Quaternion, Skeleton, Vector3 } from 'three';
 import { InstancedMesh2 } from './InstancedMesh2.js';
 import { UniformValue, UniformValueObj } from './utils/SquareDataTexture.js';
 
@@ -167,6 +167,13 @@ export class InstancedEntity {
    */
   public getUniform(name: string, target?: UniformValueObj): UniformValue {
     return this.owner.getUniformAt(this.id, name, target);
+  }
+
+  /**
+   * TODO
+   */
+  public setSkeleton(skeleton: Skeleton, updateBonesMatrices = true): void {
+    this.owner.setSkeletonAt(this.id, skeleton, updateBonesMatrices);
   }
 
   /**

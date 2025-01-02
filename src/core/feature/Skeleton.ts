@@ -5,28 +5,16 @@ import { SquareDataTexture } from '../utils/SquareDataTexture.js';
 declare module '../InstancedMesh2.js' {
   interface InstancedMesh2 {
     /**
-     *
-     * @param id
-     * @param skeleton
+     * TODO
      */
-    getSkeletonAt(id: number, skeleton?: Skeleton): Skeleton;
-    /**
-     *
-     * @param id
-     * @param skeleton
-     */
-    setSkeletonAt(id: number, skeleton: Skeleton): void;
+    setSkeletonAt(id: number, skeleton: Skeleton, updateBonesMatrices?: boolean): void;
   }
 }
 
 const _offsetMatrix = new Matrix4();
 const _identityMatrix = new Matrix4();
 
-InstancedMesh2.prototype.getSkeletonAt = function (id: number, skeleton?: Skeleton) {
-  throw new Error('\'getSkeletonAt\' not implemented yet.');
-};
-
-InstancedMesh2.prototype.setSkeletonAt = function (id: number, skeleton: Skeleton) {
+InstancedMesh2.prototype.setSkeletonAt = function (id: number, skeleton: Skeleton, updateBonesMatrices = true) {
   const bones = skeleton.bones;
 
   if (this.boneTexture === null && !this._parentLOD) {
@@ -35,6 +23,13 @@ InstancedMesh2.prototype.setSkeletonAt = function (id: number, skeleton: Skeleto
     this.bindMatrix = new Matrix4();
     this.bindMatrixInverse = new Matrix4();
     this.boneTexture = new SquareDataTexture(Float32Array, 4, 4 * size, this._capacity);
+  }
+
+  if (updateBonesMatrices) {
+    for (const bone of bones) {
+      bone.updateMatrix();
+      bone.matrixWorld.multiplyMatrices(bone.parent.matrixWorld, bone.matrix);
+    }
   }
 
   const boneInverses = skeleton.boneInverses;

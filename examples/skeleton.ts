@@ -20,12 +20,14 @@ const dummy = glb.scene.children[0].children[0] as SkinnedMesh;
 glb.scene.children[0].children[1].visible = false;
 dummy.visible = false;
 
-dummy.skeleton.bones.forEach((bone) => {
+for (const bone of dummy.skeleton.bones) {
   bone.matrixAutoUpdate = false;
   bone.matrixWorldAutoUpdate = false;
-});
+};
 
 const soldiers = new InstancedMesh2<{ mixer: AnimationMixer }>(dummy.geometry, dummy.material, { capacity: count, createInstances: true });
+
+const indexAnimation = [0, 1, 3];
 
 soldiers.addInstances(count, (obj, index) => {
   obj.position.copy(dummy.position);
@@ -34,26 +36,15 @@ soldiers.addInstances(count, (obj, index) => {
   obj.scale.copy(dummy.scale);
 
   const mixer = new AnimationMixer(glb.scene);
-  mixer.clipAction(glb.animations[index % 2]).play();
+  mixer.timeScale = Math.random() * 5;
+  mixer.clipAction(glb.animations[indexAnimation[index % 3]]).play();
   obj.mixer = mixer;
 });
 
-for (let i = 0; i < count; i++) {
-  soldiers.setSkeletonAt(i, dummy.skeleton);
-}
-
 scene.on('animate', (e) => {
-  const instances = soldiers.instances;
-
-  for (let i = 0; i < count; i++) {
-    instances[i].mixer.setTime(e.total);
-
-    dummy.skeleton.bones.forEach((bone) => { // auto?
-      bone.updateMatrix();
-      bone.matrixWorld.multiplyMatrices(bone.parent.matrixWorld, bone.matrix);
-    });
-
-    soldiers.setSkeletonAt(i, dummy.skeleton);
+  for (const soldier of soldiers.instances) {
+    soldier.mixer.update(e.delta);
+    soldier.setSkeleton(dummy.skeleton);
   }
 });
 
