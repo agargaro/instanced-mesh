@@ -1,4 +1,4 @@
-import { AttachedBindMode, BindMode, Box3, BufferAttribute, BufferGeometry, Camera, Color, ColorManagement, ColorRepresentation, DataTexture, DetachedBindMode, InstancedBufferAttribute, Material, Matrix4, Mesh, MeshDepthMaterial, MeshDistanceMaterial, Object3D, Object3DEventMap, RGBADepthPacking, Scene, Skeleton, Sphere, Vector3, WebGLRenderer } from 'three';
+import { AttachedBindMode, BindMode, Box3, BufferAttribute, BufferGeometry, Camera, Color, ColorManagement, ColorRepresentation, DataTexture, DetachedBindMode, InstancedBufferAttribute, Material, Matrix4, Mesh, MeshDepthMaterial, MeshDistanceMaterial, Object3D, Object3DEventMap, RGBADepthPacking, Scene, Skeleton, SkinnedMesh, Sphere, Vector3, WebGLRenderer } from 'three';
 import { CustomSortCallback } from './feature/FrustumCulling.js';
 import { Entity } from './feature/Instances.js';
 import { LODInfo } from './feature/LOD.js';
@@ -234,6 +234,22 @@ export class InstancedMesh2<
   public override set material(value: TMaterial) {
     this._material = value;
     this.patchMaterials(value);
+  }
+
+  /**
+   * Create an `InstancedMesh2` instance from an existing `Mesh`.
+   * @param mesh The mesh to create an `InstanceMesh2` from.
+   * @param params  Optional configuration parameters object. See `InstancedMesh2Params` for details.
+   * @returns The created `InstancedMesh2` instance.
+   */
+  public static createFrom<TData = {}>(mesh: Mesh, params: InstancedMesh2Params = {}): InstancedMesh2<TData> {
+    const instancedMesh = new InstancedMesh2<TData>(mesh.geometry, mesh.material, params);
+
+    if ((mesh as SkinnedMesh).isSkinnedMesh) {
+      instancedMesh.initSkeleton((mesh as SkinnedMesh).skeleton);
+    }
+
+    return instancedMesh;
   }
 
   /** @internal */
