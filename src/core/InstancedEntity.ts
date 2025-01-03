@@ -1,4 +1,4 @@
-import { Color, ColorRepresentation, Euler, Matrix4, Mesh, Object3D, Quaternion, Skeleton, Vector3 } from 'three';
+import { Color, ColorRepresentation, Euler, Matrix4, Mesh, Object3D, Quaternion, Vector3 } from 'three';
 import { InstancedMesh2 } from './InstancedMesh2.js';
 import { UniformValue, UniformValueObj } from './utils/SquareDataTexture.js';
 
@@ -170,10 +170,11 @@ export class InstancedEntity {
   }
 
   /**
-   * TODO
+   * Updates the bones of the skeleton to the instance.
+   * @param updateBonesMatrices Whether to update the matrices of the bones. Default is `true`.
    */
-  public setSkeleton(skeleton: Skeleton, updateBonesMatrices = true): void {
-    this.owner.setSkeletonAt(this.id, skeleton, updateBonesMatrices);
+  public updateBones(updateBonesMatrices = true): void {
+    this.owner.setBonesAt(this.id, updateBonesMatrices);
   }
 
   /**

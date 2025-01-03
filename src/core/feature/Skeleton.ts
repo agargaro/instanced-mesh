@@ -5,23 +5,45 @@ import { SquareDataTexture } from '../utils/SquareDataTexture.js';
 declare module '../InstancedMesh2.js' {
   interface InstancedMesh2 {
     /**
-     * TODO
+     * Initialize the skeleton of the instances.
+     * @param skeleton The skeleton to initialize.
+     * @param disableMatrixAutoUpdate Whether to disable the matrix auto update of the bones. Default is `true`.
      */
-    setSkeletonAt(id: number, skeleton: Skeleton, updateBonesMatrices?: boolean): void;
+    initSkeleton(skeleton: Skeleton, disableMatrixAutoUpdate?: boolean): void;
+    /**
+     * Set the bones of the skeleton to the instance at the specified index.
+     * @param id The index of the instance.
+     * @param updateBonesMatrices Whether to update the matrices of the bones. Default is `true`.
+     */
+    setBonesAt(id: number, updateBonesMatrices?: boolean): void;
     /** internal */ multiplyBoneMatricesAt(instanceIndex: number, boneIndex: number, m1: Matrix4, m2: Matrix4): void;
   }
 }
 
-InstancedMesh2.prototype.setSkeletonAt = function (id: number, skeleton: Skeleton, updateBonesMatrices = true) {
-  const bones = skeleton.bones;
-
-  if (this.boneTexture === null && !this._parentLOD) {
+InstancedMesh2.prototype.initSkeleton = function (skeleton: Skeleton, disableMatrixAutoUpdate = true) {
+  if (skeleton && this.skeleton !== skeleton && !this._parentLOD) { // TODO remove !this._parentLOD
+    const bones = skeleton.bones;
     this.skeleton = skeleton;
     this.bindMatrix = new Matrix4();
     this.bindMatrixInverse = new Matrix4();
     this.boneTexture = new SquareDataTexture(Float32Array, 4, 4 * bones.length, this._capacity);
+
+    if (disableMatrixAutoUpdate) {
+      for (const bone of bones) {
+        bone.matrixAutoUpdate = false;
+        bone.matrixWorldAutoUpdate = false;
+      }
+    }
+  }
+};
+
+InstancedMesh2.prototype.setBonesAt = function (id: number, updateBonesMatrices = true) {
+  const skeleton = this.skeleton;
+  if (!skeleton) {
+    throw new Error('"setBonesAt" cannot be called before "initSkeleton"');
   }
 
+  const bones = skeleton.bones;
   const boneInverses = skeleton.boneInverses;
 
   for (let i = 0, l = bones.length; i < l; i++) {
@@ -38,7 +60,6 @@ InstancedMesh2.prototype.setSkeletonAt = function (id: number, skeleton: Skeleto
   this.boneTexture.enqueueUpdate(id);
 };
 
-// TODO add to protoype
 InstancedMesh2.prototype.multiplyBoneMatricesAt = function (instanceIndex: number, boneIndex: number, m1: Matrix4, m2: Matrix4) {
   const offset = (instanceIndex * this.skeleton.bones.length + boneIndex) * 16;
   const ae = m1.elements;

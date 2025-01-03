@@ -4,6 +4,8 @@ import { GLTF, GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { InstancedMesh2 } from '../src/index.js';
 
 const count = 7;
+const animationMaxFps = 30;
+let time = 0;
 
 const camera = new PerspectiveCameraAuto().translateZ(-5).rotateY(Math.PI);
 const scene = new Scene();
@@ -20,14 +22,10 @@ const dummy = glb.scene.children[0].children[0] as SkinnedMesh;
 glb.scene.children[0].children[1].visible = false;
 dummy.visible = false;
 
-for (const bone of dummy.skeleton.bones) {
-  bone.matrixAutoUpdate = false;
-  bone.matrixWorldAutoUpdate = false;
-};
+const indexAnimation = [0, 1, 3];
 
 const soldiers = new InstancedMesh2<{ mixer: AnimationMixer }>(dummy.geometry, dummy.material, { capacity: count, createInstances: true });
-
-const indexAnimation = [0, 1, 3];
+soldiers.initSkeleton(dummy.skeleton);
 
 soldiers.addInstances(count, (obj, index) => {
   obj.position.copy(dummy.position);
@@ -35,17 +33,22 @@ soldiers.addInstances(count, (obj, index) => {
   obj.quaternion.copy(dummy.quaternion);
   obj.scale.copy(dummy.scale);
 
-  const mixer = new AnimationMixer(glb.scene);
-  mixer.timeScale = Math.random() * 5;
-  mixer.clipAction(glb.animations[indexAnimation[index % 3]]).play();
-  obj.mixer = mixer;
+  obj.mixer = new AnimationMixer(glb.scene);
+  obj.mixer.clipAction(glb.animations[indexAnimation[index % 3]]).play();
 });
 
 scene.on('animate', (e) => {
+  time += e.delta;
+  if (time < 1 / animationMaxFps) return;
+
   for (const soldier of soldiers.instances) {
-    soldier.mixer.update(e.delta);
-    soldier.setSkeleton(dummy.skeleton);
+    if ((soldier.mixer as any)._nActiveActions > 0) {
+      soldier.mixer.update(time);
+      soldier.updateBones();
+    }
   }
+
+  time = time % (1 / animationMaxFps);
 });
 
 glb.scene.children[0].add(soldiers);
