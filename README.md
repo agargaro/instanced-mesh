@@ -60,7 +60,7 @@ myInstancedMesh.addInstances(count, (obj, index) => {
 ## 📚 Documentation
 
 <!-- The tutorial is available here. <br> -->
-The API documentation is available [here](https://agargaro.github.io/instanced-mesh/api/classes/instancedmesh2/).
+The API documentation is available [here](https://agargaro.github.io/instanced-mesh/api/readme).
 
 ## ⬇️ Installation
 

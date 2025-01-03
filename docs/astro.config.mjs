@@ -43,17 +43,17 @@ export default defineConfig({
         discord: 'https://discord.gg/MVTwrdX3JM',
       },
       sidebar: [
-        {
-          label: 'Guides',
-          items: [
-            // Each item here is one entry in the navigation menu.
-            { label: 'Example Guide', slug: 'guides/example' },
-          ],
-        },
-        {
-          label: 'Reference',
-          autogenerate: { directory: 'reference' },
-        },
+        // {
+        //   label: 'Guides',
+        //   items: [
+        //     // Each item here is one entry in the navigation menu.
+        //     { label: 'Example Guide', slug: 'guides/example' },
+        //   ],
+        // },
+        // {
+        //   label: 'Reference',
+        //   autogenerate: { directory: 'reference' },
+        // },
         // Add the generated sidebar group to the sidebar.
         typeDocSidebarGroup,
       ],
