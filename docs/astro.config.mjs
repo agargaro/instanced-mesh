@@ -32,7 +32,7 @@ export default defineConfig({
           tsconfig: '../tsconfig.json',
         }),
       ],
-      title: 'three.ez/instanced-mesh',
+      title: 'InstancedMesh2',
       logo: {
         src: './src/assets/samoyed-mascot.png',
         alt: 'logo-samoyed-mascot',
