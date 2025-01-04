@@ -170,6 +170,14 @@ export class InstancedEntity {
   }
 
   /**
+   * Updates the bones of the skeleton to the instance.
+   * @param updateBonesMatrices Whether to update the matrices of the bones. Default is `true`.
+   */
+  public updateBones(updateBonesMatrices = true): void {
+    this.owner.setBonesAt(this.id, updateBonesMatrices);
+  }
+
+  /**
    * Sets the uniform value for the given name
    * @param name The name of the uniform to set.
    * @param value The new value for the uniform.

@@ -3,6 +3,7 @@ import instanced_pars_vertex from './chunks/instanced_pars_vertex.glsl.js';
 import instanced_color_pars_vertex from './chunks/instanced_color_pars_vertex.glsl.js';
 import instanced_vertex from './chunks/instanced_vertex.glsl.js';
 import instanced_color_vertex from './chunks/instanced_color_vertex.glsl.js';
+import instanced_skinning_pars_vertex from './chunks/instanced_skinning_pars_vertex.glsl.js';
 
 ShaderChunk['instanced_pars_vertex'] = instanced_pars_vertex;
 ShaderChunk['instanced_color_pars_vertex'] = instanced_color_pars_vertex;
@@ -25,6 +26,8 @@ ShaderChunk.defaultnormal_vertex = patchShader(ShaderChunk.defaultnormal_vertex)
 ShaderChunk.batching_pars_vertex = ShaderChunk.batching_pars_vertex.concat('\n#include <instanced_pars_vertex>');
 ShaderChunk.color_pars_vertex = ShaderChunk.color_pars_vertex.concat('\n#include <instanced_color_pars_vertex>');
 ShaderChunk['batching_vertex'] = ShaderChunk['batching_vertex'].concat('\n#include <instanced_vertex>');
+
+ShaderChunk.skinning_pars_vertex = instanced_skinning_pars_vertex;
 
 // TODO FIX don't override like this
 ShaderChunk['morphinstance_vertex'] = ShaderChunk['morphinstance_vertex'].replaceAll('gl_InstanceID', 'instanceIndex');

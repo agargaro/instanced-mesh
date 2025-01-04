@@ -1,4 +1,4 @@
-import { Box3, BufferAttribute, BufferGeometry, Camera, Color, ColorManagement, ColorRepresentation, DataTexture, InstancedBufferAttribute, Material, Matrix4, Mesh, MeshDepthMaterial, MeshDistanceMaterial, Object3D, Object3DEventMap, RGBADepthPacking, Scene, Sphere, Vector3, WebGLRenderer } from 'three';
+import { AttachedBindMode, BindMode, Box3, BufferAttribute, BufferGeometry, Camera, Color, ColorManagement, ColorRepresentation, DataTexture, DetachedBindMode, InstancedBufferAttribute, Material, Matrix4, Mesh, MeshDepthMaterial, MeshDistanceMaterial, Object3D, Object3DEventMap, RGBADepthPacking, Scene, Skeleton, SkinnedMesh, Sphere, Vector3, WebGLRenderer } from 'three';
 import { CustomSortCallback } from './feature/FrustumCulling.js';
 import { Entity } from './feature/Instances.js';
 import { LODInfo } from './feature/LOD.js';
@@ -7,8 +7,8 @@ import { BVHParams, InstancedMeshBVH } from './InstancedMeshBVH.js';
 import { GLInstancedBufferAttribute } from './utils/GLInstancedBufferAttribute.js';
 import { SquareDataTexture } from './utils/SquareDataTexture.js';
 
-// TODO Add check to not update partial texture if needsuupdate already true
-// TODO if bvh present, can override?
+// TODO: Add check to not update partial texture if needsuupdate already true
+// TODO: if bvh present, can override?
 // TODO: Use BVH only for raycasting
 // TODO LOD: instancedMeshLOD rendering first nearest levels, look out to transparent
 // TODO LOD: shared customDepthMaterial and customDistanceMaterial?
@@ -86,6 +86,10 @@ export class InstancedMesh2<
    */
   public morphTexture: DataTexture = null;
   /**
+   * Texture storing bones for instances.
+   */
+  public boneTexture: SquareDataTexture = null;
+  /**
    * Texture storing custom uniforms per instance.
    */
   public uniformsTexture: SquareDataTexture = null;
@@ -129,6 +133,24 @@ export class InstancedMesh2<
    * @default true
    */
   public autoUpdate = true;
+  /**
+   * Either `AttachedBindMode` or `DetachedBindMode`. `AttachedBindMode` means the skinned mesh shares the same world space as the skeleton.
+   * This is not true when using `DetachedBindMode` which is useful when sharing a skeleton across multiple skinned meshes.
+   * @default `AttachedBindMode`
+   */
+  public bindMode: BindMode = AttachedBindMode;
+  /**
+   * The base matrix that is used for the bound bone transforms.
+   */
+  public bindMatrix: Matrix4 = null;
+  /**
+   * The base matrix that is used for resetting the bound bone transforms.
+   */
+  public bindMatrixInverse: Matrix4 = null;
+  /**
+   * Skeleton representing the bone hierarchy of the skinned mesh.
+   */
+  public skeleton: Skeleton = null;
   /** @internal */ _renderer: WebGLRenderer = null;
   /** @internal */ _instancesCount = 0;
   /** @internal */ _count = 0;
@@ -214,6 +236,22 @@ export class InstancedMesh2<
     this.patchMaterials(value);
   }
 
+  /**
+   * Create an `InstancedMesh2` instance from an existing `Mesh`.
+   * @param mesh The mesh to create an `InstanceMesh2` from.
+   * @param params  Optional configuration parameters object. See `InstancedMesh2Params` for details.
+   * @returns The created `InstancedMesh2` instance.
+   */
+  public static createFrom<TData = {}>(mesh: Mesh, params: InstancedMesh2Params = {}): InstancedMesh2<TData> {
+    const instancedMesh = new InstancedMesh2<TData>(mesh.geometry, mesh.material, params);
+
+    if ((mesh as SkinnedMesh).isSkinnedMesh) {
+      instancedMesh.initSkeleton((mesh as SkinnedMesh).skeleton);
+    }
+
+    return instancedMesh;
+  }
+
   /** @internal */
   // eslint-disable-next-line @typescript-eslint/unified-signatures
   constructor(geometry: TGeometry, material: TMaterial, params?: InstancedMesh2Params, LOD?: InstancedMesh2);
@@ -257,6 +295,8 @@ export class InstancedMesh2<
     this.matricesTexture.update(renderer);
     this.colorsTexture?.update(renderer);
     this.uniformsTexture?.update(renderer);
+    this.boneTexture?.update(renderer);
+    // TODO convert also morph texture to squared texture?
 
     if (this.autoUpdate) {
       this.performFrustumCulling(shadowCamera, camera);
@@ -274,6 +314,8 @@ export class InstancedMesh2<
     this.matricesTexture.update(renderer);
     this.colorsTexture?.update(renderer);
     this.uniformsTexture?.update(renderer);
+    this.boneTexture?.update(renderer);
+    // TODO convert also morph texture to squared texture?
 
     if (this.autoUpdate) {
       this.performFrustumCulling(camera);
@@ -420,6 +462,15 @@ export class InstancedMesh2<
         } else {
           shader.defines['USE_COLOR'] = '';
         }
+      }
+
+      if (this.boneTexture) {
+        shader.defines['USE_SKINNING'] = '';
+        shader.defines['USE_INSTANCING_SKINNING'] = '';
+        shader.uniforms.bindMatrix = { value: this.bindMatrix };
+        shader.uniforms.bindMatrixInverse = { value: this.bindMatrixInverse };
+        shader.uniforms.bonesPerInstance = { value: this.skeleton.bones.length };
+        shader.uniforms.boneTexture = { value: this.boneTexture };
       }
     };
 
@@ -724,6 +775,11 @@ export class InstancedMesh2<
       this.morphTexture.image.data = this.morphTexture.image.data.slice();
     }
 
+    if (source.boneTexture !== null) {
+      this.boneTexture = source.boneTexture.clone();
+      this.boneTexture.image.data = this.boneTexture.image.data.slice();
+    }
+
     // TODO copies and handle LOD?
 
     return this;
@@ -738,7 +794,22 @@ export class InstancedMesh2<
     this.matricesTexture.dispose();
     this.colorsTexture?.dispose();
     this.morphTexture?.dispose();
+    this.boneTexture?.dispose();
     this.uniformsTexture?.dispose();
+  }
+
+  public override updateMatrixWorld(force?: boolean): void {
+    super.updateMatrixWorld(force);
+
+    if (!this.bindMatrixInverse) return;
+
+    if (this.bindMode === AttachedBindMode) {
+      this.bindMatrixInverse.copy(this.matrixWorld).invert();
+    } else if (this.bindMode === DetachedBindMode) {
+      this.bindMatrixInverse.copy(this.bindMatrix).invert();
+    } else {
+      console.warn('Unrecognized bindMode: ' + this.bindMode);
+    }
   }
 }
 
