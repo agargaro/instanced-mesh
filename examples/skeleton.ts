@@ -19,7 +19,7 @@ dummy.visible = false;
 
 const indexAnimation = [0, 1, 3];
 
-const soldiers = InstancedMesh2.createFrom<{ mixer: AnimationMixer }>(dummy, { capacity: count, createInstances: true });
+const soldiers = InstancedMesh2.createFrom<{ mixer: AnimationMixer }>(dummy, { capacity: count, createEntities: true });
 
 soldiers.addInstances(count, (obj, index) => {
   obj.position.copy(dummy.position);

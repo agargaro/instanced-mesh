@@ -39,7 +39,7 @@ declare module '../InstancedMesh2.js' {
      */
     addInstances(count: number, onCreation?: UpdateEntityCallback<Entity<TData>>): this;
     /** @internal */ clearInstance(instance: InstancedEntity, index: number): InstancedEntity;
-    /** @internal */ createInstances(start?: number, count?: number): this;
+    /** @internal */ createEntities(start?: number, count?: number): this;
   }
 }
 
@@ -80,7 +80,7 @@ InstancedMesh2.prototype.updateInstancesPosition = function (this: InstancedMesh
   return this;
 };
 
-InstancedMesh2.prototype.createInstances = function (this: InstancedMesh2, start = 0, count = this._instancesCount): InstancedMesh2 {
+InstancedMesh2.prototype.createEntities = function (this: InstancedMesh2, start = 0, count = this._instancesCount): InstancedMesh2 {
   const end = start + count;
 
   if (!this.instances) this.instances = new Array(count);

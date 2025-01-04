@@ -21,7 +21,7 @@ scene.continuousRaycasting = true;
 
 const geometry = new OctahedronGeometry(1, 2);
 const material = new MeshLambertMaterial({ flatShading: true });
-const instancedMesh = new InstancedMesh2<{ dir: Vector3 }>(geometry, material, { capacity: config.count, createInstances: true });
+const instancedMesh = new InstancedMesh2<{ dir: Vector3 }>(geometry, material, { capacity: config.count, createEntities: true });
 
 instancedMesh.addInstances(config.count, (object) => {
   object.dir = new Vector3().randomDirection();

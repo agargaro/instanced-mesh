@@ -16,7 +16,7 @@ controls.rollSpeed = 0.2;
 controls.movementSpeed = 50;
 scene.on('animate', (e) => controls.update(e.delta));
 
-const spheres = new InstancedMesh2<{ dir: Vector3 }, BufferGeometry, MeshNormalMaterial>(new SphereGeometry(1, 32, 16), new MeshNormalMaterial(), { capacity: count, createInstances: true });
+const spheres = new InstancedMesh2<{ dir: Vector3 }, BufferGeometry, MeshNormalMaterial>(new SphereGeometry(1, 32, 16), new MeshNormalMaterial(), { capacity: count, createEntities: true });
 spheres.addLOD(new SphereGeometry(1, 16, 8), spheres.material, 50);
 spheres.addLOD(new SphereGeometry(1, 8, 4), spheres.material, 200);
 spheres.addLOD(new SphereGeometry(1, 4, 2), spheres.material, 500);

@@ -63,7 +63,7 @@ const faces = 6;
 const count = 6;
 const boxes = new InstancedMesh2(main.renderer, count, new BoxGeometry(2, 1, 1).toNonIndexed(), new TileMaterial(count, texture));
 
-boxes.createInstances((obj, index) => {
+boxes.createEntities((obj, index) => {
   obj.position.x = (index % 3 * 3) - 3;
   obj.position.y = (Math.floor(index / 3) * 3) - 1.5;
 
