@@ -27,6 +27,7 @@
 - [**Per-instance uniforms**](#per-instance-uniforms): *assign unique shader data to individual instances.*
 - [**Level of Detail (LOD)**](#level-of-detail-lod): *dynamically adjust instance detail based on distance.*
 - [**Shadow LOD**](#shadow-lod): *optimize shadow rendering with lower detail for distant instances.*
+- [**Skinning**](#skinning): *apply skeletal animations to instances for more complex and dynamic movements. 
 
 ```ts
 const myInstancedMesh = new InstancedMesh2(geometry, material);
@@ -200,6 +201,17 @@ Optimize shadow rendering by reducing the detail level of instances casting shad
 myInstancedMesh.addShadowLOD(geometryMid);
 myInstancedMesh.addShadowLOD(geometryLow, 100);
 ```    
+
+### Skinning
+
+Apply skeletal animations to instances for more complex and dynamic movements.
+
+```ts
+myInstancedMesh.initSkeleton(skeleton);
+
+mixer.update(time);
+myInstancedMesh.setBonesAt(index);
+```   
 
 ### Raycasting tips
 
