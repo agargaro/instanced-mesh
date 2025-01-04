@@ -12,6 +12,14 @@ import { LODRenderList } from './LOD.js';
  */
 export type CustomSortCallback = (list: InstancedRenderItem[]) => void;
 
+/**
+ * A callback called when an instance is inside the frustum.
+ * @param index The index of the instance.
+ * @param position The position of the instance.
+ * @returns True if the instance should be rendered, false otherwise.
+ */
+export type InsideFrustumCallback = (index: number, position: Vector3) => boolean;
+
 declare module '../InstancedMesh2.js' {
   interface InstancedMesh2 {
     /**
@@ -169,6 +177,7 @@ InstancedMesh2.prototype.linearCulling = function (): void {
   const instancesCount = this._instancesCount;
   const geometryCentered = center.x === 0 && center.y === 0 && center.z === 0;
   const sortObjects = this._sortObjects;
+  const insideFrustumCallback = this.insideFrustumCallback;
   let count = 0;
 
   _frustum.setFromProjectionMatrix(_projScreenMatrix);
@@ -183,7 +192,7 @@ InstancedMesh2.prototype.linearCulling = function (): void {
       this.applyMatrixAtToSphere(i, _sphere, center, radius);
     }
 
-    if (_frustum.intersectsSphere(_sphere)) {
+    if (_frustum.intersectsSphere(_sphere) && insideFrustumCallback?.(i, _sphere.center)) {
       if (sortObjects) {
         const depth = _position.subVectors(_sphere.center, _cameraPos).dot(_forward);
         _renderList.push(depth, i);
