@@ -12,7 +12,7 @@ new RGBELoader().load(url, (texture) => {
   scene.environment = texture;
 });
 
-const instancedMesh = new InstancedMesh2(new TorusKnotGeometry(1, 0.4, 128, 32), new MeshStandardMaterial(), { createInstances: true });
+const instancedMesh = new InstancedMesh2(new TorusKnotGeometry(1, 0.4, 128, 32), new MeshStandardMaterial(), { createEntities: true });
 scene.add(instancedMesh);
 
 instancedMesh.initUniformsPerInstance(({ metalness: 'float', roughness: 'float', emissive: 'vec3' }));

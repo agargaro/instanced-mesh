@@ -164,7 +164,7 @@ myInstancedMesh.instances[0].opacity = 0.5; // if instances array is created
 It's possible to create an array of `InstancedEntity` **(Object3D-like)** in order to easily manipulate instances, using more memory.
 
 ```ts
-const myInstancedMesh = new InstancedMesh2(geometry, material, { createInstances: true });
+const myInstancedMesh = new InstancedMesh2(geometry, material, { createEntities: true });
 
 myInstancedMesh.instances[0].customData = {};
 myInstancedMesh.instances[0].position.random();

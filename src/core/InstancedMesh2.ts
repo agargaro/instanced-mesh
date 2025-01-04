@@ -28,7 +28,7 @@ export interface InstancedMesh2Params {
    * Determines whether to create an array of `InstancedEntity` to easily manipulate instances at the cost of more memory.
    * @default false
    */
-  createInstances?: boolean;
+  createEntities?: boolean;
   /**
    * Determines whether `InstancedEntity` can use the `rotation` property.
    * If `true` `quaternion` and `rotation` will be synchronized, affecting performance.
@@ -66,7 +66,7 @@ export class InstancedMesh2<
   public readonly isInstancedMesh2 = true;
   /**
    * An array of `Entity` representing individual instances.
-   * This array is only initialized if `createInstances` is set to `true` in the constructor parameters.
+   * This array is only initialized if `createEntities` is set to `true` in the constructor parameters.
    */
   public instances: Entity<TData>[] = null;
   /**
@@ -266,7 +266,7 @@ export class InstancedMesh2<
     if (!geometry) throw new Error('"geometry" is mandatory.');
     if (!material) throw new Error('"material" is mandatory.');
 
-    const { allowsEuler, renderer, createInstances } = params;
+    const { allowsEuler, renderer, createEntities } = params;
 
     super(geometry, null);
 
@@ -286,7 +286,7 @@ export class InstancedMesh2<
     this.patchMaterial(this.customDepthMaterial);
     this.patchMaterial(this.customDistanceMaterial);
 
-    if (createInstances) this.createInstances();
+    if (createEntities) this.createEntities();
   }
 
   public override onBeforeShadow(renderer: WebGLRenderer, scene: Scene, camera: Camera, shadowCamera: Camera, geometry: BufferGeometry, depthMaterial: Material, group: any): void {
@@ -742,7 +742,7 @@ export class InstancedMesh2<
       capacity: this._capacity,
       renderer: this._renderer,
       allowsEuler: this._allowsEuler,
-      createInstances: !!this.instances
+      createEntities: !!this.instances
     };
     return new (this as any).constructor(this.geometry, this.material, params).copy(this, recursive);
   }

@@ -18,7 +18,7 @@ const scene = new Scene();
 const material = new MeshNormalMaterial();
 const instancedMesh = new InstancedMesh2(main.renderer, config.count, new BoxGeometry(), material);
 
-instancedMesh.createInstances((object) => {
+instancedMesh.createEntities((object) => {
   object.position.random().multiplyScalar(100).subScalar(50);
   object.quaternion.random();
 });

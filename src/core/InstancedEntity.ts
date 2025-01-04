@@ -75,7 +75,7 @@ export class InstancedEntity {
   public get matrixWorld(): Matrix4 { return this.matrix.premultiply(this.owner.matrixWorld); }
 
   /**
-   * This object is instantiated automatically by setting `createInstances` to `true` in the `InstancedMesh2` constructor parameters.
+   * This object is instantiated automatically by setting `createEntities` to `true` in the `InstancedMesh2` constructor parameters.
    * Dont instantiate this manually.
    * @param owner The `InstancedMesh2` that owns this instance.
    * @param id The unique identifier for this instance within the `InstancedMesh2`.

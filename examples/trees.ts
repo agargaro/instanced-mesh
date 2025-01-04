@@ -29,7 +29,7 @@ trees.addShadowLOD(trees.geometry);
 trees.addShadowLOD(new BoxGeometry(100, 1000, 100), 50);
 // trees.levels.shadowRender.levels[0].object.castShadow = true; // TODO create utility methods
 
-trees.createInstances((obj, index) => {
+trees.createEntities((obj, index) => {
   obj.position.setX(Math.random() * terrainSize - terrainSize / 2).setZ(Math.random() * terrainSize - terrainSize / 2);
   obj.scale.setScalar(Math.random() * 0.01 + 0.01);
   obj.rotateY(Math.random() * Math.PI * 2).rotateZ(Math.random() * 0.3 - 0.15);
