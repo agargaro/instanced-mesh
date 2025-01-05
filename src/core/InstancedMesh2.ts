@@ -1,5 +1,5 @@
 import { AttachedBindMode, BindMode, Box3, BufferAttribute, BufferGeometry, Camera, Color, ColorManagement, ColorRepresentation, DataTexture, DetachedBindMode, InstancedBufferAttribute, Material, Matrix4, Mesh, MeshDepthMaterial, MeshDistanceMaterial, Object3D, Object3DEventMap, RGBADepthPacking, Scene, Skeleton, SkinnedMesh, Sphere, Vector3, WebGLRenderer } from 'three';
-import { CustomSortCallback } from './feature/FrustumCulling.js';
+import { CustomSortCallback, OnFrustumEnterCallback } from './feature/FrustumCulling.js';
 import { Entity } from './feature/Instances.js';
 import { LODInfo } from './feature/LOD.js';
 import { InstancedEntity } from './InstancedEntity.js';
@@ -151,6 +151,10 @@ export class InstancedMesh2<
    * Skeleton representing the bone hierarchy of the skinned mesh.
    */
   public skeleton: Skeleton = null;
+  /**
+   * Callback function called if an instance is inside the frustum.
+   */
+  public onFrustumEnter: OnFrustumEnterCallback = null;
   /** @internal */ _renderer: WebGLRenderer = null;
   /** @internal */ _instancesCount = 0;
   /** @internal */ _count = 0;
