@@ -80,7 +80,7 @@ declare module '../InstancedMesh2.js' {
      * @param hysteresis The hysteresis value for this LOD level.
      * @returns The current `InstancedMesh2` instance.
      */
-    addLOD(geometry: BufferGeometry, material: Material, distance?: number, hysteresis?: number): this;
+    addLOD(geometry: BufferGeometry, material: Material | Material[], distance?: number, hysteresis?: number): this;
     /**
      * Adds a shadow-specific LOD level with the given geometry and distance.
      * @param geometry The geometry for the shadow LOD.
@@ -89,7 +89,7 @@ declare module '../InstancedMesh2.js' {
      * @returns The current `InstancedMesh2` instance.
      */
     addShadowLOD(geometry: BufferGeometry, distance?: number, hysteresis?: number): this;
-    /** @internal */ addLevel(renderList: LODRenderList, geometry: BufferGeometry, material: Material, distance: number, hysteresis: number): InstancedMesh2;
+    /** @internal */ addLevel(renderList: LODRenderList, geometry: BufferGeometry, material: Material | Material[], distance: number, hysteresis: number): InstancedMesh2;
     /** @internal */ patchLevel(obj: InstancedMesh2): void;
   }
 }
@@ -123,7 +123,7 @@ InstancedMesh2.prototype.setFirstLODDistance = function (distance = 0, hysteresi
   return this;
 };
 
-InstancedMesh2.prototype.addLOD = function (geometry: BufferGeometry, material: Material, distance = 0, hysteresis = 0): InstancedMesh2 {
+InstancedMesh2.prototype.addLOD = function (geometry: BufferGeometry, material: Material | Material[], distance = 0, hysteresis = 0): InstancedMesh2 {
   if (this._parentLOD) {
     throw new Error('Cannot create LOD for this InstancedMesh2.');
   }

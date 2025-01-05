@@ -25,16 +25,19 @@ InstancedMesh2.prototype.resizeBuffers = function (capacity: number): InstancedM
 
   if (this.instanceIndex) {
     const indexArray = new Uint32Array(capacity);
-    // copy only if no culling?
     indexArray.set(new Uint32Array(this.instanceIndex.array.buffer, 0, minCapacity)); // safely copy TODO method
     this.instanceIndex.array = indexArray;
   }
 
   if (this.LODinfo) {
     for (const obj of this.LODinfo.objects) {
-      const indexArray = new Uint32Array(capacity);
-      // copy data?
-      obj.instanceIndex.array = indexArray;
+      obj._capacity = capacity;
+
+      if (obj.instanceIndex) {
+        const indexArray = new Uint32Array(capacity);
+        indexArray.set(new Uint32Array(obj.instanceIndex.array.buffer, 0, minCapacity)); // safely copy TODO method
+        obj.instanceIndex.array = indexArray;
+      }
     }
   }
 

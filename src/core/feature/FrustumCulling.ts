@@ -286,8 +286,9 @@ InstancedMesh2.prototype.BVHCullingLOD = function (LODrenderList: LODRenderList,
           level = this.getObjectLODIndexForDistance(levels, distance);
         }
 
-        if (!onFrustumEnter || onFrustumEnter(index, camera, cameraLOD, level)) return;
-        indexes[level][count[level]++] = index;
+        if (!onFrustumEnter || onFrustumEnter(index, camera, cameraLOD, level)) {
+          indexes[level][count[level]++] = index;
+        }
       }
     });
   }
@@ -323,9 +324,10 @@ InstancedMesh2.prototype.linearCullingLOD = function (LODrenderList: LODRenderLi
       } else {
         const distance = _sphere.center.distanceToSquared(_cameraLODPos);
         const levelIndex = this.getObjectLODIndexForDistance(levels, distance);
-        if (!onFrustumEnter || onFrustumEnter(i, camera, cameraLOD, levelIndex)) continue;
 
-        indexes[levelIndex][count[levelIndex]++] = i;
+        if (!onFrustumEnter || onFrustumEnter(i, camera, cameraLOD, levelIndex)) {
+          indexes[levelIndex][count[levelIndex]++] = i;
+        }
       }
     }
   }
