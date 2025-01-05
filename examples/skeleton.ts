@@ -11,6 +11,7 @@ const scene = new Scene();
 const main = new Main();
 main.createView({ scene, camera, enabled: false, backgroundColor: 0x99DDFF });
 const controls = new OrbitControls(camera, main.renderer.domElement);
+controls.update();
 
 const glb = await Asset.load<GLTF>(GLTFLoader, 'https://threejs.org/examples/models/gltf/Soldier.glb');
 
