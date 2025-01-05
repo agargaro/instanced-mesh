@@ -4,7 +4,7 @@ import { GLTF, GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { OrbitControls } from 'three/examples/jsm/Addons.js';
 import { InstancedMesh2 } from '../src/index.js';
 
-const count = 10000;
+const count = 1000;
 
 const camera = new PerspectiveCameraAuto().translateZ(-5).rotateY(Math.PI);
 const scene = new Scene();
@@ -23,10 +23,10 @@ const indexAnimation = [0, 1, 3];
 const soldiers = InstancedMesh2.createFrom<{ mixer: AnimationMixer; time: number }>(dummy, { capacity: count, createEntities: true });
 
 soldiers.addInstances(count, (obj, index) => {
-  obj.position.set(Math.random() * 10000 - 10000 / 2, Math.random() * 600 - 300, 0).divideScalar(0.01);
+  obj.position.set(Math.random() * 2000 - 2000 / 2, Math.random() * 200 - 100, 0).divideScalar(0.01);
   obj.time = 0;
   obj.mixer = new AnimationMixer(glb.scene);
-  obj.mixer.clipAction(glb.animations[indexAnimation[index % 3]]).play();
+  obj.mixer.clipAction(glb.animations[indexAnimation[1]]).play();
 });
 
 let delta = 0;
@@ -36,11 +36,15 @@ soldiers.on('animate', (e) => {
   delta = e.delta;
   invMatrixWorld.copy(soldiers.matrixWorld).invert();
   cameraLocalPosition.setFromMatrixPosition(camera.matrixWorld).applyMatrix4(invMatrixWorld);
+
+  soldiers.updateInstancesPosition((obj) => {
+    obj.translateY(e.delta * 1000);
+  });
 });
 
-soldiers.onFrustumEnter = (index, position) => {
+soldiers.onFrustumEnter = (index) => {
   const soldier = soldiers.instances[index];
-  const fps = Math.max(5, 5000 - cameraLocalPosition.distanceTo(position) * 0.5);
+  const fps = Math.max(10, 5000 - cameraLocalPosition.distanceTo(soldier.position) * 0.5);
   soldier.time += delta;
 
   if (soldier.time >= 1 / fps) {
