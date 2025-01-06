@@ -208,13 +208,13 @@ InstancedMesh2.prototype.patchLevel = function (obj: InstancedMesh2): void {
     }
   });
 
-  Object.defineProperty(obj, 'morphTexture', { // TODO remove
+  Object.defineProperty(obj, 'morphTexture', { // TODO check if it's correct
     get(this: InstancedMesh2) {
       return this._parentLOD.morphTexture;
     }
   });
 
-  Object.defineProperty(obj, 'boneTexture', { // TODO remove
+  Object.defineProperty(obj, 'boneTexture', {
     get(this: InstancedMesh2) {
       return this._parentLOD.boneTexture;
     }

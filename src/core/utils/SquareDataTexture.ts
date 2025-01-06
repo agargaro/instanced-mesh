@@ -226,6 +226,12 @@ export class SquareDataTexture extends DataTexture {
     gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, this.premultiplyAlpha);
     gl.pixelStorei(gl.UNPACK_ALIGNMENT, this.unpackAlignment);
 
+    const currentUnpackRowLen = gl.getParameter(gl.UNPACK_ROW_LENGTH);
+    const currentUnpackImageHeight = gl.getParameter(gl.UNPACK_IMAGE_HEIGHT);
+    const currentUnpackSkipPixels = gl.getParameter(gl.UNPACK_SKIP_PIXELS);
+    const currentUnpackSkipRows = gl.getParameter(gl.UNPACK_SKIP_ROWS);
+    const currentUnpackSkipImages = gl.getParameter(gl.UNPACK_SKIP_IMAGES);
+
     gl.pixelStorei(gl.UNPACK_ROW_LENGTH, width);
     gl.pixelStorei(gl.UNPACK_IMAGE_HEIGHT, height);
     gl.pixelStorei(gl.UNPACK_SKIP_PIXELS, 0); // start x axis
@@ -235,6 +241,12 @@ export class SquareDataTexture extends DataTexture {
       gl.pixelStorei(gl.UNPACK_SKIP_ROWS, row); // start y axis
       gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, row, width, count, glFormat, glType, data);
     }
+
+    gl.pixelStorei(gl.UNPACK_ROW_LENGTH, currentUnpackRowLen);
+    gl.pixelStorei(gl.UNPACK_IMAGE_HEIGHT, currentUnpackImageHeight);
+    gl.pixelStorei(gl.UNPACK_SKIP_PIXELS, currentUnpackSkipPixels);
+    gl.pixelStorei(gl.UNPACK_SKIP_ROWS, currentUnpackSkipRows);
+    gl.pixelStorei(gl.UNPACK_SKIP_IMAGES, currentUnpackSkipImages);
 
     state.unbindTexture();
   }

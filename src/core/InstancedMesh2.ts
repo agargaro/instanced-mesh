@@ -253,6 +253,8 @@ export class InstancedMesh2<
       instancedMesh.initSkeleton((mesh as SkinnedMesh).skeleton);
     }
 
+    // TODO add morph
+
     return instancedMesh;
   }
 

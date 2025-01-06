@@ -56,6 +56,7 @@
     "@three.ez/main": "^0.5.9",
     "@types/three": "^0.170.0",
     "eslint": "^9.17.0",
+    "meshoptimizer": "^0.22.0",
     "simplex-noise": "^4.0.3",
     "three-hex-tiling": "^0.1.4",
     "typescript": "^5.7.2",
