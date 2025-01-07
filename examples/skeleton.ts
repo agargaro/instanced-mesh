@@ -52,18 +52,18 @@ const geometry = dummy.geometry;
 dummy.geometry = await createSimplifiedGeometry(geometry, { ratio: 0.1, error: 1, lockBorder: true });
 
 // CREATE INSTANCEDMESH2 AND LODS
-const count = 10000;
+const count = 3000;
 const soldiers = InstancedMesh2.createFrom<{ time: number; speed: number; offset: number }>(dummy, { capacity: count, createEntities: true });
-soldiers.boneTexture.maxUpdateCalls = 800;
+soldiers.boneTexture.partialUpdate = false;
 
 soldiers.addLOD(await createSimplifiedGeometry(geometry, { ratio: 0.07, error: 1 }), dummy.material.clone(), (1 / soldierScale) * 10);
-soldiers.addLOD(await createSimplifiedGeometry(geometry, { ratio: 0.05, error: 1 }), dummy.material.clone(), (1 / soldierScale) * 20);
-soldiers.addLOD(await createSimplifiedGeometry(geometry, { ratio: 0.03, error: 1 }), dummy.material.clone(), (1 / soldierScale) * 30);
-soldiers.addLOD(await createSimplifiedGeometry(geometry, { ratio: 0.02, error: 1, prune: true }), dummy.material.clone(), (1 / soldierScale) * 40);
+soldiers.addLOD(await createSimplifiedGeometry(geometry, { ratio: 0.05, error: 1 }), dummy.material.clone(), (1 / soldierScale) * 30);
+soldiers.addLOD(await createSimplifiedGeometry(geometry, { ratio: 0.03, error: 1 }), dummy.material.clone(), (1 / soldierScale) * 50);
+soldiers.addLOD(await createSimplifiedGeometry(geometry, { ratio: 0.02, error: 1, prune: true }), dummy.material.clone(), (1 / soldierScale) * 70);
 
 // ADD INSTANCES
 soldiers.addInstances(count, (obj, index) => {
-  obj.position.set(Math.random() * 100 - 50, Math.random() * -400 + 200, 0).divideScalar(soldierScale);
+  obj.position.set(Math.random() * 100 - 50, Math.random() * -200 + 100, 0).divideScalar(soldierScale);
   obj.color = `hsl(${Math.random() * 360}, 50%, 75%)`;
   obj.time = 0;
   obj.offset = Math.random() * 5;
@@ -79,7 +79,7 @@ for (const soldier of soldiers.instances) {
 // ANIMATE INSTANCES
 let delta = 0;
 let total = 0;
-const radiusMovement = 30;
+const radiusMovement = 15;
 const invMatrixWorld = new Matrix4();
 const cameraLocalPosition = new Vector3();
 scene.on('animate', (e) => {
@@ -96,7 +96,7 @@ scene.on('animate', (e) => {
 
 // UPDATE ONLY INSTANCES INSIDE FRUSTUM SETTINGS FPS BASED ON CAMERA DISTANCE
 const maxFps = 60;
-const minFps = 0;
+const minFps = 5;
 soldiers.onFrustumEnter = (index, camera, cameraLOD, LODindex) => {
   const soldier = soldiers.instances[index];
   const cameraDistance = cameraLocalPosition.distanceTo(soldier.position) * soldierScale;

@@ -96,9 +96,9 @@ export class SquareDataTexture extends DataTexture {
   public partialUpdate = true;
   /**
    * The maximum number of update calls per frame.
-   * @default 100
+   * @default 5
    */
-  public maxUpdateCalls = 100;
+  public maxUpdateCalls = 5;
   /** @internal */ _data: TypedArray;
   protected _channels: ChannelSize;
   protected _pixelsPerInstance: number;
