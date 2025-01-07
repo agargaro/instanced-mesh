@@ -14,8 +14,9 @@ declare module '../InstancedMesh2.js' {
      * Set the bones of the skeleton to the instance at the specified index.
      * @param id The index of the instance.
      * @param updateBonesMatrices Whether to update the matrices of the bones. Default is `true`.
-     */
-    setBonesAt(id: number, updateBonesMatrices?: boolean): void;
+     * @param excludeBonesSet An optional set of bone names to exclude from updates, skipping their local matrix updates.
+    */
+    setBonesAt(id: number, updateBonesMatrices?: boolean, excludeBonesSet?: Set<string>): void;
     /** internal */ multiplyBoneMatricesAt(instanceIndex: number, boneIndex: number, m1: Matrix4, m2: Matrix4): void;
   }
 }
@@ -37,7 +38,7 @@ InstancedMesh2.prototype.initSkeleton = function (skeleton: Skeleton, disableMat
   }
 };
 
-InstancedMesh2.prototype.setBonesAt = function (id: number, updateBonesMatrices = true) {
+InstancedMesh2.prototype.setBonesAt = function (id: number, updateBonesMatrices = true, excludeBonesSet?: Set<string>) {
   const skeleton = this.skeleton;
   if (!skeleton) {
     throw new Error('"setBonesAt" cannot be called before "initSkeleton"');
@@ -50,7 +51,9 @@ InstancedMesh2.prototype.setBonesAt = function (id: number, updateBonesMatrices 
     const bone = bones[i];
 
     if (updateBonesMatrices) {
-      bone.updateMatrix();
+      if (!excludeBonesSet?.has(bone.name)) {
+        bone.updateMatrix();
+      }
       bone.matrixWorld.multiplyMatrices(bone.parent.matrixWorld, bone.matrix);
     }
 

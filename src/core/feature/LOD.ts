@@ -219,4 +219,22 @@ InstancedMesh2.prototype.patchLevel = function (obj: InstancedMesh2): void {
       return this._parentLOD.boneTexture;
     }
   });
+
+  Object.defineProperty(obj, 'skeleton', {
+    get(this: InstancedMesh2) {
+      return this._parentLOD.skeleton;
+    }
+  });
+
+  Object.defineProperty(obj, 'bindMatrixInverse', {
+    get(this: InstancedMesh2) {
+      return this._parentLOD.bindMatrixInverse;
+    }
+  });
+
+  Object.defineProperty(obj, 'bindMatrix', {
+    get(this: InstancedMesh2) {
+      return this._parentLOD.bindMatrix;
+    }
+  });
 };

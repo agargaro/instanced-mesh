@@ -172,9 +172,10 @@ export class InstancedEntity {
   /**
    * Updates the bones of the skeleton to the instance.
    * @param updateBonesMatrices Whether to update the matrices of the bones. Default is `true`.
-   */
-  public updateBones(updateBonesMatrices = true): void {
-    this.owner.setBonesAt(this.id, updateBonesMatrices);
+   * @param excludeBonesSet An optional set of bone names to exclude from updates, skipping their local matrix updates.
+  */
+  public updateBones(updateBonesMatrices = true, excludeBonesSet?: Set<string>): void {
+    this.owner.setBonesAt(this.id, updateBonesMatrices, excludeBonesSet);
   }
 
   /**
