@@ -51,6 +51,7 @@ myInstancedMesh.addInstances(count, (obj, index) => {
 - <img src="public/ts.png" alt="ts" width="16" /> [Fast raycasting](https://stackblitz.com/edit/three-ezinstancedmesh2-fast-raycasting?file=src%2Fmain.ts&embed=1&hideDevTools=1&view=preview)
 - <img src="public/ts.png" alt="ts" width="16" /> [LOD](https://stackblitz.com/edit/three-ezinstancedmesh2-instancedmeshlod?file=src%2Fmain.ts&embed=1&hideDevTools=1&view=preview)
 - <img src="public/ts.png" alt="ts" width="16" /> [Shadow LOD](https://stackblitz.com/edit/three-ezinstancedmesh2-shadow-lod?file=src%2Fmain.ts&embed=1&hideDevTools=1&view=preview)
+- <img src="public/ts.png" alt="js" width="16" /> [Skinning 3k instances](https://stackblitz.com/edit/three-ezinstancedmesh2-skinning?file=src%2Fmain.ts&embed=1&hideDevTools=1&view=preview)
 - <img src="public/js.png" alt="js" width="16" /> [Dynamic adding with BVH](https://glitch.com/edit/#!/three-ez-instanced-mesh-dynamic-adding-with-bvh?path=main.js)
 - <img src="public/js.png" alt="js" width="16" /> [Skinning](https://glitch.com/edit/#!/instancedmesh2-skinning?path=main.js)
 
