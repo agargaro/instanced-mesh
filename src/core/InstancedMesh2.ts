@@ -450,9 +450,7 @@ export class InstancedMesh2<
         shader.fragmentShader = shader.fragmentShader.replace('void main() {', uniformsFragmentGLSL);
       }
 
-      if (this.colorsTexture) {
-        if (!shader.fragmentShader.includes('#include <color_pars_fragment>')) return;
-
+      if (this.colorsTexture && shader.fragmentShader.includes('#include <color_pars_fragment>')) {
         shader.uniforms.colorsTexture = { value: this.colorsTexture };
 
         shader.vertexShader = shader.vertexShader.replace('<color_vertex>', '<instanced_color_vertex>');
