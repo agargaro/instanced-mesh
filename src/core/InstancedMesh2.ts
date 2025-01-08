@@ -312,6 +312,10 @@ export class InstancedMesh2<
     }
   }
 
+  public override onAfterShadow(renderer: WebGLRenderer, scene: Scene, camera: Camera, shadowCamera: Camera, geometry: BufferGeometry, depthMaterial: Material, group: any): void {
+    this.unpatchMaterial(depthMaterial);
+  }
+
   public override onAfterRender(renderer: WebGLRenderer, scene: Scene, camera: Camera, geometry: BufferGeometry, material: Material, group: any): void {
     // TODO fix group d.ts
     this.unpatchMaterial(material);
