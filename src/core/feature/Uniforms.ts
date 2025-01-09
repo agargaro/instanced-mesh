@@ -6,7 +6,6 @@ export type UniformSchema = { [x: string]: UniformType };
 export interface UniformSchemaShader {
   vertex?: UniformSchema;
   fragment?: UniformSchema;
-  singleTexture?: boolean;
 };
 
 interface UniformSchemaResult {
@@ -37,7 +36,7 @@ declare module '../InstancedMesh2.js' {
      * @param schema The schema defining the uniforms.
      */
     initUniformsPerInstance(schema: UniformSchemaShader): void;
-    /** @internal */ getUniformSchemaSingleResult(schema: UniformSchemaShader): UniformSchemaResult;
+    /** @internal */ getUniformSchemaResult(schema: UniformSchemaShader): UniformSchemaResult;
     /** @internal */ getUniformOffset(size: number, tempOffset: number[]): number;
     /** @internal */ getUniformSize(type: UniformType): number;
   }
@@ -59,15 +58,11 @@ InstancedMesh2.prototype.setUniformAt = function (id: number, name: string, valu
 };
 
 InstancedMesh2.prototype.initUniformsPerInstance = function (schema: UniformSchemaShader): void {
-  // if (schema.singleTexture) {
-  const { channels, pixelsPerInstance, uniformMap } = this.getUniformSchemaSingleResult(schema);
+  const { channels, pixelsPerInstance, uniformMap } = this.getUniformSchemaResult(schema);
   this.uniformsTexture = new SquareDataTexture(Float32Array, channels, pixelsPerInstance, this._capacity, uniformMap);
-  // } else {
-  //   // multi
-  // }
 };
 
-InstancedMesh2.prototype.getUniformSchemaSingleResult = function (schema: UniformSchemaShader): UniformSchemaResult {
+InstancedMesh2.prototype.getUniformSchemaResult = function (schema: UniformSchemaShader): UniformSchemaResult {
   let totalSize = 0;
   const uniformMap = new Map<string, UniformMapType>();
   const uniforms: { type: UniformType; name: string; size: number; usedInFragment: boolean }[] = [];
