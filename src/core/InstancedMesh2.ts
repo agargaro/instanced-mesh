@@ -401,7 +401,7 @@ export class InstancedMesh2<
     material.onBeforeCompile = (shader, renderer) => {
       if (this._onBeforeCompileBase) this._onBeforeCompileBase(shader, renderer);
 
-      shader.instancing = false;
+      shader.instancing = false; // TODO CHECK IF REMOVE
       shader.uniforms.matricesTexture = { value: this.matricesTexture };
 
       if (!shader.defines) shader.defines = {};
@@ -409,10 +409,10 @@ export class InstancedMesh2<
 
       if (this.uniformsTexture) {
         shader.uniforms.uniformsTexture = { value: this.uniformsTexture };
-        const { vertex, fragment } = this.uniformsTexture.getUniformsGLSL('uniformsTexture', 'instanceIndex');
+        const { vertex, fragment } = this.uniformsTexture.getUniformsGLSL('uniformsTexture', 'instanceIndex', 'uint');
 
         shader.vertexShader = shader.vertexShader.replace('void main() {', vertex);
-        if (fragment) shader.fragmentShader = shader.fragmentShader.replace('void main() {', fragment);
+        shader.fragmentShader = shader.fragmentShader.replace('void main() {', fragment);
       }
 
       if (this.colorsTexture && shader.fragmentShader.includes('#include <color_pars_fragment>')) {
