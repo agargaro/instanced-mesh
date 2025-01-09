@@ -7,7 +7,7 @@ const scene = new Scene();
 main.createView({ scene, camera: new PerspectiveCameraAuto().translateZ(2), enabled: false });
 const tempColor = new Color();
 
-const planes = new InstancedMesh2(new PlaneGeometry(), new MeshBasicMaterial(), { createEntities: true, allowsEuler: true });
+const planes = new InstancedMesh2(new PlaneGeometry(), new MeshBasicMaterial(), { createEntities: true, allowsEuler: true, capacity: 20 });
 scene.add(planes);
 
 planes.addInstances(20, (obj, index) => {

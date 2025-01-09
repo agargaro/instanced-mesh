@@ -96,15 +96,16 @@ export class SquareDataTexture extends DataTexture {
   public partialUpdate = true;
   /**
    * The maximum number of update calls per frame.
-   * @default 5
+   * @default 20
    */
-  public maxUpdateCalls = 5;
+  public maxUpdateCalls = 20;
   /** @internal */ _data: TypedArray;
   protected _channels: ChannelSize;
   protected _pixelsPerInstance: number;
   protected _stride: number;
   protected _rowToUpdate: boolean[];
   protected _uniformMap: UniformMap;
+  protected _fetchInFragmentShader: boolean;
   protected _renderer: WebGLRenderer = null;
   protected _gl: WebGL2RenderingContext = null;
   protected _utils: WebGLUtils = null;
@@ -115,8 +116,9 @@ export class SquareDataTexture extends DataTexture {
    * @param pixelsPerInstance The number of pixels required for each instance.
    * @param capacity The total number of instances.
    * @param uniformMap Optional map for handling uniform values.
+   * @param fetchInFragmentShader Optional flag that determines if uniform values should be fetched in the fragment shader instead of the vertex shader.
    */
-  constructor(arrayType: TypedArrayConstructor, channels: ChannelSize, pixelsPerInstance: number, capacity: number, uniformMap?: UniformMap) {
+  constructor(arrayType: TypedArrayConstructor, channels: ChannelSize, pixelsPerInstance: number, capacity: number, uniformMap?: UniformMap, fetchInFragmentShader?: boolean) {
     const { array, format, size, type } = getSquareTextureInfo(arrayType, channels, pixelsPerInstance, capacity);
     super(array, size, size, format, type);
     this._data = array;
@@ -125,7 +127,8 @@ export class SquareDataTexture extends DataTexture {
     this._stride = pixelsPerInstance * channels;
     this._rowToUpdate = new Array(size);
     this._uniformMap = uniformMap;
-    this.needsUpdate = true;
+    this._fetchInFragmentShader = fetchInFragmentShader;
+    this.needsUpdate = true; // TODO check if at start it updates twice
   }
 
   /**
@@ -290,12 +293,59 @@ export class SquareDataTexture extends DataTexture {
    * Generates the GLSL code for accessing the uniform data stored in the texture.
    * @param textureName The name of the texture in the GLSL shader.
    * @param indexName The name of the index in the GLSL shader.
-   * @returns The GLSL code to access the uniform data.
+   * @param indexType The type of the index in the GLSL shader.
+   * @returns An object containing the GLSL code for the vertex and fragment shaders.
    */
-  public getUniformsFragmentGLSL(textureName: string, indexName: string): string {
-    // TODO override uniform also in vertex shader
+  public getUniformsGLSL(textureName: string, indexName: string, indexType: string): { vertex: string; fragment: string } {
+    const vertex = this.getUniformsVertexGLSL(textureName, indexName, indexType);
+    const fragment = this.getUniformsFragmentGLSL(textureName, indexName, indexType);
+    return { vertex, fragment };
+  }
+
+  protected getUniformsVertexGLSL(textureName: string, indexName: string, indexType: string): string {
+    if (this._fetchInFragmentShader) {
+      return `
+        flat varying ${indexType} ez_v${indexName}; 
+        void main() {
+          ez_v${indexName} = ${indexName};`;
+    }
+
+    const texelsFetch = this.texelsFetchGLSL(textureName, indexName);
+    const getFromTexels = this.getFromTexelsGLSL();
+    const { assignVarying, declareVarying } = this.getVarying();
+
+    return `
+      uniform highp sampler2D ${textureName};  
+      ${declareVarying}
+      void main() {
+        ${texelsFetch}
+        ${getFromTexels}
+        ${assignVarying}`;
+  }
+
+  protected getUniformsFragmentGLSL(textureName: string, indexName: string, indexType: string): string {
+    if (!this._fetchInFragmentShader) {
+      const { declareVarying, getVarying } = this.getVarying();
+
+      return `
+      ${declareVarying}
+      void main() {
+        ${getVarying}`;
+    }
+
+    const texelsFetch = this.texelsFetchGLSL(textureName, `ez_v${indexName}`);
+    const getFromTexels = this.getFromTexelsGLSL();
+
+    return `
+      uniform highp sampler2D ${textureName};  
+      flat varying ${indexType} ez_v${indexName};
+      void main() {
+        ${texelsFetch}
+        ${getFromTexels}`;
+  }
+
+  protected texelsFetchGLSL(textureName: string, indexName: string): string {
     const pixelsPerInstance = this._pixelsPerInstance;
-    const uniforms = this._uniformMap;
 
     let texelsFetch = `
       int size = textureSize(${textureName}, 0).x;
@@ -303,30 +353,47 @@ export class SquareDataTexture extends DataTexture {
       int x = j % size;
       int y = j / size;
     `;
-    for (let i = 0; i < this._pixelsPerInstance; i++) {
-      texelsFetch += `vec4 _texel${i} = texelFetch(${textureName}, ivec2(x + ${i}, y), 0);\n`;
+
+    for (let i = 0; i < pixelsPerInstance; i++) {
+      texelsFetch += `vec4 ez_texel${i} = texelFetch(${textureName}, ivec2(x + ${i}, y), 0);\n`;
     }
 
-    let getData = '';
+    return texelsFetch;
+  }
+
+  protected getFromTexelsGLSL(): string {
+    const uniforms = this._uniformMap;
+    let getFromTexels = '';
+
     for (const [name, { type, offset, size }] of uniforms) {
       const tId = Math.floor(offset / this._channels);
 
       if (type === 'mat3') {
-        getData += `mat3 ${name} = mat3(texel${tId}.rgb, vec3(texel${tId}.a, texel${tId + 1}.rg), vec3(texel${tId + 1}.ba, texel${tId + 2}.r));\n`;
+        getFromTexels += `mat3 ${name} = mat3(ez_texel${tId}.rgb, vec3(ez_texel${tId}.a, ez_texel${tId + 1}.rg), vec3(ez_texel${tId + 1}.ba, ez_texel${tId + 2}.r));\n`;
       } else if (type === 'mat4') {
-        getData += `mat4 ${name} = mat4(texel${tId}, texel${tId + 1}, texel${tId + 2}, texel${tId + 3});\n`;
+        getFromTexels += `mat4 ${name} = mat4(ez_texel${tId}, ez_texel${tId + 1}, ez_texel${tId + 2}, ez_texel${tId + 3});\n`;
       } else {
         const components = this.getUniformComponents(offset, size);
-        getData += `${type} ${name} = _texel${tId}.${components};\n`;
+        getFromTexels += `${type} ${name} = ez_texel${tId}.${components};\n`;
       }
     }
 
-    return `
-      uniform highp sampler2D ${textureName};  
+    return getFromTexels;
+  }
 
-      void main() {
-        ${texelsFetch}
-        ${getData}`;
+  protected getVarying(): { declareVarying: string; assignVarying: string; getVarying: string } {
+    const uniforms = this._uniformMap;
+    let declareVarying = '';
+    let assignVarying = '';
+    let getVarying = '';
+
+    for (const [name, { type }] of uniforms) {
+      declareVarying += `flat varying ${type} ez_v${name};\n`;
+      assignVarying += `ez_v${name} = ${name};\n`;
+      getVarying += `${type} ${name} = ez_v${name};\n`;
+    }
+
+    return { declareVarying, assignVarying, getVarying };
   }
 
   protected getUniformComponents(offset: number, size: number): string {

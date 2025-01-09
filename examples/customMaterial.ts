@@ -39,8 +39,8 @@ const plants = new InstancedMesh2(new PlaneGeometry(), new TileLambertMaterial(3
 
 scene.add(boxes, plants, ambientLight, dirLight);
 
-boxes.initUniformsPerInstance({ offset: 'vec2' });
-plants.initUniformsPerInstance({ offset: 'vec2' });
+boxes.initUniformsPerInstance({ fragment: { offset: 'vec2' } });
+plants.initUniformsPerInstance({ fragment: { offset: 'vec2' } });
 
 boxes.addInstances(count, (box, index) => {
   box.color = 'white';
