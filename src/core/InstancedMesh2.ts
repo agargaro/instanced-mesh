@@ -401,32 +401,21 @@ export class InstancedMesh2<
     material.onBeforeCompile = (shader, renderer) => {
       if (this._onBeforeCompileBase) this._onBeforeCompileBase(shader, renderer);
 
-      if (!shader.customProgramCacheKey.startsWith('ezInstancedMesh2_')) return;
-
       shader.instancing = false;
-      shader.instancingColor = false; // TODO check if necessary
       shader.uniforms.matricesTexture = { value: this.matricesTexture };
 
       if (!shader.defines) shader.defines = {};
       shader.defines['USE_INSTANCING_INDIRECT'] = '';
 
       if (this.uniformsTexture) {
-        // create varying vInstanceIndex
-        if (!shader.vertexShader.includes('varying uint vInstanceIndex')) {
-          shader.vertexShader = shader.vertexShader.replace('void main() {', 'flat varying uint vInstanceIndex;\n void main() {\n vInstanceIndex = instanceIndex;');
-          shader.fragmentShader = shader.fragmentShader.replace('void main() {', 'flat varying uint vInstanceIndex;\n void main() {');
-        }
-
         shader.uniforms.uniformsTexture = { value: this.uniformsTexture };
-        const uniformsFragmentGLSL = this.uniformsTexture.getUniformsFragmentGLSL('uniformsTexture', 'vInstanceIndex');
-        shader.fragmentShader = shader.fragmentShader.replace('void main() {', uniformsFragmentGLSL);
+        const { vertex, fragment } = this.uniformsTexture.getUniformsGLSL('uniformsTexture', 'instanceIndex');
+
+        shader.vertexShader = shader.vertexShader.replace('void main() {', vertex);
+        if (fragment) shader.fragmentShader = shader.fragmentShader.replace('void main() {', fragment);
       }
 
       if (this.colorsTexture && shader.fragmentShader.includes('#include <color_pars_fragment>')) {
-        shader.uniforms.colorsTexture = { value: this.colorsTexture };
-
-        shader.vertexShader = shader.vertexShader.replace('<color_vertex>', '<instanced_color_vertex>');
-
         shader.defines['USE_INSTANCING_COLOR_INDIRECT'] = '';
 
         if (shader.vertexColors) {
@@ -438,6 +427,9 @@ export class InstancedMesh2<
         } else {
           shader.defines['USE_COLOR'] = '';
         }
+
+        shader.uniforms.colorsTexture = { value: this.colorsTexture };
+        shader.vertexShader = shader.vertexShader.replace('<color_vertex>', '<instanced_color_vertex>');
       }
 
       if (this.boneTexture) {

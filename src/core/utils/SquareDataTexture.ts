@@ -31,7 +31,7 @@ export type UniformValue = number | UniformValueObj;
 /**
  * Represents the schema for a uniform, defining its offset, size, and type.
  */
-export type UniformMapType = { offset: number; size: number; type: UniformType };
+export type UniformMapType = { offset: number; size: number; type: UniformType; usedInFragment?: boolean };
 /**
  * Represents a map of uniform names to their schema definitions.
  */
@@ -125,7 +125,7 @@ export class SquareDataTexture extends DataTexture {
     this._stride = pixelsPerInstance * channels;
     this._rowToUpdate = new Array(size);
     this._uniformMap = uniformMap;
-    this.needsUpdate = true;
+    this.needsUpdate = true; // TODO check if at start it updates twice
   }
 
   /**
@@ -290,12 +290,19 @@ export class SquareDataTexture extends DataTexture {
    * Generates the GLSL code for accessing the uniform data stored in the texture.
    * @param textureName The name of the texture in the GLSL shader.
    * @param indexName The name of the index in the GLSL shader.
-   * @returns The GLSL code to access the uniform data.
+   * @returns TODO
    */
-  public getUniformsFragmentGLSL(textureName: string, indexName: string): string {
-    // TODO override uniform also in vertex shader
+  public getUniformsGLSL(textureName: string, indexName: string): { vertex: string; fragment: string } {
+    const vertex = this.getUniformsVertexGLSL(textureName, indexName);
+    const fragment = this.getUniformsFragmentGLSL(textureName);
+    return { vertex, fragment };
+  }
+
+  protected getUniformsVertexGLSL(textureName: string, indexName: string): string {
     const pixelsPerInstance = this._pixelsPerInstance;
     const uniforms = this._uniformMap;
+    let varyingData = '';
+    let getData = '';
 
     let texelsFetch = `
       int size = textureSize(${textureName}, 0).x;
@@ -303,29 +310,56 @@ export class SquareDataTexture extends DataTexture {
       int x = j % size;
       int y = j / size;
     `;
+
     for (let i = 0; i < this._pixelsPerInstance; i++) {
-      texelsFetch += `vec4 _texel${i} = texelFetch(${textureName}, ivec2(x + ${i}, y), 0);\n`;
+      texelsFetch += `vec4 ez_texel${i} = texelFetch(${textureName}, ivec2(x + ${i}, y), 0);\n`;
     }
 
-    let getData = '';
-    for (const [name, { type, offset, size }] of uniforms) {
+    for (const [name, { type, offset, size, usedInFragment }] of uniforms) {
       const tId = Math.floor(offset / this._channels);
 
       if (type === 'mat3') {
-        getData += `mat3 ${name} = mat3(texel${tId}.rgb, vec3(texel${tId}.a, texel${tId + 1}.rg), vec3(texel${tId + 1}.ba, texel${tId + 2}.r));\n`;
+        getData += `mat3 ${name} = mat3(ez_texel${tId}.rgb, vec3(ez_texel${tId}.a, ez_texel${tId + 1}.rg), vec3(ez_texel${tId + 1}.ba, ez_texel${tId + 2}.r));\n`;
       } else if (type === 'mat4') {
-        getData += `mat4 ${name} = mat4(texel${tId}, texel${tId + 1}, texel${tId + 2}, texel${tId + 3});\n`;
+        getData += `mat4 ${name} = mat4(ez_texel${tId}, ez_texel${tId + 1}, ez_texel${tId + 2}, ez_texel${tId + 3});\n`;
       } else {
         const components = this.getUniformComponents(offset, size);
-        getData += `${type} ${name} = _texel${tId}.${components};\n`;
+        getData += `${type} ${name} = ez_texel${tId}.${components};\n`;
+      }
+
+      if (usedInFragment) {
+        varyingData += `flat varying ${type} ez_v${name};\n`;
+        getData += `ez_v${name} = ${name};\n`;
       }
     }
 
     return `
       uniform highp sampler2D ${textureName};  
+      ${varyingData}
 
       void main() {
         ${texelsFetch}
+        ${getData}`;
+  }
+
+  protected getUniformsFragmentGLSL(textureName: string): string {
+    const uniforms = this._uniformMap;
+    let varyingData = '';
+    let getData = '';
+
+    for (const [name, { type, usedInFragment }] of uniforms) {
+      if (usedInFragment) {
+        varyingData += `flat varying ${type} ez_v${name};\n`;
+        getData += `${type} ${name} = ez_v${name};\n`;
+      }
+    }
+
+    if (varyingData === '') return undefined;
+
+    return `
+      ${varyingData}
+
+      void main() {
         ${getData}`;
   }
 
