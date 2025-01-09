@@ -116,7 +116,7 @@ export class SquareDataTexture extends DataTexture {
    * @param pixelsPerInstance The number of pixels required for each instance.
    * @param capacity The total number of instances.
    * @param uniformMap Optional map for handling uniform values.
-   * @param fetchInFragmentShader Optional flag that TODO
+   * @param fetchInFragmentShader Optional flag that determines if uniform values should be fetched in the fragment shader instead of the vertex shader.
    */
   constructor(arrayType: TypedArrayConstructor, channels: ChannelSize, pixelsPerInstance: number, capacity: number, uniformMap?: UniformMap, fetchInFragmentShader?: boolean) {
     const { array, format, size, type } = getSquareTextureInfo(arrayType, channels, pixelsPerInstance, capacity);
@@ -293,7 +293,8 @@ export class SquareDataTexture extends DataTexture {
    * Generates the GLSL code for accessing the uniform data stored in the texture.
    * @param textureName The name of the texture in the GLSL shader.
    * @param indexName The name of the index in the GLSL shader.
-   * @returns TODO
+   * @param indexType The type of the index in the GLSL shader.
+   * @returns An object containing the GLSL code for the vertex and fragment shaders.
    */
   public getUniformsGLSL(textureName: string, indexName: string, indexType: string): { vertex: string; fragment: string } {
     const vertex = this.getUniformsVertexGLSL(textureName, indexName, indexType);

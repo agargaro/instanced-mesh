@@ -1,19 +1,15 @@
 import { InstancedMesh2 } from '../InstancedMesh2.js';
 import { ChannelSize, SquareDataTexture, UniformMap, UniformMapType, UniformType, UniformValue, UniformValueObj } from '../utils/SquareDataTexture.js';
 
-export type UniformSchema = { [x: string]: UniformType };
+type UniformSchema = { [x: string]: UniformType };
+type UniformSchemaShader = { vertex?: UniformSchema; fragment?: UniformSchema };
 
-export interface UniformSchemaShader {
-  vertex?: UniformSchema;
-  fragment?: UniformSchema;
-};
-
-interface UniformSchemaResult {
+type UniformSchemaResult = {
   channels: ChannelSize;
   pixelsPerInstance: number;
   uniformMap: UniformMap;
   fetchInFragmentShader: boolean;
-}
+};
 
 declare module '../InstancedMesh2.js' {
   interface InstancedMesh2 {
