@@ -105,7 +105,7 @@ InstancedMesh2.prototype.frustumCulling = function (camera: Camera) {
     const customSort = this.customSort;
 
     if (customSort === null) {
-      _renderList.array.sort(!(this._material as Material)?.transparent ? sortOpaque : sortTransparent);
+      _renderList.array.sort(!(this.material as Material)?.transparent ? sortOpaque : sortTransparent);
     } else {
       customSort(_renderList.array);
     }
@@ -238,7 +238,7 @@ InstancedMesh2.prototype.frustumCullingLOD = function (LODrenderList: LODRenderL
     let levelDistance = levels[1].distance;
 
     if (customSort === null) {
-      list.sort(!(levels[0].object._material as Material)?.transparent ? sortOpaque : sortTransparent); // TODO improve multimaterial handling
+      list.sort(!(levels[0].object.material as Material)?.transparent ? sortOpaque : sortTransparent); // TODO improve multimaterial handling
     } else {
       customSort(list);
     }
