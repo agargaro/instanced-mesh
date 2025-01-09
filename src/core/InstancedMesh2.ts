@@ -1,4 +1,4 @@
-import { AttachedBindMode, BindMode, Box3, BufferAttribute, BufferGeometry, Camera, Color, ColorManagement, ColorRepresentation, DataTexture, DetachedBindMode, InstancedBufferAttribute, Material, Matrix4, Mesh, MeshDepthMaterial, MeshDistanceMaterial, Object3D, Object3DEventMap, RGBADepthPacking, Scene, Skeleton, SkinnedMesh, Sphere, Vector3, WebGLRenderer } from 'three';
+import { AttachedBindMode, BindMode, Box3, BufferAttribute, BufferGeometry, Camera, Color, ColorManagement, ColorRepresentation, DataTexture, DetachedBindMode, InstancedBufferAttribute, Material, Matrix4, Mesh, Object3D, Object3DEventMap, Scene, Skeleton, SkinnedMesh, Sphere, Vector3, WebGLProgramParametersWithUniforms, WebGLRenderer } from 'three';
 import { CustomSortCallback, OnFrustumEnterCallback } from './feature/FrustumCulling.js';
 import { Entity } from './feature/Instances.js';
 import { LODInfo } from './feature/LOD.js';
@@ -163,20 +163,12 @@ export class InstancedMesh2<
   /** @internal */ _capacity: number;
   /** @internal */ _indexArrayNeedsUpdate = false;
   /** @internal */ _geometry: TGeometry;
-  /** @internal */ _material: TMaterial;
   /** @internal */ _parentLOD: InstancedMesh2;
   protected readonly _allowsEuler: boolean;
   protected readonly _tempInstance: InstancedEntity;
   protected _useOpacity = false;
-
-  /**
-   * @defaultValue `new MeshDepthMaterial({ depthPacking: RGBADepthPacking })`
-   */
-  public override customDepthMaterial = new MeshDepthMaterial({ depthPacking: RGBADepthPacking });
-  /**
-   * @defaultValue `new MeshDistanceMaterial()`
-   */
-  public override customDistanceMaterial = new MeshDistanceMaterial();
+  protected _customProgramCacheKeyBase: () => string = null;
+  protected _onBeforeCompileBase: (parameters: WebGLProgramParametersWithUniforms, renderer: WebGLRenderer) => void = null;
 
   // HACK TO MAKE IT WORK WITHOUT UPDATE CORE
   /** @internal */ isInstancedMesh = true; // must be set to use instancing rendering
@@ -231,16 +223,6 @@ export class InstancedMesh2<
   }
 
   /**
-   * An instance of `material` (or derived classes) or an array of materials, defining the object's appearance.
-   */
-  // @ts-expect-error it's defined as a property, but is overridden as an accessor.
-  public override get material(): TMaterial { return this._material; }
-  public override set material(value: TMaterial) {
-    this._material = value;
-    this.patchMaterials(value);
-  }
-
-  /**
    * Create an `InstancedMesh2` instance from an existing `Mesh`.
    * @param mesh The mesh to create an `InstanceMesh2` from.
    * @param params  Optional configuration parameters object. See `InstancedMesh2Params` for details.
@@ -289,13 +271,12 @@ export class InstancedMesh2<
     this.initIndexAttribute();
     this.initMatricesTexture();
 
-    this.patchMaterial(this.customDepthMaterial);
-    this.patchMaterial(this.customDistanceMaterial);
-
     if (createEntities) this.createEntities();
   }
 
   public override onBeforeShadow(renderer: WebGLRenderer, scene: Scene, camera: Camera, shadowCamera: Camera, geometry: BufferGeometry, depthMaterial: Material, group: any): void {
+    this.patchMaterial(depthMaterial);
+
     if (!this.instanceIndex || (group && !this.isFirstGroup(group.materialIndex))) return;
 
     this.matricesTexture.update(renderer);
@@ -310,12 +291,15 @@ export class InstancedMesh2<
   }
 
   public override onBeforeRender(renderer: WebGLRenderer, scene: Scene, camera: Camera, geometry: BufferGeometry, material: Material, group: any): void {
+    this.patchMaterial(material);
+
     if (!this.instanceIndex) {
       this._renderer = renderer;
       return;
     }
 
-    if (group && !this.isFirstGroup(group.materialIndex)) return; // multi material
+    // if multi material we compute frustum culling once
+    if (group && !this.isFirstGroup(group.materialIndex)) return;
 
     this.matricesTexture.update(renderer);
     this.colorsTexture?.update(renderer);
@@ -328,8 +312,13 @@ export class InstancedMesh2<
     }
   }
 
+  public override onAfterShadow(renderer: WebGLRenderer, scene: Scene, camera: Camera, shadowCamera: Camera, geometry: BufferGeometry, depthMaterial: Material, group: any): void {
+    this.unpatchMaterial(depthMaterial);
+  }
+
   public override onAfterRender(renderer: WebGLRenderer, scene: Scene, camera: Camera, geometry: BufferGeometry, material: Material, group: any): void {
     // TODO fix group d.ts
+    this.unpatchMaterial(material);
     if (this.instanceIndex || (group && !this.isLastGroup(group.materialIndex))) return;
     this.initIndexAttribute();
   }
@@ -401,38 +390,21 @@ export class InstancedMesh2<
     }
   }
 
-  protected patchMaterials(material: TMaterial): void {
-    if (!material) return;
-
-    if ((material as Material).isMaterial) {
-      this.patchMaterial(material as Material);
-      return;
-    }
-
-    for (const m of material as Material[]) {
-      this.patchMaterial(m);
-    }
-  }
-
   protected patchMaterial(material: Material): void {
-    if (material.ez_patchOwner === this) return;
+    this._customProgramCacheKeyBase = material.customProgramCacheKey.bind(material);
+    this._onBeforeCompileBase = material.onBeforeCompile.bind(material);
 
-    if (material.ez_patchOwner) {
-      if (this.isMaterialUsedByLOD(material)) return; // TODO add check if morph or skeletal
-
-      console.warn('The material has been cloned because it was already used.');
-      material = material.clone();
-    }
-
-    const onBeforeCompile = material.onBeforeCompile.bind(material);
+    material.customProgramCacheKey = () => {
+      return `ezInstancedMesh2_${this._customProgramCacheKeyBase()}`;
+    };
 
     material.onBeforeCompile = (shader, renderer) => {
-      if (onBeforeCompile) onBeforeCompile(shader, renderer);
+      if (this._onBeforeCompileBase) this._onBeforeCompileBase(shader, renderer);
 
-      if (!shader.instancing) return;
+      if (!shader.customProgramCacheKey.startsWith('ezInstancedMesh2_')) return;
 
       shader.instancing = false;
-      shader.instancingColor = false;
+      shader.instancingColor = false; // TODO check if necessary
       shader.uniforms.matricesTexture = { value: this.matricesTexture };
 
       if (!shader.defines) shader.defines = {};
@@ -477,16 +449,13 @@ export class InstancedMesh2<
         shader.uniforms.boneTexture = { value: this.boneTexture };
       }
     };
-
-    material.ez_patchOwner = this;
   }
 
-  protected isMaterialUsedByLOD(material: Material): boolean {
-    if (this._parentLOD) {
-      for (const obj of this._parentLOD.LODinfo.objects) {
-        if (obj.material === material) return true;
-      }
-    }
+  protected unpatchMaterial(material: Material): void {
+    material.onBeforeCompile = this._onBeforeCompileBase;
+    material.customProgramCacheKey = this._customProgramCacheKeyBase;
+    this._onBeforeCompileBase = null;
+    this._customProgramCacheKeyBase = null;
   }
 
   /**

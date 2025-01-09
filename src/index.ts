@@ -1,5 +1,3 @@
-import { type InstancedMesh2 } from './core/InstancedMesh2.js';
-
 export * from './core/InstancedEntity.js';
 export * from './core/InstancedMesh2.js';
 export * from './core/InstancedMeshBVH.js';
@@ -25,10 +23,3 @@ export * from './shaders/chunks/instanced_skinning_pars_vertex.glsl.js';
 export * from './shaders/chunks/instanced_vertex.glsl.js';
 
 export * from './utils/SortingUtils.js';
-
-/** @internal */
-declare module 'three' {
-  export interface Material {
-    ez_patchOwner: InstancedMesh2;
-  }
-}

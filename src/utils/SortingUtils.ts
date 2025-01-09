@@ -19,7 +19,7 @@ export function createRadixSort(target: InstancedMesh2): typeof radixSort<Instan
   };
 
   return function sortFunction(list: InstancedRenderItem[]): void {
-    options.reversed = !!(target._material as Material)?.transparent;
+    options.reversed = !!(target.material as Material)?.transparent;
 
     if (target._capacity > options.aux.length) {
       options.aux.length = target._capacity;
