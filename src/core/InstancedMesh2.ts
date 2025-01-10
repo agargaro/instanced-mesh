@@ -1,4 +1,4 @@
-import { AttachedBindMode, BindMode, Box3, BufferAttribute, BufferGeometry, Camera, Color, ColorManagement, ColorRepresentation, DataTexture, DetachedBindMode, InstancedBufferAttribute, Material, Matrix4, Mesh, Object3D, Object3DEventMap, Scene, Skeleton, SkinnedMesh, Sphere, Vector3, WebGLProgramParametersWithUniforms, WebGLRenderer } from 'three';
+import { AttachedBindMode, BindMode, Box3, BufferAttribute, BufferGeometry, Camera, Color, ColorManagement, ColorRepresentation, DataTexture, DetachedBindMode, InstancedBufferAttribute, Material, Matrix4, Mesh, Object3D, Object3DEventMap, Scene, Skeleton, SkinnedMesh, Sphere, Vector3, WebGLProgramParametersWithUniforms, WebGLProperties, WebGLRenderer, WebGLState } from 'three';
 import { CustomSortCallback, OnFrustumEnterCallback } from './feature/FrustumCulling.js';
 import { Entity } from './feature/Instances.js';
 import { LODInfo } from './feature/LOD.js';
@@ -298,18 +298,60 @@ export class InstancedMesh2<
       return;
     }
 
-    // if multi material we compute frustum culling once
-    if (group && !this.isFirstGroup(group.materialIndex)) return;
+    // if multi material we compute frustum culling and textures update once
+    if (!group || this.isFirstGroup(group.materialIndex)) {
+      // TODO convert also morph texture to squared texture?
 
-    this.matricesTexture.update(renderer);
-    this.colorsTexture?.update(renderer);
-    this.uniformsTexture?.update(renderer);
-    this.boneTexture?.update(renderer);
-    // TODO convert also morph texture to squared texture?
+      this.matricesTexture.update(renderer);
+      this.colorsTexture?.update(renderer);
+      this.uniformsTexture?.update(renderer);
+      this.boneTexture?.update(renderer);
 
-    if (this.autoUpdate) {
-      this.performFrustumCulling(camera);
+      if (this.autoUpdate) {
+        this.performFrustumCulling(camera);
+      }
     }
+
+    const properties = renderer.properties;
+    const gl = renderer.getContext() as WebGL2RenderingContext;
+    const state = renderer.state;
+    const maxTextures = this._renderer.capabilities.maxTextures;
+    const materialProperties: any = properties.get(material);
+    const program = materialProperties.currentProgram;
+    const uniformsMap = program.getUniforms().map;
+
+    let unit = maxTextures - 1;
+    unit = this.bindTexture(gl, state, properties, uniformsMap, 'matricesTexture', unit);
+    unit = this.bindTexture(gl, state, properties, uniformsMap, 'colorsTexture', unit);
+    unit = this.bindTexture(gl, state, properties, uniformsMap, 'uniformsTexture', unit);
+    this.bindTexture(gl, state, properties, uniformsMap, 'boneTexture', unit);
+
+    // TODO add morph
+  }
+
+  protected bindTexture(gl: WebGL2RenderingContext, state: WebGLState, properties: WebGLProperties, uniformsMap: any, key: string, unit: number): number {
+    if (!this[key]) return unit;
+
+    if (unit === -1) {
+      console.error(`Can't bind more textures.`); // TODO better message
+      return unit;
+    }
+
+    const textureProperties: any = properties.get(this[key]);
+    if (!textureProperties.__webglTexture) return unit;
+
+    const uniform = uniformsMap[key];
+    if (uniform === undefined) return unit;
+
+    const cache = uniform.cache;
+    if (cache[0] !== unit) {
+      gl.uniform1i(uniform.addr, unit);
+      cache[0] = unit;
+    }
+
+    (state.bindTexture as any)(gl.TEXTURE_2D, textureProperties.__webglTexture, gl.TEXTURE0 + unit); // TODO fix d.ts and check if it's correct put at the last
+
+    return --unit;
   }
 
   public override onAfterShadow(renderer: WebGLRenderer, scene: Scene, camera: Camera, shadowCamera: Camera, geometry: BufferGeometry, depthMaterial: Material, group: any): void {
@@ -402,21 +444,19 @@ export class InstancedMesh2<
       if (this._onBeforeCompileBase) this._onBeforeCompileBase(shader, renderer);
 
       shader.instancing = false; // TODO CHECK IF REMOVE
-      shader.uniforms.matricesTexture = { value: this.matricesTexture };
 
       if (!shader.defines) shader.defines = {};
       shader.defines['USE_INSTANCING_INDIRECT'] = '';
 
       if (this.uniformsTexture) {
-        shader.uniforms.uniformsTexture = { value: this.uniformsTexture };
         const { vertex, fragment } = this.uniformsTexture.getUniformsGLSL('uniformsTexture', 'instanceIndex', 'uint');
-
         shader.vertexShader = shader.vertexShader.replace('void main() {', vertex);
         shader.fragmentShader = shader.fragmentShader.replace('void main() {', fragment);
       }
 
       if (this.colorsTexture && shader.fragmentShader.includes('#include <color_pars_fragment>')) {
         shader.defines['USE_INSTANCING_COLOR_INDIRECT'] = '';
+        shader.vertexShader = shader.vertexShader.replace('<color_vertex>', '<instanced_color_vertex>');
 
         if (shader.vertexColors) {
           shader.defines['USE_VERTEX_COLOR'] = '';
@@ -427,9 +467,6 @@ export class InstancedMesh2<
         } else {
           shader.defines['USE_COLOR'] = '';
         }
-
-        shader.uniforms.colorsTexture = { value: this.colorsTexture };
-        shader.vertexShader = shader.vertexShader.replace('<color_vertex>', '<instanced_color_vertex>');
       }
 
       if (this.boneTexture) {
@@ -438,7 +475,6 @@ export class InstancedMesh2<
         shader.uniforms.bindMatrix = { value: this.bindMatrix };
         shader.uniforms.bindMatrixInverse = { value: this.bindMatrixInverse };
         shader.uniforms.bonesPerInstance = { value: this.skeleton.bones.length };
-        shader.uniforms.boneTexture = { value: this.boneTexture };
       }
     };
   }
