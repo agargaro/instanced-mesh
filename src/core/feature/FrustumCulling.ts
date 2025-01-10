@@ -174,6 +174,7 @@ InstancedMesh2.prototype.BVHCulling = function (camera: Camera) {
 
 InstancedMesh2.prototype.linearCulling = function (camera: Camera) {
   const array = this.instanceIndex.array;
+  if (!this.geometry.boundingSphere) this.geometry.computeBoundingSphere();
   const bSphere = this._geometry.boundingSphere;
   const radius = bSphere.radius;
   const center = bSphere.center;
@@ -296,6 +297,7 @@ InstancedMesh2.prototype.BVHCullingLOD = function (LODrenderList: LODRenderList,
 
 InstancedMesh2.prototype.linearCullingLOD = function (LODrenderList: LODRenderList, indexes: Uint32Array[], sortObjects: boolean, camera: Camera, cameraLOD: Camera) {
   const { count, levels } = LODrenderList;
+  if (!this.geometry.boundingSphere) this.geometry.computeBoundingSphere();
   const bSphere = this._geometry.boundingSphere;
   const radius = bSphere.radius;
   const center = bSphere.center;
