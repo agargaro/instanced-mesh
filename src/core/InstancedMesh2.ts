@@ -302,43 +302,45 @@ export class InstancedMesh2<
     if (!group || this.isFirstGroup(group.materialIndex)) {
       // TODO convert also morph texture to squared texture?
 
-      this.matricesTexture.update(renderer);
-      this.colorsTexture?.update(renderer);
-      this.uniformsTexture?.update(renderer);
-      this.boneTexture?.update(renderer);
+      // capire come evitare di far iterare tutte le booleane quando update non serve
 
       if (this.autoUpdate) {
         this.performFrustumCulling(camera);
       }
     }
 
-    const properties = renderer.properties;
     const gl = renderer.getContext() as WebGL2RenderingContext;
+    const properties = renderer.properties;
     const state = renderer.state;
     const maxTextures = this._renderer.capabilities.maxTextures;
     const materialProperties: any = properties.get(material);
     const program = materialProperties.currentProgram;
-    const uniformsMap = program.getUniforms().map;
+    const p_uniforms = program.getUniforms();
+    const uniformsMap = p_uniforms.map;
 
     let unit = maxTextures - 1;
     unit = this.bindTexture(gl, state, properties, uniformsMap, 'matricesTexture', unit);
+    unit = this.bindTexture(gl, state, properties, uniformsMap, 'boneTexture', unit);
     unit = this.bindTexture(gl, state, properties, uniformsMap, 'colorsTexture', unit);
-    unit = this.bindTexture(gl, state, properties, uniformsMap, 'uniformsTexture', unit);
-    this.bindTexture(gl, state, properties, uniformsMap, 'boneTexture', unit);
+    this.bindTexture(gl, state, properties, uniformsMap, 'uniformsTexture', unit);
 
-    // TODO add morph
+    if (this.boneTexture) {
+      p_uniforms.setOptional(gl, this, 'bindMatrix');
+      p_uniforms.setOptional(gl, this, 'bindMatrixInverse');
+      p_uniforms.setValue(gl, 'bonesPerInstance', this.skeleton.bones.length);
+    }
+
+    // morphTexture is added automatically by three.js
   }
 
   protected bindTexture(gl: WebGL2RenderingContext, state: WebGLState, properties: WebGLProperties, uniformsMap: any, key: string, unit: number): number {
-    if (!this[key]) return unit;
+    const texture = this[key] as SquareDataTexture;
+    if (!texture) return unit;
 
     if (unit === -1) {
       console.error(`Can't bind more textures.`); // TODO better message
       return unit;
     }
-
-    const textureProperties: any = properties.get(this[key]);
-    if (!textureProperties.__webglTexture) return unit;
 
     const uniform = uniformsMap[key];
     if (uniform === undefined) return unit;
@@ -349,7 +351,7 @@ export class InstancedMesh2<
       cache[0] = unit;
     }
 
-    (state.bindTexture as any)(gl.TEXTURE_2D, textureProperties.__webglTexture, gl.TEXTURE0 + unit); // TODO fix d.ts and check if it's correct put at the last
+    texture.update(this._renderer, unit);
 
     return --unit;
   }
@@ -437,7 +439,7 @@ export class InstancedMesh2<
     this._onBeforeCompileBase = material.onBeforeCompile.bind(material);
 
     material.customProgramCacheKey = () => {
-      return `ezInstancedMesh2_${this._customProgramCacheKeyBase()}`;
+      return `ezInstancedMesh2_${!!this.colorsTexture}_${!!this.boneTexture}_${!!this.boneTexture}`;
     };
 
     material.onBeforeCompile = (shader, renderer) => {
@@ -472,9 +474,6 @@ export class InstancedMesh2<
       if (this.boneTexture) {
         shader.defines['USE_SKINNING'] = '';
         shader.defines['USE_INSTANCING_SKINNING'] = '';
-        shader.uniforms.bindMatrix = { value: this.bindMatrix };
-        shader.uniforms.bindMatrixInverse = { value: this.bindMatrixInverse };
-        shader.uniforms.bonesPerInstance = { value: this.skeleton.bones.length };
       }
     };
   }
