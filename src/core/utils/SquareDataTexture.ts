@@ -177,7 +177,12 @@ export class SquareDataTexture extends DataTexture {
   public update(renderer: WebGLRenderer, slot: number): void {
     if (!this.partialUpdate) return;
     const rowsInfo = this.getUpdateRowsInfo();
-    if (rowsInfo.length === 0) return;
+    if (rowsInfo.length === 0) {
+      const textureProperties: any = this._renderer.properties.get(this);
+      const state = this._renderer.state;
+      const gl = this._gl;
+      (state as any).bindTexture(gl.TEXTURE_2D, textureProperties.__webglTexture, gl.TEXTURE0 + slot); // fix d.ts
+    }
 
     if (rowsInfo.length > this.maxUpdateCalls) {
       this.needsUpdate = true;

@@ -314,9 +314,17 @@ export class InstancedMesh2<
     const state = renderer.state;
     const maxTextures = this._renderer.capabilities.maxTextures;
     const materialProperties: any = properties.get(material);
-    const program = materialProperties.currentProgram;
+
+    const programs = materialProperties.programs;
+    const programsEntries = programs.entries(); // FIX
+    const program = programsEntries.next().value[1];
+
     const p_uniforms = program.getUniforms();
     const uniformsMap = p_uniforms.map;
+
+    if (materialProperties.currentProgram !== program) {
+      gl.useProgram(program.program); // what if the program changes?
+    }
 
     let unit = maxTextures - 1;
     unit = this.bindTexture(gl, state, properties, uniformsMap, 'matricesTexture', unit);
