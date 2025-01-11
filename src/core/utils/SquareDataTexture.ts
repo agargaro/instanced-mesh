@@ -106,9 +106,8 @@ export class SquareDataTexture extends DataTexture {
   protected _rowToUpdate: boolean[];
   protected _uniformMap: UniformMap;
   protected _fetchInFragmentShader: boolean;
-  protected _renderer: WebGLRenderer = null;
-  protected _gl: WebGL2RenderingContext = null;
   protected _utils: WebGLUtils = null;
+  protected _needsUpdate: boolean = true;
 
   /**
    * @param arrayType The constructor for the TypedArray.
@@ -128,7 +127,7 @@ export class SquareDataTexture extends DataTexture {
     this._rowToUpdate = new Array(size);
     this._uniformMap = uniformMap;
     this._fetchInFragmentShader = fetchInFragmentShader;
-    this.needsUpdate = true; // TODO check if at start it updates twice
+    this.needsUpdate = true; // necessary to init texture
   }
 
   /**
@@ -159,10 +158,8 @@ export class SquareDataTexture extends DataTexture {
    * @param index The index of the instance to update.
    */
   public enqueueUpdate(index: number): void {
-    if (!this.partialUpdate) {
-      this.needsUpdate = true;
-      return;
-    }
+    this._needsUpdate = true;
+    if (!this.partialUpdate) return;
 
     const elementsPerRow = this.image.width / this._pixelsPerInstance;
     const rowIndex = Math.floor(index / elementsPerRow);
@@ -175,20 +172,25 @@ export class SquareDataTexture extends DataTexture {
    * @param renderer The WebGLRenderer used for rendering.
    */
   public update(renderer: WebGLRenderer, slot: number): void {
-    if (!this.partialUpdate) return;
-    const rowsInfo = this.getUpdateRowsInfo();
-    if (rowsInfo.length === 0) {
-      const textureProperties: any = this._renderer.properties.get(this);
-      const state = this._renderer.state;
-      const gl = this._gl;
-      (state as any).bindTexture(gl.TEXTURE_2D, textureProperties.__webglTexture, gl.TEXTURE0 + slot); // fix d.ts
+    const textureProperties: any = renderer.properties.get(this);
+    const state = renderer.state;
+    const gl = renderer.getContext();
+    (state as any).bindTexture(gl.TEXTURE_2D, textureProperties.__webglTexture, gl.TEXTURE0 + slot); // fix d.ts
+
+    if (!this._needsUpdate) return;
+
+    if (!this.partialUpdate) {
+      this.updateRows(renderer, [{ row: 0, count: this.image.width }], slot);
+      return;
     }
 
+    const rowsInfo = this.getUpdateRowsInfo();
+    if (rowsInfo.length === 0) return;
+
     if (rowsInfo.length > this.maxUpdateCalls) {
-      this.needsUpdate = true;
+      this.updateRows(renderer, [{ row: 0, count: this.image.width }], slot);
     } else {
-      this.initRendererInfo(renderer);
-      this.updateRows(rowsInfo, slot);
+      this.updateRows(renderer, rowsInfo, slot);
     }
 
     this._rowToUpdate.fill(false);
@@ -211,21 +213,21 @@ export class SquareDataTexture extends DataTexture {
     return result;
   }
 
-  protected initRendererInfo(renderer: WebGLRenderer): void {
-    if (!this._renderer) this._renderer = renderer;
-    if (!this._gl) this._gl = renderer.getContext() as WebGL2RenderingContext;
-    if (!this._utils) this._utils = new WebGLUtils(this._gl, renderer.extensions);
-  }
-
   // Reference: https://github.com/mrdoob/three.js/blob/master/src/renderers/WebGLRenderer.js#L2569
-  protected updateRows(info: UpdateRowInfo[], slot?: number): void {
-    const textureProperties: any = this._renderer.properties.get(this);
+  protected updateRows(renderer: WebGLRenderer, info: UpdateRowInfo[], slot?: number): void {
+    // TODO passare queuste prop come parametri?
+    const textureProperties: any = renderer.properties.get(this);
     if (!textureProperties.__webglTexture) {
-      this._renderer.initTexture(this);
+      renderer.initTexture(this);
     }
 
-    const state = this._renderer.state;
-    const gl = this._gl;
+    const state = renderer.state;
+    const gl = renderer.getContext();
+
+    if (!this._utils) {
+      this._utils = new WebGLUtils(gl, renderer.extensions);
+    }
+
     const glFormat = this._utils.convert(this.format);
     const glType = this._utils.convert(this.type);
     const { data, width } = this.image;
@@ -416,8 +418,6 @@ export class SquareDataTexture extends DataTexture {
     this._stride = source._stride;
     this._rowToUpdate = source._rowToUpdate;
     this._uniformMap = source._uniformMap;
-    this._renderer = source._renderer;
-    this._gl = source._gl;
     this._utils = source._utils;
 
     return this;
