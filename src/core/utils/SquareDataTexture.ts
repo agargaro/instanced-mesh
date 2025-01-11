@@ -180,7 +180,7 @@ export class SquareDataTexture extends DataTexture {
     if (!this._needsUpdate) return;
 
     if (!this.partialUpdate) {
-      this.updateRows(renderer, [{ row: 0, count: this.image.width }], slot);
+      this.updateAllRows(renderer, slot);
       return;
     }
 
@@ -188,7 +188,7 @@ export class SquareDataTexture extends DataTexture {
     if (rowsInfo.length === 0) return;
 
     if (rowsInfo.length > this.maxUpdateCalls) {
-      this.updateRows(renderer, [{ row: 0, count: this.image.width }], slot);
+      this.updateAllRows(renderer, slot);
     } else {
       this.updateRows(renderer, rowsInfo, slot);
     }
@@ -213,6 +213,43 @@ export class SquareDataTexture extends DataTexture {
     return result;
   }
 
+  protected updateAllRows(renderer: WebGLRenderer, slot?: number): void {
+    // TODO passare queuste prop come parametri?
+    const textureProperties: any = renderer.properties.get(this);
+    if (!textureProperties.__webglTexture) {
+      renderer.initTexture(this);
+    }
+
+    const state = renderer.state;
+    const gl = renderer.getContext();
+
+    if (!this._utils) {
+      this._utils = new WebGLUtils(gl, renderer.extensions);
+    }
+
+    const glFormat = this._utils.convert(this.format);
+    const glType = this._utils.convert(this.type);
+    const { data, width } = this.image;
+    const unit = slot >= 0 ? gl.TEXTURE0 + slot : undefined;
+
+    // queste cose dopo farle solo se updatata FIX TODO
+    state.activeTexture(unit);
+
+    const workingPrimaries = ColorManagement.getPrimaries(ColorManagement.workingColorSpace);
+    const texturePrimaries = this.colorSpace === NoColorSpace ? null : ColorManagement.getPrimaries(this.colorSpace);
+    const unpackConversion = this.colorSpace === NoColorSpace || workingPrimaries === texturePrimaries ? gl.NONE : gl.BROWSER_DEFAULT_WEBGL;
+
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, this.flipY);
+    gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, this.premultiplyAlpha);
+    gl.pixelStorei(gl.UNPACK_ALIGNMENT, this.unpackAlignment);
+    gl.pixelStorei(gl.UNPACK_COLORSPACE_CONVERSION_WEBGL, unpackConversion);
+
+    gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, width, width, glFormat, glType, data);
+
+
+    if (this.onUpdate) this.onUpdate(); // this should be passed as parameter?
+  }
+
   // Reference: https://github.com/mrdoob/three.js/blob/master/src/renderers/WebGLRenderer.js#L2569
   protected updateRows(renderer: WebGLRenderer, info: UpdateRowInfo[], slot?: number): void {
     // TODO passare queuste prop come parametri?
@@ -233,8 +270,6 @@ export class SquareDataTexture extends DataTexture {
     const { data, width } = this.image;
     const channels = this._channels;
     const unit = slot >= 0 ? gl.TEXTURE0 + slot : undefined;
-
-    (state as any).bindTexture(gl.TEXTURE_2D, textureProperties.__webglTexture, unit); // fix d.ts
 
     // queste cose dopo farle solo se updatata FIX TODO
     state.activeTexture(unit);
