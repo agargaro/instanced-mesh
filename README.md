@@ -1,4 +1,4 @@
-🚨  Package version 0.3.0-alpha.7 introduced some bugs, which I am trying to fix. Please use an earlier version. 🚨
+## 🚨  Package version 0.3.0-alpha.7 introduced some bugs, which I am trying to fix. Please use an earlier version. 🚨
 
 <div align="center">
   
