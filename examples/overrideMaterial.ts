@@ -1,5 +1,5 @@
 import { Main, PerspectiveCameraAuto } from '@three.ez/main';
-import { AmbientLight, BoxGeometry, Mesh, MeshBasicMaterial, MeshLambertMaterial, MeshNormalMaterial, Scene } from 'three';
+import { AmbientLight, BoxGeometry, Mesh, MeshBasicMaterial, MeshLambertMaterial, Scene } from 'three';
 import { OrbitControls } from 'three/examples/jsm/Addons.js';
 import { InstancedMesh2 } from '../src/index.js';
 
@@ -12,7 +12,6 @@ controls.update();
 
 const material = new MeshLambertMaterial();
 const material2 = new MeshLambertMaterial();
-const material3 = new MeshLambertMaterial();
 
 const boxes = new InstancedMesh2(new BoxGeometry(), material, { capacity: 1 });
 const boxes2 = new InstancedMesh2(new BoxGeometry(), material2);
