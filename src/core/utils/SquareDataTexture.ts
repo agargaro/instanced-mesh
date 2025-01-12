@@ -1,4 +1,4 @@
-import { Color, DataTexture, FloatType, IntType, Matrix3, Matrix4, PixelFormat, RedFormat, RedIntegerFormat, RGBAFormat, RGBAIntegerFormat, RGFormat, RGIntegerFormat, TextureDataType, TypedArray, UnsignedIntType, Vector2, Vector3, Vector4, WebGLRenderer, WebGLUtils } from 'three';
+import { Color, ColorManagement, DataTexture, FloatType, IntType, Matrix3, Matrix4, NoColorSpace, PixelFormat, RedFormat, RedIntegerFormat, RGBAFormat, RGBAIntegerFormat, RGFormat, RGIntegerFormat, TextureDataType, TypedArray, UnsignedIntType, Vector2, Vector3, Vector4, WebGLRenderer, WebGLUtils } from 'three';
 
 /**
  * Represents the number of elements per pixel.
@@ -96,19 +96,19 @@ export class SquareDataTexture extends DataTexture {
   public partialUpdate = true;
   /**
    * The maximum number of update calls per frame.
-   * @default 20
+   * @default Infinity
    */
-  public maxUpdateCalls = 20;
+  public maxUpdateCalls = Infinity;
   /** @internal */ _data: TypedArray;
   protected _channels: ChannelSize;
   protected _pixelsPerInstance: number;
   protected _stride: number;
   protected _rowToUpdate: boolean[];
   protected _uniformMap: UniformMap;
-  protected _fetchInFragmentShader: boolean;
-  protected _renderer: WebGLRenderer = null;
-  protected _gl: WebGL2RenderingContext = null;
-  protected _utils: WebGLUtils = null;
+  protected _fetchUniformsInFragmentShader: boolean;
+  protected _utils: WebGLUtils = null; // TODO add it to renderer instead of creating for each texture
+  protected _needsUpdate: boolean = false;
+  protected _lastWidth: number = null;
 
   /**
    * @param arrayType The constructor for the TypedArray.
@@ -127,8 +127,8 @@ export class SquareDataTexture extends DataTexture {
     this._stride = pixelsPerInstance * channels;
     this._rowToUpdate = new Array(size);
     this._uniformMap = uniformMap;
-    this._fetchInFragmentShader = fetchInFragmentShader;
-    this.needsUpdate = true; // TODO check if at start it updates twice
+    this._fetchUniformsInFragmentShader = fetchInFragmentShader;
+    this.needsUpdate = true; // necessary to init texture
   }
 
   /**
@@ -159,10 +159,8 @@ export class SquareDataTexture extends DataTexture {
    * @param index The index of the instance to update.
    */
   public enqueueUpdate(index: number): void {
-    if (!this.partialUpdate) {
-      this.needsUpdate = true;
-      return;
-    }
+    this._needsUpdate = true;
+    if (!this.partialUpdate) return;
 
     const elementsPerRow = this.image.width / this._pixelsPerInstance;
     const rowIndex = Math.floor(index / elementsPerRow);
@@ -175,15 +173,29 @@ export class SquareDataTexture extends DataTexture {
    * @param renderer The WebGLRenderer used for rendering.
    */
   public update(renderer: WebGLRenderer): void {
-    if (!this.partialUpdate) return;
+    const textureProperties: any = renderer.properties.get(this);
+    const versionChanged = this.version > 0 && textureProperties.__version !== this.version;
+    const sizeChanged = this._lastWidth !== null && this._lastWidth !== this.image.width;
+    if (!this._needsUpdate || !textureProperties.__webglTexture || versionChanged || sizeChanged) {
+      this._lastWidth = this.image.width;
+      this._needsUpdate = false;
+      return;
+    }
+
+    this._needsUpdate = false;
+
+    if (!this.partialUpdate) {
+      this.needsUpdate = true; // three.js will update the whole texture
+      return;
+    }
+
     const rowsInfo = this.getUpdateRowsInfo();
     if (rowsInfo.length === 0) return;
 
     if (rowsInfo.length > this.maxUpdateCalls) {
-      this.needsUpdate = true;
+      this.needsUpdate = true; // three.js will update the whole texture
     } else {
-      this.initRendererInfo(renderer);
-      this.updateRows(rowsInfo);
+      this.updateRows(textureProperties, renderer, rowsInfo);
     }
 
     this._rowToUpdate.fill(false);
@@ -206,52 +218,31 @@ export class SquareDataTexture extends DataTexture {
     return result;
   }
 
-  protected initRendererInfo(renderer: WebGLRenderer): void {
-    if (!this._renderer) this._renderer = renderer;
-    if (!this._gl) this._gl = renderer.getContext() as WebGL2RenderingContext;
-    if (!this._utils) this._utils = new WebGLUtils(this._gl, renderer.extensions);
-  }
-
-  // Reference: https://github.com/mrdoob/three.js/blob/master/src/renderers/WebGLRenderer.js#L2569
-  protected updateRows(info: UpdateRowInfo[]): void {
-    const state = this._renderer.state;
-    const gl = this._gl;
+  protected updateRows(textureProperties: any, renderer: WebGLRenderer, info: UpdateRowInfo[]): void {
+    const state = renderer.state;
+    const gl = renderer.getContext() as WebGL2RenderingContext;
+    if (!this._utils) this._utils = new WebGLUtils(gl, renderer.extensions);
     const glFormat = this._utils.convert(this.format);
     const glType = this._utils.convert(this.type);
-    const { data, height, width } = this.image;
-
-    const textureProperties: any = this._renderer.properties.get(this);
-    if (!textureProperties.__webglTexture) return;
+    const { data, width } = this.image;
+    const channels = this._channels;
 
     state.bindTexture(gl.TEXTURE_2D, textureProperties.__webglTexture);
+
+    const workingPrimaries = ColorManagement.getPrimaries(ColorManagement.workingColorSpace);
+    const texturePrimaries = this.colorSpace === NoColorSpace ? null : ColorManagement.getPrimaries(this.colorSpace);
+    const unpackConversion = this.colorSpace === NoColorSpace || workingPrimaries === texturePrimaries ? gl.NONE : gl.BROWSER_DEFAULT_WEBGL;
 
     gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, this.flipY);
     gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, this.premultiplyAlpha);
     gl.pixelStorei(gl.UNPACK_ALIGNMENT, this.unpackAlignment);
-
-    const currentUnpackRowLen = gl.getParameter(gl.UNPACK_ROW_LENGTH);
-    const currentUnpackImageHeight = gl.getParameter(gl.UNPACK_IMAGE_HEIGHT);
-    const currentUnpackSkipPixels = gl.getParameter(gl.UNPACK_SKIP_PIXELS);
-    const currentUnpackSkipRows = gl.getParameter(gl.UNPACK_SKIP_ROWS);
-    const currentUnpackSkipImages = gl.getParameter(gl.UNPACK_SKIP_IMAGES);
-
-    gl.pixelStorei(gl.UNPACK_ROW_LENGTH, width);
-    gl.pixelStorei(gl.UNPACK_IMAGE_HEIGHT, height);
-    gl.pixelStorei(gl.UNPACK_SKIP_PIXELS, 0); // start x axis
-    gl.pixelStorei(gl.UNPACK_SKIP_IMAGES, 0); // start z axis
+    gl.pixelStorei(gl.UNPACK_COLORSPACE_CONVERSION_WEBGL, unpackConversion);
 
     for (const { count, row } of info) {
-      gl.pixelStorei(gl.UNPACK_SKIP_ROWS, row); // start y axis
-      gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, row, width, count, glFormat, glType, data);
+      gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, row, width, count, glFormat, glType, data, row * width * channels);
     }
 
-    gl.pixelStorei(gl.UNPACK_ROW_LENGTH, currentUnpackRowLen);
-    gl.pixelStorei(gl.UNPACK_IMAGE_HEIGHT, currentUnpackImageHeight);
-    gl.pixelStorei(gl.UNPACK_SKIP_PIXELS, currentUnpackSkipPixels);
-    gl.pixelStorei(gl.UNPACK_SKIP_ROWS, currentUnpackSkipRows);
-    gl.pixelStorei(gl.UNPACK_SKIP_IMAGES, currentUnpackSkipImages);
-
-    state.unbindTexture();
+    if (this.onUpdate) this.onUpdate();
   }
 
   /**
@@ -303,7 +294,7 @@ export class SquareDataTexture extends DataTexture {
   }
 
   protected getUniformsVertexGLSL(textureName: string, indexName: string, indexType: string): string {
-    if (this._fetchInFragmentShader) {
+    if (this._fetchUniformsInFragmentShader) {
       return `
         flat varying ${indexType} ez_v${indexName}; 
         void main() {
@@ -324,7 +315,7 @@ export class SquareDataTexture extends DataTexture {
   }
 
   protected getUniformsFragmentGLSL(textureName: string, indexName: string, indexType: string): string {
-    if (!this._fetchInFragmentShader) {
+    if (!this._fetchUniformsInFragmentShader) {
       const { declareVarying, getVarying } = this.getVarying();
 
       return `
@@ -417,9 +408,7 @@ export class SquareDataTexture extends DataTexture {
     this._stride = source._stride;
     this._rowToUpdate = source._rowToUpdate;
     this._uniformMap = source._uniformMap;
-    this._renderer = source._renderer;
-    this._gl = source._gl;
-    this._utils = source._utils;
+    this._fetchUniformsInFragmentShader = source._fetchUniformsInFragmentShader;
 
     return this;
   }

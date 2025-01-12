@@ -169,6 +169,8 @@ export class InstancedMesh2<
   protected _useOpacity = false;
   protected _customProgramCacheKeyBase: () => string = null;
   protected _onBeforeCompileBase: (parameters: WebGLProgramParametersWithUniforms, renderer: WebGLRenderer) => void = null;
+  protected _propertiesGetBase: any = null;
+  protected _properties = new Map<Material, any>();
 
   // HACK TO MAKE IT WORK WITHOUT UPDATE CORE
   /** @internal */ isInstancedMesh = true; // must be set to use instancing rendering
@@ -275,50 +277,50 @@ export class InstancedMesh2<
   }
 
   public override onBeforeShadow(renderer: WebGLRenderer, scene: Scene, camera: Camera, shadowCamera: Camera, geometry: BufferGeometry, depthMaterial: Material, group: any): void {
-    this.patchMaterial(depthMaterial);
+    this.patchMaterial(renderer, depthMaterial);
 
+    // if multimaterial we compute frustum culling only on first material
     if (!this.instanceIndex || (group && !this.isFirstGroup(group.materialIndex))) return;
+
+    if (this.autoUpdate) {
+      this.performFrustumCulling(shadowCamera, camera);
+    }
 
     this.matricesTexture.update(renderer);
     this.colorsTexture?.update(renderer);
     this.uniformsTexture?.update(renderer);
     this.boneTexture?.update(renderer);
-    // TODO convert also morph texture to squared texture?
-
-    if (this.autoUpdate) {
-      this.performFrustumCulling(shadowCamera, camera);
-    }
+    // TODO convert also morph texture to squared texture to use partial update
   }
 
   public override onBeforeRender(renderer: WebGLRenderer, scene: Scene, camera: Camera, geometry: BufferGeometry, material: Material, group: any): void {
-    this.patchMaterial(material);
+    this.patchMaterial(renderer, material);
 
     if (!this.instanceIndex) {
       this._renderer = renderer;
       return;
     }
 
-    // if multi material we compute frustum culling once
+    // if multimaterial we compute frustum culling only on first material
     if (group && !this.isFirstGroup(group.materialIndex)) return;
+
+    if (this.autoUpdate) {
+      this.performFrustumCulling(camera);
+    }
 
     this.matricesTexture.update(renderer);
     this.colorsTexture?.update(renderer);
     this.uniformsTexture?.update(renderer);
     this.boneTexture?.update(renderer);
-    // TODO convert also morph texture to squared texture?
-
-    if (this.autoUpdate) {
-      this.performFrustumCulling(camera);
-    }
+    // TODO convert also morph texture to squared texture to use partial update
   }
 
   public override onAfterShadow(renderer: WebGLRenderer, scene: Scene, camera: Camera, shadowCamera: Camera, geometry: BufferGeometry, depthMaterial: Material, group: any): void {
-    this.unpatchMaterial(depthMaterial);
+    this.unpatchMaterial(renderer, depthMaterial);
   }
 
   public override onAfterRender(renderer: WebGLRenderer, scene: Scene, camera: Camera, geometry: BufferGeometry, material: Material, group: any): void {
-    // TODO fix group d.ts
-    this.unpatchMaterial(material);
+    this.unpatchMaterial(renderer, material);
     if (this.instanceIndex || (group && !this.isLastGroup(group.materialIndex))) return;
     this.initIndexAttribute();
   }
@@ -390,33 +392,46 @@ export class InstancedMesh2<
     }
   }
 
-  protected patchMaterial(material: Material): void {
+  protected patchMaterial(renderer: WebGLRenderer, material: Material): void {
     this._customProgramCacheKeyBase = material.customProgramCacheKey.bind(material);
     this._onBeforeCompileBase = material.onBeforeCompile.bind(material);
+    const properties = renderer.properties;
+    this._propertiesGetBase = properties.get;
+
+    if (!this._properties.has(material)) {
+      this._properties.set(material, {});
+    }
+
+    properties.get = (object) => {
+      if (object === material) return this._properties.get(material);
+      return this._propertiesGetBase(object);
+    };
 
     material.customProgramCacheKey = () => {
-      return `ezInstancedMesh2_${this._customProgramCacheKeyBase()}`;
+      return `ezInstancedMesh2_${this.id}_${!!this.colorsTexture}_${!!this.boneTexture}_${!!this.uniformsTexture}`;
     };
 
     material.onBeforeCompile = (shader, renderer) => {
       if (this._onBeforeCompileBase) this._onBeforeCompileBase(shader, renderer);
 
-      shader.instancing = false; // TODO CHECK IF REMOVE
-      shader.uniforms.matricesTexture = { value: this.matricesTexture };
+      shader.instancing = false;
 
       if (!shader.defines) shader.defines = {};
       shader.defines['USE_INSTANCING_INDIRECT'] = '';
 
+      shader.uniforms.matricesTexture = { value: this.matricesTexture };
+
       if (this.uniformsTexture) {
         shader.uniforms.uniformsTexture = { value: this.uniformsTexture };
         const { vertex, fragment } = this.uniformsTexture.getUniformsGLSL('uniformsTexture', 'instanceIndex', 'uint');
-
         shader.vertexShader = shader.vertexShader.replace('void main() {', vertex);
         shader.fragmentShader = shader.fragmentShader.replace('void main() {', fragment);
       }
 
       if (this.colorsTexture && shader.fragmentShader.includes('#include <color_pars_fragment>')) {
         shader.defines['USE_INSTANCING_COLOR_INDIRECT'] = '';
+        shader.uniforms.colorsTexture = { value: this.colorsTexture };
+        shader.vertexShader = shader.vertexShader.replace('<color_vertex>', '<instanced_color_vertex>');
 
         if (shader.vertexColors) {
           shader.defines['USE_VERTEX_COLOR'] = '';
@@ -427,9 +442,6 @@ export class InstancedMesh2<
         } else {
           shader.defines['USE_COLOR'] = '';
         }
-
-        shader.uniforms.colorsTexture = { value: this.colorsTexture };
-        shader.vertexShader = shader.vertexShader.replace('<color_vertex>', '<instanced_color_vertex>');
       }
 
       if (this.boneTexture) {
@@ -443,9 +455,11 @@ export class InstancedMesh2<
     };
   }
 
-  protected unpatchMaterial(material: Material): void {
+  protected unpatchMaterial(renderer: WebGLRenderer, material: Material): void {
+    renderer.properties.get = this._propertiesGetBase;
     material.onBeforeCompile = this._onBeforeCompileBase;
     material.customProgramCacheKey = this._customProgramCacheKeyBase;
+    this._propertiesGetBase = null;
     this._onBeforeCompileBase = null;
     this._customProgramCacheKeyBase = null;
   }
