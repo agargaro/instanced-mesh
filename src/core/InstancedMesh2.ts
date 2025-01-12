@@ -279,17 +279,18 @@ export class InstancedMesh2<
   public override onBeforeShadow(renderer: WebGLRenderer, scene: Scene, camera: Camera, shadowCamera: Camera, geometry: BufferGeometry, depthMaterial: Material, group: any): void {
     this.patchMaterial(renderer, depthMaterial);
 
+    // if multimaterial we compute frustum culling only on first material
     if (!this.instanceIndex || (group && !this.isFirstGroup(group.materialIndex))) return;
-
-    this.matricesTexture.update(renderer, 0); // TODO fix
-    this.colorsTexture?.update(renderer, 0);
-    this.uniformsTexture?.update(renderer, 0);
-    this.boneTexture?.update(renderer, 0);
-    // TODO convert also morph texture to squared texture?
 
     if (this.autoUpdate) {
       this.performFrustumCulling(shadowCamera, camera);
     }
+
+    this.matricesTexture.update(renderer);
+    this.colorsTexture?.update(renderer);
+    this.uniformsTexture?.update(renderer);
+    this.boneTexture?.update(renderer);
+    // TODO convert also morph texture to squared texture to use partial update
   }
 
   public override onBeforeRender(renderer: WebGLRenderer, scene: Scene, camera: Camera, geometry: BufferGeometry, material: Material, group: any): void {
@@ -300,62 +301,18 @@ export class InstancedMesh2<
       return;
     }
 
-    // if multi material we compute frustum culling and textures update once
-    if (!group || this.isFirstGroup(group.materialIndex)) {
-      // TODO convert also morph texture to squared texture?
+    // if multimaterial we compute frustum culling only on first material
+    if (group && !this.isFirstGroup(group.materialIndex)) return;
 
-      // capire come evitare di far iterare tutte le booleane quando update non serve
-
-      if (this.autoUpdate) {
-        this.performFrustumCulling(camera);
-      }
+    if (this.autoUpdate) {
+      this.performFrustumCulling(camera);
     }
 
-    const currentProgram = this._properties.get(material).currentProgram;
-    if (!currentProgram) return;
-
-    const gl = renderer.getContext() as WebGL2RenderingContext;
-    gl.useProgram(currentProgram.program); // what if the program changes?
-
-    const p_uniforms = currentProgram.getUniforms();
-    const uniformsMap = p_uniforms.map;
-    const maxTextures = this._renderer.capabilities.maxTextures;
-    let unit = maxTextures - 1;
-    unit = this.bindTexture(gl, uniformsMap, 'matricesTexture', unit);
-    unit = this.bindTexture(gl, uniformsMap, 'boneTexture', unit);
-    unit = this.bindTexture(gl, uniformsMap, 'colorsTexture', unit);
-    this.bindTexture(gl, uniformsMap, 'uniformsTexture', unit);
-
-    if (this.boneTexture) {
-      p_uniforms.setOptional(gl, this, 'bindMatrix');
-      p_uniforms.setOptional(gl, this, 'bindMatrixInverse');
-      p_uniforms.setValue(gl, 'bonesPerInstance', this.skeleton.bones.length);
-    }
-
-    // morphTexture is added automatically by three.js
-  }
-
-  protected bindTexture(gl: WebGL2RenderingContext, uniformsMap: any, key: string, unit: number): number {
-    const texture = this[key] as SquareDataTexture;
-    if (!texture) return unit;
-
-    if (unit === -1) {
-      console.error(`Can't bind more textures.`); // TODO better message
-      return unit;
-    }
-
-    const uniform = uniformsMap[key];
-    if (uniform === undefined) return unit;
-
-    const cache = uniform.cache;
-    if (cache[0] !== unit) {
-      gl.uniform1i(uniform.addr, unit);
-      cache[0] = unit;
-    }
-
-    texture.update(this._renderer, unit);
-
-    return --unit;
+    this.matricesTexture.update(renderer);
+    this.colorsTexture?.update(renderer);
+    this.uniformsTexture?.update(renderer);
+    this.boneTexture?.update(renderer);
+    // TODO convert also morph texture to squared texture to use partial update
   }
 
   public override onAfterShadow(renderer: WebGLRenderer, scene: Scene, camera: Camera, shadowCamera: Camera, geometry: BufferGeometry, depthMaterial: Material, group: any): void {
@@ -451,7 +408,7 @@ export class InstancedMesh2<
     };
 
     material.customProgramCacheKey = () => {
-      return `ezInstancedMesh2_${!!this.colorsTexture}_${!!this.boneTexture}_${!!this.uniformsTexture}`;
+      return `ezInstancedMesh2_${this.id}_${!!this.colorsTexture}_${!!this.boneTexture}_${!!this.uniformsTexture}`;
     };
 
     material.onBeforeCompile = (shader, renderer) => {
@@ -462,7 +419,10 @@ export class InstancedMesh2<
       if (!shader.defines) shader.defines = {};
       shader.defines['USE_INSTANCING_INDIRECT'] = '';
 
+      shader.uniforms.matricesTexture = { value: this.matricesTexture };
+
       if (this.uniformsTexture) {
+        shader.uniforms.uniformsTexture = { value: this.uniformsTexture };
         const { vertex, fragment } = this.uniformsTexture.getUniformsGLSL('uniformsTexture', 'instanceIndex', 'uint');
         shader.vertexShader = shader.vertexShader.replace('void main() {', vertex);
         shader.fragmentShader = shader.fragmentShader.replace('void main() {', fragment);
@@ -470,6 +430,7 @@ export class InstancedMesh2<
 
       if (this.colorsTexture && shader.fragmentShader.includes('#include <color_pars_fragment>')) {
         shader.defines['USE_INSTANCING_COLOR_INDIRECT'] = '';
+        shader.uniforms.colorsTexture = { value: this.colorsTexture };
         shader.vertexShader = shader.vertexShader.replace('<color_vertex>', '<instanced_color_vertex>');
 
         if (shader.vertexColors) {
@@ -486,6 +447,10 @@ export class InstancedMesh2<
       if (this.boneTexture) {
         shader.defines['USE_SKINNING'] = '';
         shader.defines['USE_INSTANCING_SKINNING'] = '';
+        shader.uniforms.bindMatrix = { value: this.bindMatrix };
+        shader.uniforms.bindMatrixInverse = { value: this.bindMatrixInverse };
+        shader.uniforms.bonesPerInstance = { value: this.skeleton.bones.length };
+        shader.uniforms.boneTexture = { value: this.boneTexture };
       }
     };
   }
@@ -494,6 +459,7 @@ export class InstancedMesh2<
     renderer.properties.get = this._propertiesGetBase;
     material.onBeforeCompile = this._onBeforeCompileBase;
     material.customProgramCacheKey = this._customProgramCacheKeyBase;
+    this._propertiesGetBase = null;
     this._onBeforeCompileBase = null;
     this._customProgramCacheKeyBase = null;
   }

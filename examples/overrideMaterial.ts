@@ -33,11 +33,7 @@ boxes3.addInstances(5, (obj, index) => {
   obj.position.y = 0;
 });
 
-const box = new Mesh(new BoxGeometry(), material).translateX(2).translateY(1.5);
-const box2 = new Mesh(new BoxGeometry(), material2).translateX(2).translateY(0);
-const box3 = new Mesh(new BoxGeometry(), material3).translateX(2).translateY(-1.5);
-
-scene.add(box, boxes, box2, boxes2, boxes3, box3, new AmbientLight());
+scene.add(boxes, boxes2, boxes3, new AmbientLight());
 
 const overrideMaterial = new MeshBasicMaterial();
 
