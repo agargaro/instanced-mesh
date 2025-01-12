@@ -35,6 +35,8 @@ InstancedMesh2.prototype.initSkeleton = function (skeleton: Skeleton, disableMat
         bone.matrixWorldAutoUpdate = false;
       }
     }
+
+    this.materialsNeedsUpdate(); // TODO this may not work if change already present skeleton
   }
 };
 
