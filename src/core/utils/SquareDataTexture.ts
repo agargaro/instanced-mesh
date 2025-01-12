@@ -201,6 +201,7 @@ export class SquareDataTexture extends DataTexture {
     this._rowToUpdate.fill(false);
   }
 
+  // TODO reuse same objects to prevent memory leak
   protected getUpdateRowsInfo(): UpdateRowInfo[] {
     const rowsToUpdate = this._rowToUpdate;
     const result: UpdateRowInfo[] = [];
