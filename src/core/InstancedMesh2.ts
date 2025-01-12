@@ -373,6 +373,18 @@ export class InstancedMesh2<
       this.colorsTexture = new SquareDataTexture(Float32Array, 4, 1, this._capacity);
       this.colorsTexture.colorSpace = ColorManagement.workingColorSpace;
       this.colorsTexture._data.fill(1);
+      this.materialsNeedsUpdate();
+    }
+  }
+
+  protected materialsNeedsUpdate(): void {
+    if ((this.material as Material).isMaterial) {
+      (this.material as Material).needsUpdate = true;
+      return;
+    }
+
+    for (const material of (this.material as Material[])) {
+      material.needsUpdate = true;
     }
   }
 

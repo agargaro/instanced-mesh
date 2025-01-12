@@ -55,8 +55,11 @@ InstancedMesh2.prototype.setUniformAt = function (id: number, name: string, valu
 };
 
 InstancedMesh2.prototype.initUniformsPerInstance = function (schema: UniformSchemaShader): void {
-  const { channels, pixelsPerInstance, uniformMap, fetchInFragmentShader } = this.getUniformSchemaResult(schema);
-  this.uniformsTexture = new SquareDataTexture(Float32Array, channels, pixelsPerInstance, this._capacity, uniformMap, fetchInFragmentShader);
+  if (!this._parentLOD) {
+    const { channels, pixelsPerInstance, uniformMap, fetchInFragmentShader } = this.getUniformSchemaResult(schema);
+    this.uniformsTexture = new SquareDataTexture(Float32Array, channels, pixelsPerInstance, this._capacity, uniformMap, fetchInFragmentShader);
+    this.materialsNeedsUpdate();
+  }
 };
 
 InstancedMesh2.prototype.getUniformSchemaResult = function (schema: UniformSchemaShader): UniformSchemaResult {
