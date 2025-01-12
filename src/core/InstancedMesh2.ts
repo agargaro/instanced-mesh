@@ -169,8 +169,9 @@ export class InstancedMesh2<
   protected _useOpacity = false;
   protected _customProgramCacheKeyBase: () => string = null;
   protected _onBeforeCompileBase: (parameters: WebGLProgramParametersWithUniforms, renderer: WebGLRenderer) => void = null;
-  protected _propertiesGetBase: any = null;
-  protected _properties = new Map<Material, any>();
+  protected _propertiesGetBase: (obj: unknown) => unknown = null;
+  protected _propertiesGetMap = new WeakMap<Material, (obj: unknown) => unknown>();
+  protected _properties = new WeakMap<Material, unknown>();
 
   // HACK TO MAKE IT WORK WITHOUT UPDATE CORE
   /** @internal */ isInstancedMesh = true; // must be set to use instancing rendering
@@ -404,74 +405,80 @@ export class InstancedMesh2<
     }
   }
 
-  protected patchMaterial(renderer: WebGLRenderer, material: Material): void {
-    this._customProgramCacheKeyBase = material.customProgramCacheKey.bind(material);
-    this._onBeforeCompileBase = material.onBeforeCompile.bind(material);
-    const properties = renderer.properties;
-    this._propertiesGetBase = properties.get;
+  protected _customProgramCacheKey = (): string => {
+    return `ezInstancedMesh2_${this.id}_${!!this.colorsTexture}_${!!this.boneTexture}_${!!this.uniformsTexture}`;
+  };
 
-    if (!this._properties.has(material)) {
-      this._properties.set(material, {});
+  protected _onBeforeCompile = (shader: WebGLProgramParametersWithUniforms, renderer: WebGLRenderer): void => {
+    if (this._onBeforeCompileBase) this._onBeforeCompileBase(shader, renderer);
+
+    shader.instancing = false;
+
+    if (!shader.defines) shader.defines = {};
+    shader.defines['USE_INSTANCING_INDIRECT'] = '';
+
+    shader.uniforms.matricesTexture = { value: this.matricesTexture };
+
+    if (this.uniformsTexture) {
+      shader.uniforms.uniformsTexture = { value: this.uniformsTexture };
+      const { vertex, fragment } = this.uniformsTexture.getUniformsGLSL('uniformsTexture', 'instanceIndex', 'uint');
+      shader.vertexShader = shader.vertexShader.replace('void main() {', vertex);
+      shader.fragmentShader = shader.fragmentShader.replace('void main() {', fragment);
     }
 
-    properties.get = (object) => {
-      if (object === material) return this._properties.get(material);
-      return this._propertiesGetBase(object);
-    };
+    if (this.colorsTexture && shader.fragmentShader.includes('#include <color_pars_fragment>')) {
+      shader.defines['USE_INSTANCING_COLOR_INDIRECT'] = '';
+      shader.uniforms.colorsTexture = { value: this.colorsTexture };
+      shader.vertexShader = shader.vertexShader.replace('<color_vertex>', '<instanced_color_vertex>');
 
-    material.customProgramCacheKey = () => {
-      return `ezInstancedMesh2_${this.id}_${!!this.colorsTexture}_${!!this.boneTexture}_${!!this.uniformsTexture}`;
-    };
-
-    material.onBeforeCompile = (shader, renderer) => {
-      if (this._onBeforeCompileBase) this._onBeforeCompileBase(shader, renderer);
-
-      shader.instancing = false;
-
-      if (!shader.defines) shader.defines = {};
-      shader.defines['USE_INSTANCING_INDIRECT'] = '';
-
-      shader.uniforms.matricesTexture = { value: this.matricesTexture };
-
-      if (this.uniformsTexture) {
-        shader.uniforms.uniformsTexture = { value: this.uniformsTexture };
-        const { vertex, fragment } = this.uniformsTexture.getUniformsGLSL('uniformsTexture', 'instanceIndex', 'uint');
-        shader.vertexShader = shader.vertexShader.replace('void main() {', vertex);
-        shader.fragmentShader = shader.fragmentShader.replace('void main() {', fragment);
+      if (shader.vertexColors) {
+        shader.defines['USE_VERTEX_COLOR'] = '';
       }
 
-      if (this.colorsTexture && shader.fragmentShader.includes('#include <color_pars_fragment>')) {
-        shader.defines['USE_INSTANCING_COLOR_INDIRECT'] = '';
-        shader.uniforms.colorsTexture = { value: this.colorsTexture };
-        shader.vertexShader = shader.vertexShader.replace('<color_vertex>', '<instanced_color_vertex>');
-
-        if (shader.vertexColors) {
-          shader.defines['USE_VERTEX_COLOR'] = '';
-        }
-
-        if (this._useOpacity) {
-          shader.defines['USE_COLOR_ALPHA'] = '';
-        } else {
-          shader.defines['USE_COLOR'] = '';
-        }
+      if (this._useOpacity) {
+        shader.defines['USE_COLOR_ALPHA'] = '';
+      } else {
+        shader.defines['USE_COLOR'] = '';
       }
+    }
 
-      if (this.boneTexture) {
-        shader.defines['USE_SKINNING'] = '';
-        shader.defines['USE_INSTANCING_SKINNING'] = '';
-        shader.uniforms.bindMatrix = { value: this.bindMatrix };
-        shader.uniforms.bindMatrixInverse = { value: this.bindMatrixInverse };
-        shader.uniforms.bonesPerInstance = { value: this.skeleton.bones.length };
-        shader.uniforms.boneTexture = { value: this.boneTexture };
-      }
-    };
+    if (this.boneTexture) {
+      shader.defines['USE_SKINNING'] = '';
+      shader.defines['USE_INSTANCING_SKINNING'] = '';
+      shader.uniforms.bindMatrix = { value: this.bindMatrix };
+      shader.uniforms.bindMatrixInverse = { value: this.bindMatrixInverse };
+      shader.uniforms.bonesPerInstance = { value: this.skeleton.bones.length };
+      shader.uniforms.boneTexture = { value: this.boneTexture };
+    }
+  };
+
+  protected patchMaterial(renderer: WebGLRenderer, material: Material): void {
+    this._customProgramCacheKeyBase = material.customProgramCacheKey; // avoid .bind(material); to prevent memoryl leak
+    this._onBeforeCompileBase = material.onBeforeCompile;
+    material.customProgramCacheKey = this._customProgramCacheKey;
+    material.onBeforeCompile = this._onBeforeCompile;
+
+    const propertiesBase = renderer.properties;
+
+    if (!this._properties.has(material)) {
+      const materialProperties = {};
+      this._properties.set(material, materialProperties);
+
+      const propertiesGetBase = this._propertiesGetBase = propertiesBase.get;
+
+      this._propertiesGetMap.set(material, (object) => {
+        if (object === material) return materialProperties;
+        return propertiesGetBase(object);
+      });
+    }
+
+    propertiesBase.get = this._propertiesGetMap.get(material);
   }
 
   protected unpatchMaterial(renderer: WebGLRenderer, material: Material): void {
     renderer.properties.get = this._propertiesGetBase;
     material.onBeforeCompile = this._onBeforeCompileBase;
     material.customProgramCacheKey = this._customProgramCacheKeyBase;
-    this._propertiesGetBase = null;
     this._onBeforeCompileBase = null;
     this._customProgramCacheKeyBase = null;
   }
