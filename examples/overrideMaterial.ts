@@ -16,7 +16,7 @@ const material3 = new MeshLambertMaterial();
 
 const boxes = new InstancedMesh2(new BoxGeometry(), material, { capacity: 1 });
 const boxes2 = new InstancedMesh2(new BoxGeometry(), material2);
-const boxes3 = new InstancedMesh2(new BoxGeometry(), material3);
+const boxes3 = new InstancedMesh2(new BoxGeometry(), material2);
 
 boxes.addInstances(1, (obj, index) => {
   obj.position.x = index - 5;
@@ -33,9 +33,12 @@ boxes3.addInstances(5, (obj, index) => {
   obj.position.y = 0;
 });
 
-scene.add(boxes, boxes2, boxes3, new AmbientLight());
-
+const box = new Mesh(new BoxGeometry(), material).translateX(2).translateY(2);
+const box2 = new Mesh(new BoxGeometry(), material2).translateX(2).translateY(0.5);
+const box3 = new Mesh(new BoxGeometry(), material2).translateX(2).translateY(-1);
 const overrideMaterial = new MeshBasicMaterial();
+
+scene.add(box, boxes, box2, boxes2, boxes3, box3, new AmbientLight());
 
 setInterval(() => {
   scene.overrideMaterial = scene.overrideMaterial !== overrideMaterial ? overrideMaterial : null;
