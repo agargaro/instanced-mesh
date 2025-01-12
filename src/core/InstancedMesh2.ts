@@ -1,4 +1,4 @@
-import { AttachedBindMode, BindMode, Box3, BufferAttribute, BufferGeometry, Camera, Color, ColorManagement, ColorRepresentation, DataTexture, DetachedBindMode, InstancedBufferAttribute, Material, Matrix4, Mesh, Object3D, Object3DEventMap, Scene, Skeleton, SkinnedMesh, Sphere, Vector3, WebGLProgramParametersWithUniforms, WebGLProperties, WebGLRenderer, WebGLState } from 'three';
+import { AttachedBindMode, BindMode, Box3, BufferAttribute, BufferGeometry, Camera, Color, ColorManagement, ColorRepresentation, DataTexture, DetachedBindMode, InstancedBufferAttribute, Material, Matrix4, Mesh, Object3D, Object3DEventMap, Scene, Skeleton, SkinnedMesh, Sphere, Vector3, WebGLProgramParametersWithUniforms, WebGLRenderer } from 'three';
 import { CustomSortCallback, OnFrustumEnterCallback } from './feature/FrustumCulling.js';
 import { Entity } from './feature/Instances.js';
 import { LODInfo } from './feature/LOD.js';
@@ -169,6 +169,8 @@ export class InstancedMesh2<
   protected _useOpacity = false;
   protected _customProgramCacheKeyBase: () => string = null;
   protected _onBeforeCompileBase: (parameters: WebGLProgramParametersWithUniforms, renderer: WebGLRenderer) => void = null;
+  protected _propertiesGetBase: any = null;
+  protected _properties = new Map<Material, any>();
 
   // HACK TO MAKE IT WORK WITHOUT UPDATE CORE
   /** @internal */ isInstancedMesh = true; // must be set to use instancing rendering
@@ -275,14 +277,14 @@ export class InstancedMesh2<
   }
 
   public override onBeforeShadow(renderer: WebGLRenderer, scene: Scene, camera: Camera, shadowCamera: Camera, geometry: BufferGeometry, depthMaterial: Material, group: any): void {
-    this.patchMaterial(depthMaterial);
+    this.patchMaterial(renderer, depthMaterial);
 
     if (!this.instanceIndex || (group && !this.isFirstGroup(group.materialIndex))) return;
 
-    this.matricesTexture.update(renderer);
-    this.colorsTexture?.update(renderer);
-    this.uniformsTexture?.update(renderer);
-    this.boneTexture?.update(renderer);
+    this.matricesTexture.update(renderer, 0); // TODO fix
+    this.colorsTexture?.update(renderer, 0);
+    this.uniformsTexture?.update(renderer, 0);
+    this.boneTexture?.update(renderer, 0);
     // TODO convert also morph texture to squared texture?
 
     if (this.autoUpdate) {
@@ -291,7 +293,7 @@ export class InstancedMesh2<
   }
 
   public override onBeforeRender(renderer: WebGLRenderer, scene: Scene, camera: Camera, geometry: BufferGeometry, material: Material, group: any): void {
-    this.patchMaterial(material);
+    this.patchMaterial(renderer, material);
 
     if (!this.instanceIndex) {
       this._renderer = renderer;
@@ -309,28 +311,20 @@ export class InstancedMesh2<
       }
     }
 
+    const currentProgram = this._properties.get(material).currentProgram;
+    if (!currentProgram) return;
+
     const gl = renderer.getContext() as WebGL2RenderingContext;
-    const properties = renderer.properties;
-    const state = renderer.state;
-    const maxTextures = this._renderer.capabilities.maxTextures;
-    const materialProperties: any = properties.get(material);
+    gl.useProgram(currentProgram.program); // what if the program changes?
 
-    const programs = materialProperties.programs;
-    const programsEntries = programs.entries(); // FIX
-    const program = programsEntries.next().value[1];
-
-    const p_uniforms = program.getUniforms();
+    const p_uniforms = currentProgram.getUniforms();
     const uniformsMap = p_uniforms.map;
-
-    if (materialProperties.currentProgram !== program) {
-      gl.useProgram(program.program); // what if the program changes?
-    }
-
+    const maxTextures = this._renderer.capabilities.maxTextures;
     let unit = maxTextures - 1;
-    unit = this.bindTexture(gl, state, properties, uniformsMap, 'matricesTexture', unit);
-    unit = this.bindTexture(gl, state, properties, uniformsMap, 'boneTexture', unit);
-    unit = this.bindTexture(gl, state, properties, uniformsMap, 'colorsTexture', unit);
-    this.bindTexture(gl, state, properties, uniformsMap, 'uniformsTexture', unit);
+    unit = this.bindTexture(gl, uniformsMap, 'matricesTexture', unit);
+    unit = this.bindTexture(gl, uniformsMap, 'boneTexture', unit);
+    unit = this.bindTexture(gl, uniformsMap, 'colorsTexture', unit);
+    this.bindTexture(gl, uniformsMap, 'uniformsTexture', unit);
 
     if (this.boneTexture) {
       p_uniforms.setOptional(gl, this, 'bindMatrix');
@@ -341,7 +335,7 @@ export class InstancedMesh2<
     // morphTexture is added automatically by three.js
   }
 
-  protected bindTexture(gl: WebGL2RenderingContext, state: WebGLState, properties: WebGLProperties, uniformsMap: any, key: string, unit: number): number {
+  protected bindTexture(gl: WebGL2RenderingContext, uniformsMap: any, key: string, unit: number): number {
     const texture = this[key] as SquareDataTexture;
     if (!texture) return unit;
 
@@ -365,12 +359,11 @@ export class InstancedMesh2<
   }
 
   public override onAfterShadow(renderer: WebGLRenderer, scene: Scene, camera: Camera, shadowCamera: Camera, geometry: BufferGeometry, depthMaterial: Material, group: any): void {
-    this.unpatchMaterial(depthMaterial);
+    this.unpatchMaterial(renderer, depthMaterial);
   }
 
   public override onAfterRender(renderer: WebGLRenderer, scene: Scene, camera: Camera, geometry: BufferGeometry, material: Material, group: any): void {
-    // TODO fix group d.ts
-    this.unpatchMaterial(material);
+    this.unpatchMaterial(renderer, material);
     if (this.instanceIndex || (group && !this.isLastGroup(group.materialIndex))) return;
     this.initIndexAttribute();
   }
@@ -442,18 +435,29 @@ export class InstancedMesh2<
     }
   }
 
-  protected patchMaterial(material: Material): void {
+  protected patchMaterial(renderer: WebGLRenderer, material: Material): void {
     this._customProgramCacheKeyBase = material.customProgramCacheKey.bind(material);
     this._onBeforeCompileBase = material.onBeforeCompile.bind(material);
+    const properties = renderer.properties;
+    this._propertiesGetBase = properties.get;
+
+    if (!this._properties.has(material)) {
+      this._properties.set(material, {});
+    }
+
+    properties.get = (object) => {
+      if (object === material) return this._properties.get(material);
+      return this._propertiesGetBase(object);
+    };
 
     material.customProgramCacheKey = () => {
-      return `ezInstancedMesh2_${!!this.colorsTexture}_${!!this.boneTexture}_${!!this.boneTexture}`;
+      return `ezInstancedMesh2_${!!this.colorsTexture}_${!!this.boneTexture}_${!!this.uniformsTexture}`;
     };
 
     material.onBeforeCompile = (shader, renderer) => {
       if (this._onBeforeCompileBase) this._onBeforeCompileBase(shader, renderer);
 
-      shader.instancing = false; // TODO CHECK IF REMOVE
+      shader.instancing = false;
 
       if (!shader.defines) shader.defines = {};
       shader.defines['USE_INSTANCING_INDIRECT'] = '';
@@ -486,7 +490,8 @@ export class InstancedMesh2<
     };
   }
 
-  protected unpatchMaterial(material: Material): void {
+  protected unpatchMaterial(renderer: WebGLRenderer, material: Material): void {
+    renderer.properties.get = this._propertiesGetBase;
     material.onBeforeCompile = this._onBeforeCompileBase;
     material.customProgramCacheKey = this._customProgramCacheKeyBase;
     this._onBeforeCompileBase = null;
