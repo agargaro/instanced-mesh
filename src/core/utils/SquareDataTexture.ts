@@ -105,8 +105,8 @@ export class SquareDataTexture extends DataTexture {
   protected _stride: number;
   protected _rowToUpdate: boolean[];
   protected _uniformMap: UniformMap;
-  protected _fetchInFragmentShader: boolean;
-  protected _utils: WebGLUtils = null;
+  protected _fetchUniformsInFragmentShader: boolean;
+  protected _utils: WebGLUtils = null; // TODO add it to renderer instead of creating for each texture
   protected _needsUpdate: boolean = true;
 
   /**
@@ -126,7 +126,7 @@ export class SquareDataTexture extends DataTexture {
     this._stride = pixelsPerInstance * channels;
     this._rowToUpdate = new Array(size);
     this._uniformMap = uniformMap;
-    this._fetchInFragmentShader = fetchInFragmentShader;
+    this._fetchUniformsInFragmentShader = fetchInFragmentShader;
     this.needsUpdate = true; // necessary to init texture
   }
 
@@ -339,7 +339,7 @@ export class SquareDataTexture extends DataTexture {
   }
 
   protected getUniformsVertexGLSL(textureName: string, indexName: string, indexType: string): string {
-    if (this._fetchInFragmentShader) {
+    if (this._fetchUniformsInFragmentShader) {
       return `
         flat varying ${indexType} ez_v${indexName}; 
         void main() {
@@ -360,7 +360,7 @@ export class SquareDataTexture extends DataTexture {
   }
 
   protected getUniformsFragmentGLSL(textureName: string, indexName: string, indexType: string): string {
-    if (!this._fetchInFragmentShader) {
+    if (!this._fetchUniformsInFragmentShader) {
       const { declareVarying, getVarying } = this.getVarying();
 
       return `
