@@ -59,6 +59,13 @@ myInstancedMesh.addInstances(count, (obj, index) => {
 - Threlte
 - <img src="public/ts.png" alt="ts" width="16" /> [React-three-fiber](https://stackblitz.com/edit/vitejs-vite-zahmbaan?file=src%2FApp.tsx) (thanks to [Saumac](https://github.com/saumac))
 
+## ❔ Need help?
+
+Join us on [Discord](https://discord.gg/MVTwrdX3JM) or open an issue on GitHub.
+
+## ⭐ Like it?
+
+If you like this project, please leave a star. Thank you! ❤️
 
 ## 📚 Documentation
 
@@ -87,14 +94,6 @@ Or you can import it from CDN:
 }
 </script>
 ```
-
-## ❔ Questions?
-
-Need help? Join us on [Discord](https://discord.gg/MVTwrdX3JM) or open an issue on GitHub.
-
-## ⭐ Like it?
-
-If you like this project, please leave a star. Thank you! ❤️
 
 ## 🚀 Features
 
