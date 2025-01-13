@@ -1,8 +1,6 @@
 import { InstancedEntity } from '../InstancedEntity.js';
 import { InstancedMesh2 } from '../InstancedMesh2.js';
 
-// TODO: removeInstances(count: number): void;
-
 /**
  * Represents an extended entity type with custom data.
  */
@@ -38,6 +36,16 @@ declare module '../InstancedMesh2.js' {
      * @returns The current `InstancedMesh2` instance.
      */
     addInstances(count: number, onCreation?: UpdateEntityCallback<Entity<TData>>): this;
+    /**
+     * TODO
+     * @param ids
+     * @returns
+     */
+    removeInstances(ids: number[]): number[]; // TODO also addInstances should return indexes?
+    /**
+     * TODO
+     */
+    optimize(): void;
     /** @internal */ clearInstance(instance: InstancedEntity, index: number): InstancedEntity;
     /** @internal */ createEntities(start?: number, count?: number): this;
   }

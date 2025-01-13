@@ -129,7 +129,7 @@ InstancedMesh2.prototype.updateIndexArray = function () {
   let count = 0;
 
   for (let i = 0; i < instancesCount; i++) {
-    if (this.getVisibilityAt(i)) {
+    if (this.getActiveAndVisibilityAt(i)) {
       array[count++] = i;
     }
   }
@@ -142,7 +142,7 @@ InstancedMesh2.prototype.updateRenderList = function () {
   const instancesCount = this._instancesCount;
 
   for (let i = 0; i < instancesCount; i++) {
-    if (this.getVisibilityAt(i)) {
+    if (this.getActiveAndVisibilityAt(i)) {
       const depth = this.getPositionAt(i).sub(_cameraPos).dot(_forward);
       _renderList.push(depth, i);
     }
@@ -159,7 +159,7 @@ InstancedMesh2.prototype.BVHCulling = function (camera: Camera) {
   this.bvh.frustumCulling(_projScreenMatrix, (node: BVHNode<{}, number>) => {
     const index = node.object;
 
-    if (index < instancesCount && this.getVisibilityAt(index) && (!onFrustumEnter || onFrustumEnter(index, camera))) {
+    if (index < instancesCount && this.getActiveAndVisibilityAt(index) && (!onFrustumEnter || onFrustumEnter(index, camera))) {
       if (sortObjects) {
         const depth = this.getPositionAt(index).sub(_cameraPos).dot(_forward);
         _renderList.push(depth, index);
@@ -187,7 +187,7 @@ InstancedMesh2.prototype.linearCulling = function (camera: Camera) {
   _frustum.setFromProjectionMatrix(_projScreenMatrix);
 
   for (let i = 0; i < instancesCount; i++) {
-    if (!this.getVisibilityAt(i)) continue;
+    if (!this.getActiveAndVisibilityAt(i)) continue;
 
     if (geometryCentered) {
       const maxScale = this.getPositionAndMaxScaleOnAxisAt(i, _sphere.center);
@@ -273,7 +273,7 @@ InstancedMesh2.prototype.BVHCullingLOD = function (LODrenderList: LODRenderList,
   if (sortObjects) {
     this.bvh.frustumCulling(_projScreenMatrix, (node: BVHNode<{}, number>) => {
       const index = node.object;
-      if (index < instancesCount && this.getVisibilityAt(index) && (!onFrustumEnter || onFrustumEnter(index, camera, cameraLOD))) {
+      if (index < instancesCount && this.getActiveAndVisibilityAt(index) && (!onFrustumEnter || onFrustumEnter(index, camera, cameraLOD))) {
         const distance = this.getPositionAt(index).distanceToSquared(_cameraLODPos);
         _renderList.push(distance, index);
       }
@@ -281,7 +281,7 @@ InstancedMesh2.prototype.BVHCullingLOD = function (LODrenderList: LODRenderList,
   } else {
     this.bvh.frustumCullingLOD(_projScreenMatrix, _cameraLODPos, levels, (node: BVHNode<{}, number>, level: number) => {
       const index = node.object;
-      if (index < instancesCount && this.getVisibilityAt(index)) {
+      if (index < instancesCount && this.getActiveAndVisibilityAt(index)) {
         if (level === null) {
           const distance = this.getPositionAt(index).distanceToSquared(_cameraLODPos); // distance can be get by BVH, but is not the distance from center
           level = this.getObjectLODIndexForDistance(levels, distance);
@@ -308,7 +308,7 @@ InstancedMesh2.prototype.linearCullingLOD = function (LODrenderList: LODRenderLi
   _frustum.setFromProjectionMatrix(_projScreenMatrix);
 
   for (let i = 0; i < instancesCount; i++) {
-    if (!this.getVisibilityAt(i)) continue;
+    if (!this.getActiveAndVisibilityAt(i)) continue;
 
     if (geometryCentered) {
       const maxScale = this.getPositionAndMaxScaleOnAxisAt(i, _sphere.center);

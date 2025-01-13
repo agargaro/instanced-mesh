@@ -61,7 +61,7 @@ InstancedMesh2.prototype.raycast = function (raycaster: Raycaster, result: Inter
 };
 
 InstancedMesh2.prototype.checkObjectIntersection = function (raycaster: Raycaster, objectIndex: number, result: Intersection[]): void {
-  if (objectIndex > this._instancesCount || !this.getVisibilityAt(objectIndex)) return;
+  if (objectIndex > this._instancesCount || !this.getActiveAndVisibilityAt(objectIndex)) return;
 
   this.getMatrixAt(objectIndex, _mesh.matrixWorld);
 

@@ -14,7 +14,7 @@ declare module '../InstancedMesh2.js' {
      * Sets the number of instances to render and resizes buffers if necessary.
      * @param count The desired number of instances.
      */
-    setInstancesCount(count: number): void;
+    setInstancesCount(count: number): void; // TODO  reduceBuffer: boolean
   }
 }
 
@@ -41,9 +41,9 @@ InstancedMesh2.prototype.resizeBuffers = function (capacity: number): InstancedM
     }
   }
 
-  this.visibilityArray.length = capacity;
+  this.availabilityArray.length = capacity * 2;
   if (capacity > oldCapacity) {
-    this.visibilityArray.fill(true, oldCapacity);
+    this.availabilityArray.fill(true, oldCapacity * 2);
   }
 
   this.matricesTexture.resize(capacity);

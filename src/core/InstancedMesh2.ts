@@ -121,9 +121,10 @@ export class InstancedMesh2<
    */
   public raycastOnlyFrustum = false;
   /**
-   * Array storing visibility for instances.
+   * Array storing visibility and availability for instances.
+   * [visible0, active0, visible1, active1, ...]
    */
-  public visibilityArray: boolean[];
+  public readonly availabilityArray: boolean[];
   /**
    * Contains data for managing LOD, allowing different levels of detail for rendering and shadow casting.
    */
@@ -269,7 +270,7 @@ export class InstancedMesh2<
     this.material = material;
     this._allowsEuler = allowsEuler ?? false;
     this._tempInstance = new InstancedEntity(this, -1, allowsEuler);
-    this.visibilityArray = LOD?.visibilityArray ?? new Array(capacity).fill(true);
+    this.availabilityArray = LOD?.availabilityArray ?? new Array(capacity * 2).fill(true);
 
     this.initIndexAttribute();
     this.initMatricesTexture();
@@ -618,7 +619,7 @@ export class InstancedMesh2<
    * @param visible Whether the instance should be visible.
    */
   public setVisibilityAt(id: number, visible: boolean): void {
-    this.visibilityArray[id] = visible;
+    this.availabilityArray[id * 2] = visible;
     this._indexArrayNeedsUpdate = true;
   }
 
@@ -628,7 +629,36 @@ export class InstancedMesh2<
    * @returns Whether the instance is visible.
    */
   public getVisibilityAt(id: number): boolean {
-    return this.visibilityArray[id];
+    return this.availabilityArray[id * 2];
+  }
+
+  /**
+   * Sets the availability of a specific instance.
+   * @param id The index of the instance.
+   * @param active Whether the instance is active (not deleted).
+   */
+  public setActiveAt(id: number, active: boolean): void {
+    this.availabilityArray[id * 2 + 1] = active;
+    this._indexArrayNeedsUpdate = true;
+  }
+
+  /**
+   * Gets the availability of a specific instance.
+   * @param id The index of the instance.
+   * @returns Whether the instance is active (not deleted).
+   */
+  public getActiveAt(id: number): boolean {
+    return this.availabilityArray[id * 2 + 1];
+  }
+
+  /**
+   * Indicates if a specific instance is visible and active.
+   * @param id The index of the instance.
+   * @returns Whether the instance is visible and active.
+   */
+  public getActiveAndVisibilityAt(id: number): boolean {
+    const offset = id * 2;
+    return this.availabilityArray[offset] && this.availabilityArray[offset + 1];
   }
 
   /**
