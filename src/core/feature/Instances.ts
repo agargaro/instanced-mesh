@@ -1,6 +1,9 @@
 import { InstancedEntity } from '../InstancedEntity.js';
 import { InstancedMesh2 } from '../InstancedMesh2.js';
 
+// TODO: optimize method to fill 'holes'.
+// TODO: should setInstances delete instances from BVH? if yes, change frustum culling check too
+
 /**
  * Represents an extended entity type with custom data.
  */
@@ -13,18 +16,18 @@ export type UpdateEntityCallback<T = InstancedEntity> = (obj: Entity<T>, index: 
 declare module '../InstancedMesh2.js' {
   interface InstancedMesh2<TData = {}> {
     /**
-     * Updates instances by applying a callback function to each instance.
+     * Updates instances by applying a callback function to each instance. It calls `updateMatrix` for each instance.
      * @param onUpdate A callback function to update each entity.
-     * @param start The starting index of the instances to update. Defaults to 0.
+     * @param start The starting index of the instances to update. Defaults to `0`.
      * @param count The number of instances to update. Defaults to the total instance count.
      * @returns The current `InstancedMesh2` instance.
      */
     updateInstances(onUpdate: UpdateEntityCallback<Entity<TData>>, start?: number, count?: number): this;
     /**
-     * Updates instances position by applying a callback function to each instance.
+     * Updates instances position by applying a callback function to each instance. It calls `updateMatrixPosition` for each instance.
      * This method updates only the position attributes of the matrix.
      * @param onUpdate A callback function to update each entity.
-     * @param start The starting index of the instances to update. Defaults to 0.
+     * @param start The starting index of the instances to update. Defaults to `0`.
      * @param count The number of instances to update. Defaults to the total instance count.
      * @returns The current `InstancedMesh2` instance.
      */
@@ -38,14 +41,10 @@ declare module '../InstancedMesh2.js' {
     addInstances(count: number, onCreation?: UpdateEntityCallback<Entity<TData>>): this;
     /**
      * TODO
-     * @param ids
-     * @returns
+     * @param ids TODO
+     * @returns The current `InstancedMesh2` instance.
      */
-    removeInstances(ids: number[]): number[]; // TODO also addInstances should return indexes?
-    /**
-     * TODO
-     */
-    optimize(): void;
+    removeInstances(ids: number[]): this;
     /** @internal */ clearInstance(instance: InstancedEntity, index: number): InstancedEntity;
     /** @internal */ createEntities(start?: number, count?: number): this;
   }
@@ -104,6 +103,7 @@ InstancedMesh2.prototype.createEntities = function (this: InstancedMesh2, start 
 };
 
 InstancedMesh2.prototype.addInstances = function (count: number, onCreation?: UpdateEntityCallback): InstancedMesh2 {
+  // TODO handle freeIds
   const start = this._instancesCount;
   const end = start + count;
   const bvh = this.bvh;
@@ -117,6 +117,25 @@ InstancedMesh2.prototype.addInstances = function (count: number, onCreation?: Up
       instance.updateMatrix();
       bvh?.insert(i);
     }
+  }
+
+  return this;
+};
+
+InstancedMesh2.prototype.removeInstances = function (ids: number[]): InstancedMesh2 {
+  const freeIds = this._freeIds;
+  const bvh = this.bvh;
+
+  for (const id of ids) {
+    this.setActiveAt(id, false);
+    freeIds.push(id);
+    bvh?.delete(id);
+  }
+
+  for (let i = this._instancesCount - 1; i >= 0; i--) {
+    if (this.getActiveAt(i)) break;
+    this._instancesCount--;
+    // il buffer però avrà ancora l'istanza, attenzione ai conflitti
   }
 
   return this;

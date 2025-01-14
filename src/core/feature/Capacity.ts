@@ -79,5 +79,5 @@ InstancedMesh2.prototype.setInstancesCount = function (count: number): void {
   }
 
   this._instancesCount = count;
-  if (this.instances) this.createEntities();
+  if (this.instances) this.createEntities(); // TODO check se è giusto, perchè sembra partire da 0
 };

@@ -173,6 +173,7 @@ export class InstancedMesh2<
   protected _propertiesGetBase: (obj: unknown) => unknown = null;
   protected _propertiesGetMap = new WeakMap<Material, (obj: unknown) => unknown>();
   protected _properties = new WeakMap<Material, unknown>();
+  protected _freeIds: number[] = [];
 
   // HACK TO MAKE IT WORK WITHOUT UPDATE CORE
   /** @internal */ isInstancedMesh = true; // must be set to use instancing rendering

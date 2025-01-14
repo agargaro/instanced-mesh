@@ -159,7 +159,8 @@ InstancedMesh2.prototype.BVHCulling = function (camera: Camera) {
   this.bvh.frustumCulling(_projScreenMatrix, (node: BVHNode<{}, number>) => {
     const index = node.object;
 
-    if (index < instancesCount && this.getActiveAndVisibilityAt(index) && (!onFrustumEnter || onFrustumEnter(index, camera))) {
+    // we don't check if active because we remove inactive instances from BVH
+    if (index < instancesCount && this.getVisibilityAt(index) && (!onFrustumEnter || onFrustumEnter(index, camera))) {
       if (sortObjects) {
         const depth = this.getPositionAt(index).sub(_cameraPos).dot(_forward);
         _renderList.push(depth, index);
@@ -273,7 +274,8 @@ InstancedMesh2.prototype.BVHCullingLOD = function (LODrenderList: LODRenderList,
   if (sortObjects) {
     this.bvh.frustumCulling(_projScreenMatrix, (node: BVHNode<{}, number>) => {
       const index = node.object;
-      if (index < instancesCount && this.getActiveAndVisibilityAt(index) && (!onFrustumEnter || onFrustumEnter(index, camera, cameraLOD))) {
+      // we don't check if active because we remove inactive instances from BVH
+      if (index < instancesCount && this.getVisibilityAt(index) && (!onFrustumEnter || onFrustumEnter(index, camera, cameraLOD))) {
         const distance = this.getPositionAt(index).distanceToSquared(_cameraLODPos);
         _renderList.push(distance, index);
       }
@@ -281,7 +283,7 @@ InstancedMesh2.prototype.BVHCullingLOD = function (LODrenderList: LODRenderList,
   } else {
     this.bvh.frustumCullingLOD(_projScreenMatrix, _cameraLODPos, levels, (node: BVHNode<{}, number>, level: number) => {
       const index = node.object;
-      if (index < instancesCount && this.getActiveAndVisibilityAt(index)) {
+      if (index < instancesCount && this.getVisibilityAt(index)) {
         if (level === null) {
           const distance = this.getPositionAt(index).distanceToSquared(_cameraLODPos); // distance can be get by BVH, but is not the distance from center
           level = this.getObjectLODIndexForDistance(levels, distance);
