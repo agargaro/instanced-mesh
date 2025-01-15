@@ -54,22 +54,20 @@ const _position = new Vector3();
 const _sphere = new Sphere();
 
 InstancedMesh2.prototype.performFrustumCulling = function (camera: Camera, cameraLOD = camera) {
-  if (this._instancesCount === 0) {
+  if (!this._parentLOD && this._instancesCount === 0) {
     this._count = 0;
     return;
   }
 
-  const info = this.LODinfo;
+  const LODinfo = this.LODinfo;
   const isShadowRendering = camera !== cameraLOD;
   let LODrenderList: LODRenderList;
 
-  if (info) {
-    LODrenderList = !isShadowRendering ? info.render : (info.shadowRender ?? info.render);
+  if (LODinfo) {
+    LODrenderList = !isShadowRendering ? LODinfo.render : (LODinfo.shadowRender ?? LODinfo.render);
 
-    // Hide all LODs except this one. They will be shown after frustum culling if at least one instance is visible.
-    for (const object of info.objects) {
-      if (object === this) object._count = 0;
-      else object.visible = false;
+    for (const object of LODinfo.objects) {
+      object._count = 0;
     }
   }
 
@@ -266,7 +264,6 @@ InstancedMesh2.prototype.frustumCullingLOD = function (LODrenderList: LODRenderL
 
   for (let i = 0; i < levels.length; i++) {
     const object = levels[i].object;
-    object.visible = object === this || count[i] > 0;
     object._count = count[i];
   }
 };

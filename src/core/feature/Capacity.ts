@@ -12,11 +12,7 @@ declare module '../InstancedMesh2.js' {
      * @returns The current `InstancedMesh2` instance.
      */
     resizeBuffers(capacity: number): this;
-    /**
-     * Sets the number of instances to render and resizes buffers if necessary.
-     * @param count The desired number of instances.
-     */
-    setInstancesCount(count: number): void;
+    /** @internal */ setInstancesCount(count: number): void;
   }
 }
 

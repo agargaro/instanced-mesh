@@ -193,10 +193,8 @@ export class InstancedMesh2<
 
   /**
    * The number of active instances.
-   * If a number greater than the `capacity` is set, the `capacity` will be increased automatically.
    */
   public get instancesCount(): number { return this._instancesCount; }
-  public set instancesCount(value: number) { this.setInstancesCount(value); }
 
   /**
    * Determines if per-instance frustum culling is enabled.
