@@ -41,10 +41,16 @@ export class InstancedEntity {
   public rotation: Euler;
 
   /**
-   * The visibility state set and got from `owner.visibilityArray`.
+   * The visibility state set and got from `owner.availabilityArray`.
    */
   public get visible(): boolean { return this.owner.getVisibilityAt(this.id); }
   public set visible(value: boolean) { this.owner.setVisibilityAt(this.id, value); }
+
+  /**
+   * The availability set and got from `owner.availabilityArray`.
+   */
+  public get active(): boolean { return this.owner.getActiveAt(this.id); }
+  public set active(value: boolean) { this.owner.setActiveAt(this.id, value); }
 
   /**
    * Color set and got from `owner.colorsTexture`.

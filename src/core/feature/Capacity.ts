@@ -1,6 +1,8 @@
 import { DataTexture, FloatType, RedFormat } from 'three';
 import { InstancedMesh2 } from '../InstancedMesh2.js';
 
+// TODO: add optimize method to reduce buffer size and remove instances objects
+
 declare module '../InstancedMesh2.js' {
   interface InstancedMesh2 {
     /**
@@ -10,11 +12,7 @@ declare module '../InstancedMesh2.js' {
      * @returns The current `InstancedMesh2` instance.
      */
     resizeBuffers(capacity: number): this;
-    /**
-     * Sets the number of instances to render and resizes buffers if necessary.
-     * @param count The desired number of instances.
-     */
-    setInstancesCount(count: number): void;
+    /** @internal */ setInstancesCount(count: number): void;
   }
 }
 
@@ -41,10 +39,7 @@ InstancedMesh2.prototype.resizeBuffers = function (capacity: number): InstancedM
     }
   }
 
-  this.visibilityArray.length = capacity;
-  if (capacity > oldCapacity) {
-    this.visibilityArray.fill(true, oldCapacity);
-  }
+  this.availabilityArray.length = capacity * 2;
 
   this.matricesTexture.resize(capacity);
 
@@ -69,6 +64,18 @@ InstancedMesh2.prototype.resizeBuffers = function (capacity: number): InstancedM
 };
 
 InstancedMesh2.prototype.setInstancesCount = function (count: number): void {
+  if (count < this._instancesCount) {
+    const bvh = this.bvh;
+    if (bvh) {
+      for (let i = this._instancesCount - 1; i >= count; i--) {
+        bvh.delete(i);
+      }
+    }
+
+    this._instancesCount = count;
+    return;
+  }
+
   if (count > this._capacity) {
     let newCapacity = this._capacity + (this._capacity >> 1) + 512;
     while (newCapacity < count) {
@@ -78,6 +85,7 @@ InstancedMesh2.prototype.setInstancesCount = function (count: number): void {
     this.resizeBuffers(newCapacity);
   }
 
+  const start = this._instancesCount;
   this._instancesCount = count;
-  if (this.instances) this.createEntities();
+  if (this._createEntities) this.createEntities(start);
 };
