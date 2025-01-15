@@ -17,7 +17,7 @@ const _invMatrixWorld = new Matrix4();
 const _sphere = new Sphere();
 
 InstancedMesh2.prototype.raycast = function (raycaster: Raycaster, result: Intersection[]): void {
-  if (this._parentLOD || this.material === undefined || this.instanceIndex === undefined) return;
+  if (this._parentLOD || !this.material || this._instancesCount === 0 || !this.instanceIndex) return;
 
   const raycastFrustum = this.raycastOnlyFrustum && this._perObjectFrustumCulled && !this.bvh;
   _mesh.geometry = this._geometry;
@@ -61,7 +61,7 @@ InstancedMesh2.prototype.raycast = function (raycaster: Raycaster, result: Inter
 };
 
 InstancedMesh2.prototype.checkObjectIntersection = function (raycaster: Raycaster, objectIndex: number, result: Intersection[]): void {
-  if (objectIndex > this._instancesCount || !this.getVisibilityAt(objectIndex)) return;
+  if (objectIndex > this._instancesCount || !this.getActiveAndVisibilityAt(objectIndex)) return;
 
   this.getMatrixAt(objectIndex, _mesh.matrixWorld);
 
