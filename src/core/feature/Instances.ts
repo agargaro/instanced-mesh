@@ -44,7 +44,7 @@ declare module '../InstancedMesh2.js' {
      * @param ids TODO
      * @returns The current `InstancedMesh2` instance.
      */
-    removeInstances(ids: number[]): this;
+    removeInstances(...ids: number[]): this;
     /**
      * TODO
      * @returns The current `InstancedMesh2` instance.
@@ -117,16 +117,19 @@ InstancedMesh2.prototype.createEntities = function (this: InstancedMesh2, start:
 InstancedMesh2.prototype.addInstances = function (count: number, onCreation: UpdateEntityCallback) {
   const freeIds = this._freeIds;
   if (freeIds.length > 0) {
+    let maxId = -1;
     const freeIdsUsed = Math.min(freeIds.length, count);
     const freeidsEnd = freeIds.length - freeIdsUsed;
 
     for (let i = freeIds.length - 1; i >= freeidsEnd; i--) {
-      this.addInstance(i, onCreation);
+      const id = freeIds[i];
+      if (id > maxId) maxId = id;
+      this.addInstance(id, onCreation);
     }
 
     freeIds.length -= freeIdsUsed;
     count -= freeIdsUsed;
-    if (count === 0) return this;
+    this._instancesCount = Math.max(maxId + 1, this._instancesCount);
   }
 
   const start = this._instancesCount;
@@ -148,7 +151,7 @@ InstancedMesh2.prototype.addInstance = function (id: number, onCreation: UpdateE
   this.bvh?.insert(id);
 };
 
-InstancedMesh2.prototype.removeInstances = function (ids: number[]) {
+InstancedMesh2.prototype.removeInstances = function (...ids: number[]) {
   const freeIds = this._freeIds;
   const bvh = this.bvh;
 
