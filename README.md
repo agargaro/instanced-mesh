@@ -139,7 +139,9 @@ const myInstancedMesh = new InstancedMesh2(geometry, material, { capacity: count
 
 myInstancedMesh.addInstances(count, (obj, index) => { ... }); // add instances and expand buffer if necessary
 
-myInstancedMesh.instancesCount = 10; // change instances count
+myInstancedMesh.removeInstances(id0, idx, ...);
+
+myInstancedMesh.clearInstances(); // remove all instances
 ```
 
 ### Per-instance visibility
