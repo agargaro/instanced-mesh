@@ -72,7 +72,7 @@ export class InstancedMesh2<
   /**
    * Attribute storing indices of the instances to be rendered.
    */
-  public instanceIndex: GLInstancedBufferAttribute;
+  public instanceIndex: GLInstancedBufferAttribute = null;
   /**
    * Texture storing matrices for instances.
    */
@@ -174,6 +174,7 @@ export class InstancedMesh2<
   protected _propertiesGetMap = new WeakMap<Material, (obj: unknown) => unknown>();
   protected _properties = new WeakMap<Material, unknown>();
   protected _freeIds: number[] = [];
+  protected _createEntities: boolean;
 
   // HACK TO MAKE IT WORK WITHOUT UPDATE CORE
   /** @internal */ isInstancedMesh = true; // must be set to use instancing rendering
@@ -271,12 +272,11 @@ export class InstancedMesh2<
     this.material = material;
     this._allowsEuler = allowsEuler ?? false;
     this._tempInstance = new InstancedEntity(this, -1, allowsEuler);
-    this.availabilityArray = LOD?.availabilityArray ?? new Array(capacity * 2).fill(true);
+    this.availabilityArray = LOD?.availabilityArray ?? new Array(capacity * 2);
+    this._createEntities = createEntities;
 
     this.initIndexAttribute();
     this.initMatricesTexture();
-
-    if (createEntities) this.createEntities();
   }
 
   public override onBeforeShadow(renderer: WebGLRenderer, scene: Scene, camera: Camera, shadowCamera: Camera, geometry: BufferGeometry, depthMaterial: Material, group: any): void {
@@ -659,7 +659,21 @@ export class InstancedMesh2<
    */
   public getActiveAndVisibilityAt(id: number): boolean {
     const offset = id * 2;
-    return this.availabilityArray[offset] && this.availabilityArray[offset + 1];
+    const availabilityArray = this.availabilityArray;
+    return availabilityArray[offset] && availabilityArray[offset + 1];
+  }
+
+  /**
+   * Set if a specific instance is visible and active.
+   * @param id The index of the instance.
+   * @param value Whether the instance is active and active (not deleted).
+   */
+  public setActiveAndVisibilityAt(id: number, value: boolean): void {
+    const offset = id * 2;
+    const availabilityArray = this.availabilityArray;
+    availabilityArray[offset] = value;
+    availabilityArray[offset + 1] = value;
+    this._indexArrayNeedsUpdate = true;
   }
 
   /**
@@ -771,7 +785,7 @@ export class InstancedMesh2<
       capacity: this._capacity,
       renderer: this._renderer,
       allowsEuler: this._allowsEuler,
-      createEntities: !!this.instances
+      createEntities: this._createEntities
     };
     return new (this as any).constructor(this.geometry, this.material, params).copy(this, recursive);
   }

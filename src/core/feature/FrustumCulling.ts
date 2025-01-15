@@ -54,6 +54,11 @@ const _position = new Vector3();
 const _sphere = new Sphere();
 
 InstancedMesh2.prototype.performFrustumCulling = function (camera: Camera, cameraLOD = camera) {
+  if (this._instancesCount === 0) {
+    this._count = 0;
+    return;
+  }
+
   const info = this.LODinfo;
   const isShadowRendering = camera !== cameraLOD;
   let LODrenderList: LODRenderList;
