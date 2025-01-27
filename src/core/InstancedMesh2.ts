@@ -406,7 +406,7 @@ export class InstancedMesh2<
   }
 
   protected _customProgramCacheKey = (): string => {
-    return `ezInstancedMesh2_${this.id}_${!!this.colorsTexture}_${!!this.boneTexture}_${!!this.uniformsTexture}`;
+    return `ezInstancedMesh2_${this.id}_${!!this.colorsTexture}_${this._useOpacity}_${!!this.boneTexture}_${!!this.uniformsTexture}_${this._customProgramCacheKeyBase()}`;
   };
 
   protected _onBeforeCompile = (shader: WebGLProgramParametersWithUniforms, renderer: WebGLRenderer): void => {
@@ -709,11 +709,15 @@ export class InstancedMesh2<
    * @param value The opacity value to assign.
    */
   public setOpacityAt(id: number, value: number): void {
-    if (this.colorsTexture === null) {
-      this.initColorsTexture();
+    if (!this._useOpacity) {
+      if (this.colorsTexture === null) {
+        this.initColorsTexture();
+      } else {
+        this.materialsNeedsUpdate();
+      }
+      this._useOpacity = true;
     }
 
-    this._useOpacity = true;
     this.colorsTexture._data[id * 4 + 3] = value;
     this.colorsTexture.enqueueUpdate(id);
   }
