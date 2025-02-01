@@ -1,76 +1,264 @@
 ---
 import { Code } from '@astrojs/starlight/components';
+enum FileType {
+  File = 'file',
+  Directory = 'directory',
+}
+type SourceFile = {
+  [key: string]: string;
+};
 
 interface Props {
-    files:{[key:string]:string};
+  files: SourceFile;
 }
 
 const filesEntries = Object.entries(Astro.props.files);
 
----
-<style>
-    .code-wrapper {
-      position: relative;
-      height: 5rem;
-      overflow: hidden;
-      display:block;
-      transition: height 300ms ease-out;
+type TreeElement = {
+  filePath: string;
+  name: string;
+} & (
+  | {
+      isFile: true;
+      content: string;
+      children?: never;
     }
-    .code-wrapper--open {
-      height: 100%;
-      .code-toggle-container-btn {
-        background: transparent;
-        display: none;
-      }
+  | {
+      isFile: false;
+      children: TreeElement[];
+      content?: never;
     }
-    .code-toggle-container-btn {
-      background:linear-gradient(to top, var(--sl-color-bg), transparent);
-      content: '';
-      position: absolute;
-      inset: 0;
-      z-index: 9;
-      cursor: pointer;
+);
 
-      &:hover{
-        .code-toggle-btn{
-            width: 4rem;
-            transition: width 300ms ease-out;
-        }
-      }
-    }
-    .code-toggle-btn{
-      position: absolute;
-      height: auto;
-      bottom: 1rem;
-      margin: auto;
-      left: 0;
-      width: 2rem;
-      right: 0;
-      cursor:pointer;
-      transition: width 300ms 0.5s ease-out;
-    }
-</style>
-    
-<code-wrapper class="code-wrapper">
-    <div class="code-toggle-container-btn" title="Expand code">
-        <button type="button" class="code-toggle-btn"></button>
-    </div>
-    {filesEntries.map(([filePath, content]) => (
-        <!-- TODO maybe we can apply some title and highlights  -->
-        <Code code={content as string} title={filesEntries.length>1?filePath:undefined} lang='ts'></Code>
-    ))}
+function createRecursiveTree(entries: [string, string][], currentDir: string = ''): TreeElement[] {
+  const tree: TreeElement[] = [];
+  const filteredEntries = entries.filter(([path]) => path.startsWith(currentDir));
 
-  </code-wrapper>
-<script>
-    class CodeWrapper extends HTMLElement {
-      connectedCallback() {
-        const button = this.querySelector('.code-toggle-container-btn')!;
-        button.addEventListener('pointerdown', () => {
-          this?.classList.toggle('code-wrapper--open');
+  for (const [path, content] of filteredEntries) {
+    const relativePath = path.slice(currentDir.length).split('/').filter(Boolean);
+    const [first, ...rest] = relativePath;
+
+    if (rest.length === 0) {
+      tree.push({
+        filePath: path,
+        name: relativePath[relativePath.length - 1],
+        isFile: true,
+        content,
+      });
+    } else {
+      const existingDir = tree.find((item) => !item.isFile);
+
+      if (existingDir) {
+        (existingDir as any).children = createRecursiveTree(entries, `${currentDir}${first}/`);
+      } else {
+        tree.push({
+          filePath: path,
+          isFile: false,
+          name: first,
+          children: createRecursiveTree(entries, `${currentDir}${first}/`),
         });
       }
     }
-  
-    customElements.define('code-wrapper', CodeWrapper);
+  }
+
+  return tree;
+}
+
+const tree = createRecursiveTree(filesEntries);
+---
+
+<style>
+  /* Layout container: due colonne */
+  .container {
+    display: flex;
+    overflow: hidden;
+    max-height: 70dvh;
+  }
+  /* Sidebar sinistra per la tree view */
+  .sidebar {
+    padding: 0 0.5rem;
+    overflow-y: auto;
+    display: flex
+    margin: 0;
+    background: var(--sl-color-black)
+    user-select: none;
+  }
+  .tree ul {
+    list-style: none;
+    padding-left: 0rem;
+  }
+  .tree ul > li,
+  .tree ul > ul {
+    padding-left: 0.5rem;
+  }
+  .tree li {
+    cursor: pointer;
+    margin: 0.25rem 0;
+  }
+  .folder {
+   cursor: default;
+  }
+  .file:hover {
+    background-color: var(--sl-color-primary-100);
+    text-decoration: underline
+  }
+  .file.selected {
+    background-color: var(--sl-color-primary-100);
+  }
+  /* Area di preview del file */
+  .content {
+    flex: 1;
+    overflow-y: auto;
+    .expressive-code pre {
+      border: 0;
+    }
+  }
+  /* Stili già presenti per il code-wrapper */
+  .code-wrapper {
+    position: relative;
+    height: 5rem;
+    overflow: hidden;
+    display: block;
+    transition: height 300ms ease-out;
+  }
+  .code-wrapper--open {
+    height: 100%;
+  }
+  .code-wrapper--open .code-toggle-container-btn {
+    background: transparent;
+    display: none;
+  }
+  .code-toggle-container-btn {
+    background: linear-gradient(to top, var(--sl-color-bg), transparent);
+    position: absolute;
+    inset: 0;
+    z-index: 9;
+    cursor: pointer;
+  }
+  .code-toggle-container-btn:hover .code-toggle-btn {
+    width: 4rem;
+    transition: width 300ms ease-out;
+  }
+  .code-toggle-btn {
+    position: absolute;
+    bottom: 1rem;
+    left: 0;
+    right: 0;
+    margin: auto;
+    width: 2rem;
+    cursor: pointer;
+    transition: width 300ms 0.5s ease-out;
+  }
+
+  .section-expressive-code {
+    display: none;
+  }
+  .section-expressive-code.show-code {
+    display: block;
+  }
+</style>
+
+<code-wrapper class="code-wrapper">
+  <div class="code-toggle-container-btn" title="Expand code">
+    <button type="button" class="code-toggle-btn"></button>
+  </div>
+  <div class="container">
+    <!-- Sidebar: Tree view -->
+    <div class="sidebar">
+      <div class="tree">
+        <ul>
+          {
+            tree.map((element) => {
+              if (element.isFile) {
+                return (
+                  <li>
+                    <file-component class="file" data-filepath={element.filePath}>
+                      <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 -1 16 16" class="FileName-icon-i4M61"><path fill="#1E9CEF" d="M10.771 10.992a2.28 2.28 0 0 1-1.632-.759v1.29c1.055.686 2.87.56 3.5-.264a1.9 1.9 0 0 0 .253-1.889c-.656-1.321-2.214-1.4-2.668-2.238-.5-1.351 1.564-1.6 2.557-.685V5.234a2.85 2.85 0 0 0-1.566-.277 1.92 1.92 0 0 0-2.067 1.867c-.054 1.5 1.663 1.891 2.525 2.586.586.498.544 1.703-.902 1.582m-4.913.862V6.016H3.977v-.965h4.8v.965H6.9v5.838zM14.125.875v12.25H1.875V.875zM15 0H1v14h14z" class="typeScript_svg__i-color"></path></svg> {element.name}
+                    </file-component>
+                  </li>
+                );
+              } else {
+                return (
+                  <ul class="folder">
+                   <svg xmlns="http://www.w3.org/2000/svg" fill="#2196F3" viewBox="0 0 16 16" width="1em" height="1em" class="FileName-icon-i4M61"><path d="M13.66 12.46H2.34v-7h11.32zm.1-8.54H8L6.56 2.48H2.24c-.8 0-1.44.64-1.44 1.44v8.64c0 .8.64 1.44 1.44 1.44h11.52c.8 0 1.44-.64 1.44-1.44v-7.2c0-.8-.65-1.44-1.44-1.44"></path></svg> {element.name}
+                    {element.children.map((child) => {
+                      if (child.isFile) {
+                        return (
+                          <li>
+                            <file-component class="file" data-filepath={child.filePath}>
+                              <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 -1 16 16" class="FileName-icon-i4M61"><path fill="#1E9CEF" d="M10.771 10.992a2.28 2.28 0 0 1-1.632-.759v1.29c1.055.686 2.87.56 3.5-.264a1.9 1.9 0 0 0 .253-1.889c-.656-1.321-2.214-1.4-2.668-2.238-.5-1.351 1.564-1.6 2.557-.685V5.234a2.85 2.85 0 0 0-1.566-.277 1.92 1.92 0 0 0-2.067 1.867c-.054 1.5 1.663 1.891 2.525 2.586.586.498.544 1.703-.902 1.582m-4.913.862V6.016H3.977v-.965h4.8v.965H6.9v5.838zM14.125.875v12.25H1.875V.875zM15 0H1v14h14z" class="typeScript_svg__i-color"></path></svg>
+                              {child.name}
+                            </file-component>
+                          </li>
+                        );
+                      } else {
+                        return (
+                          <ul class="folder">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="#2196F3" viewBox="0 0 16 16" width="1em" height="1em" class="FileName-icon-i4M61"><path d="M13.66 12.46H2.34v-7h11.32zm.1-8.54H8L6.56 2.48H2.24c-.8 0-1.44.64-1.44 1.44v8.64c0 .8.64 1.44 1.44 1.44h11.52c.8 0 1.44-.64 1.44-1.44v-7.2c0-.8-.65-1.44-1.44-1.44"></path></svg> {element.name}
+                            {child.children.map((subChild) => (
+                              <li>
+                                <file-component class="file" data-filepath={subChild.filePath}>
+                                  <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 -1 16 16" class="FileName-icon-i4M61"><path fill="#1E9CEF" d="M10.771 10.992a2.28 2.28 0 0 1-1.632-.759v1.29c1.055.686 2.87.56 3.5-.264a1.9 1.9 0 0 0 .253-1.889c-.656-1.321-2.214-1.4-2.668-2.238-.5-1.351 1.564-1.6 2.557-.685V5.234a2.85 2.85 0 0 0-1.566-.277 1.92 1.92 0 0 0-2.067 1.867c-.054 1.5 1.663 1.891 2.525 2.586.586.498.544 1.703-.902 1.582m-4.913.862V6.016H3.977v-.965h4.8v.965H6.9v5.838zM14.125.875v12.25H1.875V.875zM15 0H1v14h14z" class="typeScript_svg__i-color"></path></svg>
+                                  {subChild.name}
+                                </file-component>
+                              </li>
+                            ))}
+                          </ul>
+                        );
+                      }
+                    })}
+                  </ul>
+                );
+              }
+            })
+          }
+        </ul>
+      </div>
+    </div>
+    <!-- Content: Preview del file -->
+    <div class="content">
+      <!-- Qui viene visualizzato il contenuto del file selezionato -->
+      {
+        filesEntries.map(([filePath, content], index) => {
+          if(index === 0) {
+            return <section id={filePath} class="section-expressive-code show-code">
+              <Code code={content as string} lang={filePath.match(/\.(.*)$/)[1]} />
+            </section>
+          } else {
+         return <section id={filePath} class="section-expressive-code">
+            <Code code={content as string} lang={filePath.match(/\.(.*)$/)[1]} />
+          </section>}
+        })
+      }
+    </div>
+  </div>
+</code-wrapper>
+<script>
+  class CodeWrapper extends HTMLElement {
+    connectedCallback() {
+      const button = this.querySelector('.code-toggle-container-btn')!;
+      button.addEventListener('pointerdown', () => {
+        this?.classList.toggle('code-wrapper--open');
+      });
+    }
+  }
+
+  customElements.define('code-wrapper', CodeWrapper);
+  /** this element rappresent the li element with on click on this will set the current view code */
+  class FileComponent extends HTMLElement {
+    connectedCallback() {
+      this.addEventListener('click', () => {
+        
+        this.classList.add('selected');
+
+        const codeDisplayed = document.querySelectorAll('.show-code')!;
+
+        codeDisplayed.forEach((r) => r.classList.remove('show-code'));
+        const codeDisplay = document.getElementById(this.dataset.filepath);
+        codeDisplay?.classList.add('show-code');
+      });
+    }
+  }
+
+  customElements.define('file-component', FileComponent);
 </script>
-  
