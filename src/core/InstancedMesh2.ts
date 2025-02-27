@@ -1,4 +1,4 @@
-import { AttachedBindMode, BindMode, Box3, BufferAttribute, BufferGeometry, Camera, Color, ColorManagement, ColorRepresentation, DataTexture, DetachedBindMode, InstancedBufferAttribute, Material, Matrix4, Mesh, Object3D, Object3DEventMap, Scene, Skeleton, SkinnedMesh, Sphere, Vector3, WebGLProgramParametersWithUniforms, WebGLRenderer } from 'three';
+import { AttachedBindMode, BindMode, Box3, BufferAttribute, BufferGeometry, Camera, Color, ColorManagement, ColorRepresentation, DataTexture, DetachedBindMode, InstancedBufferAttribute, Material, Matrix4, Mesh, Object3D, Object3DEventMap, Scene, Skeleton, SkinnedMesh, Sphere, TypedArray, Vector3, WebGLProgramParametersWithUniforms, WebGLRenderer } from 'three';
 import { CustomSortCallback, OnFrustumEnterCallback } from './feature/FrustumCulling.js';
 import { Entity } from './feature/Instances.js';
 import { LODInfo } from './feature/LOD.js';
@@ -803,26 +803,26 @@ export class InstancedMesh2<
     if (source.boundingSphere !== null) this.boundingSphere = source.boundingSphere.clone();
 
     this.matricesTexture = source.matricesTexture.clone(); // TODO we can avoid cloning it because it already exists
-    this.matricesTexture.image.data = this.matricesTexture.image.data.slice();
+    this.matricesTexture.image.data = (this.matricesTexture.image.data as TypedArray).slice();
 
     if (source.colorsTexture !== null) {
       this.colorsTexture = source.colorsTexture.clone();
-      this.colorsTexture.image.data = this.colorsTexture.image.data.slice();
+      this.colorsTexture.image.data = (this.colorsTexture.image.data as TypedArray).slice();
     }
 
     if (source.uniformsTexture !== null) {
       this.uniformsTexture = source.uniformsTexture.clone();
-      this.uniformsTexture.image.data = this.uniformsTexture.image.data.slice();
+      this.uniformsTexture.image.data = (this.uniformsTexture.image.data as TypedArray).slice();
     }
 
     if (source.morphTexture !== null) {
       this.morphTexture = source.morphTexture.clone();
-      this.morphTexture.image.data = this.morphTexture.image.data.slice();
+      this.morphTexture.image.data = (this.morphTexture.image.data as TypedArray).slice();
     }
 
     if (source.boneTexture !== null) {
       this.boneTexture = source.boneTexture.clone();
-      this.boneTexture.image.data = this.boneTexture.image.data.slice();
+      this.boneTexture.image.data = (this.boneTexture.image.data as TypedArray).slice(); // TODO check if they fix d.ts
     }
 
     // TODO copies and handle LOD?

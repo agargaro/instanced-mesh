@@ -1,4 +1,4 @@
-import { DataTexture, FloatType, RedFormat } from 'three';
+import { DataTexture, FloatType, RedFormat, TypedArray } from 'three';
 import { InstancedMesh2 } from '../InstancedMesh2.js';
 
 // TODO: add optimize method to reduce buffer size and remove instances objects
@@ -51,11 +51,11 @@ InstancedMesh2.prototype.resizeBuffers = function (capacity: number): InstancedM
   }
 
   if (this.morphTexture) { // test it
-    const oldArray = this.morphTexture.image.data;
+    const oldArray = this.morphTexture.image.data as TypedArray; // TODO check if they fix d.ts
     const size = oldArray.length / oldCapacity;
     this.morphTexture.dispose();
     this.morphTexture = new DataTexture(new Float32Array(size * capacity), size, capacity, RedFormat, FloatType);
-    this.morphTexture.image.data.set(oldArray); // FIX if reduce
+    (this.morphTexture.image.data as TypedArray).set(oldArray); // FIX if reduce
   }
 
   this.uniformsTexture?.resize(capacity);
