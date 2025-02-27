@@ -12,7 +12,7 @@ declare module '../InstancedMesh2.js' {
      * @returns The current `InstancedMesh2` instance.
      */
     resizeBuffers(capacity: number): this;
-    /** @internal */ setInstancesCount(count: number): void;
+    /** @internal */ setInstancesArrayCount(count: number): void;
   }
 }
 
@@ -63,16 +63,17 @@ InstancedMesh2.prototype.resizeBuffers = function (capacity: number): InstancedM
   return this;
 };
 
-InstancedMesh2.prototype.setInstancesCount = function (count: number): void {
-  if (count < this._instancesCount) {
+InstancedMesh2.prototype.setInstancesArrayCount = function (count: number): void {
+  if (count < this._instancesArrayCount) {
     const bvh = this.bvh;
     if (bvh) {
-      for (let i = this._instancesCount - 1; i >= count; i--) {
+      for (let i = this._instancesArrayCount - 1; i >= count; i--) {
+        if (!this.getActiveAt(i)) continue;
         bvh.delete(i);
       }
     }
 
-    this._instancesCount = count;
+    this._instancesArrayCount = count;
     return;
   }
 
@@ -85,7 +86,7 @@ InstancedMesh2.prototype.setInstancesCount = function (count: number): void {
     this.resizeBuffers(newCapacity);
   }
 
-  const start = this._instancesCount;
-  this._instancesCount = count;
+  const start = this._instancesArrayCount;
+  this._instancesArrayCount = count;
   if (this._createEntities) this.createEntities(start);
 };

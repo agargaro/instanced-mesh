@@ -17,7 +17,7 @@ const _invMatrixWorld = new Matrix4();
 const _sphere = new Sphere();
 
 InstancedMesh2.prototype.raycast = function (raycaster: Raycaster, result: Intersection[]): void {
-  if (this._parentLOD || !this.material || this._instancesCount === 0 || !this.instanceIndex) return;
+  if (this._parentLOD || !this.material || this.instancesCount === 0 || !this.instanceIndex) return;
 
   const raycastFrustum = this.raycastOnlyFrustum && this._perObjectFrustumCulled && !this.bvh;
   _mesh.geometry = this._geometry;
@@ -46,7 +46,7 @@ InstancedMesh2.prototype.raycast = function (raycaster: Raycaster, result: Inter
     if (!raycaster.ray.intersectsSphere(_sphere)) return;
 
     const instancesToCheck = this.instanceIndex.array;
-    const checkCount = raycastFrustum ? this._count : this._instancesCount;
+    const checkCount = raycastFrustum ? this._count : this._instancesArrayCount;
 
     for (let i = 0; i < checkCount; i++) {
       this.checkObjectIntersection(raycaster, instancesToCheck[i], result);
@@ -61,7 +61,7 @@ InstancedMesh2.prototype.raycast = function (raycaster: Raycaster, result: Inter
 };
 
 InstancedMesh2.prototype.checkObjectIntersection = function (raycaster: Raycaster, objectIndex: number, result: Intersection[]): void {
-  if (objectIndex > this._instancesCount || !this.getActiveAndVisibilityAt(objectIndex)) return;
+  if (objectIndex > this._instancesArrayCount || !this.getActiveAndVisibilityAt(objectIndex)) return;
 
   this.getMatrixAt(objectIndex, _mesh.matrixWorld);
 

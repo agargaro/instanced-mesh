@@ -18,20 +18,16 @@ declare module '../InstancedMesh2.js' {
     /**
      * Updates instances by applying a callback function to each instance. It calls `updateMatrix` for each instance.
      * @param onUpdate A callback function to update each entity.
-     * @param start The starting index of the instances to update. Defaults to `0`.
-     * @param count The number of instances to update. Defaults to the total instance count.
      * @returns The current `InstancedMesh2` instance.
      */
-    updateInstances(onUpdate: UpdateEntityCallback<Entity<TData>>, start?: number, count?: number): this;
+    updateInstances(onUpdate: UpdateEntityCallback<Entity<TData>>): this;
     /**
      * Updates instances position by applying a callback function to each instance. It calls `updateMatrixPosition` for each instance.
      * This method updates only the position attributes of the matrix.
      * @param onUpdate A callback function to update each entity.
-     * @param start The starting index of the instances to update. Defaults to `0`.
-     * @param count The number of instances to update. Defaults to the total instance count.
      * @returns The current `InstancedMesh2` instance.
      */
-    updateInstancesPosition(onUpdate: UpdateEntityCallback<Entity<TData>>, start?: number, count?: number): this;
+    updateInstancesPosition(onUpdate: UpdateEntityCallback<Entity<TData>>): this;
     /**
      * Adds new instances and optionally initializes them using a callback function.
      * @param count The number of new instances to add.
@@ -65,12 +61,13 @@ InstancedMesh2.prototype.clearInstance = function (instance: InstancedEntity, in
   return instance;
 };
 
-InstancedMesh2.prototype.updateInstances = function (this: InstancedMesh2, onUpdate?: UpdateEntityCallback, start = 0, count = this._instancesCount) {
-  const end = start + count;
+InstancedMesh2.prototype.updateInstances = function (this: InstancedMesh2, onUpdate: UpdateEntityCallback) {
+  const end = this._instancesArrayCount;
   const instances = this.instances;
   const tempInstance = this._tempInstance;
 
-  for (let i = start; i < end; i++) {
+  for (let i = 0; i < end; i++) {
+    if (!this.getActiveAt(i)) continue;
     const instance = instances ? instances[i] : this.clearInstance(tempInstance, i);
     onUpdate(instance, i);
     instance.updateMatrix();
@@ -79,12 +76,13 @@ InstancedMesh2.prototype.updateInstances = function (this: InstancedMesh2, onUpd
   return this;
 };
 
-InstancedMesh2.prototype.updateInstancesPosition = function (this: InstancedMesh2, onUpdate?: UpdateEntityCallback, start = 0, count = this._instancesCount) {
-  const end = start + count;
+InstancedMesh2.prototype.updateInstancesPosition = function (this: InstancedMesh2, onUpdate: UpdateEntityCallback) {
+  const end = this._instancesArrayCount;
   const instances = this.instances;
   const tempInstance = this._tempInstance;
 
-  for (let i = start; i < end; i++) {
+  for (let i = 0; i < end; i++) {
+    if (!this.getActiveAt(i)) continue;
     const instance = instances ? instances[i] : this.clearInstance(tempInstance, i);
     onUpdate(instance, i);
     instance.updateMatrixPosition();
@@ -94,7 +92,7 @@ InstancedMesh2.prototype.updateInstancesPosition = function (this: InstancedMesh
 };
 
 InstancedMesh2.prototype.createEntities = function (this: InstancedMesh2, start: number) {
-  const end = this._instancesCount;
+  const end = this._instancesArrayCount;
 
   if (!this.instances) {
     this.instances = new Array(end);
@@ -115,6 +113,7 @@ InstancedMesh2.prototype.createEntities = function (this: InstancedMesh2, start:
 };
 
 InstancedMesh2.prototype.addInstances = function (count: number, onCreation: UpdateEntityCallback) {
+  // refill holes created from removeInstances
   const freeIds = this._freeIds;
   if (freeIds.length > 0) {
     let maxId = -1;
@@ -129,12 +128,12 @@ InstancedMesh2.prototype.addInstances = function (count: number, onCreation: Upd
 
     freeIds.length -= freeIdsUsed;
     count -= freeIdsUsed;
-    this._instancesCount = Math.max(maxId + 1, this._instancesCount);
+    this._instancesArrayCount = Math.max(maxId + 1, this._instancesArrayCount);
   }
 
-  const start = this._instancesCount;
+  const start = this._instancesArrayCount;
   const end = start + count;
-  this.setInstancesCount(this._instancesCount + count);
+  this.setInstancesArrayCount(end);
 
   for (let i = start; i < end; i++) {
     this.addInstance(i, onCreation);
@@ -144,6 +143,7 @@ InstancedMesh2.prototype.addInstances = function (count: number, onCreation: Upd
 };
 
 InstancedMesh2.prototype.addInstance = function (id: number, onCreation: UpdateEntityCallback) {
+  this.instancesCount++;
   this.setActiveAndVisibilityAt(id, true);
   const instance = this.instances ? this.instances[id] : this.clearInstance(this._tempInstance, id);
   onCreation(instance, id);
@@ -156,23 +156,25 @@ InstancedMesh2.prototype.removeInstances = function (...ids: number[]) {
   const bvh = this.bvh;
 
   for (const id of ids) {
-    if (id < this._instancesCount && this.getActiveAt(id)) {
+    if (id < this._instancesArrayCount && this.getActiveAt(id)) {
       this.setActiveAt(id, false);
       freeIds.push(id);
       bvh?.delete(id);
+      this.instancesCount--;
     }
   }
 
-  for (let i = this._instancesCount - 1; i >= 0; i--) {
+  for (let i = this._instancesArrayCount - 1; i >= 0; i--) {
     if (this.getActiveAt(i)) break;
-    this._instancesCount--;
+    this._instancesArrayCount--;
   }
 
   return this;
 };
 
 InstancedMesh2.prototype.clearInstances = function () {
-  this._instancesCount = 0;
+  this.instancesCount = 0;
+  this._instancesArrayCount = 0;
   this._freeIds.length = 0;
   this.bvh?.clear();
   return this;
