@@ -249,7 +249,7 @@ export class InstancedMesh2<
   constructor(geometry: TGeometry, material: TMaterial, params?: InstancedMesh2Params, LOD?: InstancedMesh2);
   constructor(geometry: TGeometry, material: TMaterial, params?: InstancedMesh2Params);
   /**
-   * @remarks Geometries and materials cannot be shared. If reused, they will be cloned.
+   * @remarks Geometry cannot be shared. If reused, it will be cloned.
    * @param geometry An instance of `BufferGeometry`.
    * @param material A single or an array of `Material`.
    * @param params Optional configuration parameters object. See `InstancedMesh2Params` for details.

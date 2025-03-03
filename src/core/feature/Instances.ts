@@ -2,7 +2,6 @@ import { InstancedEntity } from '../InstancedEntity.js';
 import { InstancedMesh2 } from '../InstancedMesh2.js';
 
 // TODO: optimize method to fill 'holes'.
-// TODO: should setInstances delete instances from BVH? if yes, change frustum culling check too
 
 /**
  * Represents an extended entity type with custom data.
@@ -36,13 +35,13 @@ declare module '../InstancedMesh2.js' {
      */
     addInstances(count: number, onCreation: UpdateEntityCallback<Entity<TData>>): this;
     /**
-     * TODO
-     * @param ids TODO
+     * Removes instances by their ids.
+     * @param ids The ids of the instances to remove.
      * @returns The current `InstancedMesh2` instance.
      */
     removeInstances(...ids: number[]): this;
     /**
-     * TODO
+     * Clears all instances and resets the instance count.
      * @returns The current `InstancedMesh2` instance.
      */
     clearInstances(): this;
