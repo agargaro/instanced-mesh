@@ -116,15 +116,19 @@ export class InstancedMeshBVH {
    * This approach is more efficient and accurate compared to incremental methods, which add one instance at a time.
    */
   public create(): void {
-    const count = this.target._instancesCount;
+    const count = this.target.instancesCount;
+    const instancesArrayCount = this.target._instancesArrayCount;
     const boxes: Float32Array[] = new Array(count); // test if single array and recreation inside node creation is faster due to memory location
     const objects: Uint32Array = new Uint32Array(count);
+    let index = 0;
 
     this.clear();
 
-    for (let i = 0; i < count; i++) {
-      boxes[i] = this.getBox(i, new Float32Array(6));
-      objects[i] = i;
+    for (let i = 0; i < instancesArrayCount; i++) {
+      if (!this.target.getActiveAt(i)) continue;
+      boxes[index] = this.getBox(i, new Float32Array(6));
+      objects[index] = i;
+      index++;
     }
 
     this.bvh.createFromArray(objects as unknown as number[], boxes, (node) => {

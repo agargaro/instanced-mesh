@@ -65,6 +65,10 @@ export class InstancedMesh2<
    */
   public readonly isInstancedMesh2 = true;
   /**
+   * The number of active instances.
+   */
+  public instancesCount = 0;
+  /**
    * An array of `Entity` representing individual instances.
    * This array is only initialized if `createEntities` is set to `true` in the constructor parameters.
    */
@@ -157,7 +161,7 @@ export class InstancedMesh2<
    */
   public onFrustumEnter: OnFrustumEnterCallback = null;
   /** @internal */ _renderer: WebGLRenderer = null;
-  /** @internal */ _instancesCount = 0;
+  /** @internal */ _instancesArrayCount = 0;
   /** @internal */ _count = 0;
   /** @internal */ _perObjectFrustumCulled = true;
   /** @internal */ _sortObjects = false;
@@ -191,11 +195,6 @@ export class InstancedMesh2<
    * The number of instances rendered in the last frame.
    */
   public get count(): number { return this._count; }
-
-  /**
-   * The number of active instances.
-   */
-  public get instancesCount(): number { return this._instancesCount; }
 
   /**
    * Determines if per-instance frustum culling is enabled.
@@ -250,7 +249,7 @@ export class InstancedMesh2<
   constructor(geometry: TGeometry, material: TMaterial, params?: InstancedMesh2Params, LOD?: InstancedMesh2);
   constructor(geometry: TGeometry, material: TMaterial, params?: InstancedMesh2Params);
   /**
-   * @remarks Geometries and materials cannot be shared. If reused, they will be cloned.
+   * @remarks Geometry cannot be shared. If reused, it will be cloned.
    * @param geometry An instance of `BufferGeometry`.
    * @param material A single or an array of `Material`.
    * @param params Optional configuration parameters object. See `InstancedMesh2Params` for details.
@@ -748,7 +747,7 @@ export class InstancedMesh2<
    */
   public computeBoundingBox(): void {
     const geometry = this._geometry;
-    const count = this._instancesCount;
+    const count = this._instancesArrayCount;
 
     if (this.boundingBox === null) this.boundingBox = new Box3();
     if (geometry.boundingBox === null) geometry.computeBoundingBox();
@@ -759,6 +758,7 @@ export class InstancedMesh2<
     boundingBox.makeEmpty();
 
     for (let i = 0; i < count; i++) {
+      if (!this.getActiveAt(i)) continue;
       _box3.copy(geoBoundingBox).applyMatrix4(this.getMatrixAt(i));
       boundingBox.union(_box3);
     }
@@ -769,7 +769,7 @@ export class InstancedMesh2<
    */
   public computeBoundingSphere(): void {
     const geometry = this._geometry;
-    const count = this._instancesCount;
+    const count = this._instancesArrayCount;
 
     if (this.boundingSphere === null) this.boundingSphere = new Sphere();
     if (geometry.boundingSphere === null) geometry.computeBoundingSphere();
@@ -780,6 +780,7 @@ export class InstancedMesh2<
     boundingSphere.makeEmpty();
 
     for (let i = 0; i < count; i++) {
+      if (!this.getActiveAt(i)) continue;
       _sphere.copy(geoBoundingSphere).applyMatrix4(this.getMatrixAt(i));
       boundingSphere.union(_sphere);
     }
@@ -798,7 +799,8 @@ export class InstancedMesh2<
   public override copy(source: InstancedMesh2, recursive?: boolean): this {
     super.copy(source, recursive);
 
-    this._instancesCount = source._instancesCount;
+    this.instancesCount = source.instancesCount;
+    this._instancesArrayCount = source._instancesArrayCount;
     this._count = source._capacity;
     this._capacity = source._capacity;
 

@@ -54,7 +54,7 @@ const _position = new Vector3();
 const _sphere = new Sphere();
 
 InstancedMesh2.prototype.performFrustumCulling = function (camera: Camera, cameraLOD = camera) {
-  if (!this._parentLOD && this._instancesCount === 0) {
+  if (!this._parentLOD && this.instancesCount === 0) {
     this._count = 0;
     return;
   }
@@ -128,10 +128,10 @@ InstancedMesh2.prototype.updateIndexArray = function () {
   if (!this._indexArrayNeedsUpdate) return;
 
   const array = this.instanceIndex.array;
-  const instancesCount = this._instancesCount;
+  const instancesArrayCount = this._instancesArrayCount;
   let count = 0;
 
-  for (let i = 0; i < instancesCount; i++) {
+  for (let i = 0; i < instancesArrayCount; i++) {
     if (this.getActiveAndVisibilityAt(i)) {
       array[count++] = i;
     }
@@ -142,9 +142,9 @@ InstancedMesh2.prototype.updateIndexArray = function () {
 };
 
 InstancedMesh2.prototype.updateRenderList = function () {
-  const instancesCount = this._instancesCount;
+  const instancesArrayCount = this._instancesArrayCount;
 
-  for (let i = 0; i < instancesCount; i++) {
+  for (let i = 0; i < instancesArrayCount; i++) {
     if (this.getActiveAndVisibilityAt(i)) {
       const depth = this.getPositionAt(i).sub(_cameraPos).dot(_forward);
       _renderList.push(depth, i);
@@ -154,7 +154,7 @@ InstancedMesh2.prototype.updateRenderList = function () {
 
 InstancedMesh2.prototype.BVHCulling = function (camera: Camera) {
   const array = this.instanceIndex.array;
-  const instancesCount = this._instancesCount;
+  const instancesArrayCount = this._instancesArrayCount;
   const sortObjects = this._sortObjects;
   const onFrustumEnter = this.onFrustumEnter;
   let count = 0;
@@ -163,7 +163,7 @@ InstancedMesh2.prototype.BVHCulling = function (camera: Camera) {
     const index = node.object;
 
     // we don't check if active because we remove inactive instances from BVH
-    if (index < instancesCount && this.getVisibilityAt(index) && (!onFrustumEnter || onFrustumEnter(index, camera))) {
+    if (index < instancesArrayCount && this.getVisibilityAt(index) && (!onFrustumEnter || onFrustumEnter(index, camera))) {
       if (sortObjects) {
         const depth = this.getPositionAt(index).sub(_cameraPos).dot(_forward);
         _renderList.push(depth, index);
@@ -182,7 +182,7 @@ InstancedMesh2.prototype.linearCulling = function (camera: Camera) {
   const bSphere = this._geometry.boundingSphere;
   const radius = bSphere.radius;
   const center = bSphere.center;
-  const instancesCount = this._instancesCount;
+  const instancesArrayCount = this._instancesArrayCount;
   const geometryCentered = center.x === 0 && center.y === 0 && center.z === 0;
   const sortObjects = this._sortObjects;
   const onFrustumEnter = this.onFrustumEnter;
@@ -190,7 +190,7 @@ InstancedMesh2.prototype.linearCulling = function (camera: Camera) {
 
   _frustum.setFromProjectionMatrix(_projScreenMatrix);
 
-  for (let i = 0; i < instancesCount; i++) {
+  for (let i = 0; i < instancesArrayCount; i++) {
     if (!this.getActiveAndVisibilityAt(i)) continue;
 
     if (geometryCentered) {
@@ -270,14 +270,14 @@ InstancedMesh2.prototype.frustumCullingLOD = function (LODrenderList: LODRenderL
 
 InstancedMesh2.prototype.BVHCullingLOD = function (LODrenderList: LODRenderList, indexes: Uint32Array[], sortObjects: boolean, camera: Camera, cameraLOD: Camera) {
   const { count, levels } = LODrenderList;
-  const instancesCount = this._instancesCount;
+  const instancesArrayCount = this._instancesArrayCount;
   const onFrustumEnter = this.onFrustumEnter;
 
   if (sortObjects) {
     this.bvh.frustumCulling(_projScreenMatrix, (node: BVHNode<{}, number>) => {
       const index = node.object;
       // we don't check if active because we remove inactive instances from BVH
-      if (index < instancesCount && this.getVisibilityAt(index) && (!onFrustumEnter || onFrustumEnter(index, camera, cameraLOD))) {
+      if (index < instancesArrayCount && this.getVisibilityAt(index) && (!onFrustumEnter || onFrustumEnter(index, camera, cameraLOD))) {
         const distance = this.getPositionAt(index).distanceToSquared(_cameraLODPos);
         _renderList.push(distance, index);
       }
@@ -285,7 +285,7 @@ InstancedMesh2.prototype.BVHCullingLOD = function (LODrenderList: LODRenderList,
   } else {
     this.bvh.frustumCullingLOD(_projScreenMatrix, _cameraLODPos, levels, (node: BVHNode<{}, number>, level: number) => {
       const index = node.object;
-      if (index < instancesCount && this.getVisibilityAt(index)) {
+      if (index < instancesArrayCount && this.getVisibilityAt(index)) {
         if (level === null) {
           const distance = this.getPositionAt(index).distanceToSquared(_cameraLODPos); // distance can be get by BVH, but is not the distance from center
           level = this.getObjectLODIndexForDistance(levels, distance);
@@ -305,13 +305,13 @@ InstancedMesh2.prototype.linearCullingLOD = function (LODrenderList: LODRenderLi
   const bSphere = this._geometry.boundingSphere;
   const radius = bSphere.radius;
   const center = bSphere.center;
-  const instancesCount = this._instancesCount;
+  const instancesArrayCount = this._instancesArrayCount;
   const geometryCentered = center.x === 0 && center.y === 0 && center.z === 0;
   const onFrustumEnter = this.onFrustumEnter;
 
   _frustum.setFromProjectionMatrix(_projScreenMatrix);
 
-  for (let i = 0; i < instancesCount; i++) {
+  for (let i = 0; i < instancesArrayCount; i++) {
     if (!this.getActiveAndVisibilityAt(i)) continue;
 
     if (geometryCentered) {
