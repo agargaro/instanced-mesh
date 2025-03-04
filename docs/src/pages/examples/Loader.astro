@@ -7,9 +7,11 @@ interface Props {
 // Destructure the fileName prop from Astro.props
 const isDev = import.meta.env.DEV;
 const { slug } = Astro.props as Props;
-const src = isDev ? `/src/examples/${slug}/index.ts` : `./index.js`;
+const src = isDev ? `/src/examples/${slug}/index.ts` : `${slug}/index.js`;
 ---
 
 <!-- Astro component template -->
-<div id="dynamic-script-container"></div>
-<script type="module" is:inline src={src}></script>
+<html>
+  <div id="dynamic-script-container"></div>
+  <script type="module" is:inline src={src}></script>
+</html>

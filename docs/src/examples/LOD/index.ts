@@ -37,10 +37,9 @@ ground.receiveShadow = true;
 scene.add(ground);
 
 const instancedMesh = new InstancedMesh2(
-  main.renderer,
-  count,
   new SphereGeometry(5, 30, 15),
-  new MeshLambertMaterial({ color: 'limegreen' })
+  new MeshLambertMaterial({ color: 'limegreen' }),
+  { capacity: count }
 );
 instancedMesh.addLOD(
   new SphereGeometry(5, 20, 10),
@@ -75,7 +74,7 @@ instancedMesh.computeBVH();
 
 scene.add(camera, instancedMesh, new AmbientLight('white', 0.3));
 
-const dirLight = new DirectionalLight('blue', 0.1)
+const dirLight = new DirectionalLight('white', 2)
   .translateZ(100)
   .translateY(20);
 camera.add(dirLight, dirLight.target);
@@ -84,7 +83,7 @@ main.createView({ scene, camera, enabled: false });
 
 const gui = new GUI();
 gui
-  .add(camera, 'far', 2000, 5000, 100)
+  .add(camera, 'far', 100, 5000, 100)
   .name('camera far')
   .onChange(() => camera.updateProjectionMatrix());
 
