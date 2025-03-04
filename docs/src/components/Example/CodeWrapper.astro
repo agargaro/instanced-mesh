@@ -1,9 +1,6 @@
 ---
 import { Code } from '@astrojs/starlight/components';
-enum FileType {
-  File = 'file',
-  Directory = 'directory',
-}
+
 type SourceFile = {
   [key: string]: string;
 };
@@ -72,13 +69,14 @@ const tree = createRecursiveTree(filesEntries);
   .container {
     display: flex;
     overflow: hidden;
+   .frame.not-content pre {
     max-height: 70dvh;
+    }
   }
   /* Sidebar sinistra per la tree view */
   .sidebar {
-    padding: 0 0.5rem;
     overflow-y: auto;
-    display: flex
+    display: flex;
     margin: 0;
     background: var(--sl-color-black)
     user-select: none;
@@ -89,18 +87,28 @@ const tree = createRecursiveTree(filesEntries);
   }
   .tree ul > li,
   .tree ul > ul {
+    padding: 0 0.5rem;
     padding-left: 0.5rem;
   }
-  .tree li {
+  .tree li{
     cursor: pointer;
     margin: 0.25rem 0;
+    padding-right: calc(0.5rem + 0.25rem);
+    &:hover {
+      background-color: var(--ec-frm-edActTabBg);
+    }
   }
   .folder {
    cursor: default;
   }
+  .file{
+display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-right: 1.5rem;
+  }
   .file:hover {
     background-color: var(--sl-color-primary-100);
-    text-decoration: underline
   }
   .file.selected {
     background-color: var(--sl-color-primary-100);
