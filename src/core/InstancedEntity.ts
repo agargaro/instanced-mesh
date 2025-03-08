@@ -313,7 +313,7 @@ export class InstancedEntity {
   public translateZ(distance: number): this {
     return this.translateOnAxis(_zAxis, distance);
   }
-  
+
   /**
    * Removes this entity from its owner instance.
    * @returns The instance of the object.
