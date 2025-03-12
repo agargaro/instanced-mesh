@@ -7,7 +7,7 @@ import {
   MeshLambertMaterial,
   Scene,
 } from "three";
-import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GUI } from "three/examples/jsm/libs/lil-gui.module.min.js";
 import { InstancedMesh2 } from "@three.ez/instanced-mesh";
 

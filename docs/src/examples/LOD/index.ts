@@ -1,6 +1,6 @@
 import { Main, PerspectiveCameraAuto } from '@three.ez/main';
 import { AmbientLight, Color, DirectionalLight, MeshLambertMaterial, Scene, SphereGeometry } from 'three';
-import { OrbitControls } from 'three/examples/jsm/Addons.js';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { PRNG } from './random.js';
 import { InstancedMesh2 } from '@three.ez/instanced-mesh';
 
