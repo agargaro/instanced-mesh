@@ -3,9 +3,9 @@
   "type": "module",
   "version": "0.0.1",
   "scripts": {
-    "dev": "tsc --project tsconfig.build.json && astro dev",
-    "start": "tsc --project tsconfig.build.json && astro dev",
-    "build": "tsc --project tsconfig.build.json && astro check && astro build",
+    "dev": "tsc --project tsconfig.build.json & astro dev",
+    "start": "tsc --project tsconfig.build.json & astro dev",
+    "build": "tsc --project tsconfig.build.json & astro check && astro build",
     "preview": "astro preview",
     "astro": "astro"
   },
