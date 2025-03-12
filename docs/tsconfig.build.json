@@ -13,7 +13,6 @@
     "skipLibCheck": true,
   },
   "include": [
-    "src/examples",
-    "node_modules/@three.ez"
+    "src/examples"
   ],
 }

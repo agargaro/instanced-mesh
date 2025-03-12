@@ -6,17 +6,38 @@ export const c = (...args: (string | boolean)[]) => {
   return args.filter(Boolean).join(' ');
 };
 
+/**
+ * Interface defining the properties (Props) that can be passed to the Example component.
+ * 
+ * @interface Props
+ * @example
+ * ```astro
+ * <Example {...props} />
+ * ```
+ */
 export interface Props {
   /**
-   * The path to the entry App.svelte file relative to src/examples
+   * The file path to be processed
+   * @type {string}
    */
   path: string;
+  /**
+   * Flag to control the visibility of code section
+   * @property {boolean} [hideCode] - When true, hides the code section of the component.
+   * Default is false, showing the code section.
+   */
   hideCode?: boolean;
+  /**
+   * Flag to control whether to hide the preview section.
+   * When set to true, the preview section will not be displayed.
+   * @type {boolean}
+   * @optional
+   */
   hidePreview?: boolean;
-  iframe?: boolean;
-  showFile?: string;
-  expandCode?: boolean;
-  previewClass?: string;
+  /**
+   * Whether to hide the Stackblitz editor button.
+   * @property {boolean} [hideStackblitz=false] - When true, the Stackblitz editor button will not be displayed
+   */
   hideStackblitz?: boolean;
 }
 

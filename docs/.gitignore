@@ -14,7 +14,8 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
-
+# generate js examples
+public/examples/**
 
 # environment variables
 .env
