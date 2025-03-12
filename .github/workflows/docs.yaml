@@ -1,11 +1,12 @@
 name: Deploy docs to GitHub Pages
 
 on:
-  # Trigger the workflow every time you push to the `main` branch
-  # Using a different branch name? Replace `main` with your branch’s name
+  # Trigger the workflow every time you push or open pull_request to the `master` branch
+  # Using a different branch name? Replace `master` with your branch’s name
   push:
     branches: [ master ]
-  # Allows you to run this workflow manually from the Actions tab on GitHub.
+  pull_request:
+    branches: [ master ]
   workflow_dispatch:
 
 # Allow this job to clone the repo and create a page deployment
@@ -20,21 +21,22 @@ jobs:
     steps:
       - name: Checkout your repository using git
         uses: actions/checkout@v4
-      - name: Install
-        shell: "bash"
+      - name: Install dependencies
+        shell: bash
         working-directory: ./docs
         run: npm install
-      - name: Build
-        shell: "bash"
+      - name: Build documentation
+        shell: bash
         working-directory: ./docs
         run: npm run build
-      - name: Upload Pages Artifact
+      - name: Upload Pages artifact
+        if: github.event_name != 'pull_request'
         uses: actions/upload-pages-artifact@v3
         with:
-         path: "./docs/dist/"
-        
+          path: "./docs/dist/"
   deploy:
     needs: build
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     environment:
       name: github-pages
