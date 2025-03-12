@@ -69,6 +69,7 @@ const tree = createRecursiveTree(filesEntries);
   .container {
     display: flex;
     overflow: hidden;
+    border-radius: 0 0 0.5rem 0.5rem;
    .frame.not-content pre {
     max-height: 70dvh;
     }
@@ -81,6 +82,11 @@ const tree = createRecursiveTree(filesEntries);
     background: var(--sl-color-black)
     user-select: none;
   }
+   @media screen and (max-width: 50rem) { 
+    .container {
+      flex-direction: column;
+    }
+  }
   .tree ul {
     list-style: none;
     padding-left: 0rem;
@@ -92,11 +98,9 @@ const tree = createRecursiveTree(filesEntries);
   }
   .tree li{
     cursor: pointer;
-    margin: 0.25rem 0;
+    margin: 0.5rem 0;
     padding-right: calc(0.5rem + 0.25rem);
-    &:hover {
-      background-color: var(--ec-frm-edActTabBg);
-    }
+   
   }
   .folder {
    cursor: default;
@@ -105,13 +109,14 @@ const tree = createRecursiveTree(filesEntries);
 display: flex;
     align-items: center;
     gap: 0.5rem;
-    margin-right: 1.5rem;
+    padding: 0 0.5rem;
+    border-radius: 0.25rem;
+     &:hover {
+      background-color: var(--ec-frm-edActTabBg);
+    }
   }
-  .file:hover {
-    background-color: var(--sl-color-primary-100);
-  }
-  .file.selected {
-    background-color: var(--sl-color-primary-100);
+  .file:focus-visible {
+    background-color: rgba(0, 0, 255, 0.1);
   }
   /* Area di preview del file */
   .content {
@@ -142,6 +147,7 @@ display: flex;
     inset: 0;
     z-index: 9;
     cursor: pointer;
+    border-radius: 0 0 0.5rem 0.5rem;
   }
   .code-toggle-container-btn:hover .code-toggle-btn {
     width: 4rem;
@@ -154,6 +160,7 @@ display: flex;
     right: 0;
     margin: auto;
     width: 2rem;
+    height: 5px;
     cursor: pointer;
     transition: width 300ms 0.5s ease-out;
   }
