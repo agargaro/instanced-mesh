@@ -1,22 +1,11 @@
-import { Scene, DirectionalLight, AmbientLight } from 'three';
-import { Main, PerspectiveCameraAuto } from '@three.ez/main';
-import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { InstancedMesh2 } from '@three.ez/instanced-mesh';
+import { MeshStandardMaterial, TorusKnotGeometry } from 'three';
 
-export function createApp() {
-  const camera = new PerspectiveCameraAuto().translateZ(10);
-  const scene = new Scene();
-  const main = new Main();
-  const view = main.createView({ scene, camera });
-  
-  const controls = new OrbitControls(camera, main.renderer.domElement);
-  controls.update();
-  
-  const ambientLight = new AmbientLight('white', 0.8);
-  scene.add(ambientLight);
+export const boxes = new InstancedMesh2(new TorusKnotGeometry(), new MeshStandardMaterial());
 
-  const dirLight = new DirectionalLight('white', 2);
-  dirLight.position.set(0.5, 0.866, 0);
-  camera.add(dirLight);
-
-  return { main, view, scene, camera };
-}
+boxes.addInstances(9, (obj, index) => {
+  obj.position.x = (index % 3 - 1) * 5;
+  obj.position.y = (Math.trunc(index / 3) - 1) * 5;
+  obj.quaternion.random();
+  obj.color = Math.random() * 0xffffff;
+});
