@@ -1,0 +1,38 @@
+---
+title: Instances Custom Data
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+[If an array of instances has been created](https://agargaro.github.io/instanced-mesh/basics/00-instances-array/), 
+custom data can be added for each instance:
+
+<Tabs syncKey="code">
+  <TabItem label="Typescript">
+    ```ts
+    type CustomData = { uuid: string };
+
+    const iMesh = new InstancedMesh2<CustomData>(geo, mat, { createEntities: true });
+    
+    iMesh.addInstances(count, (obj, index) => {
+        obj.uuid = MathUtils.generateUUID();
+    });
+    ```
+  </TabItem>
+
+  <TabItem label="Javascript">
+    ```js
+    const iMesh = new InstancedMesh2(geo, mat, { createEntities: true });
+
+    iMesh.addInstances(count, (obj, index) => {
+        obj.uuid = MathUtils.generateUUID();
+    });
+    ```
+  </TabItem>
+</Tabs>
+
+### Example
+
+In this example each instance has a `startScale` in order to update the scale every frame:
+
+<Example path='instances-custom-data'/>

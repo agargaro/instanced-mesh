@@ -2,17 +2,23 @@
 title: Instances Array
 ---
 
-With the [`createEntities`](https://agargaro.github.io/instanced-mesh/api/interfaces/instancedmesh2params/#createentities) flag passed into the constructor, 
-an array of [`InstancedEntity`](https://agargaro.github.io/instanced-mesh/api/classes/instancedentity) 
-will be created that is useful for more easily manipulating instances at the cost of using more memory.
+With `InstancedMesh` a dolly it is usually used to update instances, but with `InstancedMesh2` it is possible to create an 
+[`InstancedEntity`](https://agargaro.github.io/instanced-mesh/api/classes/instancedentity) 
+(an `Object3D-like`) for each instance to manipulate them more easily at the cost of using more memory.
+
+Passing the [`createEntities`](https://agargaro.github.io/instanced-mesh/api/interfaces/instancedmesh2params/#createentities) flag into the constructor, 
+an array of `InstancedEntity` will be created:
 
 ```ts
 const iMesh = new InstancedMesh2(geo, mat, { createEntities: true });
+```
 
-iMesh.instances[0].position.random();
-iMesh.instances[0].rotateX(Math.PI);
-iMesh.instances[0].updateMatrix(); // necessary after transformations
-iMesh.instances[1].customData = {};
+After adding the instances, it is possible to manipulate them in this way:
+
+```ts
+iMesh.instances[index].position.random();
+iMesh.instances[index].rotateX(Math.PI);
+iMesh.instances[index].updateMatrix(); // necessary after transformations
 ```
 
 :::note
@@ -27,7 +33,7 @@ method for better performance.
 
 ### Example
 
-In this example, the instances array is used to animate easily the instances.
+In this example, the instances array is used to animate easily the instances:
 
 :::note
 [`torusKnots.on(eventName, callback)`](https://agargaro.github.io/three.ez/docs/api#-event-programming) is available only in [`@three.ez/main`](https://github.com/agargaro/three.ez) package.

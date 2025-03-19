@@ -2,7 +2,8 @@
 title: Introduction
 ---
 
-`InstancedMesh2` is an alternative version of `InstancedMesh` with enhanced features for performance and usability:
+`InstancedMesh2` is an alternative version of [`InstancedMesh`](https://threejs.org/docs/#api/en/objects/InstancedMesh) 
+with enhanced features for performance and usability:
 - **Per-instance frustum culling**: *skip rendering for out-of-view instances.*
 - **Sorting**: *reduce overdraw and manage transparent objects efficiently.*
 - **Spatial indexing (dynamic BVH)**: *speed up raycasting and frustum culling.*
@@ -15,17 +16,20 @@ title: Introduction
 - **Skinning**: *apply skeletal animations to instances for more complex and dynamic movements.*
 
 :::note 
-It currently only works with `WebGLRenderer` and `three.js r159+`.
+It currently only works with [`WebGLRenderer`](https://threejs.org/docs/#api/en/renderers/WebGLRenderer) and 
+[`three.js r159+`](https://github.com/mrdoob/three.js).
 :::
 
 ### Differences with `InstancedMesh`
 
-`InstancedMesh` uses an `InstancedBufferAttribute` to store instances matrices and data, and rendering occurs sequentially.
+`InstancedMesh` uses an [`InstancedBufferAttribute`](https://threejs.org/docs/#api/en/core/InstancedBufferAttribute) to store instances matrices and data, 
+and rendering occurs sequentially.
 
-`InstancedMesh2` uses a `DataTexture` to store instances matrices and data, while using an `InstancedBufferAttribute` 
-to manage the indexes of the instances to be rendered.
+`InstancedMesh2` uses [`SquareDataTexture`](https://agargaro.github.io/instanced-mesh/api/classes/squaredatatexture/) 
+(an extended version of [`DataTexture`](https://threejs.org/docs/#api/en/textures/DataTexture) to support partial update)
+to store instances matrices and data, while using an `InstancedBufferAttribute` to manage the indexes of the instances to be rendered.
 
 :::caution 
-Because of indirection, the rendering of all instances is slightly slower. <br/>
+Because of the indirection, the rendering of all instances is slightly slower. <br/>
 If none of the features are used, it is better to use `InstancedMesh`.
 :::
