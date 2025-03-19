@@ -1,6 +1,5 @@
 ---
 title: Introduction
-order: 0
 ---
 
 `InstancedMesh2` is an alternative version of `InstancedMesh` with enhanced features for performance and usability:
@@ -23,7 +22,8 @@ It currently only works with `WebGLRenderer` and `three.js r159+`.
 
 `InstancedMesh` uses an `InstancedBufferAttribute` to store instances matrices and data, and rendering occurs sequentially.
 
-`InstancedMesh2` uses a `DataTexture` to store instances matrices and data, while using an `InstancedBufferAttribute` to manage the indexes of the instances to be rendered.
+`InstancedMesh2` uses a `DataTexture` to store instances matrices and data, while using an `InstancedBufferAttribute` 
+to manage the indexes of the instances to be rendered.
 
 :::caution 
 Because of indirection, the rendering of all instances is slightly slower. <br/>
