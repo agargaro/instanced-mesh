@@ -1,0 +1,21 @@
+---
+title: Tween
+---
+
+[If an array of instances has been created](https://agargaro.github.io/instanced-mesh/basics/00-Instancedentity/), 
+you can apply tween animations to properties such as `position`, `scale`, `quaternion`, and `rotation`. 
+
+:::caution
+The `color` property **cannot** be tweened because it is a getter that retrieves values from an internal array.
+:::
+
+## Example
+
+The following example demonstrates how to use tweens to animate instance transformations.
+
+:::note
+This example leverages the [`@three.ez/main`](https://github.com/agargaro/three.ez) package for tween animations, 
+but you can use any tweening library of your choice!
+:::
+
+<Example path='tween'/>

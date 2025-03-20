@@ -2,34 +2,41 @@
 title: Introduction
 ---
 
-`InstancedMesh2` is an alternative version of [`InstancedMesh`](https://threejs.org/docs/#api/en/objects/InstancedMesh) 
-with enhanced features for performance and usability:
-- **Per-instance frustum culling**: *skip rendering for out-of-view instances.*
-- **Sorting**: *reduce overdraw and manage transparent objects efficiently.*
-- **Spatial indexing (dynamic BVH)**: *speed up raycasting and frustum culling.*
-- **Dynamic capacity**: *add or remove instances seamlessly.*
-- **Per-instance visibility and opacity**: *toggle visibility and set opacity for each instance individually.*
-- **Object3D-like instances**: *use instances like `Object3D` with transforms and custom data.*
-- **Per-instance uniforms**: *assign unique shader data to individual instances.*
-- **Level of Detail (LOD)**: *dynamically adjust instance detail based on distance.*
-- **Shadow LOD**: *optimize shadow rendering with lower detail for distant instances.*
-- **Skinning**: *apply skeletal animations to instances for more complex and dynamic movements.*
+`InstancedMesh2` is an enhanced alternative to [`InstancedMesh`](https://threejs.org/docs/#api/en/objects/InstancedMesh), 
+offering improved performance and usability with features such as:
+
+- **Per-instance frustum culling** – *Skips rendering for out-of-view instances.*
+- **Sorting** – *Reduces overdraw and efficiently manages transparent objects.*
+- **Spatial indexing (dynamic BVH)** – *Speeds up raycasting and frustum culling.*
+- **Dynamic capacity** – *Seamlessly add or remove instances.*
+- **Per-instance visibility and opacity** – *Individually toggle visibility and set opacity.*
+- **Object3D-like instances** – *Instances behave like [`Object3D`](https://threejs.org/docs/#api/en/core/Object3D), supporting transforms and custom data.*
+- **Per-instance uniforms** – *Assign unique shader data to individual instances.*
+- **Level of Detail (LOD)** – *Dynamically adjust instance detail based on distance.*
+- **Shadow LOD** – *Optimize shadow rendering by reducing detail for distant instances.*
+- **Skinning** – *Apply skeletal animations for complex and dynamic movements.*
 
 :::note 
-It currently only works with [`WebGLRenderer`](https://threejs.org/docs/#api/en/renderers/WebGLRenderer) and 
-[`three.js r159+`](https://github.com/mrdoob/three.js).
+Currently, `InstancedMesh2` only works with [`WebGLRenderer`](https://threejs.org/docs/#api/en/renderers/WebGLRenderer) 
+and requires [`three.js r159+`](https://github.com/mrdoob/three.js).
 :::
 
-### Differences with `InstancedMesh`
+### Differences from `InstancedMesh`
 
-`InstancedMesh` uses an [`InstancedBufferAttribute`](https://threejs.org/docs/#api/en/core/InstancedBufferAttribute) to store instances matrices and data, 
-and rendering occurs sequentially.
+##### `InstancedMesh`
+- Uses an [`InstancedBufferAttribute`](https://threejs.org/docs/#api/en/core/InstancedBufferAttribute) to store instance matrices and data.
+- Renders instances sequentially, meaning all instances are processed in the order they were added, without skipping or reordering. 
+  This can be inefficient when dealing with a large number of instances, especially if many are off-screen or require different sorting orders for transparency.
 
-`InstancedMesh2` uses [`SquareDataTexture`](https://agargaro.github.io/instanced-mesh/api/classes/squaredatatexture/) 
-(an extended version of [`DataTexture`](https://threejs.org/docs/#api/en/textures/DataTexture) to support partial update)
-to store instances matrices and data, while using an `InstancedBufferAttribute` to manage the indexes of the instances to be rendered.
+##### `InstancedMesh2`
+- Uses [`SquareDataTexture`](https://agargaro.github.io/instanced-mesh/api/classes/squaredatatexture/) 
+  (an extended version of [`DataTexture`](https://threejs.org/docs/#api/en/textures/DataTexture) supporting partial updates) 
+  to store instance matrices and data.
+- Uses an `InstancedBufferAttribute` to manage the indexes of instances to be rendered, allowing for selective rendering, efficient culling, 
+  and sorting before sending data to the GPU.
 
-:::caution 
-Because of the indirection, the rendering of all instances is slightly slower. <br/>
-If none of the features are used, it is better to use `InstancedMesh`.
-:::
+:::note 
+Due to this additional indirection, rendering ***all*** instances is slightly slower. <br/>
+However, the benefits of efficient culling and sorting often outweigh the minor overhead. <br/>
+If none of the extra features are needed, using `InstancedMesh` is recommended.
+::: 

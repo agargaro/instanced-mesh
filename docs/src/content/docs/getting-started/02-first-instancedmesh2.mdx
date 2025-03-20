@@ -2,13 +2,17 @@
 title: Your First InstancedMesh2
 ---
 
-We start by creating an `InstancedMesh2`:
+### Initializing `InstancedMesh2`
+
+Start by initializing an `InstancedMesh2`:
 
 ```ts
 const iMesh = new InstancedMesh2(geometry, material);
 ```
 
-After that we add and place the instances:
+### Adding and Positioning Instances
+
+Next, add instances and set their positions:
 
 ```ts
 iMesh.addInstances(count, (obj, index) => {
@@ -16,13 +20,18 @@ iMesh.addInstances(count, (obj, index) => {
 });
 ```
 
+:::note
+The `obj` used in the callback is an [`InstancedEntity`](https://agargaro.github.io/instanced-mesh/api/classes/instancedentity), 
+an object similar to [`Object3D`](https://threejs.org/docs/#api/en/core/Object3D), allowing transformations and custom data.
+:::
+
 ### Example
 
-In this example, an `InstancedMesh2` is instantiated and 9 instances are added, positioned and colored:
+In this example, an `InstancedMesh2` is instantiated with 9 instances, each positioned and colored:
 
 :::note 
-All examples use the [`@three.ez/main`](https://github.com/agargaro/three.ez) package to simplify writing the application. 
-`InstancedMesh2` it's compatible with any other library.
+All examples use the [`@three.ez/main`](https://github.com/agargaro/three.ez) package to simplify application development. <br/>
+However, `InstancedMesh2` is fully compatible with other libraries.
 :::
 
 <Example path='first'/>
