@@ -15,18 +15,55 @@ export class SpaceShip extends Group {
     super();
     // Pointer movement
     const pointer = { y: 0, x: 0 };
-    
-      window.addEventListener("mousemove", (e) => {
-        pointer.y = -(e.clientY / window.innerHeight - 0.5) * 10;
-        pointer.x = (e.clientX / window.innerWidth - 0.5) * 10;
-      });
 
-window.addEventListener("deviceorientation", (e) => {
-  pointer.y = e.beta;
-  pointer.x = e.gamma;
-});
-    
-    
+    window.addEventListener("mousemove", (e) => {
+      pointer.y = -(e.clientY / window.innerHeight - 0.5) * 10;
+      pointer.x = (e.clientX / window.innerWidth - 0.5) * 10;
+    });
+
+
+    const debug = document.createElement('pre');
+
+    // document.body.appendChild(debug);
+    debug.innerHTML = `no event yet`;
+
+    window.addEventListener("devicemotion", (e: DeviceMotionEvent) => {
+      console.log(e)
+      // normalize the alpha and gamma values
+
+      // pointer.y = -e.gamma / 90;
+
+      const isLandscape = window.innerWidth > window.innerHeight;
+
+      // pointer.x = (isLandscape ? e.accelerationIncludingGravity.x : e.accelerationIncludingGravity.z) * 2;
+      // pointer.y = (isLandscape ? e.accelerationIncludingGravity.z : -e.accelerationIncludingGravity.x) - 9.8;
+      if (isLandscape) {
+        pointer.x = e.accelerationIncludingGravity.z * 0.5
+        pointer.y = e.accelerationIncludingGravity.y * 0.2
+      } else {
+        pointer.x = e.accelerationIncludingGravity.x * 0.5
+        pointer.y = e.accelerationIncludingGravity.y * 0.2
+      }
+      // add debugger infor in dom for all the values of e 
+
+      debug.innerHTML = `
+        Angle Alpha : ${JSON.stringify(e.rotationRate)}
+        Accélération en X : ${e.accelerationIncludingGravity.x}
+        Accélération en Y : ${e.accelerationIncludingGravity.y}
+        Accélération en Z : ${e.accelerationIncludingGravity.z}
+    `
+      debug.style.whiteSpace = "pre";
+      debug.style.position = "fixed";
+      debug.style.top = 0 + "px";
+      debug.style.right = 0 + "px";
+      debug.style.zIndex = '1000';
+      debug.style.backgroundColor = 'white';
+      debug.style.padding = '10px';
+      debug.style.border = '1px solid black';
+
+    });
+
+
     const gltf = Asset.get<GLTF>(GLB_PATH);
     this.add(gltf.scene.children[0]);
 
