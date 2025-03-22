@@ -166,6 +166,41 @@ export class InstancedEntity {
   }
 
   /**
+   * Sets the transformation matrix with its current position only.
+   * The updated matrix is stored in the `owner.matricesTexture`.
+   */
+  public setMatrixPosition(): void {
+    const owner = this.owner;
+    const position = this.position;
+    const te = owner.matricesTexture._data;
+    const id = this.id;
+    const offset = id * 16;
+
+    te[offset + 0] = 1;
+    te[offset + 1] = 0;
+    te[offset + 2] = 0;
+    te[offset + 3] = 0;
+
+    te[offset + 4] = 0;
+    te[offset + 5] = 1;
+    te[offset + 6] = 0;
+    te[offset + 7] = 0;
+
+    te[offset + 8] = 0;
+    te[offset + 9] = 0;
+    te[offset + 10] = 1;
+    te[offset + 11] = 0;
+
+    te[offset + 12] = position.x;
+    te[offset + 13] = position.y;
+    te[offset + 14] = position.z;
+    te[offset + 15] = 1;
+
+    owner.matricesTexture.enqueueUpdate(id);
+    owner.bvh?.move(id);
+  }
+
+  /**
    * Retrieves the uniform value associated with the given name.
    * @param name The name of the uniform to retrieve.
    * @param target Optional target object where the uniform value will be written.
