@@ -730,6 +730,7 @@ export class InstancedMesh2<
    * @returns The opacity of the instance.
    */
   public getOpacityAt(id: number): number {
+    if (!this._useOpacity) return 1;
     return this.colorsTexture._data[id * 4 + 3];
   }
 
