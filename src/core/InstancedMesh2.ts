@@ -219,7 +219,7 @@ export class InstancedMesh2<
   /**
    * An instance of `BufferGeometry` (or derived classes), defining the object's structure.
    */
-  // @ts-expect-error it's defined as a property, but is overridden as an accessor.
+  // @ts-expect-error It's defined as a property, but is overridden as an accessor.
   public override get geometry(): TGeometry { return this._geometry; }
   public override set geometry(value: TGeometry) {
     this._geometry = value;

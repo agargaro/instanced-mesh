@@ -29,8 +29,10 @@ ShaderChunk['batching_vertex'] = ShaderChunk['batching_vertex'].concat('\n#inclu
 
 ShaderChunk.skinning_pars_vertex = instanced_skinning_pars_vertex;
 
-// TODO FIX don't override like this
-ShaderChunk['morphinstance_vertex'] = ShaderChunk['morphinstance_vertex'].replaceAll('gl_InstanceID', 'instanceIndex');
+// TODO FIX don't override like this, create a new shaderChunk to make it works also with older three.js version
+if (ShaderChunk['morphinstance_vertex']) {
+  ShaderChunk['morphinstance_vertex'] = ShaderChunk['morphinstance_vertex'].replaceAll('gl_InstanceID', 'instanceIndex');
+}
 
 // use 'getPatchedShader' function to make these example works
 // examples/jsm/modifiers/CurveModifier.js
