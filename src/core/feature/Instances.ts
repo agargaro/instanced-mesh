@@ -45,29 +45,41 @@ declare module '../InstancedMesh2.js' {
      * @returns The current `InstancedMesh2` instance.
      */
     clearInstances(): this;
-    /** @internal */ clearInstance(instance: InstancedEntity, index: number): InstancedEntity;
+    /** @internal */ clearTempInstance(index: number): InstancedEntity;
+    /** @internal */ clearTempInstancePosition(index: number): InstancedEntity;
+    /** @internal */ clearInstance(instance: InstancedEntity): InstancedEntity;
     /** @internal */ createEntities(start: number): this;
     /** @internal */ addInstance(id: number, onCreation: UpdateEntityCallback): void;
   }
 }
 
-InstancedMesh2.prototype.clearInstance = function (instance: InstancedEntity, index: number) {
+InstancedMesh2.prototype.clearTempInstance = function (index: number) {
+  const instance = this._tempInstance;
+  (instance as any).id = index;
+  return this.clearInstance(instance);
+};
+
+InstancedMesh2.prototype.clearTempInstancePosition = function (index: number) {
+  const instance = this._tempInstance;
   (instance as any).id = index;
   instance.position.set(0, 0, 0);
+  return instance;
+};
+
+InstancedMesh2.prototype.clearInstance = function (instance: InstancedEntity) {
+  instance.position.set(0, 0, 0);
   instance.scale.set(1, 1, 1);
-  instance.quaternion.set(0, 0, 0, 1);
-  instance.rotation?.set(0, 0, 0);
+  instance.quaternion.identity();
   return instance;
 };
 
 InstancedMesh2.prototype.updateInstances = function (this: InstancedMesh2, onUpdate: UpdateEntityCallback) {
   const end = this._instancesArrayCount;
   const instances = this.instances;
-  const tempInstance = this._tempInstance;
 
   for (let i = 0; i < end; i++) {
     if (!this.getActiveAt(i)) continue;
-    const instance = instances ? instances[i] : this.clearInstance(tempInstance, i);
+    const instance = instances ? instances[i] : this.clearTempInstance(i);
     onUpdate(instance, i);
     instance.updateMatrix();
   }
@@ -78,11 +90,10 @@ InstancedMesh2.prototype.updateInstances = function (this: InstancedMesh2, onUpd
 InstancedMesh2.prototype.updateInstancesPosition = function (this: InstancedMesh2, onUpdate: UpdateEntityCallback) {
   const end = this._instancesArrayCount;
   const instances = this.instances;
-  const tempInstance = this._tempInstance;
 
   for (let i = 0; i < end; i++) {
     if (!this.getActiveAt(i)) continue;
-    const instance = instances ? instances[i] : this.clearInstance(tempInstance, i);
+    const instance = instances ? instances[i] : this.clearTempInstancePosition(i);
     onUpdate(instance, i);
     instance.updateMatrixPosition();
   }
@@ -144,7 +155,7 @@ InstancedMesh2.prototype.addInstances = function (count: number, onCreation: Upd
 InstancedMesh2.prototype.addInstance = function (id: number, onCreation: UpdateEntityCallback) {
   this.instancesCount++;
   this.setActiveAndVisibilityAt(id, true);
-  const instance = this.instances ? this.instances[id] : this.clearInstance(this._tempInstance, id);
+  const instance = this.instances ? this.clearInstance(this.instances[id]) : this.clearTempInstance(id);
   onCreation(instance, id);
   instance.updateMatrix();
   this.bvh?.insert(id);
