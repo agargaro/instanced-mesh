@@ -70,7 +70,6 @@ InstancedMesh2.prototype.clearInstance = function (instance: InstancedEntity) {
   instance.position.set(0, 0, 0);
   instance.scale.set(1, 1, 1);
   instance.quaternion.identity();
-  instance.rotation?.set(0, 0, 0);
   return instance;
 };
 
