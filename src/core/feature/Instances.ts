@@ -46,6 +46,7 @@ declare module '../InstancedMesh2.js' {
      */
     clearInstances(): this;
     /** @internal */ clearTempInstance(index: number): InstancedEntity;
+    /** @internal */ clearTempInstancePosition(index: number): InstancedEntity;
     /** @internal */ clearInstance(instance: InstancedEntity): InstancedEntity;
     /** @internal */ createEntities(start: number): this;
     /** @internal */ addInstance(id: number, onCreation: UpdateEntityCallback): void;
@@ -56,6 +57,13 @@ InstancedMesh2.prototype.clearTempInstance = function (index: number) {
   const instance = this._tempInstance;
   (instance as any).id = index;
   return this.clearInstance(instance);
+};
+
+InstancedMesh2.prototype.clearTempInstancePosition = function (index: number) {
+  const instance = this._tempInstance;
+  (instance as any).id = index;
+  instance.position.set(0, 0, 0);
+  return instance;
 };
 
 InstancedMesh2.prototype.clearInstance = function (instance: InstancedEntity) {
@@ -86,15 +94,9 @@ InstancedMesh2.prototype.updateInstancesPosition = function (this: InstancedMesh
 
   for (let i = 0; i < end; i++) {
     if (!this.getActiveAt(i)) continue;
-    if (instances) {
-      const instance = instances[i];
-      onUpdate(instance, i);
-      instance.updateMatrixPosition();
-    } else {
-      const instance = this.clearTempInstance(i);
-      onUpdate(instance, i);
-      instance.setMatrixPosition();
-    }
+    const instance = instances ? instances[i] : this.clearTempInstancePosition(i);
+    onUpdate(instance, i);
+    instance.updateMatrixPosition();
   }
 
   return this;
