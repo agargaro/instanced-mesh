@@ -1,34 +1,24 @@
 ---
-title: Welcome to Instanced Mesh Docs
+title: Welcome to InstancedMesh2 Doc
 description: instanced mesh is an module of @three.ez.
 template: splash
 hero:
-  tagline: Enhanced InstancedMesh with frustum culling, fast raycasting (using BVH), sorting, visibility management and more.
-  image:
-   file: ../../assets/samoyed-mascot-moved.png
+  tagline: Enhanced InstancedMesh with frustum culling, fast raycasting (using a BVH), sorting, visibility, LOD, skinning and more.
   actions:
+    - text: Tutorial
+      link: /instanced-mesh/getting-started/00-introduction/
+      icon: right-arrow
     - text: API
       link: /instanced-mesh/api/readme
       icon: right-arrow
-    - text: Go to github
+    - text: ""
       link: https://github.com/agargaro/instanced-mesh
-      icon: external
-      variant: minimal
+      icon: github
 ---
 
 import { Card, CardGrid } from '@astrojs/starlight/components';
+import Intro from '../../components/Intro/Intro.astro';
 
-## Features
 
-<CardGrid>
-  <Card title="Per-instance frustum culling" icon="external">Skip rendering for out-of-view instances.</Card>
-  <Card title="Sorting" icon="external">Reduce overdraw and manage transparent objects efficiently.</Card>
-  <Card title="Spatial indexing (dynamic BVH)" icon="external">Speed up raycasting and frustum culling.</Card>
-  <Card title="Dynamic capacity" icon="external">Add or remove instances seamlessly.</Card>
-  <Card title="Per-instance visibility" icon="external">Toggle visibility for each instance individually.</Card>
-  <Card title="Per-instance opacity" icon="external">Set opacity for each instance individually.</Card>
-  <Card title="Object3D-like instances" icon="external">Use instances like Object3D with transforms and custom data.</Card>
-  <Card title="Per-instance uniforms" icon="external">Assign unique shader data to individual instances.</Card>
-  <Card title="Level of Detail (LOD)" icon="external">Dynamically adjust instance detail based on distance.</Card>
-  <Card title="Shadow LOD" icon="external">Optimize shadow rendering with lower detail for distant instances.</Card>
-</CardGrid>
+<Intro client:idle/>
+
