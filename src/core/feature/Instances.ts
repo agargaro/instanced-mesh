@@ -153,7 +153,7 @@ InstancedMesh2.prototype.addInstances = function (count: number, onCreation: Upd
 };
 
 InstancedMesh2.prototype.addInstance = function (id: number, onCreation: UpdateEntityCallback) {
-  this.instancesCount++;
+  this._instancesCount++;
   this.setActiveAndVisibilityAt(id, true);
   const instance = this.instances ? this.clearInstance(this.instances[id]) : this.clearTempInstance(id);
   onCreation(instance, id);
@@ -170,7 +170,7 @@ InstancedMesh2.prototype.removeInstances = function (...ids: number[]) {
       this.setActiveAt(id, false);
       freeIds.push(id);
       bvh?.delete(id);
-      this.instancesCount--;
+      this._instancesCount--;
     }
   }
 
@@ -183,7 +183,7 @@ InstancedMesh2.prototype.removeInstances = function (...ids: number[]) {
 };
 
 InstancedMesh2.prototype.clearInstances = function () {
-  this.instancesCount = 0;
+  this._instancesCount = 0;
   this._instancesArrayCount = 0;
   this._freeIds.length = 0;
   this.bvh?.clear();

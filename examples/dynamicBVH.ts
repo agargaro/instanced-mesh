@@ -67,6 +67,5 @@ main.createView({ scene, camera, onAfterRender: () => spheresCount.updateDisplay
 const gui = new GUI();
 gui.add(instancedMesh, 'capacity').name('instances max count').disable();
 const spheresCount = gui.add(instancedMesh, 'count').name('instances rendered').disable();
-gui.add(config, 'count', 0, instancedMesh.capacity).name('instances count').onChange((v) => instancedMesh.instancesCount = v);
 gui.add(config, 'animatedCount', 0, 50000).name('instances animated');
 gui.add(camera, 'far', 100, config.spawnRadius, 20).name('camera far').onChange(() => camera.updateProjectionMatrix());

@@ -116,7 +116,7 @@ export class InstancedMeshBVH {
    * This approach is more efficient and accurate compared to incremental methods, which add one instance at a time.
    */
   public create(): void {
-    const count = this.target.instancesCount;
+    const count = this.target._instancesCount;
     const instancesArrayCount = this.target._instancesArrayCount;
     const boxes: Float32Array[] = new Array(count); // test if single array and recreation inside node creation is faster due to memory location
     const objects: Uint32Array = new Uint32Array(count);
