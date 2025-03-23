@@ -1,18 +1,25 @@
-import { InstancedMesh2 } from "@three.ez/instanced-mesh";
+import { createRadixSort, InstancedMesh2 } from "@three.ez/instanced-mesh";
 import { MeshLambertMaterial, OctahedronGeometry, Vector3 } from "three";
 import { type SpaceShip } from "./spaceship";
 
-export class Smoke extends InstancedMesh2<{ currentTime: number }> {
+export class Smoke extends InstancedMesh2<{ currentTime: number, dir: Vector3 }> {
   private readonly spawnPoints = [new Vector3(0.52, 0.75, -1), new Vector3(-0.52, 0.75, -1)];
-  private readonly spawnTime = 0.1;
-  private readonly lifeTime = 3;
-  private readonly speed = 4;
-  private readonly scaleMultiplier = 8;
-  private readonly direction = new Vector3(0, 0, 1);
+  private readonly spawnTime = 0.005;
+  private readonly lifeTime = 1;
+  private readonly speed = 3;
+  private readonly scaleMultiplier = 3;
+  private readonly opacityMultiplier = 1;
+  private readonly direction = new Vector3(0, 0.2, 1).normalize();
+  private readonly dirDisplacement = 0.1;
   private time = 0;
 
   constructor(spaceship: SpaceShip) {
-    super(new OctahedronGeometry(0.05, 1), new MeshLambertMaterial({ color: 0xffffff }), { createEntities: true });
+    const material = new MeshLambertMaterial({ emissive: 0x999999, transparent: true, depthWrite: false });
+    super(new OctahedronGeometry(0.03, 1), material, { createEntities: true, capacity: 500 });
+    this.frustumCulled = false;
+
+    this.sortObjects = true;
+    this.customSort = createRadixSort(this);
 
     this.on("animate", (e) => {
       this.updateParticles(e.delta);
@@ -29,12 +36,15 @@ export class Smoke extends InstancedMesh2<{ currentTime: number }> {
         return;
       }
 
-      obj.position.addScaledVector(this.direction, this.speed * delta);
+      obj.position.addScaledVector(obj.dir, this.speed * delta);
       obj.scale.addScalar(this.scaleMultiplier * delta);
+      obj.opacity -= delta * this.opacityMultiplier;
     });
   }
 
   private addParticles(spaceship: SpaceShip, delta: number): void {
+    const dirDisplacement = this.dirDisplacement;
+    const halfDirDisplacement = dirDisplacement / 2;
     this.time += delta;
 
     while (this.time >= this.spawnTime) {
@@ -43,12 +53,19 @@ export class Smoke extends InstancedMesh2<{ currentTime: number }> {
 
       this.addInstances(2, (obj, index) => {
         obj.currentTime = this.time;
+        if (!obj.dir) {
+          obj.dir = this.direction.clone();
+          obj.dir.x += Math.random() * dirDisplacement - halfDirDisplacement;
+          obj.dir.y += Math.random() * dirDisplacement - halfDirDisplacement;
+          obj.dir.z += Math.random() * dirDisplacement - halfDirDisplacement;
+        }
 
         obj.position.copy(this.spawnPoints[index % 2]);
         spaceship.localToWorld(obj.position);
 
-        obj.position.addScaledVector(this.direction, this.speed * obj.currentTime);
+        obj.position.addScaledVector(obj.dir, this.speed * obj.currentTime);
         obj.scale.addScalar(this.scaleMultiplier * obj.currentTime);
+        obj.opacity = 1 - obj.currentTime * this.opacityMultiplier;
       });
     }
   }

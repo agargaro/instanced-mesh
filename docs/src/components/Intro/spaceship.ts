@@ -10,12 +10,12 @@ export class SpaceShip extends Group {
     super();
     this.loadModel();
 
-    const pointLight = new PointLight('white', 20).translateY(5);
+    const pointLight = new PointLight('white', 6, 12, 1).translateY(10);
     this.add(pointLight);
 
+    this.position.set(1.5, 5, -3.5);
     this.rotation.y = Math.PI;
-    this.translateY(5);
-    this.scale.setScalar(0.4);
+    this.scale.setScalar(0.15);
 
     this.bindInteraction();
   }
@@ -29,21 +29,29 @@ export class SpaceShip extends Group {
 
   private bindInteraction(): void {
     const pointer = new Vector2();
-    const newPosition = new Vector3();
+    let newPosition: Vector3;
 
     window.addEventListener("mousemove", (e) => {
+      if (!newPosition) {
+        newPosition = new Vector3();
+      }
+
       pointer.x = e.clientX / window.innerWidth - 0.5;
       pointer.y = -e.clientY / window.innerHeight + 0.5;
 
-      newPosition.x = pointer.x * 10;
-      newPosition.z = pointer.y * 10;
+      newPosition.x = pointer.x * 5;
+      newPosition.z = -0.5 - (pointer.y + 0.5) * 6;
     });
 
 
     this.on("animate", (e) => {
-      this.position.x += (newPosition.x - this.position.x) * e.delta * 10;
-      // this.position.z += (pointer.y - this.position.y) * e.delta;
-      this.rotation.z = (newPosition.x - this.position.x) * e.delta * 10;
+      if (!newPosition) return;
+
+      this.position.x += (newPosition.x - this.position.x) * e.delta * 5;
+      this.position.z += (newPosition.z - this.position.z) * e.delta * 5;
+
+      this.rotation.z = (newPosition.x - this.position.x) * e.delta * 15;
+      this.rotation.x = (newPosition.z - this.position.z) * e.delta * 15;
     });
   }
 }
