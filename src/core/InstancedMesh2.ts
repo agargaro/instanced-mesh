@@ -65,10 +65,6 @@ export class InstancedMesh2<
    */
   public readonly isInstancedMesh2 = true;
   /**
-   * The number of active instances.
-   */
-  public instancesCount = 0;
-  /**
    * An array of `Entity` representing individual instances.
    * This array is only initialized if `createEntities` is set to `true` in the constructor parameters.
    */
@@ -161,6 +157,7 @@ export class InstancedMesh2<
    */
   public onFrustumEnter: OnFrustumEnterCallback = null;
   /** @internal */ _renderer: WebGLRenderer = null;
+  /** @internal */ _instancesCount = 0;
   /** @internal */ _instancesArrayCount = 0;
   /** @internal */ _count = 0;
   /** @internal */ _perObjectFrustumCulled = true;
@@ -195,6 +192,11 @@ export class InstancedMesh2<
    * The number of instances rendered in the last frame.
    */
   public get count(): number { return this._count; }
+
+  /**
+   * The number of active instances.
+   */
+  public get instancesCount(): number { return this._instancesCount; }
 
   /**
    * Determines if per-instance frustum culling is enabled.
@@ -800,7 +802,7 @@ export class InstancedMesh2<
   public override copy(source: InstancedMesh2, recursive?: boolean): this {
     super.copy(source, recursive);
 
-    this.instancesCount = source.instancesCount;
+    this._instancesCount = source._instancesCount;
     this._instancesArrayCount = source._instancesArrayCount;
     this._count = source._capacity;
     this._capacity = source._capacity;
