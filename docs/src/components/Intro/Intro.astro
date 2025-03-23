@@ -3,16 +3,16 @@
 ---
 
 <canvas id="three-canvas"></canvas>
+
+<span id="credits-info">🛈</span>
 <span id="credits">
-  "low poly space ship" (https://skfb.ly/H9qJ) by chrisonciuconcepts is licensed
-  under Creative Commons Attribution
-  (http://creativecommons.org/licenses/by/4.0/).
+  low poly space ship by chrisonciuconcepts (https://skfb.ly/H9qJ)
 </span>
 
 <style>
   #three-canvas {
-    width: 100%;
-    height: 100%;
+    width: 100dvw;
+    height: 100dvh;
     position: fixed;
     top: 0;
     bottom: 0;
@@ -20,7 +20,33 @@
     right: 0;
     z-index: -1;
   }
-
+  #credits-info {
+    position: absolute;
+    margin: 1em;
+    padding: 1em;
+    bottom: 0;
+    right: 0;
+    z-index: 2;
+  }
+  #credits-info:hover,
+  #credits-info:focus {
+    + #credits {
+      opacity: 1;
+    }
+  }
+  #credits {
+    margin-bottom: -100%;
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    font: 0.2em;
+    margin: 2em;
+    overflow: auto;
+    opacity: 0;
+    will-change: opacity;
+    transition: opacity 0.5s linear 1s;
+  }
 </style>
 
 <script src="./intro.ts"></script>

@@ -6,7 +6,7 @@ import { SpaceShip } from "./spaceship";
 
 await Asset.preloadAllPending();
 
-const main = new Main({ rendererParameters: { canvas: document.getElementById("three-canvas") } });
+const main = new Main({ showStats: false, rendererParameters: { canvas: document.getElementById("three-canvas") } });
 main.renderer.toneMapping = ACESFilmicToneMapping;
 main.renderer.toneMappingExposure = 0.5;
 
