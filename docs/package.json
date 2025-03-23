@@ -14,7 +14,7 @@
     "@astrojs/mdx": "^4.1.1",
     "@astrojs/starlight": "^0.32.2",
     "@stackblitz/sdk": "^1.11.0",
-    "@three.ez/instanced-mesh": "latest",
+    "@three.ez/instanced-mesh": "^0.3.1",
     "@three.ez/main": "latest",
     "astro": "^5.4.3",
     "astro-auto-import": "^0.4.4",
@@ -27,6 +27,6 @@
     "vite": "^6.2.0"
   },
   "devDependencies": {
-    "@types/three": "^0.172.0"
+    "@types/three": "~0.171.0"
   }
 }

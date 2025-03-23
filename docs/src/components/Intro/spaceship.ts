@@ -1,6 +1,8 @@
 import { Asset } from "@three.ez/main";
 import { BoxGeometry, Group, Mesh, MeshLambertMaterial, Vector3 } from "three";
 import { type GLTF, GLTFLoader } from "three/examples/jsm/Addons.js";
+import type { Pane } from "tweakpane";
+import { Smoke } from "./smoke";
 
 const GLB_PATH = "./instanced-mesh/low_poly_space_ship.glb";
 
@@ -10,13 +12,20 @@ export class SpaceShip extends Group {
   constructor() {
     super();
 
-    const gltf = Asset.get<GLTF>(GLB_PATH);
+    this.loadGltfAsset();
 
-    console.assert(gltf, "GLTF not loaded");
+    this.rotateY(Math.PI);
+    this.updateMatrix();
+
+    this.setupPane();
+  }
+
+  private loadGltfAsset() {
+    const gltf = Asset.get<GLTF>(GLB_PATH);
+    console.assert(gltf, "[spaceship]: GLTF not loaded");
 
     const group = gltf.scene.children[0];
-
-    console.assert(group, "Group not found");
+    console.assert(group, "[spaceship]: Group not found");
 
     this.add(group);
 
@@ -24,28 +33,22 @@ export class SpaceShip extends Group {
     mesh.material = new MeshLambertMaterial({
       map: mesh.material.map,
     });
+  }
 
-    this.rotateY(Math.PI);
+  setupPane() {
+    const pane: Pane = window.pane;
+    if (pane) {
+      const spaceshipFolder = window.pane.addFolder({
+        title: this.constructor.name,
+        expanded: true,
+      });
 
-    this.updateMatrix();
-
-    const invertedMatrix = this.matrix.invert();
-    const rightSpawn = new Vector3(0.6, 0.3, -5).applyMatrix4(invertedMatrix);
-    const leftSpawn = new Vector3(-0.6, 0, 0).applyMatrix4(invertedMatrix);
-
-    // pane.addBinding(rightSpawn, "rightSpawn", { x: {}, y: {}, z: {} });
-    // pane.addBinding(rightSpawn, "leftSpawn", { x: {}, y: {}, z: {} });
-
-    const box = new BoxGeometry(0.1, 0.1, 0.1);
-
-    const rightBox = new Mesh(
-      box,
-      new MeshLambertMaterial({ color: 0xff0000 }),
-    );
-    rightBox.position.add(rightSpawn);
-
-    const leftBox = new Mesh(box, new MeshLambertMaterial({ color: 0x00ff00 }));
-    leftBox.position.add(leftSpawn);
-    this.add(rightBox, leftBox);
+      spaceshipFolder.addBinding(this, "position", {
+        label: this.constructor.name + " pos",
+      });
+      spaceshipFolder.addBinding(this, "rotation", {
+        label: this.constructor.name + " rotation",
+      });
+    }
   }
 }
