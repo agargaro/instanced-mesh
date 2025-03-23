@@ -6,8 +6,8 @@ import { GLTF, GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { Sky } from 'three/examples/jsm/objects/Sky.js';
 import { InstancedMesh2 } from '../src/index.js';
 
-const count = 10000;
-const terrainSize = 1000;
+const count = 1000000;
+const terrainSize = 20000;
 
 const main = new Main(); // init renderer and other stuff
 main.renderer.toneMapping = ACESFilmicToneMapping;
@@ -20,16 +20,15 @@ const scene = new Scene();
 
 const treeGLTF = (await Asset.load<GLTF>(GLTFLoader, 'tree.glb')).scene.children[0] as Mesh<BufferGeometry, MeshStandardMaterial>;
 
-const trees = new InstancedMesh2(main.renderer, count, treeGLTF.geometry, treeGLTF.material);
+const trees = new InstancedMesh2(treeGLTF.geometry, treeGLTF.material, { capacity: count });
 trees.castShadow = true;
 trees.cursor = 'pointer';
 
-trees.addLOD(new BoxGeometry(100, 1000, 100), new MeshLambertMaterial(), 100);
+trees.addLOD(new BoxGeometry(100, 1000, 100), new MeshLambertMaterial({ color: 'darkgreen' }), 1000);
 trees.addShadowLOD(trees.geometry);
-trees.addShadowLOD(new BoxGeometry(100, 1000, 100), 50);
-// trees.levels.shadowRender.levels[0].object.castShadow = true; // TODO create utility methods
+trees.addShadowLOD(new BoxGeometry(100, 1000, 100), 200);
 
-trees.createEntities((obj, index) => {
+trees.addInstances(count, (obj) => {
   obj.position.setX(Math.random() * terrainSize - terrainSize / 2).setZ(Math.random() * terrainSize - terrainSize / 2);
   obj.scale.setScalar(Math.random() * 0.01 + 0.01);
   obj.rotateY(Math.random() * Math.PI * 2).rotateZ(Math.random() * 0.3 - 0.15);
@@ -81,7 +80,12 @@ dirLight.on('animate', (e) => {
 
 scene.add(sky, trees, ground, new AmbientLight(), dirLight, dirLight.target);
 
-main.createView({ scene, camera, enabled: false, onAfterRender: () => treeCount.updateDisplay() });
+main.createView({
+  scene, camera, enabled: false, onAfterRender: () => {
+    treeCount.updateDisplay();
+    treeLODCount.updateDisplay();
+  }
+});
 
 const controls = new MapControls(camera, main.renderer.domElement);
 controls.maxPolarAngle = Math.PI / 2.1;
@@ -92,6 +96,7 @@ controls.target.set(-25, 10, 10);
 controls.update();
 
 const gui = new GUI();
-gui.add(trees.instances as any, 'length').name('instances total').disable();
+gui.add(trees, 'instancesCount').name('instances total').disable();
 const treeCount = gui.add(trees, 'count').name('instances rendered').disable();
-gui.add(camera, 'far', 2000, 10000, 100).name('camera far').onChange(() => camera.updateProjectionMatrix());
+const treeLODCount = gui.add(trees.LODinfo.render.levels[1].object, 'count').name('instances rendered').disable();
+gui.add(camera, 'far', 1000, 4000, 100).name('camera far').onChange(() => camera.updateProjectionMatrix());

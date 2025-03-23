@@ -18,8 +18,6 @@ scene.add(instancedMesh);
 instancedMesh.initUniformsPerInstance(({ fragment: { metalness: 'float', roughness: 'float', emissive: 'vec3' } }));
 
 instancedMesh.addInstances(50, (obj, index) => {
-  // obj.position.set(index % 10 * 5 - 25, index / 10 * 5 - 10, 0);
-  // obj.rotateX(index * 0.25);
   obj.position.random().multiplyScalar(20).subScalar(10);
   obj.quaternion.random();
   obj.setUniform('metalness', Math.random());
@@ -32,5 +30,3 @@ instancedMesh.on('animate', (e) => {
 });
 
 main.createView({ scene, camera: new PerspectiveCameraAuto().translateZ(50) });
-
-// instancedMesh.matricesTexture.partialUpdate = true;
