@@ -46,7 +46,7 @@ myInstancedMesh.addInstances(count, (obj, index) => {
 - <img src="public/ts.png" alt="ts" width="16" /> [1kk static trees](https://stackblitz.com/edit/three-ezinstancedmesh2-1kk-static-trees?file=src%2Fmain.ts&embed=1&hideDevTools=1&view=preview)
 - <img src="public/ts.png" alt="ts" width="16" /> [Instances array dynamic](https://stackblitz.com/edit/three-ezinstancedmesh2-instances-array-dynamic?file=src%2Fmain.ts&embed=1&hideDevTools=1&view=preview)
 - <img src="public/ts.png" alt="ts" width="16" /> [Sorting](https://stackblitz.com/edit/three-ezinstancedmesh2-sorting?file=src%2Fmain.ts&embed=1&hideDevTools=1&view=preview)
-- <img src="public/ts.png" alt="ts" width="16" /> [Custom material](https://stackblitz.com/edit/three-ezinstancedmesh2-custom-material?file=src%2Fmain.ts&embed=1&hideDevTools=1&view=preview)
+- <img src="public/ts.png" alt="ts" width="16" /> [Uniforms per instance](https://stackblitz.com/edit/three-ezinstancedmesh2-custom-material?file=src%2Fmain.ts&embed=1&hideDevTools=1&view=preview)
 - <img src="public/ts.png" alt="ts" width="16" /> [Dynamic BVH (no vite)](https://stackblitz.com/edit/three-ezinstancedmesh2-dynamic-bvh?file=index.ts&embed=1&hideDevTools=1&view=preview)
 - <img src="public/ts.png" alt="ts" width="16" /> [Fast raycasting](https://stackblitz.com/edit/three-ezinstancedmesh2-fast-raycasting?file=src%2Fmain.ts&embed=1&hideDevTools=1&view=preview)
 - <img src="public/ts.png" alt="ts" width="16" /> [LOD](https://stackblitz.com/edit/three-ezinstancedmesh2-instancedmeshlod?file=src%2Fmain.ts&embed=1&hideDevTools=1&view=preview)
@@ -179,7 +179,7 @@ myInstancedMesh.instances[0].updateMatrix(); // necessary after transformations
 Assign unique shader uniforms to each instance, working with every materials.
 
 ```ts
-myInstancedMesh.initUniformsPerInstance(({ metalness: 'float', roughness: 'float', emissive: 'vec3' }));
+myInstancedMesh.initUniformsPerInstance({ fragment: { metalness: 'float', roughness: 'float', emissive: 'vec3' } });
 
 myInstancedMesh.setUniformAt(index, 'metalness', 0.5);
 myInstancedMesh.instances[0].setUniform('emissive', new Color('white')); // if instances array is created

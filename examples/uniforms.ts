@@ -15,7 +15,7 @@ new RGBELoader().load(url, (texture) => {
 const instancedMesh = new InstancedMesh2(new TorusKnotGeometry(1, 0.4, 128, 32), new MeshStandardMaterial(), { createEntities: true });
 scene.add(instancedMesh);
 
-instancedMesh.initUniformsPerInstance(({ fragment: { metalness: 'float', roughness: 'float', emissive: 'vec3' } }));
+instancedMesh.initUniformsPerInstance({ fragment: { metalness: 'float', roughness: 'float', emissive: 'vec3' } });
 
 instancedMesh.addInstances(50, (obj, index) => {
   obj.position.random().multiplyScalar(20).subScalar(10);
