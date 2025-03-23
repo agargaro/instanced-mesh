@@ -1,55 +1,41 @@
 import { Main, PerspectiveCameraAuto } from '@three.ez/main';
-import { BoxGeometry, MeshNormalMaterial, Scene, Vector3 } from 'three';
+import { MeshNormalMaterial, Scene, SphereGeometry } from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { GUI } from 'three/examples/jsm/libs/lil-gui.module.min.js';
-import { InstancedMesh2 } from '../src/index.js';
-import { createRadixSort } from '../src/utils/createRadixSort.js';
+import { createRadixSort, InstancedMesh2 } from '../src/index.js';
 
 const config = {
-  count: 100000,
-  animatedCount: 0,
+  count: 20000,
   customSort: true
 };
 
 const main = new Main();
-const camera = new PerspectiveCameraAuto().translateZ(100);
+const camera = new PerspectiveCameraAuto().translateZ(10);
 const scene = new Scene();
 
-const material = new MeshNormalMaterial();
-const instancedMesh = new InstancedMesh2(main.renderer, config.count, new BoxGeometry(), material);
+const material = new MeshNormalMaterial({ transparent: true, opacity: 0.5, depthWrite: false });
+const instancedMesh = new InstancedMesh2(new SphereGeometry(1, 16, 8), material, { capacity: config.count, createEntities: true });
 
-instancedMesh.createEntities((object) => {
+instancedMesh.addInstances(config.count, (object) => {
   object.position.random().multiplyScalar(100).subScalar(50);
-  object.quaternion.random();
 });
 
-instancedMesh.sortObjects = false;
+instancedMesh.sortObjects = true;
 const radixSort = createRadixSort(instancedMesh);
 instancedMesh.customSort = radixSort;
 
 scene.add(instancedMesh);
 
-const axis = new Vector3(1, 0, 0);
 const controls = new OrbitControls(camera, main.renderer.domElement);
 controls.autoRotate = true;
 
-scene.on('animate', (e) => {
-  controls.update();
-
-  for (let i = 0; i < config.animatedCount; i++) {
-    const mesh = instancedMesh.instances[i];
-    mesh.rotateOnAxis(axis, e.delta);
-    mesh.updateMatrix();
-  }
-});
+scene.on('animate', (e) => controls.update());
 
 main.createView({ scene, camera, enabled: false, backgroundColor: 'white', onAfterRender: () => spheresCount.updateDisplay() });
 
 const gui = new GUI();
-gui.add(instancedMesh, 'maxCount').name('instances max count').disable();
+gui.add(instancedMesh, 'capacity').name('instances capacity').disable();
 const spheresCount = gui.add(instancedMesh, 'count').name('instances rendered').disable();
-gui.add(config, 'count', 0, instancedMesh.capacity).name('instances count').onChange((v) => instancedMesh.instancesCount = v);
-gui.add(config, 'animatedCount', 0, 10000).name('instances animated');
 gui.add(instancedMesh, 'perObjectFrustumCulled');
 gui.add(instancedMesh, 'sortObjects');
 gui.add(instancedMesh.material, 'opacity', 0, 1).onChange((v) => {

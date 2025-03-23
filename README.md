@@ -69,8 +69,7 @@ If you like this project, please leave a star. Thank you! ❤️
 
 ## 📚 Documentation
 
-<!-- The tutorial is available here. <br> -->
-The API documentation is available [here](https://agargaro.github.io/instanced-mesh/api/readme).
+The documentation is available [here](https://agargaro.github.io/instanced-mesh).
 
 ## ⬇️ Installation
 
