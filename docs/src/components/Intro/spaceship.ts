@@ -6,6 +6,7 @@ const GLB_PATH = "/instanced-mesh/low_poly_space_ship.glb";
 Asset.preload(GLTFLoader, GLB_PATH);
 
 export class SpaceShip extends Group {
+
   constructor() {
     super();
     this.loadModel();
@@ -13,7 +14,7 @@ export class SpaceShip extends Group {
     const pointLight = new PointLight('white', 6, 12, 1).translateY(10);
     this.add(pointLight);
 
-    this.position.set(0, 5, -2.5);
+    this.position.set(0, 5, 20);
     this.rotation.y = Math.PI;
     this.scale.setScalar(0.15);
 
@@ -29,18 +30,16 @@ export class SpaceShip extends Group {
 
   private bindInteraction(): void {
     const pointer = new Vector2();
-    let newPosition: Vector3;
+    const newPosition = new Vector3(0, 0, -2.5);
+    const minPosition = new Vector3(-1, 0, -5);
+    const maxPosition = new Vector3(1, 0, -1.5); 
 
-    window.addEventListener("mousemove", (e) => {
-      if (!newPosition) {
-        newPosition = new Vector3();
-      }
+    window.addEventListener("pointermove", (e) => {
+      pointer.x = e.clientX / window.innerWidth;
+      pointer.y = e.clientY / window.innerHeight;
 
-      pointer.x = e.clientX / window.innerWidth - 0.5;
-      pointer.y = -e.clientY / window.innerHeight + 0.5;
-
-      newPosition.x = pointer.x * 2.5;
-      newPosition.z = -1 - (pointer.y + 0.5) * 6;
+      newPosition.x = (pointer.x * (maxPosition.x - minPosition.x)) + minPosition.x;
+      newPosition.z = (pointer.y * (maxPosition.z - minPosition.z)) + minPosition.z;
     });
 
 
@@ -50,8 +49,8 @@ export class SpaceShip extends Group {
       this.position.x += (newPosition.x - this.position.x) * e.delta * 5;
       this.position.z += (newPosition.z - this.position.z) * e.delta * 5;
 
-      this.rotation.z = (newPosition.x - this.position.x) * e.delta * 15;
-      this.rotation.x = (newPosition.z - this.position.z) * e.delta * 15;
+      this.rotation.z = (newPosition.x - this.position.x) * e.delta * 20;
+      this.rotation.x = (newPosition.z - this.position.z) * e.delta * 20;
     });
   }
 }

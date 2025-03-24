@@ -5,8 +5,8 @@ import { rand } from "./random";
 const capacity = 800;
 
 export class Floor extends InstancedMesh2<{ multiplier: number; startTime: number; }> {
-  public floorSpeed = 7;
-  public scaleSpeed = 0.7;
+  public floorSpeed = 5;
+  public scaleSpeed = 0.8;
   private readonly maxHeight = 15;
 
   constructor() {
