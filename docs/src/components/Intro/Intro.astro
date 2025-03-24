@@ -2,6 +2,12 @@
 
 ---
 
+<style is:global>
+  /* Unscoped, delivered as-is to the browser. */
+  body {
+    overflow: hidden;
+  }
+</style>
 <canvas id="three-canvas"></canvas>
 
 <span id="credits-info">🛈</span>
@@ -23,8 +29,7 @@
     user-select: none;
   }
   #credits-info {
-    position: absolute;
-    margin: 1em;
+    position: fixed;
     padding: 1em;
     bottom: 0;
     right: 0;
@@ -34,11 +39,13 @@
   #credits-info:focus {
     + #credits {
       opacity: 1;
+      display: block;
     }
   }
   #credits {
+    display: none;
     margin-bottom: -100%;
-    position: absolute;
+    position: fixed;
     bottom: 0;
     left: 0;
     right: 0;
