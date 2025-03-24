@@ -15,4 +15,4 @@ const scene = new Scene();
 const spaceship = new SpaceShip();
 scene.add(spaceship, new Smoke(spaceship), new Floor());
 
-main.createView({ scene, camera });
+main.createView({ scene, camera, enabled: false });

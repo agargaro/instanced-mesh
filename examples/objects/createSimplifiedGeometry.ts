@@ -22,7 +22,6 @@ export async function createSimplifiedGeometry(geometry: BufferGeometry, params:
   if (params.sparse) flags.push('Sparse');
   if (params.errorAbsolute) flags.push('ErrorAbsolute');
   if (params.prune) {
-    MeshoptSimplifier.useExperimentalFeatures = true;
     flags.push('Prune');
   }
 
