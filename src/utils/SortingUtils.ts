@@ -53,8 +53,3 @@ export function sortOpaque(a: InstancedRenderItem, b: InstancedRenderItem): numb
 export function sortTransparent(a: InstancedRenderItem, b: InstancedRenderItem): number {
   return b.depth - a.depth;
 }
-
-/** @internal */
-export function ascSortIntersection(a: Intersection, b: Intersection): number {
-  return a.distance - b.distance;
-}
