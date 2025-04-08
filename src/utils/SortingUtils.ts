@@ -1,7 +1,7 @@
-import { Intersection, Material } from 'three';
-import { InstancedRenderItem } from '../core/utils/InstancedRenderList.js';
+import { Material } from 'three';
 import { radixSort, RadixSortOptions } from 'three/addons/utils/SortUtils.js';
 import { InstancedMesh2 } from '../core/InstancedMesh2.js';
+import { InstancedRenderItem } from '../core/utils/InstancedRenderList.js';
 
 /**
  * Creates a radix sort function specifically for sorting `InstancedMesh2` instances.
