@@ -16,18 +16,7 @@
 
 </div>
 
-`InstancedMesh2` is an alternative version of `InstancedMesh` with enhanced features for performance and usability:
-- [**Per-instance frustum culling**](#per-instance-frustum-culling): *skip rendering for out-of-view instances.*
-- [**Sorting**](#sorting): *reduce overdraw and manage transparent objects efficiently.*
-- [**Spatial indexing (dynamic BVH)**](#spatial-indexing-dynamic-bvh): *speed up raycasting and frustum culling.*
-- [**Dynamic capacity**](#dynamic-capacity): *add or remove instances seamlessly.*
-- [**Per-instance visibility**](#per-instance-visibility): *toggle visibility for each instance individually.*
-- [**Per-instance opacity**](#per-instance-opacity): *set opacity for each instance individually.*
-- [**Object3D-like instances**](#object3d-like-instances): *use instances like `Object3D` with transforms and custom data.*
-- [**Per-instance uniforms**](#per-instance-uniforms): *assign unique shader data to individual instances.*
-- [**Level of Detail (LOD)**](#level-of-detail-lod): *dynamically adjust instance detail based on distance.*
-- [**Shadow LOD**](#shadow-lod): *optimize shadow rendering with lower detail for distant instances.*
-- [**Skinning**](#skinning): *apply skeletal animations to instances for more complex and dynamic movements.*
+`InstancedMesh2` is an alternative version of `InstancedMesh` with enhanced features for performance and usability.
 
 ```ts
 const myInstancedMesh = new InstancedMesh2(geometry, material);
@@ -36,6 +25,18 @@ myInstancedMesh.addInstances(count, (obj, index) => {
   obj.position.x = index;
 });
 ```
+
+- [**Dynamic capacity**](#dynamic-capacity): *add or remove instances seamlessly.*
+- [**Object3D-like instances**](#object3d-like-instances): *use instances like `Object3D` with transforms and custom data.*
+- [**Per-instance frustum culling**](#per-instance-frustum-culling): *skip rendering for out-of-view instances.*
+- [**Spatial indexing (dynamic BVH)**](#spatial-indexing-dynamic-bvh): *speed up raycasting and frustum culling.*
+- [**Sorting**](#sorting): *reduce overdraw and manage transparent objects efficiently.*
+- [**Per-instance visibility**](#per-instance-visibility): *toggle visibility for each instance individually.*
+- [**Per-instance opacity**](#per-instance-opacity): *set opacity for each instance individually.*
+- [**Per-instance uniforms**](#per-instance-uniforms): *assign unique shader data to individual instances.*
+- [**Level of Detail (LOD)**](#level-of-detail-lod): *dynamically adjust instance detail based on distance.*
+- [**Shadow LOD**](#shadow-lod): *optimize shadow rendering with lower detail for distant instances.*
+- [**Skinning**](#skinning): *apply skeletal animations to instances for more complex and dynamic movements.*
 
 ## 🧑‍💻 Live Examples
 
@@ -96,37 +97,6 @@ Or you can import it from CDN:
 
 ## 🚀 Features
 
-### Per-instance frustum culling
-
-Avoiding rendering objects outside the camera frustum can drastically improve performance (especially for complex geometries). <br>
-Frustum culling by default is performed by iterating all instances, [but it is possible to speed up this process by creating a spatial indexing data structure **(BVH)**](#spatial-indexing-dynamic-bvh). <br>
-
-By default `perObjectFrustumCulled` is `true`.
-
-### Sorting
-
-Sorting can be used to decrease overdraw and render transparent objects. <br>
-
-It's possible to improve sort performance adding a `customSort`, like built-in `createRadixSort`.
-
-By default `sortObjects` is `false`. <br>
-
-```ts
-import { createRadixSort } from '@three.ez/instanced-mesh';
-
-myInstancedMesh.sortObjects = true;
-myInstancedMesh.customSort = createRadixSort(myInstancedMesh);
-```
-
-### Spatial indexing (dynamic BVH)
-
-**To speed up raycasting and frustum culling**, a spatial indexing data structure can be created to contain the boundingBoxes of all instances. <br>
-This works very well if the instances are **mostly static** (updating a BVH can be expensive) and scattered in world space. <br>
-Setting a margin makes BVH updating faster, but may make raycasting and frustum culling slightly slower.
-```ts
-myInstancedMesh.computeBVH({ margin: 0 });
-```
-
 ### Dynamic capacity
 
 Manage a dynamic number of instances, automatically expanding the data buffers as needed to accommodate additional instances. <br>
@@ -143,24 +113,6 @@ myInstancedMesh.removeInstances(id0, idx, ...);
 myInstancedMesh.clearInstances(); // remove all instances
 ```
 
-### Per-instance visibility
-
-Set the visibility status of each instance:
-
-```ts
-myInstancedMesh.setVisibilityAt(index, false);
-myInstancedMesh.instances[0].visible = false; // if instances array is created
-```
-
-### Per-instance opacity
-
-Set the opacity of each instance:
-
-```ts
-myInstancedMesh.setOpacityAt(index, 0.5);
-myInstancedMesh.instances[0].opacity = 0.5; // if instances array is created
-```
-
 ### Object3D-like instances
 
 It's possible to create an array of `InstancedEntity` **(Object3D-like)** in order to easily manipulate instances, using more memory.
@@ -172,7 +124,56 @@ myInstancedMesh.instances[0].customData = {};
 myInstancedMesh.instances[0].position.random();
 myInstancedMesh.instances[0].rotateX(Math.PI);
 myInstancedMesh.instances[0].updateMatrix(); // necessary after transformations
-```     
+```  
+
+### Per-instance frustum culling
+
+Avoiding rendering objects outside the camera frustum can drastically improve performance (especially for complex geometries). <br>
+Frustum culling by default is performed by iterating all instances, [but it is possible to speed up this process by creating a spatial indexing data structure **(BVH)**](#spatial-indexing-dynamic-bvh). <br>
+
+By default `perObjectFrustumCulled` is `true`.
+
+### Spatial indexing (dynamic BVH)
+
+**To speed up raycasting and frustum culling**, a spatial indexing data structure can be created to contain the boundingBoxes of all instances. <br>
+This works very well if the instances are **mostly static** (updating a BVH can be expensive) and scattered in world space. <br>
+Setting a margin makes BVH updating faster, but may make raycasting and frustum culling slightly slower.
+```ts
+myInstancedMesh.computeBVH({ margin: 0 });
+```
+
+### Sorting
+
+Sorting can be used to decrease overdraw and render transparent objects. <br>
+
+It's possible to improve sort performance adding a `customSort`, like built-in `createRadixSort`.
+
+By default `sortObjects` is `false`. <br>
+
+```ts
+import { createRadixSort } from '@three.ez/instanced-mesh';
+
+myInstancedMesh.sortObjects = true;
+myInstancedMesh.customSort = createRadixSort(myInstancedMesh);
+```
+
+### Per-instance visibility
+
+Set the visibility status of each instance.
+
+```ts
+myInstancedMesh.setVisibilityAt(index, false);
+myInstancedMesh.instances[0].visible = false; // if instances array is created
+```
+
+### Per-instance opacity
+
+Set the opacity of each instance. It's recommended to enable [**instances sorting**](#sorting) and disable the `depthWriting` of the material.
+
+```ts
+myInstancedMesh.setOpacityAt(index, 0.5);
+myInstancedMesh.instances[0].opacity = 0.5; // if instances array is created
+```   
 
 ### Per-instance uniforms
 
