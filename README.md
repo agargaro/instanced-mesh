@@ -59,6 +59,7 @@ myInstancedMesh.addInstances(count, (obj, index) => {
 **Using other libraries**
 - Threlte
 - <img src="public/ts.png" alt="ts" width="16" /> [React-three-fiber](https://stackblitz.com/edit/vitejs-vite-zahmbaan?file=src%2FApp.tsx) (thanks to [Saumac](https://github.com/saumac))
+- <img src="public/js.png" alt="js" width="16" /> [React-three-fiber](https://stackblitz.com/~/github.com/Lunakepio/ac-2-dna-ui) (thanks to [Lunakepio](https://github.com/Lunakepio))
 
 ## ❔ Need help?
 
