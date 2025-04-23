@@ -186,6 +186,14 @@ InstancedMesh2.prototype.clearInstances = function () {
   this._instancesCount = 0;
   this._instancesArrayCount = 0;
   this._freeIds.length = 0;
+
   this.bvh?.clear();
+
+  if (this.LODinfo) {
+    for (const obj of this.LODinfo.objects) {
+      obj._count = 0;
+    }
+  }
+
   return this;
 };
