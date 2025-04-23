@@ -123,6 +123,10 @@ InstancedMesh2.prototype.createEntities = function (this: InstancedMesh2, start:
 };
 
 InstancedMesh2.prototype.addInstances = function (count: number, onCreation?: UpdateEntityCallback) {
+  if (!onCreation && this.bvh) {
+    console.warn('InstancedMesh2: if `computeBVH()` has already been called, it is better to valorize the instances in the `onCreation` callback for better performance.');
+  }
+
   // refill holes created from removeInstances
   const freeIds = this._freeIds;
   if (freeIds.length > 0) {
@@ -160,9 +164,8 @@ InstancedMesh2.prototype.addInstance = function (id: number, onCreation?: Update
   if (onCreation) {
     onCreation(instance, id);
     instance.updateMatrix();
-  } else if (this.bvh) {
+  } else {
     instance.setMatrixIdentity();
-    console.warn('InstancedMesh2.addInstances: if `computeBVH()` has already been called, it is better to valorize the instances in the `onCreation` callback for better performance.');
   }
 
   this.bvh?.insert(id);
