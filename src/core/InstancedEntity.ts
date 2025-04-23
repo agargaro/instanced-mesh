@@ -101,6 +101,39 @@ export class InstancedEntity {
   }
 
   /**
+   * Set the transformation matrix to identity matrix.
+   */
+  public setMatrixIdentity(): void {
+    const owner = this.owner;
+    const te = owner.matricesTexture._data;
+    const id = this.id;
+    const offset = id * 16;
+
+    te[offset + 0] = 1;
+    te[offset + 1] = 0;
+    te[offset + 2] = 0;
+    te[offset + 3] = 0;
+
+    te[offset + 4] = 0;
+    te[offset + 5] = 1;
+    te[offset + 6] = 0;
+    te[offset + 7] = 0;
+
+    te[offset + 8] = 0;
+    te[offset + 9] = 0;
+    te[offset + 10] = 1;
+    te[offset + 11] = 0;
+
+    te[offset + 12] = 0;
+    te[offset + 13] = 0;
+    te[offset + 14] = 0;
+    te[offset + 15] = 1;
+
+    owner.matricesTexture.enqueueUpdate(id);
+    owner.bvh?.move(id);
+  }
+
+  /**
    * Updates the transformation matrix with its current position, quaternion, and scale.
    * The updated matrix is stored in the `owner.matricesTexture`.
    */

@@ -1,4 +1,4 @@
-import { AttachedBindMode, BindMode, Box3, BufferAttribute, BufferGeometry, Camera, Color, ColorManagement, ColorRepresentation, DataTexture, DetachedBindMode, InstancedBufferAttribute, Material, Matrix4, Mesh, Object3D, Object3DEventMap, Scene, Skeleton, SkinnedMesh, Sphere, TypedArray, Vector3, WebGLProgramParametersWithUniforms, WebGLRenderer } from 'three';
+import { AttachedBindMode, BindMode, Box3, BufferAttribute, BufferGeometry, Camera, Color, ColorManagement, ColorRepresentation, DataTexture, DetachedBindMode, InstancedBufferAttribute, InstancedMesh, Material, Matrix4, Mesh, Object3D, Object3DEventMap, Scene, Skeleton, SkinnedMesh, Sphere, TypedArray, Vector3, WebGLProgramParametersWithUniforms, WebGLRenderer } from 'three';
 import { CustomSortCallback, OnFrustumEnterCallback } from './feature/FrustumCulling.js';
 import { Entity } from './feature/Instances.js';
 import { LODInfo } from './feature/LOD.js';
@@ -235,10 +235,25 @@ export class InstancedMesh2<
    * @returns The created `InstancedMesh2` instance.
    */
   public static createFrom<TData = {}>(mesh: Mesh, params: InstancedMesh2Params = {}): InstancedMesh2<TData> {
+    if ((mesh as InstancedMesh).isInstancedMesh) {
+      params.capacity ??= (mesh as InstancedMesh).count;
+    }
+
     const instancedMesh = new InstancedMesh2<TData>(mesh.geometry, mesh.material, params);
 
     if ((mesh as SkinnedMesh).isSkinnedMesh) {
       instancedMesh.initSkeleton((mesh as SkinnedMesh).skeleton);
+    }
+
+    if ((mesh as InstancedMesh).isInstancedMesh) {
+      instancedMesh.addInstances((mesh as InstancedMesh).count);
+
+      for (let i = 0; i < (mesh as InstancedMesh).count; i++) {
+        (mesh as InstancedMesh).getMatrixAt(i, _tempMat4);
+        (mesh as InstancedMesh).getColorAt(i, _tempCol);
+        instancedMesh.setMatrixAt(i, _tempMat4);
+        instancedMesh.setColorAt(i, _tempCol);
+      }
     }
 
     // TODO add morph
