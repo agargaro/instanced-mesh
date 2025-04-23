@@ -251,7 +251,7 @@ export class InstancedMesh2<
 
       const geometry = mesh.geometry.clone();
       geometry.deleteAttribute('instanceIndex');
-      // TODO add warning if there are instancedAttribute
+      warnIfInstancedAttribute();
 
       const instancedMesh = new InstancedMesh2<TData>(geometry, mesh.material, params);
 
@@ -288,6 +288,15 @@ export class InstancedMesh2<
             rgbaArray[j + 1] = rgbArray[i + 1];
             rgbaArray[j + 2] = rgbArray[i + 2];
             rgbaArray[j + 3] = 1;
+          }
+        }
+      }
+
+      function warnIfInstancedAttribute(): void {
+        const attributes = geometry.attributes;
+        for (const name in attributes) {
+          if ((attributes[name] as InstancedBufferAttribute).isInstancedBufferAttribute) {
+            console.warn(`InstancedBufferAttribute "${name}" is not supported. It will be ignored.`);
           }
         }
       }
