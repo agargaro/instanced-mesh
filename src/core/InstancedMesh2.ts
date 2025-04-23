@@ -229,36 +229,42 @@ export class InstancedMesh2<
   }
 
   /**
-   * Create an `InstancedMesh2` instance from an existing `Mesh`.
-   * @param mesh The mesh to create an `InstanceMesh2` from.
+   * Create an `InstancedMesh2` instance from an existing `Mesh` or `InstancedMesh`.
+   * @param mesh The `Mesh` or `InstancedMesh` to create an `InstanceMesh2` from.
    * @param params  Optional configuration parameters object. See `InstancedMesh2Params` for details.
    * @returns The created `InstancedMesh2` instance.
    */
   public static createFrom<TData = {}>(mesh: Mesh, params: InstancedMesh2Params = {}): InstancedMesh2<TData> {
-    if ((mesh as InstancedMesh).isInstancedMesh) {
-      params.capacity ??= (mesh as InstancedMesh).count;
+    if ((mesh as SkinnedMesh).isSkinnedMesh) return createFromSkinnedMesh(mesh as SkinnedMesh);
+    if ((mesh as InstancedMesh).isInstancedMesh) return createFromInstancedMesh(mesh as InstancedMesh);
+    // TODO add morph support
+    return new InstancedMesh2<TData>(mesh.geometry, mesh.material, params);
+
+    function createFromSkinnedMesh<TData = {}>(mesh: SkinnedMesh): InstancedMesh2<TData> {
+      const instancedMesh = new InstancedMesh2<TData>(mesh.geometry, mesh.material, params);
+      instancedMesh.initSkeleton(mesh.skeleton);
+      return instancedMesh;
     }
 
-    const instancedMesh = new InstancedMesh2<TData>(mesh.geometry, mesh.material, params);
+    function createFromInstancedMesh<TData = {}>(mesh: InstancedMesh): InstancedMesh2<TData> {
+      params.capacity ??= mesh.count;
 
-    if ((mesh as SkinnedMesh).isSkinnedMesh) {
-      instancedMesh.initSkeleton((mesh as SkinnedMesh).skeleton);
-    }
+      const geometry = mesh.geometry.clone();
+      geometry.deleteAttribute('instanceIndex');
+      // TODO
 
-    if ((mesh as InstancedMesh).isInstancedMesh) {
-      instancedMesh.addInstances((mesh as InstancedMesh).count);
+      const instancedMesh = new InstancedMesh2<TData>(geometry, mesh.material, params);
+      instancedMesh.addInstances(mesh.count);
 
-      for (let i = 0; i < (mesh as InstancedMesh).count; i++) {
-        (mesh as InstancedMesh).getMatrixAt(i, _tempMat4);
-        (mesh as InstancedMesh).getColorAt(i, _tempCol);
+      for (let i = 0; i < mesh.count; i++) {
+        mesh.getMatrixAt(i, _tempMat4);
+        mesh.getColorAt(i, _tempCol);
         instancedMesh.setMatrixAt(i, _tempMat4);
         instancedMesh.setColorAt(i, _tempCol);
       }
+
+      return instancedMesh;
     }
-
-    // TODO add morph
-
-    return instancedMesh;
   }
 
   /** @internal */
