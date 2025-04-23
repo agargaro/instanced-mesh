@@ -33,7 +33,7 @@ export class InstancedEntity {
   /**
    * The local rotation as `Quaternion`.
    */
-  public quaternion: Quaternion;
+  public quaternion = new Quaternion();
   /**
    * The local rotation as `Euler`.
    * This works only if `allowsEuler` is set to `true` in the `InstancedMesh2` constructor parameters.
@@ -90,9 +90,9 @@ export class InstancedEntity {
   constructor(owner: InstancedMesh2, id: number, useEuler: boolean) {
     this.id = id;
     this.owner = owner;
-    const quaternion = this.quaternion = new Quaternion();
 
     if (useEuler) {
+      const quaternion = this.quaternion;
       const rotation = this.rotation = new Euler();
 
       rotation._onChange(() => quaternion.setFromEuler(rotation, false));

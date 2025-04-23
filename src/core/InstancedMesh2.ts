@@ -247,23 +247,50 @@ export class InstancedMesh2<
     }
 
     function createFromInstancedMesh<TData = {}>(mesh: InstancedMesh): InstancedMesh2<TData> {
-      params.capacity ??= mesh.count;
+      params.capacity = Math.max(mesh.count, params.capacity);
 
       const geometry = mesh.geometry.clone();
       geometry.deleteAttribute('instanceIndex');
-      // TODO
+      // TODO add warning if there are instancedAttribute
 
       const instancedMesh = new InstancedMesh2<TData>(geometry, mesh.material, params);
-      instancedMesh.addInstances(mesh.count);
 
-      for (let i = 0; i < mesh.count; i++) {
-        mesh.getMatrixAt(i, _tempMat4);
-        mesh.getColorAt(i, _tempCol);
-        instancedMesh.setMatrixAt(i, _tempMat4);
-        instancedMesh.setColorAt(i, _tempCol);
-      }
+      instancedMesh.position.copy(mesh.position);
+      instancedMesh.quaternion.copy(mesh.quaternion);
+      instancedMesh.scale.copy(mesh.scale);
+
+      copyInstances();
+      copyMatrices();
+      copyColors();
+      // TODO copy morph target?
 
       return instancedMesh;
+
+      function copyInstances(): void {
+        instancedMesh.setInstancesArrayCount(mesh.count);
+        instancedMesh._instancesCount = mesh.count;
+        instancedMesh.availabilityArray.fill(true, 0, mesh.count * 2);
+      }
+
+      function copyMatrices(): void {
+        (instancedMesh.matricesTexture.image.data as Float32Array).set(mesh.instanceMatrix.array);
+      }
+
+      function copyColors(): void {
+        if (mesh.instanceColor) {
+          instancedMesh.initColorsTexture();
+
+          const rgbArray = mesh.instanceColor.array;
+          const rgbaArray = instancedMesh.colorsTexture.image.data as Float32Array;
+
+          for (let i = 0, j = 0; i < rgbArray.length; i += 3, j += 4) {
+            rgbaArray[j] = rgbArray[i];
+            rgbaArray[j + 1] = rgbArray[i + 1];
+            rgbaArray[j + 2] = rgbArray[i + 2];
+            rgbaArray[j + 3] = 1;
+          }
+        }
+      }
     }
   }
 
