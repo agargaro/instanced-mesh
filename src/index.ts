@@ -23,3 +23,4 @@ export * from './shaders/chunks/instanced_skinning_pars_vertex.glsl.js';
 export * from './shaders/chunks/instanced_vertex.glsl.js';
 
 export * from './utils/SortingUtils.js';
+export * from './utils/CreateFrom.js';

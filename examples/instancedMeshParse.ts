@@ -1,7 +1,7 @@
 import { Main, PerspectiveCameraAuto } from '@three.ez/main';
 import { Color, IcosahedronGeometry, InstancedMesh, Matrix4, MeshBasicMaterial, Scene } from 'three';
 import { OrbitControls } from 'three/examples/jsm/Addons.js';
-import { InstancedMesh2 } from '../src/index.js';
+import { createInstancedMesh2From } from '../src/index.js';
 
 const camera = new PerspectiveCameraAuto().translateZ(1);
 const scene = new Scene();
@@ -38,7 +38,7 @@ scene.add(im);
 function parseToInstancedMesh2(): void {
   if (im.parent !== scene) return;
   im.removeFromParent();
-  const im2 = InstancedMesh2.createFrom(im);
+  const im2 = createInstancedMesh2From(im);
   scene.add(im2);
 }
 

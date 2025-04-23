@@ -1,8 +1,8 @@
 import { Asset, Main, PerspectiveCameraAuto } from '@three.ez/main';
 import { AnimationMixer, BufferGeometry, DirectionalLight, Fog, HemisphereLight, Interpolant, Matrix4, Mesh, MeshStandardMaterial, PlaneGeometry, PropertyMixer, Scene, Vector3 } from 'three';
 import { GLTF, GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import { InstancedMesh2 } from '../src/index.js';
 import { createSimplifiedGeometry } from './objects/createSimplifiedGeometry.js';
+import { createInstancedMesh2From } from '../src/index.js';
 
 const excludedBones = new Set([
   'mixamorigLeftHand', 'mixamorigLeftHandThumb1', 'mixamorigLeftHandThumb2', 'mixamorigLeftHandThumb3',
@@ -53,7 +53,7 @@ dummy.geometry = await createSimplifiedGeometry(geometry, { ratio: 0.1, error: 1
 
 // CREATE INSTANCEDMESH2 AND LODS
 const count = 3000;
-const soldiers = InstancedMesh2.createFrom<{ time: number; speed: number; offset: number }>(dummy, { capacity: count, createEntities: true });
+const soldiers = createInstancedMesh2From<{ time: number; speed: number; offset: number }>(dummy, { capacity: count, createEntities: true });
 soldiers.boneTexture.partialUpdate = false;
 
 soldiers.addLOD(await createSimplifiedGeometry(geometry, { ratio: 0.07, error: 1 }), dummy.material.clone(), (1 / soldierScale) * 10);
