@@ -416,7 +416,7 @@ export class InstancedMesh2<
 
     shader.instancing = false;
 
-    if (!shader.defines) shader.defines = {};
+    shader.defines ??= {};
     shader.defines['USE_INSTANCING_INDIRECT'] = '';
 
     shader.uniforms.matricesTexture = { value: this.matricesTexture };
@@ -752,7 +752,7 @@ export class InstancedMesh2<
     const geometry = this._geometry;
     const count = this._instancesArrayCount;
 
-    if (this.boundingBox === null) this.boundingBox = new Box3();
+    this.boundingBox ??= new Box3();
     if (geometry.boundingBox === null) geometry.computeBoundingBox();
 
     const geoBoundingBox = geometry.boundingBox;
@@ -774,7 +774,7 @@ export class InstancedMesh2<
     const geometry = this._geometry;
     const count = this._instancesArrayCount;
 
-    if (this.boundingSphere === null) this.boundingSphere = new Sphere();
+    this.boundingSphere ??= new Sphere();
     if (geometry.boundingSphere === null) geometry.computeBoundingSphere();
 
     const geoBoundingSphere = geometry.boundingSphere;

@@ -223,7 +223,7 @@ export class SquareDataTexture extends DataTexture {
     const state = renderer.state;
     const gl = renderer.getContext() as WebGL2RenderingContext;
     // @ts-expect-error Expected 2 arguments, but got 3.
-    if (!this._utils) this._utils = new WebGLUtils(gl, renderer.extensions, renderer.capabilities); // third argument is necessary for older three versions
+    this._utils ??= new WebGLUtils(gl, renderer.extensions, renderer.capabilities); // third argument is necessary for older three versions
     const glFormat = this._utils.convert(this.format);
     const glType = this._utils.convert(this.type);
     const { data, width } = this.image;
