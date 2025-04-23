@@ -33,7 +33,7 @@ export class InstancedEntity {
   /**
    * The local rotation as `Quaternion`.
    */
-  public quaternion: Quaternion;
+  public quaternion = new Quaternion();
   /**
    * The local rotation as `Euler`.
    * This works only if `allowsEuler` is set to `true` in the `InstancedMesh2` constructor parameters.
@@ -90,14 +90,47 @@ export class InstancedEntity {
   constructor(owner: InstancedMesh2, id: number, useEuler: boolean) {
     this.id = id;
     this.owner = owner;
-    const quaternion = this.quaternion = new Quaternion();
 
     if (useEuler) {
+      const quaternion = this.quaternion;
       const rotation = this.rotation = new Euler();
 
       rotation._onChange(() => quaternion.setFromEuler(rotation, false));
       quaternion._onChange(() => rotation.setFromQuaternion(quaternion, undefined, false));
     }
+  }
+
+  /**
+   * Set the transformation matrix to identity matrix.
+   */
+  public setMatrixIdentity(): void {
+    const owner = this.owner;
+    const te = owner.matricesTexture._data;
+    const id = this.id;
+    const offset = id * 16;
+
+    te[offset + 0] = 1;
+    te[offset + 1] = 0;
+    te[offset + 2] = 0;
+    te[offset + 3] = 0;
+
+    te[offset + 4] = 0;
+    te[offset + 5] = 1;
+    te[offset + 6] = 0;
+    te[offset + 7] = 0;
+
+    te[offset + 8] = 0;
+    te[offset + 9] = 0;
+    te[offset + 10] = 1;
+    te[offset + 11] = 0;
+
+    te[offset + 12] = 0;
+    te[offset + 13] = 0;
+    te[offset + 14] = 0;
+    te[offset + 15] = 1;
+
+    owner.matricesTexture.enqueueUpdate(id);
+    owner.bvh?.move(id);
   }
 
   /**
