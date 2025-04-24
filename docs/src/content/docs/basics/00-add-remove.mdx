@@ -21,13 +21,13 @@ iMesh.addInstances(count, (obj, index) => {
 
 ### Remove Instances
 
-Removes instances by their IDs. When an instance is removed:
+It's possible to remove instances by their IDs. When an instance is removed:
 - The instance is marked as inactive
 - Its ID is stored in a pool of available IDs
 - The slot is automatically reused when adding new instances
 
 ```ts
-iMesh.removeInstances(id0, idx, ...);
+iMesh.removeInstances(id0, id1, ...);
 ```
 
 ### Clear Instances
