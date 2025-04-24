@@ -1,0 +1,49 @@
+---
+title: Add and Remove Instances
+---
+
+You can add instances without specifying a length: buffers will automatically expand as needed. <br/>
+To set a specific initial buffer capacity, set the [`capacity`](https://agargaro.github.io/instanced-mesh/api/interfaces/instancedmesh2params/#capacity)
+ in the constructor parameters:
+
+```ts
+const iMesh = new InstancedMesh2(geo, mat, { capacity: 10000 });
+```
+
+### Add Instances
+
+```ts
+iMesh.addInstances(count, (obj, index) => {
+  obj.position.x = index;
+  obj.quaternion.random();
+});
+```
+
+### Remove Instances
+
+It's possible to remove instances by their IDs. When an instance is removed:
+- The instance is marked as inactive
+- Its ID is stored in a pool of available IDs
+- The slot is automatically reused when adding new instances
+
+```ts
+iMesh.removeInstances(id0, id1, ...);
+```
+
+### Clear Instances
+
+```ts
+iMesh.clearInstances();
+```
+
+### Example
+
+In this example, instances can be added and removed by clicking:
+
+:::note
+[`scene.on(eventName, callback)`](https://agargaro.github.io/three.ez/docs/api#-event-programming) is only available in the 
+[`@three.ez/main`](https://github.com/agargaro/three.ez) package.
+:::
+
+
+<Example path='add-remove'/>

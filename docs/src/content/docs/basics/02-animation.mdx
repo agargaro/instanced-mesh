@@ -1,0 +1,66 @@
+---
+title: Animate Instances
+---
+
+### Animate one instance
+
+[If an array of instances has been created](https://agargaro.github.io/instanced-mesh/basics/00-Instancedentity/), 
+it's possible to update an instance in this way:
+
+
+```ts
+iMesh.instances[index].position.random();
+iMesh.instances[index].rotateX(Math.PI);
+iMesh.instances[index].updateMatrix(); // Required after transformations
+```
+
+:::note
+After modifying `position`, `scale`, or `quaternion`, you must call the 
+[`updateMatrix`](https://agargaro.github.io/instanced-mesh/api/classes/instancedentity/#updatematrix) method to apply the changes.
+:::
+
+:::tip
+For better performance, if only `position` is updated, use the 
+[`updateMatrixPosition`](https://agargaro.github.io/instanced-mesh/api/classes/instancedentity/#updatematrixposition) method instead.
+:::
+
+### Animate multiple instances with for loop
+
+[If an array of instances has been created](https://agargaro.github.io/instanced-mesh/basics/00-Instancedentity/), 
+it's possible to update an instance in this way:
+
+```ts
+for (const instance of iMesh.instances) {
+  if (instance.active) { // if isn't removed
+    instance.position.x += 0.1;
+    instance.updateMatrixPosition();
+  }
+}
+```
+
+### Animate all instances using `updateInstances`
+
+**This is the recommended method.** <br/>
+This method iterates over all active instances and automatically calls the `updateMatrix` method.
+
+```ts
+this.updateInstances((obj) => {
+  instance.scale.x += 0.1;
+});
+```
+
+:::tip
+For better performance, if only `position` is updated, use the 
+[`updateInstancesPosition`](https://agargaro.github.io/instanced-mesh/api/classes/instancedmesh2/#updateinstancesposition) method instead.
+:::
+
+:::caution
+[If an array of instances](https://agargaro.github.io/instanced-mesh/basics/00-Instancedentity/) has **not** been created,
+the `position`, `scale` and `quaternion` of the instances will not be maintained and thus reset in the callback.
+:::
+
+### Example
+
+In this example, each instance is animated:
+
+<Example path='animation'/>

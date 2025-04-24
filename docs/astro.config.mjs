@@ -51,6 +51,14 @@ export default defineConfig({
           label: 'Basics',
           autogenerate: { directory: 'basics' },
         },
+        {
+          label: 'Advanced',
+          autogenerate: { directory: 'advanced' },
+        },
+        {
+          label: 'More',
+          autogenerate: { directory: 'more' },
+        },
         // {
         //   label: 'Reference',
         //   autogenerate: { directory: 'reference' },
