@@ -14,8 +14,7 @@ torusKnots.addInstances(9, (obj, index) => {
 });
 
 torusKnots.on('animate', (e) => {
-  for (const instance of torusKnots.instances) {
+  torusKnots.updateInstances((instance) => {
     instance.rotation.z += e.delta;
-    instance.updateMatrix();
-  }
+  });
 });

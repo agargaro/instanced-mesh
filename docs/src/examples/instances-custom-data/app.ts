@@ -18,9 +18,8 @@ torusKnots.addInstances(9, (obj, index) => {
 });
 
 torusKnots.on('animate', (e) => {
-  for (const instance of torusKnots.instances) {
+  torusKnots.updateInstances((instance) => {
     instance.rotateZ(e.delta);
     instance.scale.setScalar(Math.abs(Math.sin(instance.startScale + e.total)));
-    instance.updateMatrix();
-  }
+  });
 });
