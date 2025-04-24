@@ -2,7 +2,8 @@
 title: Create InstancedEntity
 ---
 
-Each instance can automatically create an associated [`InstancedEntity`](https://agargaro.github.io/instanced-mesh/api/classes/instancedentity).<br/>
+Each instance can automatically create an associated [`InstancedEntity`](https://agargaro.github.io/instanced-mesh/api/classes/instancedentity) 
+(an object similar to [`Object3D`](https://threejs.org/docs/#api/en/core/Object3D)).<br/>
 This provides a simple API to access and modify instance properties, as shown below:
 
 ```ts
@@ -19,22 +20,11 @@ const iMesh = new InstancedMesh2(geo, mat, { createEntities: true });
 ```
 
 :::note
-After modifying `position`, `scale`, or `quaternion`, you must call the 
-[`updateMatrix`](https://agargaro.github.io/instanced-mesh/api/classes/instancedentity/#updatematrix) method to apply the changes.
-:::
-
-:::tip
-For better performance, if only `position` is updated, use the 
-[`updateMatrixPosition`](https://agargaro.github.io/instanced-mesh/api/classes/instancedentity/#updatematrixposition) method instead.
+Check out the `InstancedEntity` API [here](https://agargaro.github.io/instanced-mesh/api/classes/instancedentity).
 :::
 
 ### Example
 
-This example demonstrates how the instances array can be used to animate instances easily:
-
-:::note
-[`torusKnots.on(eventName, callback)`](https://agargaro.github.io/three.ez/docs/api#-event-programming) is only available in the 
-[`@three.ez/main`](https://github.com/agargaro/three.ez) package.
-:::
+This example demonstrates how the instances array can be used to color instances after they have been added:
 
 <Example path='instances-array'/>

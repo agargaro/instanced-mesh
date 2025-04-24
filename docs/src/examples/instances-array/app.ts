@@ -9,12 +9,8 @@ torusKnots.addInstances(9, (obj, index) => {
   obj.position.x = (index % 3 - 1) * 5;
   obj.position.y = (Math.trunc(index / 3) - 1) * 5;
   obj.quaternion.random();
-  obj.color = Math.random() * 0xffffff;
 });
 
-torusKnots.on('animate', (e) => {
-  for (const instance of torusKnots.instances) {
-    instance.rotateZ(e.delta);
-    instance.updateMatrix();
-  }
-});
+torusKnots.instances[2].color = 'red';
+torusKnots.instances[4].color = 'green';
+torusKnots.instances[6].color = 'blue';
