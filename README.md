@@ -138,9 +138,10 @@ By default `perObjectFrustumCulled` is `true`.
 
 **To speed up raycasting and frustum culling**, a spatial indexing data structure can be created to contain the boundingBoxes of all instances. <br>
 This works very well if the instances are **mostly static** (updating a BVH can be expensive) and scattered in world space. <br>
+
 Setting a margin makes BVH updating faster, but may make raycasting and frustum culling slightly slower.
 ```ts
-myInstancedMesh.computeBVH({ margin: 0 });
+myInstancedMesh.computeBVH({ margin: 0 }); // margin is optional
 ```
 
 ### Sorting
