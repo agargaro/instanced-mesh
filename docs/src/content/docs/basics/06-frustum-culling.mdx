@@ -12,10 +12,10 @@ iMesh.perObjectFrustumCulled = true; // default is true
 ### How It Works
 
 Frustum culling is performed every frame in two ways:
-- **Linear (default):** Iterates through all instances, checking if their boundingSphere is inside the camera's frustum. 
+- **Linear (default):** Iterates through all instances, checking if their boundingSphere is inside the camera's frustum. <br/>
   **Best for dynamic scenarios**.
 - **BVH:** [If a BVH is built](https://agargaro.github.io/instanced-mesh/basics/09-bvh-build/), 
-  its nodes are recursely iterated. If a node is outside the camera's frustum, the node and all its children are discarded. 
+  its nodes are recursely iterated. If a node is outside the camera's frustum, the node and all its children are discarded. <br/> 
   **Best for mostly static scenarios**.
 
 :::tip
@@ -54,6 +54,10 @@ iMesh.onFrustumEnter = (index, camera) => {
   return iMesh.getPositionAt(index).distanceTo(camera.position) <= maxDistance;
 };
 ```
+
+:::caution
+Do not update `position`, `scale`, or `quaternion` in this callback, otherwise frustum culling will not work properly.
+:::
 
 ### Example
 

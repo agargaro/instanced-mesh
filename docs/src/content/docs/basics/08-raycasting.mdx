@@ -2,7 +2,33 @@
 title: Raycasting
 ---
 
-WIP
+### How It Works
 
-// raycastonlyfrustum
-// bvh
+Raycasting is performed in two ways:
+- **Linear (default):** Iterates through all instances, calling [`raycast`](https://threejs.org/docs/#api/en/core/Object3D.raycast) 
+  for each instance. <br/>
+  **Best for dynamic scenarios**.
+- **BVH:** [If a BVH is built](https://agargaro.github.io/instanced-mesh/basics/09-bvh-build/), 
+  its nodes are recursely iterated. If a node isn't intersected by the ray, the node and all its children are discarded. <br/>
+  **Best for mostly static scenarios**.
+
+:::tip
+If complex geometry is used, it's recommended to use [`three-mesh-bvh`](https://github.com/gkjohnson/three-mesh-bvh) 
+to acelerate the raycasting of a mesh, creating a BVH containing the triangles.
+:::
+
+### `raycastOnlyFrustum` Property
+
+Using the linear approach, you can iterate only the instances rendered in the previous frame, in this way:
+
+```ts
+iMesh.raycastOnlyFrustum = true;
+```
+
+:::caution
+If a BVH has been built, this property will be ignored.
+:::
+
+### Example
+
+<Example path='raycasting'/>
