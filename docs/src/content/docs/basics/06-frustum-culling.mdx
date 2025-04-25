@@ -2,8 +2,55 @@
 title: Frustum Culling
 ---
 
-WIP
+With frustum culling, instances outside the camera's frustum are not rendered. <br/>
+This saves GPU resources by using the CPU to calculate the indices to render.
 
-// autoupdate
-// frustum enter
-// bvh
+```ts
+iMesh.perObjectFrustumCulled = true; // default is true
+```
+
+### How It Works
+
+Frustum culling is performed every frame in two ways:
+- **Linear (default):** Iterates through all instances, checking if their boundingSphere is inside the camera's frustum. 
+  **Best for dynamic scenarios**.
+- **BVH:** [If a BVH is built](https://agargaro.github.io/instanced-mesh/basics/09-bvh-build/), 
+  its nodes are recursely iterated. If a node is outside the camera's frustum, the node and all its children are discarded. 
+  **Best for mostly static scenarios**.
+
+### When Not to Use It
+
+Sometimes, frustum culling can be more costly than beneficial, so it's better to skip it if:
+
+- Most instances are always within the camera's frustum.
+- The geometry is too simple (e.g., cubes, blades of grass, etc.).
+
+### Disable Autoupdate
+
+It's possible to disable the automatic computing of frustum culling and sorting before each rendering in this way:
+
+```ts
+iMesh.autoUpdate = false;
+
+// compute frustum culling and sorting manually
+iMesh.performFrustumCulling(camera);
+```
+
+### `OnFrustumEnter` Callback
+
+When frustum culling is performed, the [`onFrustumEnter`](https://agargaro.github.io/instanced-mesh/api/classes/instancedmesh2/#onfrustumenter) 
+callback is called for each instance in the camera frustum. 
+This callback is very useful for animating only the bones of visible instances.
+
+**If the callback returns true, the instance will be rendered**.
+
+```ts
+iMesh.onFrustumEnter = (index, camera) => {
+  // render only if not too far away
+  return iMesh.getPositionAt(index).distanceTo(camera.position) <= maxDistance;
+};
+```
+
+### Example
+
+<Example path='frustum-culling'/>
