@@ -11,7 +11,7 @@ export type TypedArrayConstructor = new (count: number) => TypedArray;
 /**
  * Represents the texture information including its data, size, format, and data type.
  */
-export type TextureInfo = { array: TypedArray; size: number; format: PixelFormat; type: TextureDataType };
+export type TextureInfo = { array: TypedArray; size: number; format: PixelFormat; type: TextureDataType; channelsFixed: ChannelSize };
 /**
  * Represents information for updating rows in the texture, including the row index and number of rows.
  */
@@ -81,7 +81,7 @@ export function getSquareTextureInfo(arrayType: TypedArrayConstructor, channels:
       break;
   }
 
-  return { array, size, type, format };
+  return { array, size, type, format, channelsFixed: channels };
 }
 
 /**
@@ -119,12 +119,12 @@ export class SquareDataTexture extends DataTexture {
    * @param fetchInFragmentShader Optional flag that determines if uniform values should be fetched in the fragment shader instead of the vertex shader.
    */
   constructor(arrayType: TypedArrayConstructor, channels: ChannelSize, pixelsPerInstance: number, capacity: number, uniformMap?: UniformMap, fetchInFragmentShader?: boolean) {
-    const { array, format, size, type } = getSquareTextureInfo(arrayType, channels, pixelsPerInstance, capacity);
+    const { array, format, size, type, channelsFixed } = getSquareTextureInfo(arrayType, channels, pixelsPerInstance, capacity);
     super(array, size, size, format, type);
     this._data = array;
-    this._channels = channels;
+    this._channels = channelsFixed;
     this._pixelsPerInstance = pixelsPerInstance;
-    this._stride = pixelsPerInstance * channels;
+    this._stride = pixelsPerInstance * channelsFixed;
     this._rowToUpdate = new Array(size);
     this._uniformMap = uniformMap;
     this._fetchUniformsInFragmentShader = fetchInFragmentShader;
