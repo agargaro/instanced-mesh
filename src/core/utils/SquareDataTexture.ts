@@ -119,6 +119,7 @@ export class SquareDataTexture extends DataTexture {
    * @param fetchInFragmentShader Optional flag that determines if uniform values should be fetched in the fragment shader instead of the vertex shader.
    */
   constructor(arrayType: TypedArrayConstructor, channels: ChannelSize, pixelsPerInstance: number, capacity: number, uniformMap?: UniformMap, fetchInFragmentShader?: boolean) {
+    if (channels === 3) channels = 4;
     const { array, format, size, type } = getSquareTextureInfo(arrayType, channels, pixelsPerInstance, capacity);
     super(array, size, size, format, type);
     this._data = array;
