@@ -1,7 +1,7 @@
 import { ShaderMaterial, ShaderMaterialParameters, Texture, Vector2 } from 'three';
 
 export class TileMaterial extends ShaderMaterial {
-  public override vertexShader = `
+  public override vertexShader = /* glsl */`
     #include <instanced_pars_vertex>
     varying vec2 vUv;
 
@@ -11,7 +11,7 @@ export class TileMaterial extends ShaderMaterial {
       gl_Position = projectionMatrix * modelViewMatrix * instanceMatrix * vec4(position, 1.0);
     }`;
 
-  public override fragmentShader = `
+  public override fragmentShader = /* glsl */`
     uniform vec2 offset;
     uniform sampler2D map;
     uniform vec2 tileSize;

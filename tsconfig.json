@@ -13,6 +13,9 @@
     "outDir": "dist/src",
     "esModuleInterop": true,
     "noImplicitAny": false,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "types": [
+      "vite-plugin-glsl/ext"
+    ]
   }
 }

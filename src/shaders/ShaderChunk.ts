@@ -1,9 +1,9 @@
 import { ShaderChunk } from 'three';
-import instanced_pars_vertex from './chunks/instanced_pars_vertex.glsl.js';
-import instanced_color_pars_vertex from './chunks/instanced_color_pars_vertex.glsl.js';
-import instanced_vertex from './chunks/instanced_vertex.glsl.js';
-import instanced_color_vertex from './chunks/instanced_color_vertex.glsl.js';
-import instanced_skinning_pars_vertex from './chunks/instanced_skinning_pars_vertex.glsl.js';
+import instanced_pars_vertex from './chunks/instanced_pars_vertex.glsl';
+import instanced_color_pars_vertex from './chunks/instanced_color_pars_vertex.glsl';
+import instanced_vertex from './chunks/instanced_vertex.glsl';
+import instanced_color_vertex from './chunks/instanced_color_vertex.glsl';
+import instanced_skinning_pars_vertex from './chunks/instanced_skinning_pars_vertex.glsl';
 
 ShaderChunk['instanced_pars_vertex'] = instanced_pars_vertex;
 ShaderChunk['instanced_color_pars_vertex'] = instanced_color_pars_vertex;

@@ -1,4 +1,3 @@
-export default /* glsl */`
 #ifdef USE_INSTANCING_COLOR_INDIRECT
   uniform highp sampler2D colorsTexture;
 
@@ -20,4 +19,3 @@ export default /* glsl */`
     }
   #endif
 #endif
-`;

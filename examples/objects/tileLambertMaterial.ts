@@ -8,14 +8,14 @@ export class TileLambertMaterial extends MeshLambertMaterial {
   public override onBeforeCompile(p: WebGLProgramParametersWithUniforms, r: WebGLRenderer): void {
     p.uniforms.tileSize = { value: new Vector2(this.tileSizeX / this.map.image.width, this.tileSizeY / this.map.image.height) };
 
-    p.fragmentShader = p.fragmentShader.replace('void main() {', `
+    p.fragmentShader = p.fragmentShader.replace('void main() {', /* glsl */`
       uniform vec2 offset;
       uniform vec2 tileSize;
 
       void main() {
     `);
 
-    p.fragmentShader = p.fragmentShader.replace('#include <map_fragment>', `
+    p.fragmentShader = p.fragmentShader.replace('#include <map_fragment>', /* glsl */`
       diffuseColor *= texture2D(map, vMapUv * tileSize + offset * tileSize);
     `);
   }

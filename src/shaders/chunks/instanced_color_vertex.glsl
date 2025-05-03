@@ -1,4 +1,3 @@
-export default /* glsl */`
 #ifdef USE_INSTANCING_COLOR_INDIRECT
   #ifdef USE_VERTEX_COLOR
     vColor = color;
@@ -10,4 +9,3 @@ export default /* glsl */`
     #endif
   #endif
 #endif
-`;
