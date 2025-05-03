@@ -1,4 +1,3 @@
-export default /* glsl */`
 #ifdef USE_INSTANCING_INDIRECT
   attribute uint instanceIndex;
   uniform highp sampler2D matricesTexture;  
@@ -15,4 +14,3 @@ export default /* glsl */`
     return mat4( v1, v2, v3, v4 );
   }
 #endif
-`;

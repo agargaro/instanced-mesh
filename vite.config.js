@@ -2,6 +2,7 @@ import { resolve } from 'path';
 import { defineConfig } from 'vite';
 import { viteStaticCopy } from 'vite-plugin-static-copy';
 import { externalizeDeps } from 'vite-plugin-externalize-deps';
+import glsl from 'vite-plugin-glsl';
 
 export default defineConfig(({ command }) => ({
   publicDir: command === 'build' ? false : 'public',
@@ -14,6 +15,7 @@ export default defineConfig(({ command }) => ({
     }
   },
   plugins: [
+    glsl(),
     externalizeDeps(),
     viteStaticCopy({
       targets: [{

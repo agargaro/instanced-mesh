@@ -16,11 +16,11 @@ export * from './core/utils/InstancedRenderList.js';
 export * from './core/utils/SquareDataTexture.js';
 
 export * from './shaders/ShaderChunk.js';
-export * from './shaders/chunks/instanced_color_pars_vertex.glsl.js';
-export * from './shaders/chunks/instanced_color_vertex.glsl.js';
-export * from './shaders/chunks/instanced_pars_vertex.glsl.js';
-export * from './shaders/chunks/instanced_skinning_pars_vertex.glsl.js';
-export * from './shaders/chunks/instanced_vertex.glsl.js';
+export * from './shaders/chunks/instanced_color_pars_vertex.glsl';
+export * from './shaders/chunks/instanced_color_vertex.glsl';
+export * from './shaders/chunks/instanced_pars_vertex.glsl';
+export * from './shaders/chunks/instanced_skinning_pars_vertex.glsl';
+export * from './shaders/chunks/instanced_vertex.glsl';
 
 export * from './utils/SortingUtils.js';
 export * from './utils/CreateFrom.js';

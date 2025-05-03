@@ -1,4 +1,3 @@
-export default /* glsl */`
 #ifdef USE_INSTANCING_INDIRECT
   mat4 instanceMatrix = getInstancedMatrix();
 
@@ -6,4 +5,3 @@ export default /* glsl */`
     vColor *= getColorTexture();
   #endif
 #endif
-`;
