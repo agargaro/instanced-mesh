@@ -2,7 +2,8 @@
   
   <h1>Three.ez - InstancedMesh2</h1>
   <p>
-    <em>Simplify your <b>three.js</b> application development with <b>three.ez</b>!</em>
+    <em>Simplify your <b>three.js</b> application development with <b>three.ez</b>!</em> <br><br>
+    <b><a href="https://github.com/agargaro/batched-mesh-extensions">three.ez/batched-mesh-extensions</a></b> - <code>BatchedMesh</code> extension methods and enhancements for better performance and usability
   </p>
 
   <img src="public/banner.png" alt="banner" /> <br>
