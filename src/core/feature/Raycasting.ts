@@ -54,7 +54,7 @@ InstancedMesh2.prototype.raycastInstances = function (raycaster, result) {
 
     const instancesToCheck = this.instanceIndex.array; // TODO this is unsorted and it's slower to iterate. If raycastFrustum is false, don't use it.
     const raycastFrustum = this.raycastOnlyFrustum && this._perObjectFrustumCulled;
-    const checkCount = raycastFrustum ? this._count : this._instancesArrayCount;
+    const checkCount = raycastFrustum ? this.count : this._instancesArrayCount;
 
     for (let i = 0; i < checkCount; i++) {
       this.checkObjectIntersection(raycaster, instancesToCheck[i], result);
