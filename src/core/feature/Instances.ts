@@ -201,7 +201,7 @@ InstancedMesh2.prototype.clearInstances = function () {
 
   if (this.LODinfo) {
     for (const obj of this.LODinfo.objects) {
-      obj._count = 0;
+      obj.count = 0;
     }
   }
 

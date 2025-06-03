@@ -57,6 +57,10 @@ export class InstancedMesh2<
   TEventMap extends Object3DEventMap = Object3DEventMap
 > extends Mesh<TGeometry, TMaterial, TEventMap> {
   /**
+   * The number of instances rendered in the last frame.
+   */
+  public declare count: number;
+  /**
    * @defaultValue `InstancedMesh2`
    */
   public override readonly type = 'InstancedMesh2';
@@ -159,7 +163,6 @@ export class InstancedMesh2<
   /** @internal */ _renderer: WebGLRenderer = null;
   /** @internal */ _instancesCount = 0;
   /** @internal */ _instancesArrayCount = 0;
-  /** @internal */ _count = 0;
   /** @internal */ _perObjectFrustumCulled = true;
   /** @internal */ _sortObjects = false;
   /** @internal */ _capacity: number;
@@ -187,11 +190,6 @@ export class InstancedMesh2<
    * The capacity of the instance buffers.
    */
   public get capacity(): number { return this._capacity; }
-
-  /**
-   * The number of instances rendered in the last frame.
-   */
-  public get count(): number { return this._count; }
 
   /**
    * The number of active instances.
@@ -331,7 +329,7 @@ export class InstancedMesh2<
 
   protected initIndexAttribute(): void {
     if (!this._renderer) {
-      this._count = 0;
+      this.count = 0;
       return;
     }
 
@@ -784,9 +782,9 @@ export class InstancedMesh2<
   public override copy(source: InstancedMesh2, recursive?: boolean): this {
     super.copy(source, recursive);
 
+    this.count = source._capacity;
     this._instancesCount = source._instancesCount;
     this._instancesArrayCount = source._instancesArrayCount;
-    this._count = source._capacity;
     this._capacity = source._capacity;
 
     if (source.boundingBox !== null) this.boundingBox = source.boundingBox.clone();

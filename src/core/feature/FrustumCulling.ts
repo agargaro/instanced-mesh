@@ -55,7 +55,7 @@ const _sphere = new Sphere();
 
 InstancedMesh2.prototype.performFrustumCulling = function (camera: Camera, cameraLOD = camera) {
   if (!this._parentLOD && this._instancesArrayCount === 0) {
-    this._count = 0;
+    this.count = 0;
     return;
   }
 
@@ -67,14 +67,14 @@ InstancedMesh2.prototype.performFrustumCulling = function (camera: Camera, camer
     LODrenderList = !isShadowRendering ? LODinfo.render : (LODinfo.shadowRender ?? LODinfo.render);
 
     for (const object of LODinfo.objects) {
-      object._count = 0;
+      object.count = 0;
     }
   }
 
   if (LODrenderList?.levels.length > 0) this.frustumCullingLOD(LODrenderList, camera, cameraLOD);
   else if (!this._parentLOD) this.frustumCulling(camera);
 
-  this.instanceIndex.update(this._renderer, this._count);
+  this.instanceIndex.update(this._renderer, this.count);
 };
 
 InstancedMesh2.prototype.frustumCulling = function (camera: Camera) {
@@ -119,7 +119,7 @@ InstancedMesh2.prototype.frustumCulling = function (camera: Camera) {
       array[i] = list[i].index;
     }
 
-    this._count = count;
+    this.count = count;
     _renderList.reset();
   }
 };
@@ -137,7 +137,7 @@ InstancedMesh2.prototype.updateIndexArray = function () {
     }
   }
 
-  this._count = count;
+  this.count = count;
   this._indexArrayNeedsUpdate = false;
 };
 
@@ -173,7 +173,7 @@ InstancedMesh2.prototype.BVHCulling = function (camera: Camera) {
     }
   });
 
-  this._count = count;
+  this.count = count;
 };
 
 InstancedMesh2.prototype.linearCulling = function (camera: Camera) {
@@ -210,7 +210,7 @@ InstancedMesh2.prototype.linearCulling = function (camera: Camera) {
     }
   }
 
-  this._count = count;
+  this.count = count;
 };
 
 InstancedMesh2.prototype.frustumCullingLOD = function (LODrenderList: LODRenderList, camera: Camera, cameraLOD: Camera) {
@@ -264,7 +264,7 @@ InstancedMesh2.prototype.frustumCullingLOD = function (LODrenderList: LODRenderL
 
   for (let i = 0; i < levels.length; i++) {
     const object = levels[i].object;
-    object._count = count[i];
+    object.count = count[i];
   }
 };
 
