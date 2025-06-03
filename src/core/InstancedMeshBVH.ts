@@ -6,6 +6,7 @@ import { InstancedMesh2 } from './InstancedMesh2.js';
 // TODO getBoxFromSphere updated if change geometry (and create accessor)
 // TODO accurateCulling in bvh.js?
 // TODO use params in constructor
+// TODO: intersectBox optional intersectCallback
 
 /**
  * Parameters for configuring the BVH (Bounding Volume Hierarchy).
@@ -119,7 +120,7 @@ export class InstancedMeshBVH {
     const count = this.target._instancesCount;
     const instancesArrayCount = this.target._instancesArrayCount;
     const boxes: Float32Array[] = new Array(count); // test if single array and recreation inside node creation is faster due to memory location
-    const objects: Uint32Array = new Uint32Array(count);
+    const objects = new Uint32Array(count);
     let index = 0;
 
     this.clear();
@@ -189,7 +190,7 @@ export class InstancedMeshBVH {
    */
   public clear(): void {
     this.bvh.clear();
-    this.nodesMap = new Map();
+    this.nodesMap.clear();
   }
 
   /**
@@ -255,7 +256,7 @@ export class InstancedMeshBVH {
     vec3ToArray(ray.origin, origin);
     vec3ToArray(ray.direction, dir);
 
-    // should we add margin check? maybe is not worth it
+    // TODO should we add margin check? maybe is not worth it
     this.bvh.rayIntersections(dir, origin, onIntersection, raycaster.near, raycaster.far);
   }
 

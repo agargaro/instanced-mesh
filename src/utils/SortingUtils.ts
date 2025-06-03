@@ -3,6 +3,8 @@ import { radixSort, RadixSortOptions } from 'three/addons/utils/SortUtils.js';
 import { InstancedMesh2 } from '../core/InstancedMesh2.js';
 import { InstancedRenderItem } from '../core/utils/InstancedRenderList.js';
 
+type radixSortCallback = (list: InstancedRenderItem[]) => void;
+
 /**
  * Creates a radix sort function specifically for sorting `InstancedMesh2` instances.
  * The sorting is based on the `depth` property of each `InstancedRenderItem`.
@@ -11,11 +13,11 @@ import { InstancedRenderItem } from '../core/utils/InstancedRenderList.js';
  * @returns A radix sort function.
  */
 // Reference: https://github.com/mrdoob/three.js/blob/master/examples/webgl_mesh_batch.html#L291
-export function createRadixSort(target: InstancedMesh2): typeof radixSort<InstancedRenderItem> {
+export function createRadixSort(target: InstancedMesh2): radixSortCallback {
   const options: RadixSortOptions<InstancedRenderItem> = {
     get: (el) => el.depthSort,
     aux: new Array(target._capacity),
-    reversed: null
+    reversed: false
   };
 
   return function sortFunction(list: InstancedRenderItem[]): void {

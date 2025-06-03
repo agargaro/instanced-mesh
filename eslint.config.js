@@ -31,6 +31,7 @@ export default [
       '@typescript-eslint/no-dynamic-delete': 'off',
       '@typescript-eslint/no-invalid-void-type': 'off',
       '@typescript-eslint/no-this-alias': 'off',
+      '@typescript-eslint/no-non-null-assertion': 'off',
       '@typescript-eslint/explicit-function-return-type': [
         'error', {
           allowExpressions: true
