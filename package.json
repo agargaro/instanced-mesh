@@ -43,7 +43,7 @@
   "scripts": {
     "start": "vite",
     "build": "vite build && tsc --build tsconfig.build.json",
-    "lint": "npx eslint --fix",
+    "lint": "eslint --fix",
     "test": "echo todo add tests",
     "publish-alpha": "npm version prerelease --preid=alpha --git-tag-version false && npm run build && cd dist && npm publish --access public",
     "publish-patch": "npm version patch --git-tag-version false && npm run build && cd dist && npm publish --access public",
@@ -51,20 +51,20 @@
     "publish-major": "npm version major --git-tag-version false && npm run build && cd dist && npm publish --access public"
   },
   "devDependencies": {
-    "@eslint/js": "^9.24.0",
-    "@stylistic/eslint-plugin": "^4.2.0",
-    "@three.ez/main": "^0.5.9",
-    "@types/three": "^0.175.0",
-    "eslint": "^9.24.0",
+    "@eslint/js": "^9.28.0",
+    "@stylistic/eslint-plugin": "^4.4.0",
+    "@three.ez/main": "^0.5.10",
+    "@types/three": "^0.177.0",
+    "eslint": "^9.28.0",
     "meshoptimizer": "^0.23.0",
     "simplex-noise": "^4.0.3",
     "three-hex-tiling": "^0.1.5",
     "typescript": "^5.8.3",
-    "typescript-eslint": "^8.29.1",
-    "vite": "^6.2.5",
+    "typescript-eslint": "^8.33.1",
+    "vite": "^6.3.5",
     "vite-plugin-externalize-deps": "^0.9.0",
-    "vite-plugin-glsl": "^1.4.1",
-    "vite-plugin-static-copy": "^2.3.0"
+    "vite-plugin-glsl": "^1.4.2",
+    "vite-plugin-static-copy": "^3.0.0"
   },
   "peerDependencies": {
     "three": ">=0.159.0"
