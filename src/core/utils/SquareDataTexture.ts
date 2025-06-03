@@ -245,7 +245,7 @@ export class SquareDataTexture extends DataTexture {
       gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, row, width, count, glFormat, glType, data, row * width * channels);
     }
 
-    if (this.onUpdate) this.onUpdate();
+    if (this.onUpdate) this.onUpdate(this);
   }
 
   /**
