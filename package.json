@@ -38,7 +38,8 @@
     "shadow-LOD",
     "uniform-per-instance",
     "instancedMesh2",
-    "skinning"
+    "skinning",
+    "webgpu"
   ],
   "scripts": {
     "start": "vite",
@@ -55,6 +56,7 @@
     "@stylistic/eslint-plugin": "^4.4.0",
     "@three.ez/main": "^0.5.10",
     "@types/three": "^0.177.0",
+    "@webgpu/types": "^0.1.40",
     "eslint": "^9.28.0",
     "meshoptimizer": "^0.23.0",
     "simplex-noise": "^4.0.3",

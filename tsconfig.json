@@ -15,7 +15,8 @@
     "noImplicitAny": false,
     "skipLibCheck": true,
     "types": [
-      "vite-plugin-glsl/ext"
+      "vite-plugin-glsl/ext",
+      "@webgpu/types"
     ]
   }
 }
