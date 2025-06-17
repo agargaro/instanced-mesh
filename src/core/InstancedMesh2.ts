@@ -1,4 +1,4 @@
-import { AttachedBindMode, BindMode, Box3, BufferAttribute, BufferGeometry, Camera, Color, ColorManagement, ColorRepresentation, DataTexture, DetachedBindMode, InstancedBufferAttribute, Material, Matrix4, Mesh, Object3D, Object3DEventMap, Scene, Skeleton, Sphere, TypedArray, Vector3, WebGLProgramParametersWithUniforms, WebGLRenderer, WebGPURenderer, WebGPUProgramParameters } from 'three';
+import { AttachedBindMode, BindMode, Box3, BufferAttribute, BufferGeometry, Camera, Color, ColorManagement, ColorRepresentation, DataTexture, DetachedBindMode, InstancedBufferAttribute, Material, Matrix4, Mesh, Object3D, Object3DEventMap, Scene, Skeleton, Sphere, TypedArray, Vector3, WebGLProgramParametersWithUniforms, WebGLRenderer } from 'three';
 import { CustomSortCallback, OnFrustumEnterCallback } from './feature/FrustumCulling.js';
 import { Entity } from './feature/Instances.js';
 import { LODInfo } from './feature/LOD.js';
@@ -36,11 +36,11 @@ export interface InstancedMesh2Params {
    */
   allowsEuler?: boolean;
   /**
-   * Renderer instance (WebGL or WebGPU).
+   * WebGL renderer instance.
    * If not provided, buffers will be initialized during the first render, resulting in no instances being rendered initially.
    * @default null
    */
-  renderer?: WebGLRenderer | WebGPURenderer;
+  renderer?: WebGLRenderer;
 }
 
 /**
@@ -160,7 +160,7 @@ export class InstancedMesh2<
    * Callback function called if an instance is inside the frustum.
    */
   public onFrustumEnter: OnFrustumEnterCallback = null;
-  /** @internal */ _renderer: WebGLRenderer | WebGPURenderer = null;
+  /** @internal */ _renderer: WebGLRenderer = null;
   /** @internal */ _instancesCount = 0;
   /** @internal */ _instancesArrayCount = 0;
   /** @internal */ _perObjectFrustumCulled = true;
@@ -259,7 +259,7 @@ export class InstancedMesh2<
     this.initMatricesTexture();
   }
 
-  public override onBeforeShadow(renderer: WebGLRenderer | WebGPURenderer, scene: Scene, camera: Camera, shadowCamera: Camera, geometry: BufferGeometry, depthMaterial: Material, group: any): void {
+  public override onBeforeShadow(renderer: WebGLRenderer, scene: Scene, camera: Camera, shadowCamera: Camera, geometry: BufferGeometry, depthMaterial: Material, group: any): void {
     this.patchMaterial(renderer, depthMaterial);
 
     // if multimaterial we compute frustum culling only on first material
@@ -269,18 +269,14 @@ export class InstancedMesh2<
       this.performFrustumCulling(shadowCamera, camera);
     }
 
-    if (renderer instanceof WebGLRenderer) {
-      this.matricesTexture.update(renderer);
-      this.colorsTexture?.update(renderer);
-      this.uniformsTexture?.update(renderer);
-      this.boneTexture?.update(renderer);
-    } else {
-      // WebGPU texture updates will be added in phase 2
-      console.warn('WebGPU texture updates are not yet implemented');
-    }
+    this.matricesTexture.update(renderer);
+    this.colorsTexture?.update(renderer);
+    this.uniformsTexture?.update(renderer);
+    this.boneTexture?.update(renderer);
+    // TODO convert also morph texture to squared texture to use partial update
   }
 
-  public override onBeforeRender(renderer: WebGLRenderer | WebGPURenderer, scene: Scene, camera: Camera, geometry: BufferGeometry, material: Material, group: any): void {
+  public override onBeforeRender(renderer: WebGLRenderer, scene: Scene, camera: Camera, geometry: BufferGeometry, material: Material, group: any): void {
     this.patchMaterial(renderer, material);
 
     if (!this.instanceIndex) {
@@ -295,15 +291,11 @@ export class InstancedMesh2<
       this.performFrustumCulling(camera);
     }
 
-    if (renderer instanceof WebGLRenderer) {
-      this.matricesTexture.update(renderer);
-      this.colorsTexture?.update(renderer);
-      this.uniformsTexture?.update(renderer);
-      this.boneTexture?.update(renderer);
-    } else {
-      // WebGPU texture updates will be added in phase 2
-      console.warn('WebGPU texture updates are not yet implemented');
-    }
+    this.matricesTexture.update(renderer);
+    this.colorsTexture?.update(renderer);
+    this.uniformsTexture?.update(renderer);
+    this.boneTexture?.update(renderer);
+    // TODO convert also morph texture to squared texture to use partial update
   }
 
   public override onAfterShadow(renderer: WebGLRenderer, scene: Scene, camera: Camera, shadowCamera: Camera, geometry: BufferGeometry, depthMaterial: Material, group: any): void {
@@ -341,21 +333,16 @@ export class InstancedMesh2<
       return;
     }
 
-    if (this._renderer instanceof WebGLRenderer) {
-      const gl = this._renderer.getContext() as WebGL2RenderingContext;
-      const capacity = this._capacity;
-      const array = new Uint32Array(capacity);
+    const gl = this._renderer.getContext() as WebGL2RenderingContext;
+    const capacity = this._capacity;
+    const array = new Uint32Array(capacity);
 
-      for (let i = 0; i < capacity; i++) {
-        array[i] = i;
-      }
-
-      this.instanceIndex = new GLInstancedBufferAttribute(gl, gl.UNSIGNED_INT, 1, 4, array);
-      this._geometry.setAttribute('instanceIndex', this.instanceIndex as unknown as BufferAttribute);
-    } else {
-      // WebGPU implementation will be added in phase 2
-      console.warn('WebGPU support is not yet implemented');
+    for (let i = 0; i < capacity; i++) {
+      array[i] = i;
     }
+
+    this.instanceIndex = new GLInstancedBufferAttribute(gl, gl.UNSIGNED_INT, 1, 4, array);
+    this._geometry.setAttribute('instanceIndex', this.instanceIndex as unknown as BufferAttribute);
   }
 
   protected initMatricesTexture(): void {
@@ -404,94 +391,80 @@ export class InstancedMesh2<
     return `ezInstancedMesh2_${this.id}_${!!this.colorsTexture}_${this._useOpacity}_${!!this.boneTexture}_${!!this.uniformsTexture}_${this._customProgramCacheKeyBase.call(this._currentMaterial)}`;
   };
 
-  protected _onBeforeCompile = (shader: WebGLProgramParametersWithUniforms | WebGPUProgramParameters, renderer: WebGLRenderer | WebGPURenderer): void => {
-    if (renderer instanceof WebGLRenderer) {
-      if (this._onBeforeCompileBase) this._onBeforeCompileBase.call(this._currentMaterial, shader as WebGLProgramParametersWithUniforms, renderer);
+  protected _onBeforeCompile = (shader: WebGLProgramParametersWithUniforms, renderer: WebGLRenderer): void => {
+    if (this._onBeforeCompileBase) this._onBeforeCompileBase.call(this._currentMaterial, shader, renderer);
 
-      shader.instancing = false;
+    shader.instancing = false;
 
-      shader.defines ??= {};
-      shader.defines['USE_INSTANCING_INDIRECT'] = '';
+    shader.defines ??= {};
+    shader.defines['USE_INSTANCING_INDIRECT'] = '';
 
-      shader.uniforms.matricesTexture = { value: this.matricesTexture };
+    shader.uniforms.matricesTexture = { value: this.matricesTexture };
 
-      if (this.uniformsTexture) {
-        shader.uniforms.uniformsTexture = { value: this.uniformsTexture };
-        const { vertex, fragment } = this.uniformsTexture.getUniformsGLSL('uniformsTexture', 'instanceIndex', 'uint');
-        shader.vertexShader = shader.vertexShader.replace('void main() {', vertex);
-        shader.fragmentShader = shader.fragmentShader.replace('void main() {', fragment);
+    if (this.uniformsTexture) {
+      shader.uniforms.uniformsTexture = { value: this.uniformsTexture };
+      const { vertex, fragment } = this.uniformsTexture.getUniformsGLSL('uniformsTexture', 'instanceIndex', 'uint');
+      shader.vertexShader = shader.vertexShader.replace('void main() {', vertex);
+      shader.fragmentShader = shader.fragmentShader.replace('void main() {', fragment);
+    }
+
+    if (this.colorsTexture && shader.fragmentShader.includes('#include <color_pars_fragment>')) {
+      shader.defines['USE_INSTANCING_COLOR_INDIRECT'] = '';
+      shader.uniforms.colorsTexture = { value: this.colorsTexture };
+      shader.vertexShader = shader.vertexShader.replace('<color_vertex>', '<instanced_color_vertex>');
+
+      if (shader.vertexColors) {
+        shader.defines['USE_VERTEX_COLOR'] = '';
       }
 
-      if (this.colorsTexture && shader.fragmentShader.includes('#include <color_pars_fragment>')) {
-        shader.defines['USE_INSTANCING_COLOR_INDIRECT'] = '';
-        shader.uniforms.colorsTexture = { value: this.colorsTexture };
-        shader.vertexShader = shader.vertexShader.replace('<color_vertex>', '<instanced_color_vertex>');
-
-        if (shader.vertexColors) {
-          shader.defines['USE_VERTEX_COLOR'] = '';
-        }
-
-        if (this._useOpacity) {
-          shader.defines['USE_COLOR_ALPHA'] = '';
-        } else {
-          shader.defines['USE_COLOR'] = '';
-        }
+      if (this._useOpacity) {
+        shader.defines['USE_COLOR_ALPHA'] = '';
+      } else {
+        shader.defines['USE_COLOR'] = '';
       }
+    }
 
-      if (this.boneTexture) {
-        shader.defines['USE_SKINNING'] = '';
-        shader.defines['USE_INSTANCING_SKINNING'] = '';
-        shader.uniforms.bindMatrix = { value: this.bindMatrix };
-        shader.uniforms.bindMatrixInverse = { value: this.bindMatrixInverse };
-        shader.uniforms.bonesPerInstance = { value: this.skeleton.bones.length };
-        shader.uniforms.boneTexture = { value: this.boneTexture };
-      }
-    } else {
-      // WebGPU shader compilation will be added in phase 2
-      console.warn('WebGPU shader compilation is not yet implemented');
+    if (this.boneTexture) {
+      shader.defines['USE_SKINNING'] = '';
+      shader.defines['USE_INSTANCING_SKINNING'] = '';
+      shader.uniforms.bindMatrix = { value: this.bindMatrix };
+      shader.uniforms.bindMatrixInverse = { value: this.bindMatrixInverse };
+      shader.uniforms.bonesPerInstance = { value: this.skeleton.bones.length };
+      shader.uniforms.boneTexture = { value: this.boneTexture };
     }
   };
 
-  protected patchMaterial(renderer: WebGLRenderer | WebGPURenderer, material: Material): void {
+  protected patchMaterial(renderer: WebGLRenderer, material: Material): void {
     this._currentMaterial = material;
-    
-    if (renderer instanceof WebGLRenderer) {
-      this._customProgramCacheKeyBase = material.customProgramCacheKey;
-      this._onBeforeCompileBase = material.onBeforeCompile;
-      material.customProgramCacheKey = this._customProgramCacheKey;
-      material.onBeforeCompile = this._onBeforeCompile;
+    this._customProgramCacheKeyBase = material.customProgramCacheKey; // avoid .bind(material); to prevent memory leak
+    this._onBeforeCompileBase = material.onBeforeCompile;
+    material.customProgramCacheKey = this._customProgramCacheKey;
+    material.onBeforeCompile = this._onBeforeCompile;
 
-      const propertiesBase = renderer.properties;
+    const propertiesBase = renderer.properties;
 
-      if (!this._properties.has(material)) {
-        const materialProperties = {};
-        this._properties.set(material, materialProperties);
+    if (!this._properties.has(material)) {
+      const materialProperties = {};
+      this._properties.set(material, materialProperties);
 
-        const propertiesGetBase = this._propertiesGetBase = propertiesBase.get;
+      const propertiesGetBase = this._propertiesGetBase = propertiesBase.get;
 
-        this._propertiesGetMap.set(material, (object) => {
-          if (object === material) return materialProperties;
-          return propertiesGetBase(object);
-        });
-      }
-
-      propertiesBase.get = this._propertiesGetMap.get(material);
-    } else {
-      // WebGPU material patching will be added in phase 2
-      console.warn('WebGPU material patching is not yet implemented');
+      this._propertiesGetMap.set(material, (object) => {
+        if (object === material) return materialProperties;
+        return propertiesGetBase(object);
+      });
     }
+
+    propertiesBase.get = this._propertiesGetMap.get(material);
   }
 
-  protected unpatchMaterial(renderer: WebGLRenderer | WebGPURenderer, material: Material): void {
+  protected unpatchMaterial(renderer: WebGLRenderer, material: Material): void {
     this._currentMaterial = null;
-    
-    if (renderer instanceof WebGLRenderer) {
-      renderer.properties.get = this._propertiesGetBase;
-      material.onBeforeCompile = this._onBeforeCompileBase;
-      material.customProgramCacheKey = this._customProgramCacheKeyBase;
-      this._onBeforeCompileBase = null;
-      this._customProgramCacheKeyBase = null;
-    }
+    renderer.properties.get = this._propertiesGetBase;
+    material.onBeforeCompile = this._onBeforeCompileBase;
+    material.customProgramCacheKey = this._customProgramCacheKeyBase;
+    this._onBeforeCompileBase = null;
+    this._customProgramCacheKeyBase = null;
   }
 
   /**
