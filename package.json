@@ -67,7 +67,7 @@
     "vite-plugin-static-copy": "^3.0.0"
   },
   "peerDependencies": {
-    "three": ">=0.159.0"
+    "three": ">=0.177.0"
   },
   "dependencies": {
     "bvh.js": "^0.0.13"
