@@ -1,9 +1,10 @@
 import { BufferGeometry, ColorManagement, DataTexture, Material, Object3DEventMap } from 'three';
-import { SquareDataTextureGPU } from './utils/SquareDataTexture.js';
 import { MeshBasicNodeMaterial, StorageInstancedBufferAttribute, WebGPURenderer } from 'three/webgpu';
 import { getBoneMatrix, getColorTexture, getInstancedMatrix } from '../shaders/tsl/nodes.js';
 import { InstancedMesh2, InstancedMesh2Params } from './InstancedMesh2.js';
-import { uniform, uniformTexture } from 'three/tsl';
+import { uniform } from 'three/tsl';
+
+import { SquareDataTextureGPU } from './utils/SquareDataTexture.js';
 
 
 /**
@@ -83,7 +84,7 @@ export class InstancedMeshGPU<
     }
     // Set the node for instance matrix in the material
     if (this._currentMaterial) {
-      (this._currentMaterial as any).matricesTexture = getInstancedMatrix(uniform(this.matricesTexture);
+      (this._currentMaterial as any).matricesTexture = getInstancedMatrix(uniform(this.matricesTexture));
     }
   }
 

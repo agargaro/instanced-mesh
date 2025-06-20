@@ -1,4 +1,4 @@
-import { Fn, instanceIndex, int, ivec2, mat4, textureSize, tslFn, uniform, vec4 } from 'three/tsl';
+import { Fn, instanceIndex, int, ivec2, mat4, textureSize, uniform, vec4 } from 'three/tsl';
 
 
 export const getColorTexture = (colorsTexture) => {
