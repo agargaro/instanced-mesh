@@ -43,27 +43,6 @@ declare module '../InstancedMesh2.js' {
   }
 }
 
-declare module '../InstancedMeshGPU.js' {
-  interface InstancedMeshGPU {
-    /**
-     * Performs frustum culling and manages LOD visibility.
-     * @param camera The main camera used for rendering.
-     * @param cameraLOD An optional camera for LOD calculations. Defaults to the main camera.
-     */
-    performFrustumCulling(camera: Camera, cameraLOD?: Camera): void;
-
-    /** @internal */ frustumCulling(camera: Camera): void;
-    /** @internal */ updateIndexArray(): void;
-    /** @internal */ updateRenderList(): void;
-    /** @internal */ BVHCulling(camera: Camera): void;
-    /** @internal */ linearCulling(camera: Camera): void;
-
-    /** @internal */ frustumCullingLOD(LODrenderList: LODRenderList, camera: Camera, cameraLOD: Camera): void;
-    /** @internal */ BVHCullingLOD(LODrenderList: LODRenderList, indexes: Uint32Array[], sortObjects: boolean, camera: Camera, cameraLOD: Camera): void;
-    /** @internal */ linearCullingLOD(LODrenderList: LODRenderList, indexes: Uint32Array[], sortObjects: boolean, camera: Camera, cameraLOD: Camera): void;
-  }
-}
-
 const _frustum = new Frustum();
 const _renderList = new InstancedRenderList();
 const _projScreenMatrix = new Matrix4();
