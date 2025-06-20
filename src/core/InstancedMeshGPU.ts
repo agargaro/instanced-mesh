@@ -118,14 +118,6 @@ export class InstancedMeshGPU<
     super.onBeforeRender(renderer, scene, camera, geometry, material, group);
     this.matricesTexture.update(renderer);
     this.colorsTexture?.update(renderer);
-
-    // Ensure the material is a node material and set up the node graph
-    if (material && material.isNodeMaterial) {
-      // Set the instance matrix node for vertex transformation
-      material.positionNode = getInstancedMatrix(this.matricesTexture);
-      // Set the color node for fragment color
-      material.colorNode = getColorTexture(this.colorsTexture);
-    }
   }
 }
 
