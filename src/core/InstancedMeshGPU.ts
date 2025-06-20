@@ -1,10 +1,5 @@
-import { AttachedBindMode, BindMode, Box3, BufferGeometry, Color, ColorManagement, ColorRepresentation, DataTexture, Material, Matrix4, Mesh, Object3D, Object3DEventMap, Skeleton, Sphere, Vector3 } from 'three';
-import { CustomSortCallback, OnFrustumEnterCallback } from './feature/FrustumCulling.js';
-import { Entity } from './feature/Instances.js';
-import { LODInfo } from './feature/LOD.js';
-import { InstancedEntity } from './InstancedEntity.js';
-import { InstancedMeshBVH } from './InstancedMeshBVH.js';
-import { SquareDataTexture } from './utils/SquareDataTexture.js';
+import { BufferGeometry, ColorManagement, DataTexture, Material, Object3DEventMap } from 'three';
+import { SquareDataTextureGPU } from './utils/SquareDataTexture.js';
 import { MeshBasicNodeMaterial, StorageInstancedBufferAttribute, WebGPURenderer, InstanceNode } from 'three/webgpu';
 import { getColorTexture } from '../shaders/tsl/nodes.js';
 import { InstancedMesh2 } from './InstancedMesh2.js';
@@ -65,13 +60,9 @@ export class InstancedMeshGPU<
    */
   public readonly isInstancedMeshGPU = true;
   /**
-   * Attribute storing indices of the instances to be rendered.
-   */
-  public instanceIndex: InstanceNode = null;
-  /**
    * Texture storing matrices for instances.
    */
-  public matricesTexture: SquareDataTextureGPU;
+  public override matricesTexture: SquareDataTextureGPU;
   /**
    * Texture storing colors for instances.
    */
@@ -89,7 +80,7 @@ export class InstancedMeshGPU<
    */
   public override uniformsTexture: SquareDataTextureGPU = null;
 
-  /** @internal */ _renderer: WebGPURenderer = null;
+  /** @internal */ override _renderer: WebGPURenderer | any = null;
 
   /**
    * Material for TSL nodes system
@@ -118,19 +109,12 @@ export class InstancedMeshGPU<
 
     const { allowsEuler, renderer, createEntities } = params;
 
-    super(null, null);
+    super(geometry, material);
 
     const capacity = params.capacity > 0 ? params.capacity : _defaultCapacity;
     this._renderer = renderer;
     this._capacity = capacity;
-    this._parentLOD = LOD;
-    this._geometry = geometry;
-    this.material = material;
-    this._allowsEuler = allowsEuler ?? false;
-    // this._tempInstance = new InstancedEntity(this, -1, allowsEuler);
-    this.availabilityArray = LOD?.availabilityArray ?? new Array(capacity * 2);
     this._createEntities = createEntities;
-    // this.initIndexAttribute();
     this.initMatricesTexture();
   }
 
