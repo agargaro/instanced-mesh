@@ -68,14 +68,19 @@ export class InstancedMeshGPU<
     this._context = this._renderer.domElement.getContext('webgpu');
     this.initMatricesTexture();
     this.initColorsTexture();
+    // Ensure textures are updated before first render
+    this.matricesTexture.update(this._renderer);
+    this.colorsTexture?.update(this._renderer);
   }
 
   protected override initMatricesTexture(): void {
     if (!this._parentLOD) {
       this.matricesTexture = new SquareDataTextureGPU(Float32Array, 4, 4, this._capacity);
     }
-
-    this._currentMaterial.fragmentNode = getInstancedMatrix(this.colorsTexture);
+    // Set the node for instance matrix in the material
+    if (this._currentMaterial) {
+      (this._currentMaterial as any).matricesTexture = getInstancedMatrix(this.matricesTexture);
+    }
   }
 
   protected override initColorsTexture(): void {
@@ -85,9 +90,26 @@ export class InstancedMeshGPU<
       this.colorsTexture._data.fill(1);
       this.materialsNeedsUpdate();
     }
-    this._currentMaterial.colorNode = getColorTexture(this.colorsTexture);
+    // Set the node for instance color in the material
+    if (this._currentMaterial) {
+      (this._currentMaterial as any).colorNode = getColorTexture(this.colorsTexture);
+    }
   }
 
+  // Ensure textures are updated before each render
+  public override onBeforeRender(renderer, scene, camera, geometry, material, group): void {
+    super.onBeforeRender(renderer, scene, camera, geometry, material, group);
+    this.matricesTexture.update(renderer);
+    this.colorsTexture?.update(renderer);
+
+    // Ensure the material is a node material and set up the node graph
+    if (material && material.isNodeMaterial) {
+      // Set the instance matrix node for vertex transformation
+      material.positionNode = getInstancedMatrix(this.matricesTexture);
+      // Set the color node for fragment color
+      material.colorNode = getColorTexture(this.colorsTexture);
+    }
+  }
 }
 
 const _defaultCapacity = 1000;
