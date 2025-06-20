@@ -23,8 +23,8 @@ export const getInstancedMatrix = (matricesTexture) => {
 };
 
 
-export const getBoneMatrix = (boneTexture) => Fn(( [i] ) => {
-    const bonesPerInstance = uniform( 'int' );
+export const getBoneMatrix = (boneTexture) => Fn((i) => {
+	const bonesPerInstance = uniform( 'int' );
 
 	const size = int( textureSize( boneTexture, int( 0 ) ).x ).toVar();
 	const j = int( bonesPerInstance.mul( int( instanceIndex ) ).add( int( i ) ).mul( int( 4 ) ) ).toVar();
