@@ -1,7 +1,7 @@
 import { BufferGeometry, ColorManagement, DataTexture, Material, Object3DEventMap } from 'three';
 import { SquareDataTextureGPU } from './utils/SquareDataTexture.js';
-import { MeshBasicNodeMaterial, StorageInstancedBufferAttribute, WebGPURenderer, InstanceNode } from 'three/webgpu';
-import { getColorTexture } from '../shaders/tsl/nodes.js';
+import { MeshBasicNodeMaterial, StorageInstancedBufferAttribute, WebGPURenderer } from 'three/webgpu';
+import { getColorTexture, getInstancedMatrix } from '../shaders/tsl/nodes.js';
 import { InstancedMesh2 } from './InstancedMesh2.js';
 
 
@@ -48,10 +48,6 @@ export class InstancedMeshGPU<
   TEventMap extends Object3DEventMap = Object3DEventMap
 > extends InstancedMesh2<TGeometry, TMaterial, TEventMap> {
   /**
-   * The number of instances rendered in the last frame.
-   */
-  public declare count: number;
-  /**
    * @defaultValue `InstancedMesh2`
    */
   public override readonly type = 'InstancedMeshGPU' as any;
@@ -68,10 +64,6 @@ export class InstancedMeshGPU<
    */
   public override colorsTexture: SquareDataTextureGPU = null;
   /**
-   * Texture storing morph target influences for instances.
-   */
-  public override morphTexture: DataTexture = null;
-  /**
    * Texture storing bones for instances.
    */
   public override boneTexture: SquareDataTextureGPU = null;
@@ -87,7 +79,7 @@ export class InstancedMeshGPU<
    */
   protected override _currentMaterial: MeshBasicNodeMaterial = null;
 
-  /** @internal */ override instanceMatrix = new StorageInstancedBufferAttribute(new Float32Array(0), 16); // must be init to avoid exception
+  /** @internal */ override instanceMatrix = new StorageInstancedBufferAttribute(new Float32Array(0), 16);
 
   private _adapter: GPUAdapter;
   private _device: GPUDevice;
@@ -126,14 +118,14 @@ export class InstancedMeshGPU<
     this._adapter = await navigator.gpu.requestAdapter();
     this._device = await this._adapter.requestDevice();
     this._context = this._renderer.domElement.getContext('webgpu');
-
-    this._currentMaterial.colorNode = getColorTexture(this.colorsTexture);
   }
 
   protected override initMatricesTexture(): void {
     if (!this._parentLOD) {
       this.matricesTexture = new SquareDataTextureGPU(Float32Array, 4, 4, this._capacity);
     }
+
+    this._currentMaterial.fragmentNode = getInstancedMatrix(this.colorsTexture);
   }
 
   protected override initColorsTexture(): void {
@@ -143,6 +135,7 @@ export class InstancedMeshGPU<
       this.colorsTexture._data.fill(1);
       this.materialsNeedsUpdate();
     }
+    this._currentMaterial.colorNode = getColorTexture(this.colorsTexture);
   }
 
 }
