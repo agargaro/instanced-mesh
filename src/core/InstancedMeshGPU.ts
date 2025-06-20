@@ -1,8 +1,9 @@
 import { BufferGeometry, ColorManagement, DataTexture, Material, Object3DEventMap } from 'three';
 import { SquareDataTextureGPU } from './utils/SquareDataTexture.js';
 import { MeshBasicNodeMaterial, StorageInstancedBufferAttribute, WebGPURenderer } from 'three/webgpu';
-import { getColorTexture, getInstancedMatrix } from '../shaders/tsl/nodes.js';
+import { getBoneMatrix, getColorTexture, getInstancedMatrix } from '../shaders/tsl/nodes.js';
 import { InstancedMesh2, InstancedMesh2Params } from './InstancedMesh2.js';
+import { uniform, uniformTexture } from 'three/tsl';
 
 
 /**
@@ -46,6 +47,7 @@ export class InstancedMeshGPU<
 
   override _renderer: WebGPURenderer | any = null;
 
+  override _material: MeshBasicNodeMaterial = null;
   override _currentMaterial: MeshBasicNodeMaterial = null;
 
   override instanceMatrix = new StorageInstancedBufferAttribute(new Float32Array(0), 16);
@@ -54,11 +56,13 @@ export class InstancedMeshGPU<
   private _device: GPUDevice;
   private _context: any;
 
-  constructor(geometry: TGeometry, material: TMaterial, params: InstancedMeshGPUParams = {}, LOD?: InstancedMeshGPU) {
+  constructor(geometry: TGeometry, material: MeshBasicNodeMaterial, params: InstancedMeshGPUParams = {}, LOD?: InstancedMeshGPU) {
     if (!geometry) throw new Error('"geometry" is mandatory.');
     if (!material) throw new Error('"material" is mandatory.');
 
-    super(geometry, material, params, LOD);
+    this._currentMaterial = material;
+    this._material = material;
+    super(geometry, null, null, LOD);
     this.init();
   }
 
@@ -79,7 +83,7 @@ export class InstancedMeshGPU<
     }
     // Set the node for instance matrix in the material
     if (this._currentMaterial) {
-      (this._currentMaterial as any).matricesTexture = getInstancedMatrix(this.matricesTexture);
+      (this._currentMaterial as any).matricesTexture = getInstancedMatrix(uniform(this.matricesTexture);
     }
   }
 
@@ -92,7 +96,20 @@ export class InstancedMeshGPU<
     }
     // Set the node for instance color in the material
     if (this._currentMaterial) {
-      (this._currentMaterial as any).colorNode = getColorTexture(this.colorsTexture);
+      (this._currentMaterial as any).colorNode = getColorTexture(uniform(this.colorsTexture));
+    }
+  }
+
+  protected initBoneTexture(): void {
+    if (!this._parentLOD) {
+      this.boneTexture = new SquareDataTextureGPU(Float32Array, 4, 4, this._capacity);
+      this.boneTexture.colorSpace = ColorManagement.workingColorSpace;
+      this.boneTexture._data.fill(1);
+      this.materialsNeedsUpdate();
+    }
+    // Set the node for bone matrix in the material
+    if (this._currentMaterial) {
+      (this._currentMaterial as any).boneMatrixNode = getBoneMatrix(uniform(this.boneTexture));
     }
   }
 
