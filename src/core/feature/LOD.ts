@@ -1,5 +1,5 @@
 import { BufferGeometry, Material, ShaderMaterial } from 'three';
-import { InstancedMesh2, InstancedMesh2Params } from '../InstancedMesh2.js';
+import { InstancedMesh2, InstancedMesh2Params } from '../InstancedMesh2.common.js';
 
 // TODO check squaured distance in comments and code
 
@@ -56,7 +56,7 @@ export interface LODLevel<TData = {}> {
   object: InstancedMesh2<TData>;
 }
 
-declare module '../InstancedMesh2.js' {
+declare module '../InstancedMesh2.common.js' {
   interface InstancedMesh2 {
     /**
      * Retrieves the index of the LOD level for a given distance.

@@ -1,7 +1,7 @@
 import { DataTexture, FloatType, Mesh, RedFormat } from 'three';
-import { InstancedMesh2 } from '../InstancedMesh2.js';
+import { InstancedMesh2 } from '../InstancedMesh2.common.js';
 
-declare module '../InstancedMesh2.js' {
+declare module '../InstancedMesh2.common.js' {
   interface InstancedMesh2 {
     /**
      * Gets the morph target data for a specific instance.

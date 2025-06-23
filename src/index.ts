@@ -1,5 +1,5 @@
 export * from './core/InstancedEntity.js';
-export * from './core/InstancedMesh2.js';
+export * from './core/InstancedMesh2.common.js';
 export * from './core/InstancedMeshBVH.js';
 
 export * from './core/feature/Capacity.js';

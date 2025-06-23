@@ -1,5 +1,5 @@
 import { InstancedEntity } from '../InstancedEntity.js';
-import { InstancedMesh2 } from '../InstancedMesh2.js';
+import { InstancedMesh2 } from '../InstancedMesh2.common.js';
 
 // TODO: optimize method to fill 'holes'.
 
@@ -12,7 +12,7 @@ export type Entity<T> = InstancedEntity & T;
  */
 export type UpdateEntityCallback<T = InstancedEntity> = (obj: Entity<T>, index: number) => void;
 
-declare module '../InstancedMesh2.js' {
+declare module '../InstancedMesh2.common.js' {
   interface InstancedMesh2<TData = {}> {
     /**
      * Updates instances by applying a callback function to each instance. It calls `updateMatrix` for each instance.

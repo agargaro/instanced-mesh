@@ -1,5 +1,5 @@
 import { InstancedBufferAttribute, InstancedMesh, Mesh, SkinnedMesh } from 'three';
-import { InstancedMesh2, InstancedMesh2Params } from '../core/InstancedMesh2.js';
+import { InstancedMesh2, InstancedMesh2Params } from '../core/InstancedMesh2.common.js';
 
 /**
  * Create an `InstancedMesh2` instance from an existing `Mesh` or `InstancedMesh`.

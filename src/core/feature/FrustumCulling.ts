@@ -22,7 +22,7 @@ export type CustomSortCallback = (list: InstancedRenderItem[]) => void;
  */
 export type OnFrustumEnterCallback = (index: number, camera: Camera, cameraLOD?: Camera, LODindex?: number) => boolean;
 
-declare module '../InstancedMesh2.js' {
+declare module '../InstancedMesh2.common.js' {
   interface InstancedMesh2 {
     /**
      * Performs frustum culling and manages LOD visibility.
