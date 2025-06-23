@@ -6,6 +6,7 @@ import { InstancedEntity } from './InstancedEntity.js';
 import { BVHParams, InstancedMeshBVH } from './InstancedMeshBVH.js';
 import { GLInstancedBufferAttribute } from './utils/GLInstancedBufferAttribute.js';
 import { SquareDataTexture } from './utils/SquareDataTexture.js';
+import { CustomSortCallback, OnFrustumEnterCallback } from './feature/FrustumCulling.js';
 
 // TODO: Add check to not update partial texture if needsuupdate already true
 // TODO: if bvh present, can override?
@@ -396,7 +397,7 @@ export class InstancedMesh2<
     this._customProgramCacheKeyBase = material.customProgramCacheKey; // avoid .bind(material); to prevent memory leak
     this._onBeforeCompileBase = material.onBeforeCompile;
     material.customProgramCacheKey = this._customProgramCacheKey;
-    material.onBeforeCompile = this._onBeforeCompile;
+    // material.onBeforeCompile = this._onBeforeCompile;
 
     const propertiesBase = renderer.properties;
 

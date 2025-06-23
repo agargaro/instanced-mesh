@@ -24,9 +24,9 @@ export interface InstancedMeshGPUParams extends Omit<InstancedMesh2Params, 'rend
 
 /**
  * @internal
- * Enhances the InstancedMesh2 prototype with WebGL methods.
+ * Enhances the InstancedMesh2 prototype with WebGPU methods.
  */
-export function extendInstancedMesh2PrototypeWebGL(): void {
+export function extendInstancedMesh2PrototypeWebGPU(): void {
 
   InstancedMesh2.prototype.type = 'InstancedMeshGPU';
   InstancedMesh2.prototype.isInstancedMeshGPU = true;
@@ -43,9 +43,6 @@ export function extendInstancedMesh2PrototypeWebGL(): void {
   InstancedMesh2.prototype._currentMaterial = null; //MeshBasicNodeMaterial
 
   InstancedMesh2.prototype.init = async function(): Promise<void> {
-    // this._adapter = await navigator.gpu.requestAdapter();
-    // this._device = await this._adapter.requestDevice();
-    // this._context = this._renderer.domElement.getContext('webgpu');
     this.initMatricesTexture();
     this.initColorsTexture();
     // Ensure textures are updated before first render
