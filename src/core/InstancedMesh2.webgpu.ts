@@ -47,7 +47,7 @@ export function extendInstancedMesh2PrototypeWebGPU(): void {
     this.colorsTexture?.update(this._renderer);
   };
 
-  InstancedMesh2.prototype.initMatricesTexture = function(): void {
+  InstancedMesh2.prototype.initPositionsNode = function(): void {
     if (!this._parentLOD) {
       this.matricesTexture = new SquareDataTextureGPU(Float32Array, 4, 4, this._capacity);
     }
@@ -57,7 +57,7 @@ export function extendInstancedMesh2PrototypeWebGPU(): void {
     }
   };
 
-  InstancedMesh2.prototype.initColorsTexture = function(): void {
+  InstancedMesh2.prototype.initColorsNode = function(): void {
     if (!this._parentLOD) {
       this.colorsTexture = new SquareDataTextureGPU(Float32Array, 4, 1, this._capacity);
       this.colorsTexture.colorSpace = ColorManagement.workingColorSpace;
@@ -70,7 +70,7 @@ export function extendInstancedMesh2PrototypeWebGPU(): void {
     }
   };
 
-  InstancedMesh2.prototype.initBoneTexture = function(): void {
+  InstancedMesh2.prototype.initBonesNode = function(): void {
     if (!this._parentLOD) {
       this.boneTexture = new SquareDataTextureGPU(Float32Array, 4, 4, this._capacity);
       this.boneTexture.colorSpace = ColorManagement.workingColorSpace;

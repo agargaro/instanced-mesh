@@ -186,11 +186,13 @@ export class InstancedMesh2<
   /** @internal */ isInstancedMesh = true;
   /** @internal */ instanceMatrix = new InstancedBufferAttribute(new Float32Array(0), 16); // overridden in renderer-specific prototype if needed
   /** @internal */ instanceColor = null;
+
+  // Todo: WebGPU-specific methods
   init: () => void;
-  initMatricesTexture: () => void;
-  initColorsTexture: () => void;
-  initBoneTexture: () => void;
   onBeforeCompile: (shader: WebGLProgramParametersWithUniforms, renderer: WebGLRenderer) => void;
+  initPositionsNode: () => void;
+  initColorsNode: () => void;
+  initBonesNode: () => void;
 
   /**
    * The capacity of the instance buffers.
