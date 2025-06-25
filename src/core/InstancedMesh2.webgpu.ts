@@ -29,26 +29,23 @@ export interface InstancedMeshGPUParams extends Omit<InstancedMesh2Params, 'rend
 export function extendInstancedMesh2PrototypeWebGPU(): void {
 
   InstancedMesh2.prototype.type = 'InstancedMeshGPU';
-  InstancedMesh2.prototype.isInstancedMeshGPU = true;
-  
-  InstancedMesh2.prototype.matricesTexture = null; // SquareDataTextureGPU
-  InstancedMesh2.prototype.colorsTexture = null; //SquareDataTextureGPU
-  InstancedMesh2.prototype.boneTexture = null; // SquareDataTextureGPU;
-  InstancedMesh2.prototype.uniformsTexture = null; //SquareDataTextureGPU
 
-  InstancedMesh2.prototype._renderer = null; //WebGPURenderer | any
+  // WebGPU-specific member initialization
+  InstancedMesh2.prototype.matricesTexture = null; // SquareDataTextureGPU
+  InstancedMesh2.prototype.colorsTexture = null; // SquareDataTextureGPU
+  InstancedMesh2.prototype.boneTexture = null; // SquareDataTextureGPU
+  InstancedMesh2.prototype.uniformsTexture = null; // SquareDataTextureGPU
+  InstancedMesh2.prototype._renderer = null; // WebGPURenderer | any
   InstancedMesh2.prototype.instanceMatrix = new StorageInstancedBufferAttribute(new Float32Array(0), 16);
 
-  InstancedMesh2.prototype._material = null; //MeshBasicNodeMaterial
-  InstancedMesh2.prototype._currentMaterial = null; //MeshBasicNodeMaterial
-
   InstancedMesh2.prototype.init = async function(): Promise<void> {
+    this._currentMaterial = new MeshBasicNodeMaterial();
     this.initMatricesTexture();
     this.initColorsTexture();
     // Ensure textures are updated before first render
     this.matricesTexture.update(this._renderer);
     this.colorsTexture?.update(this._renderer);
-  }
+  };
 
   InstancedMesh2.prototype.initMatricesTexture = function(): void {
     if (!this._parentLOD) {
@@ -58,7 +55,7 @@ export function extendInstancedMesh2PrototypeWebGPU(): void {
     if (this._currentMaterial) {
       (this._currentMaterial as any).matricesTexture = getInstancedMatrix(uniform(this.matricesTexture));
     }
-  }
+  };
 
   InstancedMesh2.prototype.initColorsTexture = function(): void {
     if (!this._parentLOD) {
@@ -71,7 +68,7 @@ export function extendInstancedMesh2PrototypeWebGPU(): void {
     if (this._currentMaterial) {
       (this._currentMaterial as any).colorNode = getColorTexture(uniform(this.colorsTexture));
     }
-  }
+  };
 
   InstancedMesh2.prototype.initBoneTexture = function(): void {
     if (!this._parentLOD) {
@@ -84,14 +81,15 @@ export function extendInstancedMesh2PrototypeWebGPU(): void {
     if (this._currentMaterial) {
       (this._currentMaterial as any).boneMatrixNode = getBoneMatrix(uniform(this.boneTexture));
     }
-  }
+  };
 
   // Ensure textures are updated before each render
   InstancedMesh2.prototype.onBeforeRender = function(renderer, scene, camera, geometry, material, group): void {
-    super.onBeforeRender(renderer, scene, camera, geometry, material, group);
+    this.onBeforeRender(renderer, scene, camera, geometry, material, group);
     this.matricesTexture.update(renderer);
     this.colorsTexture?.update(renderer);
-  }
+  };
+
 }
 
 const _defaultCapacity = 1000;

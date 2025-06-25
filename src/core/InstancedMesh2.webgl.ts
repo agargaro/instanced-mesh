@@ -1,6 +1,7 @@
-import { WebGLProgramParametersWithUniforms, WebGLRenderer } from 'three';
+import { ColorManagement, WebGLProgramParametersWithUniforms, WebGLRenderer } from 'three';
 
-import { InstancedMesh2 } from '@three.ez/main';
+import { InstancedMesh2 } from '../core/InstancedMesh2.common.js';
+import { SquareDataTexture } from './utils/SquareDataTexture.js';
 
 
 /**
@@ -8,8 +9,43 @@ import { InstancedMesh2 } from '@three.ez/main';
  * Enhances the InstancedMesh2 prototype with WebGL methods.
  */
 export function extendInstancedMesh2PrototypeWebGL(): void {
-    
-  InstancedMesh2.prototype.onBeforeCompile = (shader: WebGLProgramParametersWithUniforms, renderer: WebGLRenderer): void => {
+  // WebGL-specific member initialization
+  InstancedMesh2.prototype.matricesTexture = null;
+  InstancedMesh2.prototype.colorsTexture = null;
+  InstancedMesh2.prototype.boneTexture = null;
+  InstancedMesh2.prototype.uniformsTexture = null;
+  InstancedMesh2.prototype._renderer = null;
+  // instanceMatrix is already initialized in .common, but can be overridden if needed
+
+  InstancedMesh2.prototype.init = function(): void {
+    this.initMatricesTexture();
+    this.initColorsTexture();
+    // Ensure textures are updated before first render
+    this.matricesTexture.update(this._renderer);
+    this.colorsTexture?.update(this._renderer);
+  };
+
+  InstancedMesh2.prototype.initMatricesTexture = function(): void {
+    if (!this._parentLOD) {
+      // Only initialize if not already set
+      if (!this.matricesTexture) {
+        this.matricesTexture = new SquareDataTexture(Float32Array, 4, 4, this._capacity);
+      }
+    }
+  };
+
+  InstancedMesh2.prototype.initColorsTexture = function(): void {
+    if (!this._parentLOD) {
+      if (!this.colorsTexture) {
+        this.colorsTexture = new SquareDataTexture(Float32Array, 4, 1, this._capacity);
+        this.colorsTexture.colorSpace = ColorManagement.workingColorSpace;
+        this.colorsTexture._data.fill(1);
+        this.materialsNeedsUpdate();
+      }
+    }
+  };
+
+  InstancedMesh2.prototype.onBeforeCompile = function(shader: WebGLProgramParametersWithUniforms, renderer: WebGLRenderer): void {
     if (this._onBeforeCompileBase) this._onBeforeCompileBase.call(this._currentMaterial, shader, renderer);
 
     shader.instancing = false;
@@ -51,5 +87,4 @@ export function extendInstancedMesh2PrototypeWebGL(): void {
       shader.uniforms.boneTexture = { value: this.boneTexture };
     }
   };
-
 }
