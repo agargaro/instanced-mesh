@@ -53,7 +53,7 @@ export function extendInstancedMesh2PrototypeWebGPU(): void {
     }
     // Set the node for instance matrix in the material
     if (this._currentMaterial) {
-      (this._currentMaterial as any).matricesTexture = getInstancedMatrix(uniform(this.matricesTexture));
+      (this._currentMaterial as any).positionNode = getInstancedMatrix(uniform(this.matricesTexture));
     }
   };
 
