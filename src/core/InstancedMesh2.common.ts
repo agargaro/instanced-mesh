@@ -630,6 +630,15 @@ export class InstancedMesh2<
   }
 
   /**
+   * Initializes the colors texture for the instances.
+   * This method should be implemented in the renderer-specific prototype.
+   * @throws Error if not implemented.
+   */
+  initColorsTexture() {
+    throw new Error('Method not implemented.');
+  }
+
+  /**
    * Gets the color of a specific instance.
    * @param id The index of the instance.
    * @param color Optional `Color` to store the result.
