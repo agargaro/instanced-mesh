@@ -1,6 +1,6 @@
 import { Material } from 'three';
 import { radixSort, RadixSortOptions } from 'three/addons/utils/SortUtils.js';
-import { InstancedMesh2 } from '../core/InstancedMesh2.js';
+import { InstancedMesh2 } from '../core/InstancedMesh2.common.js';
 import { InstancedRenderItem } from '../core/utils/InstancedRenderList.js';
 
 type radixSortCallback = (list: InstancedRenderItem[]) => void;

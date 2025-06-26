@@ -1,4 +1,4 @@
-import { InstancedMesh2 } from '../InstancedMesh2.js';
+import { InstancedMesh2 } from '../InstancedMesh2.common.js';
 import { ChannelSize, SquareDataTexture, UniformMap, UniformMapType, UniformType, UniformValue, UniformValueObj } from '../utils/SquareDataTexture.js';
 
 type UniformSchema = { [x: string]: UniformType };
@@ -11,7 +11,7 @@ type UniformSchemaResult = {
   fetchInFragmentShader: boolean;
 };
 
-declare module '../InstancedMesh2.js' {
+declare module '../InstancedMesh2.common.js' {
   interface InstancedMesh2 {
     /**
      * Retrieves a uniform value for a specific instance.

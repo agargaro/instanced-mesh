@@ -1,7 +1,7 @@
 import { Intersection, Matrix4, Mesh, Ray, Raycaster, Sphere, Vector3 } from 'three';
-import { InstancedMesh2 } from '../InstancedMesh2.js';
+import { InstancedMesh2 } from '../InstancedMesh2.common.js';
 
-declare module '../InstancedMesh2.js' {
+declare module '../InstancedMesh2.common.js' {
   interface InstancedMesh2 {
     /** @internal */ raycastInstances(raycaster: Raycaster, result: Intersection[]): void;
     /** @internal */ checkObjectIntersection(raycaster: Raycaster, objectIndex: number, result: Intersection[]): void;

@@ -1,8 +1,8 @@
 import { Matrix4, Skeleton } from 'three';
-import { InstancedMesh2 } from '../InstancedMesh2.js';
+import { InstancedMesh2 } from '../InstancedMesh2.common.js';
 import { SquareDataTexture } from '../utils/SquareDataTexture.js';
 
-declare module '../InstancedMesh2.js' {
+declare module '../InstancedMesh2.common.js' {
   interface InstancedMesh2 {
     /**
      * Initialize the skeleton of the instances.

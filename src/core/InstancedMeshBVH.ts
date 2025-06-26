@@ -1,7 +1,7 @@
 import { box3ToArray, BVH, BVHNode, HybridBuilder, onFrustumIntersectionCallback, onFrustumIntersectionLODCallback, onIntersectionCallback, onIntersectionRayCallback, vec3ToArray, WebGLCoordinateSystem } from 'bvh.js';
 import { Box3, Matrix4, Raycaster, Sphere, Vector3 } from 'three';
 import { LODLevel } from './feature/LOD.js';
-import { InstancedMesh2 } from './InstancedMesh2.js';
+import { InstancedMesh2 } from './InstancedMesh2.common.js';
 
 // TODO getBoxFromSphere updated if change geometry (and create accessor)
 // TODO accurateCulling in bvh.js?

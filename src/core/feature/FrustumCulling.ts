@@ -1,7 +1,7 @@
 import { BVHNode } from 'bvh.js';
 import { Camera, Frustum, Material, Matrix4, Sphere, Vector3 } from 'three';
 import { sortOpaque, sortTransparent } from '../../utils/SortingUtils.js';
-import { InstancedMesh2 } from '../InstancedMesh2.js';
+import { InstancedMesh2 } from '../InstancedMesh2.common.js';
 import { InstancedRenderItem, InstancedRenderList } from '../utils/InstancedRenderList.js';
 import { LODRenderList } from './LOD.js';
 
@@ -22,7 +22,7 @@ export type CustomSortCallback = (list: InstancedRenderItem[]) => void;
  */
 export type OnFrustumEnterCallback = (index: number, camera: Camera, cameraLOD?: Camera, LODindex?: number) => boolean;
 
-declare module '../InstancedMesh2.js' {
+declare module '../InstancedMesh2.common.js' {
   interface InstancedMesh2 {
     /**
      * Performs frustum culling and manages LOD visibility.

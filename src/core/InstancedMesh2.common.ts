@@ -1,11 +1,12 @@
 import { AttachedBindMode, BindMode, Box3, BufferAttribute, BufferGeometry, Camera, Color, ColorManagement, ColorRepresentation, DataTexture, DetachedBindMode, InstancedBufferAttribute, Material, Matrix4, Mesh, Object3D, Object3DEventMap, Scene, Skeleton, Sphere, TypedArray, Vector3, WebGLProgramParametersWithUniforms, WebGLRenderer } from 'three';
-import { CustomSortCallback, OnFrustumEnterCallback } from './feature/FrustumCulling.js';
+
 import { Entity } from './feature/Instances.js';
 import { LODInfo } from './feature/LOD.js';
 import { InstancedEntity } from './InstancedEntity.js';
 import { BVHParams, InstancedMeshBVH } from './InstancedMeshBVH.js';
 import { GLInstancedBufferAttribute } from './utils/GLInstancedBufferAttribute.js';
 import { SquareDataTexture } from './utils/SquareDataTexture.js';
+import { CustomSortCallback, OnFrustumEnterCallback } from './feature/FrustumCulling.js';
 
 // TODO: Add check to not update partial texture if needsuupdate already true
 // TODO: if bvh present, can override?
@@ -63,7 +64,7 @@ export class InstancedMesh2<
   /**
    * @defaultValue `InstancedMesh2`
    */
-  public override readonly type = 'InstancedMesh2';
+  public override type = 'InstancedMesh2';
   /**
    * Indicates if this is an `InstancedMesh2`.
    */
@@ -80,11 +81,11 @@ export class InstancedMesh2<
   /**
    * Texture storing matrices for instances.
    */
-  public matricesTexture: SquareDataTexture;
+  public matricesTexture: SquareDataTexture; // initialized in renderer-specific prototype
   /**
    * Texture storing colors for instances.
    */
-  public colorsTexture: SquareDataTexture = null;
+  public colorsTexture: SquareDataTexture = null; // initialized in renderer-specific prototype
   /**
    * Texture storing morph target influences for instances.
    */
@@ -92,11 +93,11 @@ export class InstancedMesh2<
   /**
    * Texture storing bones for instances.
    */
-  public boneTexture: SquareDataTexture = null;
+  public boneTexture: SquareDataTexture = null; // initialized in renderer-specific prototype
   /**
    * Texture storing custom uniforms per instance.
    */
-  public uniformsTexture: SquareDataTexture = null;
+  public uniformsTexture: SquareDataTexture = null; // initialized in renderer-specific prototype
   /**
    * This bounding box encloses all instances, which can be calculated with `computeBoundingBox` method.
    * Bounding box isn't computed by default. It needs to be explicitly computed, otherwise it's `null`.
@@ -160,7 +161,7 @@ export class InstancedMesh2<
    * Callback function called if an instance is inside the frustum.
    */
   public onFrustumEnter: OnFrustumEnterCallback = null;
-  /** @internal */ _renderer: WebGLRenderer = null;
+  /** @internal */ _renderer: WebGLRenderer = null; // initialized in renderer-specific prototype
   /** @internal */ _instancesCount = 0;
   /** @internal */ _instancesArrayCount = 0;
   /** @internal */ _perObjectFrustumCulled = true;
@@ -182,9 +183,16 @@ export class InstancedMesh2<
   protected _createEntities: boolean;
 
   // HACK TO MAKE IT WORK WITHOUT UPDATE CORE
-  /** @internal */ isInstancedMesh = true; // must be set to use instancing rendering
-  /** @internal */ instanceMatrix = new InstancedBufferAttribute(new Float32Array(0), 16); // must be init to avoid exception
-  /** @internal */ instanceColor = null; // must be null to avoid exception
+  /** @internal */ isInstancedMesh = true;
+  /** @internal */ instanceMatrix = new InstancedBufferAttribute(new Float32Array(0), 16); // overridden in renderer-specific prototype if needed
+  /** @internal */ instanceColor = null;
+
+  // Todo: WebGPU-specific methods
+  init: () => void;
+  onBeforeCompile: (shader: WebGLProgramParametersWithUniforms, renderer: WebGLRenderer) => void;
+  initPositionsNode: () => void;
+  initColorsNode: () => void;
+  initBonesNode: () => void;
 
   /**
    * The capacity of the instance buffers.
@@ -255,8 +263,10 @@ export class InstancedMesh2<
     this.availabilityArray = LOD?.availabilityArray ?? new Array(capacity * 2);
     this._createEntities = createEntities;
 
+    // Only initialize common attributes here.
     this.initIndexAttribute();
-    this.initMatricesTexture();
+
+    // Renderer-specific initialization (matricesTexture, colorsTexture, etc.) is done in prototype extension.
   }
 
   public override onBeforeShadow(renderer: WebGLRenderer, scene: Scene, camera: Camera, shadowCamera: Camera, geometry: BufferGeometry, depthMaterial: Material, group: any): void {
@@ -345,21 +355,6 @@ export class InstancedMesh2<
     this._geometry.setAttribute('instanceIndex', this.instanceIndex as unknown as BufferAttribute);
   }
 
-  protected initMatricesTexture(): void {
-    if (!this._parentLOD) {
-      this.matricesTexture = new SquareDataTexture(Float32Array, 4, 4, this._capacity);
-    }
-  }
-
-  protected initColorsTexture(): void {
-    if (!this._parentLOD) {
-      this.colorsTexture = new SquareDataTexture(Float32Array, 4, 1, this._capacity);
-      this.colorsTexture.colorSpace = ColorManagement.workingColorSpace;
-      this.colorsTexture._data.fill(1);
-      this.materialsNeedsUpdate();
-    }
-  }
-
   protected materialsNeedsUpdate(): void {
     if ((this.material as Material).isMaterial) {
       (this.material as Material).needsUpdate = true;
@@ -391,55 +386,12 @@ export class InstancedMesh2<
     return `ezInstancedMesh2_${this.id}_${!!this.colorsTexture}_${this._useOpacity}_${!!this.boneTexture}_${!!this.uniformsTexture}_${this._customProgramCacheKeyBase.call(this._currentMaterial)}`;
   };
 
-  protected _onBeforeCompile = (shader: WebGLProgramParametersWithUniforms, renderer: WebGLRenderer): void => {
-    if (this._onBeforeCompileBase) this._onBeforeCompileBase.call(this._currentMaterial, shader, renderer);
-
-    shader.instancing = false;
-
-    shader.defines ??= {};
-    shader.defines['USE_INSTANCING_INDIRECT'] = '';
-
-    shader.uniforms.matricesTexture = { value: this.matricesTexture };
-
-    if (this.uniformsTexture) {
-      shader.uniforms.uniformsTexture = { value: this.uniformsTexture };
-      const { vertex, fragment } = this.uniformsTexture.getUniformsGLSL('uniformsTexture', 'instanceIndex', 'uint');
-      shader.vertexShader = shader.vertexShader.replace('void main() {', vertex);
-      shader.fragmentShader = shader.fragmentShader.replace('void main() {', fragment);
-    }
-
-    if (this.colorsTexture && shader.fragmentShader.includes('#include <color_pars_fragment>')) {
-      shader.defines['USE_INSTANCING_COLOR_INDIRECT'] = '';
-      shader.uniforms.colorsTexture = { value: this.colorsTexture };
-      shader.vertexShader = shader.vertexShader.replace('<color_vertex>', '<instanced_color_vertex>');
-
-      if (shader.vertexColors) {
-        shader.defines['USE_VERTEX_COLOR'] = '';
-      }
-
-      if (this._useOpacity) {
-        shader.defines['USE_COLOR_ALPHA'] = '';
-      } else {
-        shader.defines['USE_COLOR'] = '';
-      }
-    }
-
-    if (this.boneTexture) {
-      shader.defines['USE_SKINNING'] = '';
-      shader.defines['USE_INSTANCING_SKINNING'] = '';
-      shader.uniforms.bindMatrix = { value: this.bindMatrix };
-      shader.uniforms.bindMatrixInverse = { value: this.bindMatrixInverse };
-      shader.uniforms.bonesPerInstance = { value: this.skeleton.bones.length };
-      shader.uniforms.boneTexture = { value: this.boneTexture };
-    }
-  };
-
   protected patchMaterial(renderer: WebGLRenderer, material: Material): void {
     this._currentMaterial = material;
     this._customProgramCacheKeyBase = material.customProgramCacheKey; // avoid .bind(material); to prevent memory leak
     this._onBeforeCompileBase = material.onBeforeCompile;
     material.customProgramCacheKey = this._customProgramCacheKey;
-    material.onBeforeCompile = this._onBeforeCompile;
+    // material.onBeforeCompile = this._onBeforeCompile;
 
     const propertiesBase = renderer.properties;
 
@@ -675,6 +627,15 @@ export class InstancedMesh2<
     }
 
     this.colorsTexture.enqueueUpdate(id);
+  }
+
+  /**
+   * Initializes the colors texture for the instances.
+   * This method should be implemented in the renderer-specific prototype.
+   * @throws Error if not implemented.
+   */
+  initColorsTexture() {
+    throw new Error('Method not implemented.');
   }
 
   /**

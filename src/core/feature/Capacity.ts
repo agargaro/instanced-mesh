@@ -1,9 +1,9 @@
 import { DataTexture, FloatType, RedFormat, TypedArray } from 'three';
-import { InstancedMesh2 } from '../InstancedMesh2.js';
+import { InstancedMesh2 } from '../InstancedMesh2.common.js';
 
 // TODO: add optimize method to reduce buffer size and remove instances objects
 
-declare module '../InstancedMesh2.js' {
+declare module '../InstancedMesh2.common.js' {
   interface InstancedMesh2 {
     /**
      * Resizes internal buffers to accommodate the specified capacity.
