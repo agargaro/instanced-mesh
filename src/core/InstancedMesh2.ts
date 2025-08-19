@@ -1,4 +1,4 @@
-import { AttachedBindMode, BindMode, Box3, BufferAttribute, BufferGeometry, Camera, Color, ColorManagement, ColorRepresentation, DataTexture, DetachedBindMode, InstancedBufferAttribute, Material, Matrix4, Mesh, Object3D, Object3DEventMap, Scene, Skeleton, Sphere, TypedArray, Vector3, WebGLProgramParametersWithUniforms, WebGLRenderer } from 'three';
+import { AttachedBindMode, BindMode, Box3, BufferAttribute, BufferGeometry, Camera, Color, ColorManagement, ColorRepresentation, DataTexture, DetachedBindMode, InstancedBufferAttribute, Material, Matrix4, Mesh, MeshDistanceMaterial, Object3D, Object3DEventMap, Scene, Skeleton, Sphere, TypedArray, Vector3, WebGLProgramParametersWithUniforms, WebGLRenderer } from 'three';
 import { CustomSortCallback, OnFrustumEnterCallback } from './feature/FrustumCulling.js';
 import { Entity } from './feature/Instances.js';
 import { LODInfo } from './feature/LOD.js';
@@ -444,13 +444,21 @@ export class InstancedMesh2<
     const propertiesBase = renderer.properties;
 
     if (!this._properties.has(material)) {
-      const materialProperties = {};
+      const materialProperties: { [x: string]: any } = {};
       this._properties.set(material, materialProperties);
 
       const propertiesGetBase = this._propertiesGetBase = propertiesBase.get;
 
       this._propertiesGetMap.set(material, (object) => {
-        if (object === material) return materialProperties;
+        if (object === material) {
+          // fix pointLight bug
+          // related: https://github.com/mrdoob/three.js/blob/dev/src/renderers/webgl/WebGLShadowMap.js#L333
+          if ((material as MeshDistanceMaterial).isMeshDistanceMaterial) {
+            const materialPropertiesBase = propertiesGetBase(object) as { [x: string]: any };
+            materialProperties.light = materialPropertiesBase.light;
+          }
+          return materialProperties;
+        }
         return propertiesGetBase(object);
       });
     }
