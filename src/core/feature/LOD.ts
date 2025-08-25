@@ -89,8 +89,59 @@ declare module '../InstancedMesh2.js' {
      * @returns The current `InstancedMesh2` instance.
      */
     addShadowLOD(geometry: BufferGeometry, distance?: number, hysteresis?: number): this;
+    /**
+     * Update a single **render** LOD level.
+     * - Accepts **world-space** distance; it will be squared internally.
+     * - If `distance` is omitted, only `hysteresis` is updated.
+     * - No-ops when render LODs are not present.
+     * @param levelIndex Index of the LOD level to update.
+     * @param distance The distance for this LOD level.
+     * @param hysteresis The hysteresis value for this LOD level.
+     * @returns The current `InstancedMesh2` instance.
+     */
+    setLODDistance(
+      levelIndex: number,
+      distance?: number,
+      hysteresis?: number
+    ): this;
+    /**
+     * Update a single **shadow** LOD level.
+     * - Accepts **world-space** distance; it will be squared internally.
+     * - If `distance` is omitted, only `hysteresis` is updated.
+     * - No-ops when shadow LODs are not present.
+     * @param levelIndex Index of the shadow LOD level to update.
+     * @param distance The distance for this LOD level.
+     * @param hysteresis The hysteresis value for this LOD level.
+     * @returns The current `InstancedMesh2` instance.
+     */
+    setShadowLODDistance(
+      levelIndex: number,
+      distance?: number,
+      hysteresis?: number
+    ): this;
+    /**
+     * Batch update **render** LOD distances.
+     * - No-op when render LODs are not present.
+     * @param distance The distance for this LOD level.
+     * @param hysteresis The hysteresis value for this LOD level.
+     * @returns The current `InstancedMesh2` instance.
+     */
+    setLODProfile(distances: number[], hysteresis?: number | number[]): this;
+    /**
+     * Batch update **shadow** LOD distances.
+     * - No-op when shadow LODs are not present.
+     * @param distance The distance for this LOD level.
+     * @param hysteresis The hysteresis value for this LOD level.
+     * @returns The current `InstancedMesh2` instance.
+     */
+    setShadowLODProfile(
+      distances: number[],
+      hysteresis?: number | number[]
+    ): this;
     /** @internal */ addLevel(renderList: LODRenderList, geometry: BufferGeometry, material: Material | Material[], distance: number, hysteresis: number): InstancedMesh2;
     /** @internal */ patchLevel(obj: InstancedMesh2): void;
+    /** @internal */ changeLevel(renderList: LODRenderList, levelIndex: number, distance?: number, hysteresis?: number): this;
+    /** @internal */ setLODs(renderList: LODRenderList, distances: number[], hysteresis?: number | number[]): this;
   }
 }
 
@@ -188,6 +239,101 @@ InstancedMesh2.prototype.addLevel = function (renderList: LODRenderList, geometr
 
   return object;
 };
+
+ InstancedMesh2.prototype.changeLevel = function (
+    renderList,
+    levelIndex,
+    distance,
+    hysteresis
+  ) {
+    if (!renderList || !renderList.levels) throw new Error("Invalid LOD list.");
+    const levels = renderList.levels;
+    if (levelIndex < 0 || levelIndex >= levels.length)
+      throw new Error("Level index OOB");
+
+    const entry = levels[levelIndex];
+
+    if (distance != null) {
+      const d2 = distance ** 2;
+      if (Number.isNaN(d2)) throw new Error("Distance is NaN");
+      entry.distance = d2;
+    }
+    if (hysteresis != null) entry.hysteresis = hysteresis;
+    return this;
+  };
+
+  InstancedMesh2.prototype.setLODDistance = function (
+    levelIndex,
+    distance,
+    hysteresis
+  ) {
+    return this.changeLevel(
+      this.LODinfo.render,
+      levelIndex,
+      distance,
+      hysteresis
+    );
+  };
+
+  InstancedMesh2.prototype.setShadowLODDistance = function (
+    levelIndex,
+    distance,
+    hysteresis
+  ) {
+    return this.changeLevel(
+      this?.LODinfo?.shadowRender,
+      levelIndex,
+      distance,
+      hysteresis
+    );
+  };
+
+  InstancedMesh2.prototype.setLODs = function (
+    renderList,
+    distances,
+    hysteresis
+  ) {
+    if (!renderList || !renderList.levels) throw new Error("Invalid LOD list.");
+    const levels = renderList.levels;
+    const n = Math.min(levels.length, distances?.length ?? 0);
+    if (n === 0) return this;
+
+    for (let i = 0; i < n; i++) {
+      const d = distances[i];
+      if (d == null || Number.isNaN(d)) {
+        throw new Error(`LOD distance at index ${i} is invalid (${d}).`);
+      }
+      if (i > 0 && !(d > distances[i - 1])) {
+        throw new Error(
+          `LOD distances must be strictly increasing: d[${i - 1}]=${
+            distances[i - 1]
+          } < d[${i}]=${d}`
+        );
+      }
+    }
+
+    for (let i = 0; i < n; i++) {
+      const h = Array.isArray(hysteresis) ? hysteresis[i] : hysteresis;
+      this.changeLevel(renderList, i, distances[i], h);
+    }
+
+    return this;
+  };
+
+  InstancedMesh2.prototype.setLODProfile = function (distances, hysteresis) {
+    const list = this?.LODinfo?.render;
+    if (!list || !list.levels || list.levels.length === 0) return this;
+    return this.setLODs(list, distances, hysteresis);
+  };
+
+  InstancedMesh2.prototype.setShadowLODProfile = function (
+    distances,
+    hysteresis
+  ) {
+    const list = this?.LODinfo?.shadowRender;
+    if (!list || !list.levels || list.levels.length === 0) return this;
+    return this.setLODs(list, distances, hysteresis);
+  };
 
 InstancedMesh2.prototype.patchLevel = function (obj: InstancedMesh2): void {
   Object.defineProperty(obj, '_lastRenderInfo', {
