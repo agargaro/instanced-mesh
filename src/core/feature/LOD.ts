@@ -246,7 +246,7 @@ InstancedMesh2.prototype.addLevel = function (renderList: LODRenderList, geometr
     distance,
     hysteresis
   ) {
-    if (!renderList || !renderList.levels) throw new Error("Invalid LOD list.");
+    if (!renderList?.levels) throw new Error("Invalid LOD list.");
     const levels = renderList.levels;
     if (levelIndex < 0 || levelIndex >= levels.length)
       throw new Error("Level index OOB");
@@ -281,7 +281,7 @@ InstancedMesh2.prototype.addLevel = function (renderList: LODRenderList, geometr
     hysteresis
   ) {
     return this.changeLevel(
-      this?.LODinfo?.shadowRender,
+      this.LODinfo?.shadowRender,
       levelIndex,
       distance,
       hysteresis
@@ -293,7 +293,7 @@ InstancedMesh2.prototype.addLevel = function (renderList: LODRenderList, geometr
     distances,
     hysteresis
   ) {
-    if (!renderList || !renderList.levels) throw new Error("Invalid LOD list.");
+    if (!renderList?.levels) throw new Error("Invalid LOD list.");
     const levels = renderList.levels;
     const n = Math.min(levels.length, distances?.length ?? 0);
     if (n === 0) return this;
@@ -303,7 +303,7 @@ InstancedMesh2.prototype.addLevel = function (renderList: LODRenderList, geometr
       if (d == null || Number.isNaN(d)) {
         throw new Error(`LOD distance at index ${i} is invalid (${d}).`);
       }
-      if (i > 0 && !(d > distances[i - 1])) {
+      if (i > 0 && d <= distances[i - 1]) {
         throw new Error(
           `LOD distances must be strictly increasing: d[${i - 1}]=${
             distances[i - 1]
@@ -322,7 +322,7 @@ InstancedMesh2.prototype.addLevel = function (renderList: LODRenderList, geometr
 
   InstancedMesh2.prototype.setLODProfile = function (distances, hysteresis) {
     const list = this?.LODinfo?.render;
-    if (!list || !list.levels || list.levels.length === 0) return this;
+    if (!list?.levels?.length) return this;
     return this.setLODs(list, distances, hysteresis);
   };
 
@@ -331,7 +331,7 @@ InstancedMesh2.prototype.addLevel = function (renderList: LODRenderList, geometr
     hysteresis
   ) {
     const list = this?.LODinfo?.shadowRender;
-    if (!list || !list.levels || list.levels.length === 0) return this;
+    if (!list?.levels?.length) return this;
     return this.setLODs(list, distances, hysteresis);
   };
 
