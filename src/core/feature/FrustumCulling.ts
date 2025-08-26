@@ -74,11 +74,6 @@ InstancedMesh2.prototype.performFrustumCulling = function (camera: Camera, camer
 
   if (LODrenderList?.levels.length > 0) mainMesh.frustumCullingLOD(LODrenderList, camera, cameraLOD);
   else mainMesh.frustumCulling(camera);
-
-  // this.instanceIndex.update(this._renderer, this.count);
-  mainMesh.instanceIndex.update(mainMesh._renderer, mainMesh.count);
-
-  console.log(LODrenderList.count);
 };
 
 InstancedMesh2.prototype.frustumCullingAlreadyPerformed = function (frame, camera, shadowCamera) {
