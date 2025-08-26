@@ -190,6 +190,12 @@ InstancedMesh2.prototype.addLevel = function (renderList: LODRenderList, geometr
 };
 
 InstancedMesh2.prototype.patchLevel = function (obj: InstancedMesh2): void {
+  Object.defineProperty(obj, '_lastRenderInfo', {
+    get(this: InstancedMesh2) {
+      return this._parentLOD._lastRenderInfo;
+    }
+  });
+
   Object.defineProperty(obj, 'matricesTexture', {
     get(this: InstancedMesh2) {
       return this._parentLOD.matricesTexture;

@@ -31,6 +31,7 @@ declare module '../InstancedMesh2.js' {
      */
     performFrustumCulling(camera: Camera, cameraLOD?: Camera): void;
 
+    /** @internal */ frustumCullingAlreadyPerformed(frame: number, camera: Camera, shadowCamera: Camera | null): boolean;
     /** @internal */ frustumCulling(camera: Camera): void;
     /** @internal */ updateIndexArray(): void;
     /** @internal */ updateRenderList(): void;
@@ -54,27 +55,43 @@ const _position = new Vector3();
 const _sphere = new Sphere();
 
 InstancedMesh2.prototype.performFrustumCulling = function (camera: Camera, cameraLOD = camera) {
-  if (!this._parentLOD && this._instancesArrayCount === 0) {
-    this.count = 0;
-    return;
-  }
-
-  const LODinfo = this.LODinfo;
-  const isShadowRendering = camera !== cameraLOD;
+  const mainMesh = this._parentLOD ?? this;
+  const LODinfo = mainMesh.LODinfo;
   let LODrenderList: LODRenderList;
 
   if (LODinfo) {
+    const isShadowRendering = camera !== cameraLOD;
     LODrenderList = !isShadowRendering ? LODinfo.render : (LODinfo.shadowRender ?? LODinfo.render);
 
     for (const object of LODinfo.objects) {
       object.count = 0;
     }
+  } else {
+    mainMesh.count = 0;
   }
 
-  if (LODrenderList?.levels.length > 0) this.frustumCullingLOD(LODrenderList, camera, cameraLOD);
-  else if (!this._parentLOD) this.frustumCulling(camera);
+  if (mainMesh._instancesArrayCount === 0) return;
 
-  this.instanceIndex.update(this._renderer, this.count);
+  if (LODrenderList?.levels.length > 0) mainMesh.frustumCullingLOD(LODrenderList, camera, cameraLOD);
+  else mainMesh.frustumCulling(camera);
+
+  // this.instanceIndex.update(this._renderer, this.count);
+  mainMesh.instanceIndex.update(mainMesh._renderer, mainMesh.count);
+
+  console.log(LODrenderList.count);
+};
+
+InstancedMesh2.prototype.frustumCullingAlreadyPerformed = function (frame, camera, shadowCamera) {
+  const lastRenderInfo = this._lastRenderInfo;
+  if (lastRenderInfo.frame === frame && lastRenderInfo.camera === camera && lastRenderInfo.shadowCamera === shadowCamera) {
+    return true;
+  }
+
+  lastRenderInfo.frame = frame;
+  lastRenderInfo.camera = camera;
+  lastRenderInfo.shadowCamera = shadowCamera;
+
+  return false;
 };
 
 InstancedMesh2.prototype.frustumCulling = function (camera: Camera) {
