@@ -138,6 +138,16 @@ declare module '../InstancedMesh2.js' {
       distances: number[],
       hysteresis?: number | number[]
     ): this;
+    /**
+     * Remove a render LOD level by index.
+     * - Throws if index is out of bounds.
+     * - Prevents removing LOD0 when other levels exist.
+     * - Mirrors the removal on the shadow LOD list when that index exists.
+     *
+     * @param levelIndex Index of the LOD level to remove.
+     * @returns The current `InstancedMesh2` instance.
+     */
+    removeLOD(levelIndex: number): this;
     /** @internal */ addLevel(renderList: LODRenderList, geometry: BufferGeometry, material: Material | Material[], distance: number, hysteresis: number): InstancedMesh2;
     /** @internal */ patchLevel(obj: InstancedMesh2): void;
     /** @internal */ changeLevel(renderList: LODRenderList, levelIndex: number, distance?: number, hysteresis?: number): this;
@@ -334,6 +344,30 @@ InstancedMesh2.prototype.addLevel = function (renderList: LODRenderList, geometr
     if (!list?.levels?.length) return this;
     return this.setLODs(list, distances, hysteresis);
   };
+  
+  InstancedMesh2.prototype.removeLOD = function (levelIndex) {
+    const list = this.LODinfo?.render;
+    if (!list?.levels) throw new Error('Invalid LOD list.');
+    const n = list.levels.length;
+    if (levelIndex < 0 || levelIndex >= n) throw new Error('Level index OOB');
+    if (n > 1 && levelIndex === 0) throw new Error('Cannot remove LOD0 while others exist');
+    
+    // remove whole list if only LOD0 remains
+    if (n === 1) {
+      this.LODinfo.render = null;
+    } else {
+      list.levels.splice(levelIndex, 1);
+      list.count?.splice?.(levelIndex, 1);
+    }
+
+    // mirror remove on shadow list if that index exists
+    const shadow = this.LODinfo?.shadowRender;
+    if (shadow?.levels && levelIndex < shadow.levels.length) {
+      shadow.levels.splice(levelIndex, 1);
+      shadow.count?.splice?.(levelIndex, 1);
+      if (shadow.levels.length === 0) this.LODinfo.shadowRender = null}
+      return this;
+    };
 
 InstancedMesh2.prototype.patchLevel = function (obj: InstancedMesh2): void {
   Object.defineProperty(obj, '_lastRenderInfo', {
