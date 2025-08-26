@@ -94,7 +94,7 @@ declare module '../InstancedMesh2.js' {
      * - Accepts **world-space** distance; it will be squared internally.
      * - If `distance` is omitted, only `hysteresis` is updated.
      * - No-ops when render LODs are not present.
-     * @param levelIndex Index of the LOD level to update.
+     * @param levelIndex 1-based index of the render LOD to update (0 is ignored).
      * @param distance The distance for this LOD level.
      * @param hysteresis The hysteresis value for this LOD level.
      * @returns The current `InstancedMesh2` instance.
@@ -267,6 +267,7 @@ InstancedMesh2.prototype.addLevel = function (renderList: LODRenderList, geometr
     distance,
     hysteresis
   ) {
+    if(levelIndex===0) return this;
     return this.changeLevel(
       this.LODinfo.render,
       levelIndex,
@@ -295,33 +296,32 @@ InstancedMesh2.prototype.addLevel = function (renderList: LODRenderList, geometr
   ) {
     if (!renderList?.levels) throw new Error("Invalid LOD list.");
     const levels = renderList.levels;
-    const n = Math.min(levels.length, distances?.length ?? 0);
-    if (n === 0) return this;
+    const isRender = this.LODinfo?.render === renderList;
 
-    for (let i = 0; i < n; i++) {
-      const d = distances[i];
-      if (d == null || Number.isNaN(d)) {
+    const start = isRender ? 1 : 0; //for shadowLOD
+    if (isRender) levels[0].distance = 0;
+    if (!distances?.length) return this;
+
+   const n = Math.min(levels.length - start, distances.length);
+
+   let prev = null;
+     for (let i = 0; i < n; i++) {
+       const d = distances[i];
+       if (d == null || Number.isNaN(d)) {
         throw new Error(`LOD distance at index ${i} is invalid (${d}).`);
       }
-      if (i > 0 && d <= distances[i - 1]) {
-        throw new Error(
-          `LOD distances must be strictly increasing: d[${i - 1}]=${
-            distances[i - 1]
-          } < d[${i}]=${d}`
-        );
+      if (i > 0 && d <= prev) {
+        throw new Error(`LOD distances must be strictly increasing: d[${i - 1}]=${prev} < d[${i}]=${d}`);
       }
-    }
-
-    for (let i = 0; i < n; i++) {
       const h = Array.isArray(hysteresis) ? hysteresis[i] : hysteresis;
-      this.changeLevel(renderList, i, distances[i], h);
+      this.changeLevel(renderList, start + i, d, h);
+      prev = d;
     }
-
     return this;
   };
 
   InstancedMesh2.prototype.setLODProfile = function (distances, hysteresis) {
-    const list = this?.LODinfo?.render;
+    const list = this.LODinfo?.render;
     if (!list?.levels?.length) return this;
     return this.setLODs(list, distances, hysteresis);
   };
@@ -330,7 +330,7 @@ InstancedMesh2.prototype.addLevel = function (renderList: LODRenderList, geometr
     distances,
     hysteresis
   ) {
-    const list = this?.LODinfo?.shadowRender;
+    const list = this.LODinfo?.shadowRender;
     if (!list?.levels?.length) return this;
     return this.setLODs(list, distances, hysteresis);
   };
