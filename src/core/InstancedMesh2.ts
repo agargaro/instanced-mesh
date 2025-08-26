@@ -13,6 +13,8 @@ import { SquareDataTexture } from './utils/SquareDataTexture.js';
 // TODO LOD: instancedMeshLOD rendering first nearest levels, look out to transparent
 // TODO LOD: shared customDepthMaterial and customDistanceMaterial?
 // TODO LOD: BVH and handle raycastOnlyFrustum?;
+// TODO: check if check first and last material is right.. we should use the first valid index instead
+// TODO: use visible = false instead count = 0 for unused LOD?
 
 /**
  * Parameters for configuring an `InstancedMesh2` instance.
@@ -41,6 +43,12 @@ export interface InstancedMesh2Params {
    * @default null
    */
   renderer?: WebGLRenderer;
+}
+
+interface RenderInfo {
+  frame: number;
+  camera: Camera | null;
+  shadowCamera: Camera | null;
 }
 
 /**
@@ -169,6 +177,7 @@ export class InstancedMesh2<
   /** @internal */ _indexArrayNeedsUpdate = false;
   /** @internal */ _geometry: TGeometry;
   /** @internal */ _parentLOD: InstancedMesh2;
+  /** @internal */ _lastRenderInfo: RenderInfo;
   protected readonly _allowsEuler: boolean;
   protected readonly _tempInstance: InstancedEntity;
   protected _useOpacity = false;
@@ -255,6 +264,7 @@ export class InstancedMesh2<
     this.availabilityArray = LOD?.availabilityArray ?? new Array(capacity * 2);
     this._createEntities = createEntities;
 
+    this.initLastRenderInfo();
     this.initIndexAttribute();
     this.initMatricesTexture();
   }
@@ -265,10 +275,12 @@ export class InstancedMesh2<
     // if multimaterial we compute frustum culling only on first material
     if (!this.instanceIndex || (group && !this.isFirstGroup(group.materialIndex))) return;
 
-    if (this.autoUpdate) {
+    const frame = renderer.info.render.frame;
+    if (this.autoUpdate && !this.frustumCullingAlreadyPerformed(frame, camera, shadowCamera)) {
       this.performFrustumCulling(shadowCamera, camera);
     }
 
+    this.instanceIndex.update(this._renderer, this.count);
     this.matricesTexture.update(renderer);
     this.colorsTexture?.update(renderer);
     this.uniformsTexture?.update(renderer);
@@ -287,10 +299,12 @@ export class InstancedMesh2<
     // if multimaterial we compute frustum culling only on first material
     if (group && !this.isFirstGroup(group.materialIndex)) return;
 
-    if (this.autoUpdate) {
+    const frame = renderer.info.render.frame;
+    if (this.autoUpdate && !this.frustumCullingAlreadyPerformed(frame, camera, null)) {
       this.performFrustumCulling(camera);
     }
 
+    this.instanceIndex.update(this._renderer, this.count);
     this.matricesTexture.update(renderer);
     this.colorsTexture?.update(renderer);
     this.uniformsTexture?.update(renderer);
@@ -343,6 +357,12 @@ export class InstancedMesh2<
 
     this.instanceIndex = new GLInstancedBufferAttribute(gl, gl.UNSIGNED_INT, 1, 4, array);
     this._geometry.setAttribute('instanceIndex', this.instanceIndex as unknown as BufferAttribute);
+  }
+
+  protected initLastRenderInfo(): void {
+    if (!this._parentLOD) {
+      this._lastRenderInfo = { frame: -1, camera: null, shadowCamera: null };
+    }
   }
 
   protected initMatricesTexture(): void {
