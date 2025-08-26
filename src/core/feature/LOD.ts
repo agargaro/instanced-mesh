@@ -250,124 +250,125 @@ InstancedMesh2.prototype.addLevel = function (renderList: LODRenderList, geometr
   return object;
 };
 
- InstancedMesh2.prototype.changeLevel = function (
-    renderList,
+InstancedMesh2.prototype.changeLevel = function (
+  renderList,
+  levelIndex,
+  distance,
+  hysteresis
+) {
+  if (!renderList?.levels) throw new Error('Invalid LOD list.');
+  const levels = renderList.levels;
+  if (levelIndex < 0 || levelIndex >= levels.length)
+    throw new Error('Level index OOB');
+
+  const entry = levels[levelIndex];
+
+  if (distance != null) {
+    const d2 = distance ** 2;
+    if (Number.isNaN(d2)) throw new Error('Distance is NaN');
+    entry.distance = d2;
+  }
+  if (hysteresis != null) entry.hysteresis = hysteresis;
+  return this;
+};
+
+InstancedMesh2.prototype.setLODDistance = function (
+  levelIndex,
+  distance,
+  hysteresis
+) {
+  if (levelIndex === 0) return this;
+  return this.changeLevel(
+    this.LODinfo.render,
     levelIndex,
     distance,
     hysteresis
-  ) {
-    if (!renderList?.levels) throw new Error("Invalid LOD list.");
-    const levels = renderList.levels;
-    if (levelIndex < 0 || levelIndex >= levels.length)
-      throw new Error("Level index OOB");
+  );
+};
 
-    const entry = levels[levelIndex];
-
-    if (distance != null) {
-      const d2 = distance ** 2;
-      if (Number.isNaN(d2)) throw new Error("Distance is NaN");
-      entry.distance = d2;
-    }
-    if (hysteresis != null) entry.hysteresis = hysteresis;
-    return this;
-  };
-
-  InstancedMesh2.prototype.setLODDistance = function (
+InstancedMesh2.prototype.setShadowLODDistance = function (
+  levelIndex,
+  distance,
+  hysteresis
+) {
+  return this.changeLevel(
+    this.LODinfo?.shadowRender,
     levelIndex,
     distance,
     hysteresis
-  ) {
-    if(levelIndex===0) return this;
-    return this.changeLevel(
-      this.LODinfo.render,
-      levelIndex,
-      distance,
-      hysteresis
-    );
-  };
+  );
+};
 
-  InstancedMesh2.prototype.setShadowLODDistance = function (
-    levelIndex,
-    distance,
-    hysteresis
-  ) {
-    return this.changeLevel(
-      this.LODinfo?.shadowRender,
-      levelIndex,
-      distance,
-      hysteresis
-    );
-  };
+InstancedMesh2.prototype.setLODs = function (
+  renderList,
+  distances,
+  hysteresis
+) {
+  if (!renderList?.levels) throw new Error('Invalid LOD list.');
+  const levels = renderList.levels;
+  const isRender = this.LODinfo?.render === renderList;
 
-  InstancedMesh2.prototype.setLODs = function (
-    renderList,
-    distances,
-    hysteresis
-  ) {
-    if (!renderList?.levels) throw new Error("Invalid LOD list.");
-    const levels = renderList.levels;
-    const isRender = this.LODinfo?.render === renderList;
+  const start = isRender ? 1 : 0; // for shadowLOD
+  if (isRender) levels[0].distance = 0;
+  if (!distances?.length) return this;
 
-    const start = isRender ? 1 : 0; //for shadowLOD
-    if (isRender) levels[0].distance = 0;
-    if (!distances?.length) return this;
+  const n = Math.min(levels.length - start, distances.length);
 
-   const n = Math.min(levels.length - start, distances.length);
-
-   let prev = null;
-     for (let i = 0; i < n; i++) {
-       const d = distances[i];
-       if (d == null || Number.isNaN(d)) {
-        throw new Error(`LOD distance at index ${i} is invalid (${d}).`);
-      }
-      if (i > 0 && d <= prev) {
-        throw new Error(`LOD distances must be strictly increasing: d[${i - 1}]=${prev} < d[${i}]=${d}`);
-      }
-      const h = Array.isArray(hysteresis) ? hysteresis[i] : hysteresis;
-      this.changeLevel(renderList, start + i, d, h);
-      prev = d;
+  let prev = null;
+  for (let i = 0; i < n; i++) {
+    const d = distances[i];
+    if (d == null || Number.isNaN(d)) {
+      throw new Error(`LOD distance at index ${i} is invalid (${d}).`);
     }
-    return this;
-  };
-
-  InstancedMesh2.prototype.setLODProfile = function (distances, hysteresis) {
-    const list = this.LODinfo?.render;
-    if (!list?.levels?.length) return this;
-    return this.setLODs(list, distances, hysteresis);
-  };
-
-  InstancedMesh2.prototype.setShadowLODProfile = function (
-    distances,
-    hysteresis
-  ) {
-    const list = this.LODinfo?.shadowRender;
-    if (!list?.levels?.length) return this;
-    return this.setLODs(list, distances, hysteresis);
-  };
-  
-  InstancedMesh2.prototype.removeLOD = function (levelIndex) {
-    const list = this.LODinfo?.render;
-    if (!list?.levels) throw new Error('Invalid LOD list.');
-    const n = list.levels.length;
-    if (levelIndex < 0 || levelIndex >= n) throw new Error('Level index OOB');
-    if (n > 1 && levelIndex === 0) throw new Error('Cannot remove LOD0 while others exist');
-    
-    // remove whole list if only LOD0 remains
-    if (n === 1) {
-      this.LODinfo.render = null;
-    } else {
-      list.levels.splice(levelIndex, 1);
-      list.count?.splice?.(levelIndex, 1);
+    if (i > 0 && d <= prev) {
+      throw new Error(`LOD distances must be strictly increasing: d[${i - 1}]=${prev} < d[${i}]=${d}`);
     }
+    const h = Array.isArray(hysteresis) ? hysteresis[i] : hysteresis;
+    this.changeLevel(renderList, start + i, d, h);
+    prev = d;
+  }
+  return this;
+};
 
-    // mirror remove on shadow list if that index exists
-    const shadow = this.LODinfo?.shadowRender;
-    if (shadow?.levels && levelIndex < shadow.levels.length) {
-      shadow.levels.splice(levelIndex, 1);
-      shadow.count?.splice?.(levelIndex, 1);
-      if (shadow.levels.length === 0) this.LODinfo.shadowRender = null}
-      return this;
-    };
+InstancedMesh2.prototype.setLODProfile = function (distances, hysteresis) {
+  const list = this.LODinfo?.render;
+  if (!list?.levels?.length) return this;
+  return this.setLODs(list, distances, hysteresis);
+};
+
+InstancedMesh2.prototype.setShadowLODProfile = function (
+  distances,
+  hysteresis
+) {
+  const list = this.LODinfo?.shadowRender;
+  if (!list?.levels?.length) return this;
+  return this.setLODs(list, distances, hysteresis);
+};
+
+InstancedMesh2.prototype.removeLOD = function (levelIndex) {
+  const list = this.LODinfo?.render;
+  if (!list?.levels) throw new Error('Invalid LOD list.');
+  const n = list.levels.length;
+  if (levelIndex < 0 || levelIndex >= n) throw new Error('Level index OOB');
+  if (n > 1 && levelIndex === 0) throw new Error('Cannot remove LOD0 while others exist');
+
+  // remove whole list if only LOD0 remains
+  if (n === 1) {
+    this.LODinfo.render = null;
+  } else {
+    list.levels.splice(levelIndex, 1);
+    list.count?.splice?.(levelIndex, 1);
+  }
+
+  // mirror remove on shadow list if that index exists
+  const shadow = this.LODinfo?.shadowRender;
+  if (shadow?.levels && levelIndex < shadow.levels.length) {
+    shadow.levels.splice(levelIndex, 1);
+    shadow.count?.splice?.(levelIndex, 1);
+    if (shadow.levels.length === 0) this.LODinfo.shadowRender = null;
+  }
+  return this;
+};
 
 InstancedMesh2.prototype.patchLevel = function (obj: InstancedMesh2): void {
   Object.defineProperty(obj, '_lastRenderInfo', {
