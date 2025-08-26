@@ -280,6 +280,7 @@ export class InstancedMesh2<
       this.performFrustumCulling(shadowCamera, camera);
     }
 
+    this.instanceIndex.update(this._renderer, this.count);
     this.matricesTexture.update(renderer);
     this.colorsTexture?.update(renderer);
     this.uniformsTexture?.update(renderer);
@@ -304,7 +305,6 @@ export class InstancedMesh2<
     }
 
     this.instanceIndex.update(this._renderer, this.count);
-
     this.matricesTexture.update(renderer);
     this.colorsTexture?.update(renderer);
     this.uniformsTexture?.update(renderer);
