@@ -110,14 +110,14 @@ declare module '../InstancedMesh2.js' {
      * @param hysteresis The hysteresis value(s) for each LOD level.
      * @returns The current `InstancedMesh2` instance.
      */
-    updateAllLOD(distances: number[] | null, hysteresis?: number | number[]): this;
+    updateAllLOD(distances?: number[], hysteresis?: number | number[]): this;
     /**
      * Updates the shadow LOD settings for all levels.
      * @param distances The array of distances for each LOD level.
      * @param hysteresis The hysteresis value(s) for each LOD level.
      * @returns The current `InstancedMesh2` instance.
      */
-    updateAllShadowLOD(distances: number[] | null, hysteresis?: number | number[]): this;
+    updateAllShadowLOD(distances?: number[], hysteresis?: number | number[]): this;
     /**
      * Removes a specific LOD level by its index.
      * @param levelIndex The index of the LOD level to remove.
@@ -126,7 +126,7 @@ declare module '../InstancedMesh2.js' {
     removeLOD(levelIndex: number): this;
     /** @internal */ addLevel(renderList: LODRenderList, geometry: BufferGeometry, material: Material | Material[], distance: number, hysteresis: number): InstancedMesh2;
     /** @internal */ patchLevel(obj: InstancedMesh2): void;
-    /** @internal */ updateLevel(renderList: LODRenderList, levelIndex: number, distance: number, hysteresis: number, sort?: boolean): this;
+    /** @internal */ updateLevel(renderList: LODRenderList, levelIndex: number, distance: number, hysteresis: number): this;
     /** @internal */ updateAllLevels(renderList: LODRenderList, distances: number[] | null, hysteresis?: number | number[]): this;
   }
 }
@@ -226,23 +226,18 @@ InstancedMesh2.prototype.addLevel = function (renderList: LODRenderList, geometr
   return object;
 };
 
-InstancedMesh2.prototype.updateLevel = function (renderList, levelIndex, distance, hysteresis, sort = true) {
+InstancedMesh2.prototype.updateLevel = function (renderList, levelIndex, distance, hysteresis) {
   if (!renderList) throw new Error('Render list is invalid.');
 
   const level = renderList.levels[levelIndex];
   if (!level) throw new Error('Cannot update an empty LOD.');
 
-  if (distance != null) {
-    level.distance = distance ** 2; // to avoid to use Math.sqrt every time
+  if (distance != null && !Number.isNaN(distance)) {
+    const d2 = distance ** 2;
+    level.distance = d2;
   }
-
-  if (hysteresis != null) {
+  if (hysteresis != null && !Number.isNaN(hysteresis))
     level.hysteresis = hysteresis;
-  }
-
-  if (sort) {
-    renderList.levels.sort((a, b) => a.distance - b.distance);
-  }
 
   return this;
 };
@@ -256,18 +251,29 @@ InstancedMesh2.prototype.updateShadowLOD = function (levelIndex, distance, hyste
 };
 
 InstancedMesh2.prototype.updateAllLevels = function (renderList, distances, hysteresis) {
-  if (!renderList) throw new Error('Render list is invalid.');
+  if (!renderList?.levels) throw new Error('Invalid LOD list.');
+  const levels = renderList.levels;
+  const isRender = this.LODinfo?.render === renderList;
 
-  const count = Math.min(renderList.levels.length, Math.max((hysteresis as number[])?.length ?? 0, distances?.length ?? 0));
+  const start = isRender ? 1 : 0; // for shadowLOD
+  if (isRender) levels[0].distance = 0; // Keep first LOD distance zero and update for lazy loading.
+  if (!distances?.length) return this;
 
-  for (let i = 0; i < count; i++) {
-    const distance = distances?.[i];
-    const _hysteresis = Array.isArray(hysteresis) ? hysteresis[i] : hysteresis;
-    this.updateLevel(renderList, i, distance, _hysteresis, false);
+  const n = Math.min(levels.length - start, distances.length);
+
+  let prev = null;
+  for (let i = 0; i < n; i++) {
+    const d = distances[i];
+    if (d == null || Number.isNaN(d)) {
+      throw new Error(`LOD distance at index ${i} is invalid (${d}).`);
+    }
+    if (i > 0 && d <= prev) {
+      throw new Error(`LOD distances must be strictly increasing: d[${i - 1}]=${prev} < d[${i}]=${d}`);
+    }
+    const h = Array.isArray(hysteresis) ? hysteresis[i] : hysteresis;
+    this.updateLevel(renderList, start + i, d, h);
+    prev = d;
   }
-
-  renderList.levels.sort((a, b) => a.distance - b.distance);
-
   return this;
 };
 
