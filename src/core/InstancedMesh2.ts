@@ -165,6 +165,11 @@ export class InstancedMesh2<
    */
   public skeleton: Skeleton = null;
   /**
+   * Flag indicating whether to automatically update the BVH structure (if present).
+   * @default true
+   */
+  public autoUpdateBVH = true;
+  /**
    * Callback function called if an instance is inside the frustum.
    */
   public onFrustumEnter: OnFrustumEnterCallback = null;
@@ -528,7 +533,10 @@ export class InstancedMesh2<
     }
 
     this.matricesTexture.enqueueUpdate(id);
-    this.bvh?.move(id);
+
+    if (this.bvh && this.autoUpdateBVH) {
+      this.bvh.move(id);
+    }
   }
 
   /**

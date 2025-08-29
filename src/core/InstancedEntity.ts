@@ -101,7 +101,7 @@ export class InstancedEntity {
   }
 
   /**
-   * Set the transformation matrix to identity matrix.
+   * @internal
    */
   public setMatrixIdentity(): void {
     const owner = this.owner;
@@ -130,7 +130,6 @@ export class InstancedEntity {
     te[offset + 15] = 1;
 
     owner.matricesTexture.enqueueUpdate(id);
-    owner.bvh?.move(id);
   }
 
   /**
@@ -175,7 +174,10 @@ export class InstancedEntity {
     te[offset + 15] = 1;
 
     owner.matricesTexture.enqueueUpdate(id);
-    owner.bvh?.move(id);
+
+    if (owner.bvh && owner.autoUpdateBVH) {
+      owner.bvh.move(id);
+    }
   }
 
   /**
@@ -195,7 +197,10 @@ export class InstancedEntity {
     te[offset + 14] = position.z;
 
     owner.matricesTexture.enqueueUpdate(id);
-    owner.bvh?.move(id);
+
+    if (owner.bvh && owner.autoUpdateBVH) {
+      owner.bvh.move(id);
+    }
   }
 
   /**
