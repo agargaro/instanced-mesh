@@ -20,7 +20,7 @@ export type CustomSortCallback = (list: InstancedRenderItem[]) => void;
  * @param LODindex The LOD level of the instance (provided only if LODs are initialized and `sortObjects` is false).
  * @returns True if the instance should be rendered, false otherwise.
  */
-export type OnFrustumEnterCallback = (index: number, camera?: Camera, cameraLOD?: Camera, LODindex?: number) => boolean;
+export type OnFrustumEnterCallback = (index: number, camera: Camera, cameraLOD?: Camera, LODindex?: number) => boolean;
 
 declare module '../InstancedMesh2.js' {
   interface InstancedMesh2 {
