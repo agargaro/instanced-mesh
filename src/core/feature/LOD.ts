@@ -120,16 +120,20 @@ declare module '../InstancedMesh2.js' {
     updateAllShadowLOD(distances?: number[], hysteresis?: number | number[]): this;
     /**
      * Removes a specific LOD level by its index.
-     * If the same geometry is reused by other levels, pass removeObject=false.
      * @param levelIndex The index of the LOD level to remove.
-     * @param removeObject Also remove the child InstancedMesh2 object. Default true.
-     * @returns The current `InstancedMesh2` instance.
+     * @returns The removed `InstancedMesh2` LOD instance or null if still used for shadow rendering. Useful to dispose geometry and material if necessary.
      */
-    removeLOD(levelIndex: number, removeObject?: boolean): this;
+    removeLOD(levelIndex: number): InstancedMesh2 | null;
+    /**
+   * Removes a specific LOD level by its index.
+   * @param levelIndex The index of the LOD level to remove.
+   * @returns The removed `InstancedMesh2` LOD instance or null if still used for rendering. Useful to dispose geometry and material if necessary.
+   */
+    removeShadowLOD(levelIndex: number): InstancedMesh2 | null;
     /** @internal */ addLevel(renderList: LODRenderList, geometry: BufferGeometry, material: Material | Material[], distance: number, hysteresis: number): InstancedMesh2;
     /** @internal */ patchLevel(obj: InstancedMesh2): void;
-    /** @internal */ updateLevel(renderList: LODRenderList, levelIndex: number, distance: number, hysteresis: number): this;
-    /** @internal */ updateAllLevels(renderList: LODRenderList, distances: number[] | null, hysteresis?: number | number[]): this;
+    /** @internal */ updateLevel(renderList: LODRenderList, levelIndex: number, distance?: number, hysteresis?: number, validate?: boolean): this;
+    /** @internal */ updateAllLevels(renderList: LODRenderList, distances?: number[], hysteresis?: number | number[]): this;
   }
 }
 
@@ -153,6 +157,8 @@ InstancedMesh2.prototype.setFirstLODDistance = function (distance): InstancedMes
   }
 
   if (!this.LODinfo.render) {
+    distance = distance ** 2;
+
     this.LODinfo.render = {
       levels: [{ distance, hysteresis: 0, object: this }], // hysteresis is always 0 at first level
       count: [0]
@@ -208,7 +214,7 @@ InstancedMesh2.prototype.addLevel = function (renderList: LODRenderList, geometr
   const objIndex = objectsList.findIndex((e) => e.geometry === geometry);
   if (objIndex === -1) {
     const params: InstancedMesh2Params = { capacity: this._capacity, renderer: this._renderer };
-    object = new InstancedMesh2(geometry, material ?? new ShaderMaterial(), params, this);
+    object = new InstancedMesh2(geometry, material ?? new ShaderMaterial(), params, this); // TODO add empty shared material instead?
     object.frustumCulled = false;
     this.patchLevel(object);
     objectsList.push(object);
@@ -219,7 +225,7 @@ InstancedMesh2.prototype.addLevel = function (renderList: LODRenderList, geometr
   }
 
   for (index = 0; index < levels.length; index++) {
-    if (distance < levels[index].distance) break;
+    if (distance <= levels[index].distance) break;
   }
 
   levels.splice(index, 0, { distance, hysteresis, object });
@@ -228,64 +234,81 @@ InstancedMesh2.prototype.addLevel = function (renderList: LODRenderList, geometr
   return object;
 };
 
-InstancedMesh2.prototype.updateLevel = function (renderList, levelIndex, distance, hysteresis) {
+InstancedMesh2.prototype.updateLevel = function (renderList, levelIndex, distance, hysteresis, validate) {
   if (!renderList) throw new Error('Render list is invalid.');
 
   const level = renderList.levels[levelIndex];
   if (!level) throw new Error('Cannot update an empty LOD.');
 
-  if (distance != null && !Number.isNaN(distance)) {
-    const d2 = distance ** 2;
-    level.distance = d2;
+  if (distance != null) {
+    distance **= 2; // to avoid to use Math.sqrt every time
+
+    if (validate) {
+      const prev = renderList.levels[levelIndex - 1]?.distance ?? -1;
+      const next = renderList.levels[levelIndex + 1]?.distance ?? Infinity;
+      if (distance <= prev || distance >= next) throw new Error('Invalid distance for LOD.');
+    }
+
+    level.distance = distance;
   }
-  if (hysteresis != null && !Number.isNaN(hysteresis))
+
+  if (hysteresis != null) {
     level.hysteresis = hysteresis;
+  }
 
   return this;
 };
 
 InstancedMesh2.prototype.updateLOD = function (levelIndex, distance, hysteresis) {
-  const list = this?.LODinfo?.render;
-  if (levelIndex === 0) throw new Error('Cannot change distance for LOD0. It is the main mesh and must stay at 0.'); // If user try to change first lod
-  return this.updateLevel(list, levelIndex, distance, hysteresis);
+  if (levelIndex === 0) throw new Error('Cannot change distance for LOD0.');
+  return this.updateLevel(this.LODinfo?.render, levelIndex, distance, hysteresis, true);
 };
 
 InstancedMesh2.prototype.updateShadowLOD = function (levelIndex, distance, hysteresis) {
-  return this.updateLevel(this.LODinfo?.shadowRender, levelIndex, distance, hysteresis);
+  return this.updateLevel(this.LODinfo?.shadowRender, levelIndex, distance, hysteresis, true);
 };
 
 InstancedMesh2.prototype.updateAllLevels = function (renderList, distances, hysteresis) {
-  if (!renderList?.levels) throw new Error('Invalid LOD list.');
-  const levels = renderList.levels;
-  const isRender = this.LODinfo?.render === renderList;
+  if (!renderList) throw new Error('Invalid render list.');
 
-  const start = isRender ? 1 : 0; // for shadowLOD
-  if (isRender) levels[0].distance = 0;
+  const count = Math.min(renderList.levels.length, Math.max((hysteresis as number[])?.length ?? 0, distances?.length ?? 0));
 
-  const hasDistances = distances?.length > 0;
-
-  let _distances = [];
-  if (hasDistances) { // Only when distances provided
-    _distances = (isRender && distances[0] === 0) // If user give 0 for first distance, handle this w/o throw error
-      ? distances.slice(1, Math.min(levels.length, distances.length))
-      : distances.slice(0, Math.min(levels.length - start, distances.length));
-
-    // Validate
-    _distances.every((_d, i) => {
-      if (i > 0 && _d <= _distances[i - 1]) throw new Error(`LOD distances must be strictly increasing: d[${i - 1}]=${_distances[i - 1]} < d[${i}]=${_d}`);
-      return true;
-    });
+  for (let i = 0; i < count; i++) {
+    const distance = distances?.[i];
+    const _hysteresis = Array.isArray(hysteresis) ? hysteresis[i] : hysteresis;
+    this.updateLevel(renderList, i, distance, _hysteresis, false);
   }
 
-  // apply: if no distances, update only hysteresis for all levels
-  const total = hasDistances ? _distances.length : (levels.length - start);
+  // const levels = renderList.levels;
+  // const isRender = this.LODinfo?.render === renderList;
 
-  for (let i = 0; i < total; i++) {
-    const _d = hasDistances ? _distances[i] : undefined;
-    const _h = Array.isArray(hysteresis) ? hysteresis[i] : hysteresis;
+  // const start = isRender ? 1 : 0; // for shadowLOD
+  // if (isRender) levels[0].distance = 0;
 
-    this.updateLevel(renderList, start + i, _d, _h);
-  }
+  // const hasDistances = distances?.length > 0;
+
+  // let _distances = [];
+  // if (hasDistances) { // Only when distances provided
+  //   _distances = (isRender && distances[0] === 0) // If user give 0 for first distance, handle this w/o throw error
+  //     ? distances.slice(1, Math.min(levels.length, distances.length))
+  //     : distances.slice(0, Math.min(levels.length - start, distances.length));
+
+  //   // Validate
+  //   _distances.every((_d, i) => {
+  //     if (i > 0 && _d <= _distances[i - 1]) throw new Error(`LOD distances must be strictly increasing: d[${i - 1}]=${_distances[i - 1]} < d[${i}]=${_d}`);
+  //     return true;
+  //   });
+  // }
+
+  // // apply: if no distances, update only hysteresis for all levels
+  // const total = hasDistances ? _distances.length : (levels.length - start);
+
+  // for (let i = 0; i < total; i++) {
+  //   const _d = hasDistances ? _distances[i] : undefined;
+  //   const _h = Array.isArray(hysteresis) ? hysteresis[i] : hysteresis;
+
+  //   this.updateLevel(renderList, start + i, _d, _h);
+  // }
 
   return this;
 };
@@ -298,37 +321,71 @@ InstancedMesh2.prototype.updateAllShadowLOD = function (distances, hysteresis) {
   return this.updateAllLevels(this.LODinfo?.shadowRender, distances, hysteresis);
 };
 
-InstancedMesh2.prototype.removeLOD = function (levelIndex, removeObject = true) {
-  const info = this.LODinfo;
-  const list = info?.render;
-  if (!list?.levels) throw new Error('Invalid LOD list.');
+InstancedMesh2.prototype.removeLOD = function (levelIndex) {
+  if (this._parentLOD) throw new Error('Cannot remove LOD from this InstancedMesh2.');
 
-  const n = list.levels.length;
-  if (levelIndex < 0 || levelIndex >= n) throw new Error('Level index OOB');
-  if (n > 1 && levelIndex === 0) throw new Error('Cannot remove LOD0 while others exist');
+  const LODinfo = this.LODinfo;
+  const renderList = LODinfo?.render;
+  if (!renderList) throw new Error('Invalid LOD list.');
 
-  // Remove whole list if only LOD0 remains
-  const [removed] = list.levels.splice(levelIndex, 1);
-  list.count?.splice?.(levelIndex, 1);
-  if (list.levels.length <= 1) info.render = null;
+  const obj = renderList.levels[levelIndex]?.object;
+  if (obj === this) throw new Error('Cannot remove the main InstancedMesh2.');
+  if (!obj) throw new Error(`Cannot remove LOD${levelIndex}.`);
 
-  const obj = removed.object;
+  renderList.levels.splice(levelIndex, 1);
+  renderList.count.splice(levelIndex, 1);
 
-  // Mirror remove on shadow list if that index exists
-  const shadow = this.LODinfo?.shadowRender;
-  if (shadow?.levels && levelIndex < shadow.levels.length) {
-    shadow.levels.splice(levelIndex, 1);
-    shadow.count?.splice?.(levelIndex, 1);
-    if (shadow.levels.length === 0) this.LODinfo.shadowRender = null;
-  }
+  let removed = false;
+  const objIndex = LODinfo.shadowRender?.levels.findIndex((x) => x.object === obj) ?? -1;
 
-  // Remove LOD object
-  if (removeObject && obj !== this) {
+  if (objIndex !== -1) {
+    LODinfo.objects.splice(objIndex, 1);
     this.remove(obj);
-    const idx = info.objects?.indexOf(obj) ?? -1;
-    if (idx !== -1) info.objects.splice(idx, 1);
+    removed = true;
   }
-  return this;
+
+  if (renderList.levels.length <= 1) {
+    LODinfo.render = null;
+
+    if (LODinfo.shadowRender === null) {
+      this.LODinfo = null;
+    }
+  }
+
+  return removed ? obj : null;
+};
+
+InstancedMesh2.prototype.removeShadowLOD = function (levelIndex) {
+  if (this._parentLOD) throw new Error('Cannot remove LOD from this InstancedMesh2.');
+
+  const LODinfo = this.LODinfo;
+  const renderList = LODinfo?.shadowRender;
+  if (!renderList) throw new Error('Invalid LOD list.');
+
+  const obj = renderList.levels[levelIndex]?.object;
+  if (!obj) throw new Error(`Cannot remove LOD${levelIndex}.`);
+
+  renderList.levels.splice(levelIndex, 1);
+  renderList.count.splice(levelIndex, 1);
+
+  let removed = false;
+  const objIndex = LODinfo.render?.levels.findIndex((x) => x.object === obj) ?? -1;
+
+  if (objIndex !== -1) {
+    LODinfo.objects.splice(objIndex, 1);
+    this.remove(obj);
+    removed = true;
+  }
+
+  if (renderList.levels.length === 0) {
+    LODinfo.shadowRender = null;
+
+    if (LODinfo.render === null) {
+      this.LODinfo = null;
+    }
+  }
+
+  return removed ? obj : null;
 };
 
 InstancedMesh2.prototype.patchLevel = function (obj: InstancedMesh2): void {
