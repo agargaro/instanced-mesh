@@ -130,6 +130,7 @@ declare module '../InstancedMesh2.js' {
     /** @internal */ patchLevel(obj: InstancedMesh2): void;
     /** @internal */ updateLevel(renderList: LODRenderList, levelIndex: number, distance: number, hysteresis: number): this;
     /** @internal */ updateAllLevels(renderList: LODRenderList, distances: number[] | null, hysteresis?: number | number[]): this;
+    /** @internal */ disposeLOD(object: InstancedMesh2);
   }
 }
 
@@ -298,6 +299,13 @@ InstancedMesh2.prototype.updateAllShadowLOD = function (distances, hysteresis) {
   return this.updateAllLevels(this.LODinfo?.shadowRender, distances, hysteresis);
 };
 
+InstancedMesh2.prototype.disposeLOD = function (object: InstancedMesh2) {
+  object.geometry.dispose();
+  const mat = object.material;
+  if (Array.isArray(mat)) for (const m of mat) m.dispose();
+  else mat.dispose();
+};
+
 InstancedMesh2.prototype.removeLOD = function (levelIndex, removeObject = true) {
   const info = this.LODinfo;
   const list = info?.render;
@@ -324,9 +332,14 @@ InstancedMesh2.prototype.removeLOD = function (levelIndex, removeObject = true) 
 
   // Remove LOD object
   if (removeObject && obj !== this) {
-    this.remove(obj);
-    const idx = info.objects?.indexOf(obj) ?? -1;
-    if (idx !== -1) info.objects.splice(idx, 1);
+    try {
+      this.remove(obj);
+      const idx = info.objects?.indexOf(obj) ?? -1;
+      if (idx !== -1) info.objects.splice(idx, 1);
+      this.disposeLOD(obj);
+    } catch (e) {
+      console.error(e);
+    }
   }
   return this;
 };
