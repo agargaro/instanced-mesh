@@ -8,6 +8,7 @@
     "build": "tsc --project tsconfig.build.json & astro check && astro build",
     "preview": "astro preview --port 4321",
     "previews": "BASE_URL=http://localhost:4321 node scripts/generate-previews.mjs",
+    "update-previews": "npm run build && npm run preview & sleep 2 && npm run previews",
     "astro": "astro"
   },
   "dependencies": {

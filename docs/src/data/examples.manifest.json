@@ -16,36 +16,12 @@
     "animWebp": "/instanced-mesh/examples-reviews/animation.webp"
   },
   {
-    "slug": "animation",
-    "title": "animation",
-    "url": "/instanced-mesh/examples/animation/",
-    "posterJpg": "/instanced-mesh/examples-thumbs/animation.jpg",
-    "animGif": "/instanced-mesh/examples-reviews/animation.gif",
-    "animWebp": "/instanced-mesh/examples-reviews/animation.webp"
-  },
-  {
     "slug": "euler",
     "title": "euler",
     "url": "/instanced-mesh/examples/euler/",
     "posterJpg": "/instanced-mesh/examples-thumbs/euler.jpg",
     "animGif": "/instanced-mesh/examples-reviews/euler.gif",
     "animWebp": "/instanced-mesh/examples-reviews/euler.webp"
-  },
-  {
-    "slug": "euler",
-    "title": "euler",
-    "url": "/instanced-mesh/examples/euler/",
-    "posterJpg": "/instanced-mesh/examples-thumbs/euler.jpg",
-    "animGif": "/instanced-mesh/examples-reviews/euler.gif",
-    "animWebp": "/instanced-mesh/examples-reviews/euler.webp"
-  },
-  {
-    "slug": "first",
-    "title": "first",
-    "url": "/instanced-mesh/examples/first/",
-    "posterJpg": "/instanced-mesh/examples-thumbs/first.jpg",
-    "animGif": "/instanced-mesh/examples-reviews/first.gif",
-    "animWebp": "/instanced-mesh/examples-reviews/first.webp"
   },
   {
     "slug": "first",
@@ -64,36 +40,12 @@
     "animWebp": "/instanced-mesh/examples-reviews/frustum-culling.webp"
   },
   {
-    "slug": "frustum-culling",
-    "title": "frustum culling",
-    "url": "/instanced-mesh/examples/frustum-culling/",
-    "posterJpg": "/instanced-mesh/examples-thumbs/frustum-culling.jpg",
-    "animGif": "/instanced-mesh/examples-reviews/frustum-culling.gif",
-    "animWebp": "/instanced-mesh/examples-reviews/frustum-culling.webp"
-  },
-  {
     "slug": "instances-array",
     "title": "instances array",
     "url": "/instanced-mesh/examples/instances-array/",
     "posterJpg": "/instanced-mesh/examples-thumbs/instances-array.jpg",
     "animGif": "/instanced-mesh/examples-reviews/instances-array.gif",
     "animWebp": "/instanced-mesh/examples-reviews/instances-array.webp"
-  },
-  {
-    "slug": "instances-array",
-    "title": "instances array",
-    "url": "/instanced-mesh/examples/instances-array/",
-    "posterJpg": "/instanced-mesh/examples-thumbs/instances-array.jpg",
-    "animGif": "/instanced-mesh/examples-reviews/instances-array.gif",
-    "animWebp": "/instanced-mesh/examples-reviews/instances-array.webp"
-  },
-  {
-    "slug": "instances-custom-data",
-    "title": "instances custom data",
-    "url": "/instanced-mesh/examples/instances-custom-data/",
-    "posterJpg": "/instanced-mesh/examples-thumbs/instances-custom-data.jpg",
-    "animGif": "/instanced-mesh/examples-reviews/instances-custom-data.gif",
-    "animWebp": "/instanced-mesh/examples-reviews/instances-custom-data.webp"
   },
   {
     "slug": "instances-custom-data",
@@ -118,22 +70,6 @@
     "posterJpg": "/instanced-mesh/examples-thumbs/sorting.jpg",
     "animGif": "/instanced-mesh/examples-reviews/sorting.gif",
     "animWebp": "/instanced-mesh/examples-reviews/sorting.webp"
-  },
-  {
-    "slug": "sorting",
-    "title": "sorting",
-    "url": "/instanced-mesh/examples/sorting/",
-    "posterJpg": "/instanced-mesh/examples-thumbs/sorting.jpg",
-    "animGif": "/instanced-mesh/examples-reviews/sorting.gif",
-    "animWebp": "/instanced-mesh/examples-reviews/sorting.webp"
-  },
-  {
-    "slug": "tween",
-    "title": "tween",
-    "url": "/instanced-mesh/examples/tween/",
-    "posterJpg": "/instanced-mesh/examples-thumbs/tween.jpg",
-    "animGif": "/instanced-mesh/examples-reviews/tween.gif",
-    "animWebp": "/instanced-mesh/examples-reviews/tween.webp"
   },
   {
     "slug": "tween",
