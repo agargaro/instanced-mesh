@@ -8,9 +8,9 @@ import { execa } from 'execa';
 
 // ===== Config =====
 const BASE_URL = process.env.BASE_URL || 'http://localhost:4321';
-const EXAMPLES_GLOB = process.env.EXAMPLES_GLOB || 'src/pages/examples/**/index.{astro,md,mdx}';
-const OUT_DIR = process.env.OUT_DIR || 'public/examples/previews';
-const THUMBS_DIR = process.env.THUMBS_DIR || 'public/examples/thumbs';
+const EXAMPLES_GLOB = process.env.EXAMPLES_GLOB || 'public/examples/**/index.js';
+const OUT_DIR = process.env.OUT_DIR || 'public/examples-reviews';
+const THUMBS_DIR = process.env.THUMBS_DIR || 'public/examples-thumbs';
 const MANIFEST_PATH = process.env.MANIFEST_PATH || 'src/data/examples.manifest.json';
 
 const VIEWPORT = {
@@ -37,7 +37,7 @@ async function routesFromFiles() {
   const files = await globby(EXAMPLES_GLOB);
   return files.map(f => ({
     slug: slugFromFile(f),
-    url: `${BASE_URL}/examples/${slugFromFile(f)}/`
+    url: `${BASE_URL}/instanced-mesh/examples/${slugFromFile(f)}/`
   }));
 }
 
@@ -139,9 +139,9 @@ async function generateOne(page, route) {
     slug,
     title: slug.replace(/[-_]/g, ' '),
     url: url.replace(BASE_URL, ''), // path relativo
-    posterJpg: `/${posterJpg.replace(/^public\//, '')}`,
-    animGif: `/${animGif.replace(/^public\//, '')}`,
-    animWebp: `/${animWebp.replace(/^public\//, '')}`
+    posterJpg: `/instanced-mesh/${posterJpg.replace(/^public\//, '')}`,
+    animGif: `/instanced-mesh/${animGif.replace(/^public\//, '')}`,
+    animWebp: `/instanced-mesh/${animWebp.replace(/^public\//, '')}`
   };
 }
 

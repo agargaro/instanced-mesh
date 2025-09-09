@@ -1,134 +1,77 @@
 ---
-import manifest from '../../data/examples.manifest.json';
-
-const items = manifest.sort((a, b) => a.title.localeCompare(b.title));
+import raw from '../../data/examples.manifest.json?raw';
+const items = JSON.parse(raw) as Array<{
+  title: string; url: string; posterJpg: string; animWebp: string;
+}>;
+const sorted = items.slice().sort((a, b) => a.title.localeCompare(b.title));
 ---
 
-<section class="examples">
-  {items.map(item => (
-    <a class="card" href={item.url} aria-label={`Apri esempio ${item.title}`}>
-      <div class="media" data-anim={item.animWebp} data-fallback={item.animGif}>
-        <img
-          class="poster"
-          src={item.posterJpg}
-          alt={`Anteprima ${item.title}`}
-          loading="lazy"
-          width="512" height="288"
-          decoding="async"
-        />
-        <button class="play" aria-hidden="true">▶</button>
-      </div>
-      <h3 class="title">{item.title}</h3>
+<section class="wall" aria-label="Esempi">
+  {sorted.map(item => (
+    <a class="tile" href={item.url} aria-label={`Apri esempio ${item.title}`}>
+      <picture>
+        <source srcset={item.animWebp} type="image/webp" />
+        <img class="media" src={item.animWebp} alt="" loading="lazy" decoding="async" />
+      </picture>
+      <div class="caption"><span class="t">{item.title}</span></div>
     </a>
   ))}
 </section>
 
-<script>
-  // Lazy + hover/tap play: scambia poster -> animazione
-  const supportsReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const cards = document.querySelectorAll('.media');
-  if (!supportsReduced) {
-    const onEnter = el => {
-      if (el.dataset.playing) return;
-      const srcWebp = el.dataset.anim;
-      const srcGif = el.dataset.fallback;
-      const img = el.querySelector('img.poster');
-      // Usa WebP se supportato
-      const test = document.createElement('img');
-      test.onload = () => {
-        img.dataset.poster = img.src;
-        img.src = srcWebp;
-        el.dataset.playing = '1';
-      };
-      test.onerror = () => {
-        img.dataset.poster = img.src;
-        img.src = srcGif;
-        el.dataset.playing = '1';
-      };
-      test.src = 'data:image/webp;base64,UklGRkoAAABXRUJQVlA4WAoAAAAQAAAAHwAAHwAAQUxQSAw='; // ping per capability
-      // se webp animato non fosse supportato, fallback GIF
-      // (il check sopra è solo placeholder: browser moderni supportano già WebP animato)
-      img.src = srcWebp;
-      el.dataset.playing = '1';
-    };
-    const onLeave = el => {
-      const img = el.querySelector('img.poster');
-      if (img.dataset.poster) { img.src = img.dataset.poster; }
-      el.dataset.playing = '';
-    };
-
-    cards.forEach(el => {
-      el.addEventListener('mouseenter', () => onEnter(el));
-      el.addEventListener('mouseleave', () => onLeave(el));
-      el.addEventListener('focusin', () => onEnter(el));
-      el.addEventListener('focusout', () => onLeave(el));
-    });
-
-    // Lazy: attiva animazione solo quando visibile
-    const io = new IntersectionObserver(entries => {
-      entries.forEach(e => {
-        if (e.isIntersecting) e.target.dataset.visible = '1';
-      });
-    }, { rootMargin: '200px' });
-    cards.forEach(el => io.observe(el));
-  }
-</script>
-
 <style>
-.examples {
-  --card-bg: var(--astro-surface, #fff);
-  --border: color-mix(in srgb, currentColor 12%, transparent);
-  display: grid;
-  gap: 1rem;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+:global(body){ background:#0a0f1a; color:#dbe4ff;margin:0; padding:0; }
+
+/* Griglia senza spazi, tile grandi */
+.wall{
+  --tile-min: 420px;
+  --tile-ratio: 16/9;
+  display:grid;
+  gap:0;
+  grid-template-columns:repeat(auto-fit, minmax(var(--tile-min), 1fr));
+  align-items:stretch;
 }
 
-.card {
-  display: grid;
-  gap: .5rem;
-  text-decoration: none;
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  background: var(--card-bg);
-  overflow: hidden;
-  box-shadow: 0 6px 18px rgba(0,0,0,.06);
-  transition: transform .18s ease, box-shadow .18s ease;
-}
-.card:hover { transform: translateY(-2px); box-shadow: 0 12px 28px rgba(0,0,0,.10); }
-
-.media {
-  position: relative;
-  aspect-ratio: 16/9;
-  overflow: hidden;
-  background: #0b1220;
-}
-.poster {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-}
-.play {
-  position: absolute;
-  inset: auto 10px 10px auto;
-  border: 0;
-  border-radius: 999px;
-  width: 36px; height: 36px;
-  font-size: 14px;
-  background: rgba(255,255,255,.85);
-  backdrop-filter: saturate(180%) blur(8px);
-  box-shadow: 0 6px 18px rgba(0,0,0,.25);
-  cursor: default;
-}
-.title {
-  margin: .5rem .75rem .85rem;
-  font: 600 0.95rem/1.25 system-ui, sans-serif;
-  color: inherit;
-  text-wrap: balance;
+/* Tile piatte */
+.tile{
+  position:relative;
+  display:block;
+  aspect-ratio: var(--tile-ratio);
+  overflow:hidden;
+  background:#0b1220;
 }
 
-/* accessibilità */
-@media (prefers-reduced-motion: reduce) {
-  .play { display: none; }
+picture{ display:block; height:100%; }
+.media{
+  width:100%; height:100%;
+  object-fit:cover; display:block;
+  transform:scale(1);
+  transition:transform .2s ease, filter .2s ease;
+  filter:brightness(.96) contrast(1.02);
 }
-</style>
+.tile:hover .media,
+.tile:focus-visible .media{ transform:scale(1.02); filter:brightness(1); }
+
+/* Titolo on-hover/focus */
+.caption{
+  position:absolute; inset:auto 0 0 0;
+  padding:.7rem .9rem;
+  background:linear-gradient(to top, rgba(0,0,0,.55), rgba(0,0,0,0) 80%);
+  color:#e6ecff;
+  transform:translateY(100%); opacity:0; pointer-events:none;
+  transition:transform .2s ease, opacity .2s ease;
+}
+.t{
+  font:600 1.05rem/1.15 system-ui, sans-serif;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  text-shadow:0 1px 2px rgba(0,0,0,.5);
+}
+.tile:hover .caption,
+.tile:focus-visible .caption{ transform:translateY(0); opacity:1; }
+
+/* Responsive */
+@media (max-width: 480px){
+  .wall{ --tile-min: 170px; }
+  .t{ font-size:.95rem; }
+}
+@media (min-width: 481px) and (max-width: 900px){
+  .wall{ --tile-min: 280px;
