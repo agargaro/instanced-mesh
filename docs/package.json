@@ -6,7 +6,8 @@
     "dev": "tsc --project tsconfig.build.json & astro dev --host",
     "start": "tsc --project tsconfig.build.json & astro dev",
     "build": "tsc --project tsconfig.build.json & astro check && astro build",
-    "preview": "astro preview",
+    "preview": "astro preview --port 4321",
+    "previews": "BASE_URL=http://localhost:4321 node scripts/generate-previews.mjs",
     "astro": "astro"
   },
   "dependencies": {
