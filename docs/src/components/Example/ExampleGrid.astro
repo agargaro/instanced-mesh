@@ -1,77 +1,645 @@
 ---
-import raw from '../../data/examples.manifest.json?raw';
-const items = JSON.parse(raw) as Array<{
-  title: string; url: string; posterJpg: string; animWebp: string;
-}>;
-const sorted = items.slice().sort((a, b) => a.title.localeCompare(b.title));
+import itemsJson from "../../data/examples.manifest.json";
+type ExampleItem = {
+  slug: string;
+  title: string;
+  url: string;
+  posterJpg?: string;
+  animWebp?: string;
+  category?: string; // Future use
+};
+const items: ExampleItem[] = itemsJson as ExampleItem[];
+type Categories = Record<string, ExampleItem[]>;
+const categories: Categories = {};
+for (const item of items) {
+  const cat = item.category || "examples";
+  if (!categories[cat]) categories[cat] = [];
+  categories[cat].push(item);
+}
+const categoryEntries: [string, ExampleItem[]][] = Object.entries(categories);
+// Astro state for selected example
+let selected: ExampleItem | undefined = undefined;
+let selectedUrl: string | undefined = undefined;
+let selectedTitle: string | undefined = undefined;
+if (Astro.url.searchParams.has("example")) {
+  const slug = Astro.url.searchParams.get("example");
+  selected = items.find((i: ExampleItem) => i.slug === slug);
+  if (selected) {
+    selectedUrl = selected.url;
+    selectedTitle = selected.title;
+  }
+}
 ---
 
-<section class="wall" aria-label="Esempi">
-  {sorted.map(item => (
-    <a class="tile" href={item.url} aria-label={`Apri esempio ${item.title}`}>
-      <picture>
-        <source srcset={item.animWebp} type="image/webp" />
-        <img class="media" src={item.animWebp} alt="" loading="lazy" decoding="async" />
-      </picture>
-      <div class="caption"><span class="t">{item.title}</span></div>
-    </a>
-  ))}
-</section>
+<div id="panel" data-sidebar-open="false">
+  <div id="layout">
+    <aside id="sidebar" aria-label="Examples list" tabindex="-1">
+      <div id="header">
+        <h1>
+          <a href="/instanced-mesh" aria-label="Back to InstancedMesh2 docs home"
+            >InstancedMesh2 docs <svg
+              aria-hidden="true"
+              class="astro-xwgiixxa astro-c6vsoqas"
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="currentColor"
+              style="--sl-icon-size: 1.5rem;"
+              data-astro-source-file="/workspaces/instanced-mesh/docs/node_modules/@astrojs/starlight/user-components/Icon.astro"
+              data-astro-source-loc="16:2"
+              ><path
+                d="M17.92 11.62a1.001 1.001 0 0 0-.21-.33l-5-5a1.003 1.003 0 1 0-1.42 1.42l3.3 3.29H7a1 1 0 0 0 0 2h7.59l-3.3 3.29a1.002 1.002 0 0 0 .325 1.639 1 1 0 0 0 1.095-.219l5-5a1 1 0 0 0 .21-.33 1 1 0 0 0 0-.76Z"
+              ></path></svg
+            ></a>
+        </h1>
+      </div>
+      <div id="inputWrapper">
+        <svg
+          aria-hidden="true"
+          class="astro-v37mnknz astro-c6vsoqas"
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="currentColor"
+          style="--sl-icon-size: 1em;"
+          data-astro-source-file="/workspaces/instanced-mesh/docs/node_modules/@astrojs/starlight/user-components/Icon.astro"
+          data-astro-source-loc="16:2"
+          ><path
+            d="M21.71 20.29 18 16.61A9 9 0 1 0 16.61 18l3.68 3.68a.999.999 0 0 0 1.42 0 1 1 0 0 0 0-1.39ZM11 18a7 7 0 1 1 0-14 7 7 0 0 1 0 14Z"
+          ></path></svg
+        >
+        <input
+          placeholder="Search"
+          type="text"
+          id="filterInput"
+          autocomplete="off"
+          autocorrect="off"
+          autocapitalize="off"
+          spellcheck="false"
+          aria-label="Filter examples"
+        />
+        <button id="clearSearchButton" class="icon-button" type="button" aria-label="Clear search" hidden>
+          <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M13.41 12l4.3-4.29a1 1 0 1 0-1.42-1.42L12 10.59 7.71 6.29a1 1 0 0 0-1.42 1.42L10.59 12l-4.3 4.29a1 1 0 1 0 1.42 1.42L12 13.41l4.29 4.3a1 1 0 0 0 1.42-1.42Z"/>
+          </svg>
+        </button>
+      </div>
+      <div id="contentWrapper">
+        {
+          categoryEntries.map(([cat, arr]) => (
+            <Fragment>
+              {/* <h2 data-category={cat}>{cat}</h2> enable this for category title */}
+              {arr.map((item) => (
+                <button
+                  class="card"
+                  type="button"
+                  data-slug={item.slug}
+                  data-url={item.url}
+                  aria-label={`Open example: ${item.title}`}
+                >
+                  <div class="cover">
+                    <img
+                      src={item.animWebp || item.posterJpg}
+                      alt={item.title}
+                      loading="lazy"
+                      width="400"
+                    />
+                  </div>
+                  <div class="title">{item.title}</div>
+                </button>
+              ))}
+            </Fragment>
+          ))
+        }
+      </div>
+    </aside>
+    <!-- Floating hamburger (mobile) -->
+    <button
+      id="menuButton"
+      class="icon-button floating-menu"
+      type="button"
+      aria-controls="sidebar"
+      aria-expanded="false"
+      aria-label="Open examples menu"
+    >
+      <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M4 6h16a1 1 0 0 0 0-2H4a1 1 0 0 0 0 2Zm16 5H4a1 1 0 0 0 0 2h16a1 1 0 0 0 0-2Zm0 7H4a1 1 0 0 0 0 2h16a1 1 0 0 0 0-2Z"/>
+      </svg>
+    </button>
+    <main id="main">
+      <div id="iframeWrapper">
+        <iframe
+          id="iframeViewer"
+          name="viewer"
+          allow="fullscreen; xr-spatial-tracking;"
+          srcdoc="<meta charset='utf-8'><title>Instanced Mesh Examples</title><meta name='viewport' content='width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0'><style>:root{color-scheme:light dark;}html,body{height:100%;}body{height:100%;margin:0;display:flex;align-items:center;justify-content:center;font-family:system-ui,-apple-system,'Segoe UI',Roboto,Ubuntu,Cantarell,'Noto Sans',sans-serif;color:#e2e8f0;background:#17181c;}@media (prefers-color-scheme: light){body{color:#24272f;background:#ffffff;}}</style>Select an example from the sidebar"
+        ></iframe>
+      </div>
+    </main>
+  </div>
 
-<style>
-:global(body){ background:#0a0f1a; color:#dbe4ff;margin:0; padding:0; }
+  <script>
+    // Utilities / state
+    const MOBILE_BREAKPOINT = 900; // px
 
-/* Griglia senza spazi, tile grandi */
-.wall{
-  --tile-min: 420px;
-  --tile-ratio: 16/9;
-  display:grid;
-  gap:0;
-  grid-template-columns:repeat(auto-fit, minmax(var(--tile-min), 1fr));
-  align-items:stretch;
-}
+    function isMobile() {
+      return window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT}px)`).matches;
+    }
 
-/* Tile piatte */
-.tile{
-  position:relative;
-  display:block;
-  aspect-ratio: var(--tile-ratio);
-  overflow:hidden;
-  background:#0b1220;
-}
+    function setBodyScrollLocked(locked: boolean) {
+      const root = document.documentElement;
+      if (locked) {
+        root.classList.add("no-scroll");
+        document.body.classList.add("no-scroll");
+      } else {
+        root.classList.remove("no-scroll");
+        document.body.classList.remove("no-scroll");
+      }
+    }
 
-picture{ display:block; height:100%; }
-.media{
-  width:100%; height:100%;
-  object-fit:cover; display:block;
-  transform:scale(1);
-  transition:transform .2s ease, filter .2s ease;
-  filter:brightness(.96) contrast(1.02);
-}
-.tile:hover .media,
-.tile:focus-visible .media{ transform:scale(1.02); filter:brightness(1); }
+    function toggleSidebar(open?: boolean) {
+      const panel = document.getElementById("panel");
+      const sidebar = document.getElementById("sidebar");
+      const main = document.getElementById("main");
+      const btn = document.getElementById("menuButton");
+      if (!panel || !sidebar || !btn) return;
+      const shouldOpen = open !== undefined ? open : panel.getAttribute("data-sidebar-open") !== "true";
+      panel.setAttribute("data-sidebar-open", String(shouldOpen));
+      btn.setAttribute("aria-expanded", String(shouldOpen));
+      btn.setAttribute("aria-label", shouldOpen ? "Close examples menu" : "Open examples menu");
+      // Treat as modal on mobile
+      if (isMobile()) {
+        if (shouldOpen) {
+          sidebar.setAttribute("role", "dialog");
+          sidebar.setAttribute("aria-modal", "true");
+          main?.setAttribute("inert", "");
+          main?.setAttribute("aria-hidden", "true");
+        } else {
+          sidebar.removeAttribute("role");
+          sidebar.removeAttribute("aria-modal");
+          main?.removeAttribute("inert");
+          main?.removeAttribute("aria-hidden");
+        }
+      }
+      if (shouldOpen) {
+        setBodyScrollLocked(true);
+        // Move focus to search when opening on mobile
+        setTimeout(() => {
+          const filterInput = document.getElementById("filterInput");
+          filterInput?.focus();
+        }, 0);
+      } else {
+        setBodyScrollLocked(false);
+        // Return focus to toggle button
+        btn.focus();
+      }
+    }
 
-/* Titolo on-hover/focus */
-.caption{
-  position:absolute; inset:auto 0 0 0;
-  padding:.7rem .9rem;
-  background:linear-gradient(to top, rgba(0,0,0,.55), rgba(0,0,0,0) 80%);
-  color:#e6ecff;
-  transform:translateY(100%); opacity:0; pointer-events:none;
-  transition:transform .2s ease, opacity .2s ease;
-}
-.t{
-  font:600 1.05rem/1.15 system-ui, sans-serif;
-  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
-  text-shadow:0 1px 2px rgba(0,0,0,.5);
-}
-.tile:hover .caption,
-.tile:focus-visible .caption{ transform:translateY(0); opacity:1; }
+    function setIframeUrl(url: string) {
+      const iframe = document.getElementById("iframeViewer");
+      if (iframe && iframe instanceof HTMLIFrameElement) {
+        iframe.removeAttribute("srcdoc");
+        iframe.src = url;
+      }
+    }
 
-/* Responsive */
-@media (max-width: 480px){
-  .wall{ --tile-min: 170px; }
-  .t{ font-size:.95rem; }
-}
-@media (min-width: 481px) and (max-width: 900px){
-  .wall{ --tile-min: 280px;
+    // Select example and sync iframe/hash (hash router)
+    function selectExample(slug: string, url: string) {
+      if (slug) window.location.hash = slug;
+      if (url) setIframeUrl(url);
+      // Highlight currently selected card in the grid
+      document.querySelectorAll(".card").forEach((node) => {
+        const card = node as HTMLElement;
+        const ds = card?.dataset;
+        if (ds) {
+          card.classList.toggle("selected", ds.slug === slug);
+        }
+      });
+      // Close modal on mobile after selection
+      if (isMobile()) toggleSidebar(false);
+    }
+
+    // DOM Ready
+    document.addEventListener("DOMContentLoaded", () => {
+      const menuButton = document.getElementById("menuButton");
+      const filterInput = document.getElementById("filterInput");
+      const clearBtn = document.getElementById("clearSearchButton");
+
+      // Toggle menu button
+      menuButton?.addEventListener("click", () => {
+        if (isMobile()) toggleSidebar();
+      });
+
+      // ESC to close when open
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") {
+          const panel = document.getElementById("panel");
+          if (panel?.getAttribute("data-sidebar-open") === "true") {
+            toggleSidebar(false);
+          }
+        }
+      });
+
+      // Real-time search filter: show/hide cards based on input (title/slug match)
+      filterInput?.addEventListener("input", (e: Event) => {
+        const target = e.target as HTMLInputElement | null;
+        const value = String(target?.value || "").toLowerCase();
+        // toggle clear button
+        if (clearBtn) {
+          if (value.length > 0) clearBtn.removeAttribute("hidden");
+          else clearBtn.setAttribute("hidden", "");
+        }
+        document.querySelectorAll(".card").forEach((node) => {
+          const el = node as HTMLElement;
+          const title = el.querySelector(".title")?.textContent?.toLowerCase() || "";
+          const slug = el.dataset?.slug?.toLowerCase() || "";
+          el.style.display = title.includes(value) || slug.includes(value) ? "" : "none";
+        });
+      });
+
+      // Clear search button
+      clearBtn?.addEventListener("click", () => {
+        if (filterInput instanceof HTMLInputElement) {
+          filterInput.value = "";
+          filterInput.dispatchEvent(new Event("input", { bubbles: true }));
+          filterInput.focus();
+        }
+      });
+
+      // Delegate click/keyboard on cards
+      document.getElementById("contentWrapper")?.addEventListener("click", (e) => {
+        const target = e.target;
+        const card = (target instanceof Element) ? target.closest(".card") : null;
+        if (card && card instanceof HTMLElement) {
+          const slug = card.dataset.slug;
+          const url = card.dataset.url;
+          if (slug && url) selectExample(slug, url);
+        }
+      });
+      document.getElementById("contentWrapper")?.addEventListener("keydown", (e) => {
+        const target = e.target;
+        if ((e.key === "Enter" || e.key === " ") && target instanceof Element && target.matches(".card")) {
+          e.preventDefault();
+          const card = target;
+          const slug = card.getAttribute("data-slug");
+          const url = card.getAttribute("data-url");
+          if (slug && url) selectExample(slug, url);
+        }
+      });
+
+      // Simple focus trap when sidebar is open on mobile
+      function trapFocus(e: KeyboardEvent) {
+        const panel = document.getElementById("panel");
+        if (!panel || panel.getAttribute("data-sidebar-open") !== "true" || !isMobile()) return;
+        const sidebar = document.getElementById("sidebar");
+        if (!sidebar) return;
+        const focusableSelectors = 'a[href], button:not([disabled]), textarea, input[type="text"], input[type="search"], input[type="radio"], input[type="checkbox"], select, [tabindex]:not([tabindex="-1"])';
+        const focusables = Array.from(sidebar.querySelectorAll(focusableSelectors)).filter((el): el is HTMLElement => el instanceof HTMLElement && el.offsetParent !== null);
+        if (focusables.length === 0) return;
+        const first: HTMLElement = focusables[0];
+        const last: HTMLElement = focusables[focusables.length - 1];
+        if (e.key === "Tab") {
+          if (e.shiftKey && document.activeElement === first) {
+            e.preventDefault();
+            last.focus();
+          } else if (!e.shiftKey && document.activeElement === last) {
+            e.preventDefault();
+            first.focus();
+          }
+        }
+      }
+      document.addEventListener("keydown", trapFocus);
+
+      // On page load: if hash is set, sync iframe and scroll to card
+      const hash = window.location.hash.replace("#", "");
+      if (hash) {
+        const card = document.querySelector(`.card[data-slug="${hash}"]`);
+        if (card && card instanceof HTMLElement) {
+          selectExample(card.dataset.slug, card.dataset.url);
+          // Auto-scroll selected card into view in sidebar
+          setTimeout(() => {
+            card.scrollIntoView({ behavior: "smooth", block: "center" });
+          }, 100);
+        }
+      }
+
+      // Ensure correct initial sidebar state on load
+      const panel = document.getElementById("panel");
+      if (panel) {
+        panel.setAttribute("data-sidebar-open", isMobile() ? "false" : "true");
+        const btn = document.getElementById("menuButton");
+        btn?.setAttribute("aria-expanded", isMobile() ? "false" : "true");
+        setBodyScrollLocked(false);
+      }
+
+      // Handle resize: sync modal/desktop state
+      window.addEventListener("resize", () => {
+        const panel = document.getElementById("panel");
+        const nowMobile = isMobile();
+        if (!panel) return;
+        if (nowMobile) {
+          panel.setAttribute("data-sidebar-open", "false");
+          document.getElementById("menuButton")?.setAttribute("aria-expanded", "false");
+          document.getElementById("menuButton")?.setAttribute("aria-label", "Open examples menu");
+          setBodyScrollLocked(false);
+        } else {
+          panel.setAttribute("data-sidebar-open", "true");
+          document.getElementById("menuButton")?.setAttribute("aria-expanded", "true");
+          document.getElementById("menuButton")?.setAttribute("aria-label", "Examples menu");
+          setBodyScrollLocked(false);
+        }
+      });
+    });
+
+    // Hash change event: always sync iframe src and scroll to card, even if filtered out
+    window.addEventListener("hashchange", () => {
+      const hash = window.location.hash.replace("#", "");
+      // Find card by slug, even if hidden by filter
+      const card = document.querySelector(`.card[data-slug="${hash}"]`);
+      if (card && card instanceof HTMLElement) {
+        // Unhide card if it was filtered out
+        card.style.display = "";
+        selectExample(card.dataset.slug, card.dataset.url);
+        // Auto-scroll selected card into view in sidebar
+        setTimeout(() => {
+          card.scrollIntoView({ behavior: "smooth", block: "center" });
+        }, 100);
+      } else {
+        // If no card found, nuke iframe src and show default doc
+        const iframe = document.getElementById("iframeViewer");
+        if (iframe && iframe instanceof HTMLIFrameElement) {
+          iframe.srcdoc =
+            "<meta charset='utf-8'><title>instanced-mesh examples</title><meta name='viewport' content='width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0'><style>html,body{height:100%;}body{height:100%;display:flex;align-items:center;justify-content:center;color:#fff;background:#222;font-family:sans-serif;} </style>Select an example from la sidebar";
+        }
+      }
+    });
+  </script>
+  <style>
+    /* Scope component design tokens to the panel, pulling from Starlight theme */
+    #panel {
+      --bg: var(--sl-color-black);
+      --panel: var(--sl-color-gray-6);
+      --panel-2: var(--sl-color-gray-5);
+      --text: var(--sl-color-white);
+      --text-dim: var(--sl-color-gray-3);
+      --border: var(--sl-color-gray-5);
+      --accent: var(--sl-color-accent);
+      --radius: 8px;
+      --shadow: 0 2px 8px color-mix(in srgb, var(--sl-color-accent) 18%, transparent);
+      --space-1: 4px;
+      --space-2: 8px;
+      --space-3: 12px;
+      --space-4: 16px;
+      --space-6: 24px;
+      --header-h: 56px;
+      --sidebar-w: 340px;
+      --sidebar-w-min: 220px;
+      --sidebar-w-max: 400px;
+    }
+
+    /* Keep global scroll lock functional */
+    :global(html.no-scroll, body.no-scroll) { overflow: hidden; }
+    #layout {
+      display: flex;
+      height: 100vh;
+      width: 100vw;
+      background: var(--bg);
+      overflow: hidden;
+    }
+    #sidebar {
+      width: var(--sidebar-w);
+      min-width: var(--sidebar-w-min);
+      max-width: var(--sidebar-w-max);
+      background: var(--bg);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+    }
+    #sidebar #header {
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      background: var(--bg);
+      display: flex;
+      flex-direction: row;
+      justify-content: space-between;
+      align-items: center;
+      gap: var(--space-2);
+    }
+    #sidebar #inputWrapper {
+      flex-shrink: 1;
+      position: relative;
+      padding: var(--space-2) var(--space-4);
+    }
+    #sidebar #contentWrapper {
+      overflow-y: auto;
+      flex-shrink: 1;
+    }
+    #main {
+      flex: 1;
+      background: var(--bg);
+      display: flex;
+      align-items: stretch;
+      justify-content: center;
+      height: 100vh;
+      min-width: 0;
+      overflow: hidden;
+    }
+    #iframeWrapper {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: stretch;
+      justify-content: center;
+      min-width: 0;
+    }
+    #iframeViewer {
+      width: 100%;
+      height: 100%;
+      background: var(--bg);
+      border: none;
+      min-width: 0;
+      min-height: 0;
+      max-width: 100vw;
+      max-height: 100vh;
+      overflow: hidden;
+      display: block;
+    }
+    #header {
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+      padding: var(--space-3) var(--space-6);
+      h1 a {
+        text-decoration: none;
+        color: var(--text);
+      }
+    }
+    #header h1 {
+      font-size: 1.3em;
+      font-weight: 600;
+      margin: 0;
+    }
+    #sections span {
+      color: var(--text);
+      font-weight: 500;
+      letter-spacing: 0.02em;
+    }
+    #filterInput {
+      background: var(--panel);
+      color: var(--text);
+      border: 1px solid var(--border);
+      font-size: 1em;
+      padding: var(--space-2) var(--space-3) var(--space-2) 32px;
+      width: 100%;
+      box-sizing: border-box;
+      outline: none;
+      border-radius: 6px;
+    }
+    #inputWrapper svg { position: absolute; top: 12px; left: 16px; }
+    #clearSearchButton { position: absolute; right: 12px; top: 8px; }
+
+    .icon-button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: var(--space-2);
+      border: 1px solid var(--border);
+      background: var(--panel);
+      color: var(--text);
+      border-radius: 6px;
+      cursor: pointer;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+    }
+    .icon-button:hover { border-color: var(--accent); box-shadow: var(--shadow); }
+    .icon-button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  @media (min-width: 901px) { #menuButton { display: none; } }
+
+    #contentWrapper {
+      padding: var(--space-4);
+      padding-bottom: 0;
+    }
+    .card {
+      margin: 0 0 var(--space-4) 0;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--panel);
+      transition:
+        box-shadow 0.2s,
+        border-color 0.2s;
+      box-shadow: none;
+      cursor: pointer;
+      overflow: hidden;
+      width: 100%;
+      text-align: left;
+    }
+    .card:hover {
+      border-color: var(--accent);
+      box-shadow: var(--shadow);
+    }
+    .card.selected {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px color-mix(in srgb, var(--sl-color-accent) 60%, transparent);
+    }
+    .cover {
+      background: var(--panel-2);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 160px;
+      overflow: hidden;
+    }
+    .cover img {
+      max-width: 100%;
+      max-height: 100%;
+      border-radius: 6px 6px 0 0;
+      object-fit: cover;
+      display: block;
+    }
+    .title {
+      background: var(--panel);
+      color: var(--text);
+      font-size: 1.05em;
+      font-weight: 500;
+      padding: var(--space-3) var(--space-4);
+      border-radius: 0 0 var(--radius) var(--radius);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* Mobile modal behavior */
+    @media (max-width: 900px) {
+      #layout { flex-direction: column; }
+      /* Sidebar hidden by default on mobile */
+      #panel[data-sidebar-open="false"] #sidebar { display: none; }
+      #panel[data-sidebar-open="true"] #sidebar {
+        position: fixed;
+        inset: 0;
+        width: 100vw;
+        max-width: 100vw;
+        min-width: 0;
+        height: 100vh;
+        max-height: none;
+        border-right: none;
+        border-bottom: 1px solid var(--border);
+        z-index: 30;
+        background: var(--bg);
+        /* Slide-in */
+        transform: translateY(0);
+        padding-bottom: env(safe-area-inset-bottom);
+      }
+      /* Dimmed overlay */
+      #panel[data-sidebar-open="true"]::after {
+        content: "";
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.45);
+        z-index: 20;
+        pointer-events: none;
+      }
+      #main { height: 100vh; width: 100vw; }
+      #iframeWrapper { height: 100%; width: 100vw; min-width: 0; }
+      #iframeViewer { height: 100%; width: 100vw; min-width: 0; min-height: 0; max-width: 100vw; max-height: 100vh; }
+      /* Floating hamburger button */
+      .floating-menu {
+        position: fixed;
+        top: 10px;
+        left: 10px;
+        z-index: 40;
+        backdrop-filter: blur(6px);
+        background: color-mix(in srgb, var(--panel) 85%, transparent);
+      }
+    }
+
+    /* Motion preferences */
+    @media (prefers-reduced-motion: reduce) {
+      * { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+    }
+
+    @media (max-width: 600px) {
+      #sidebar {
+        padding: 0 var(--space-1);
+      }
+      #main {
+        height: 100vh;
+      }
+      #header {
+        padding: var(--space-3) var(--space-2) var(--space-2) var(--space-2);
+      }
+      #inputWrapper {
+        padding: var(--space-2);
+      }
+      .cover {
+        height: 120px;
+      }
+      .title {
+        font-size: 0.95em;
+        padding: var(--space-2) var(--space-2);
+      }
+    }
+  </style>
+
+</div>
