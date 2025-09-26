@@ -419,8 +419,6 @@ export class InstancedMesh2<
   protected _onBeforeCompile = (shader: WebGLProgramParametersWithUniforms, renderer: WebGLRenderer): void => {
     if (this._onBeforeCompileBase) this._onBeforeCompileBase.call(this._currentMaterial, shader, renderer);
 
-    shader.instancing = false;
-
     shader.defines ??= {};
     shader.defines['USE_INSTANCING_INDIRECT'] = '';
 
