@@ -212,6 +212,7 @@ InstancedMesh2.prototype.addLevel = function (renderList: LODRenderList, geometr
     object = new InstancedMesh2(geometry, material ?? new ShaderMaterial(), params, this);
     object.frustumCulled = false;
     this.patchLevel(object);
+    object.renderOrder = this.renderOrder;
     objectsList.push(object);
     this.add(object); // TODO handle render order?
   } else {
@@ -343,6 +344,23 @@ InstancedMesh2.prototype.removeLOD = function (levelIndex, removeObject = true) 
   }
   return this;
 };
+
+Object.defineProperty(InstancedMesh2.prototype, 'renderOrder', {
+  get: function (): number {
+    return this._renderOrder !== undefined ? this._renderOrder : 0;
+  },
+
+  set: function (value: number): void {
+    this._renderOrder = value;
+
+    // If this mesh manages LODs, propagate the value to all of them.
+    if (this.LODinfo?.objects) {
+      for (const lodObject of this.LODinfo.objects) {
+        lodObject._renderOrder = value;
+      }
+    }
+  }
+});
 
 InstancedMesh2.prototype.patchLevel = function (obj: InstancedMesh2): void {
   Object.defineProperty(obj, '_lastRenderInfo', {
