@@ -21,6 +21,11 @@ import { SquareDataTexture } from './utils/SquareDataTexture.js';
  */
 export interface InstancedMesh2Params {
   /**
+   * If `true`, LOD uses camera distance; otherwise it uses screen size.
+   * @default undefined
+   */
+  useDistanceForLOD?: boolean;
+  /**
    * Determines the maximum number of instances that buffers can hold.
    * The buffers will be expanded automatically if necessary.
    * @default 1000
@@ -254,7 +259,7 @@ export class InstancedMesh2<
     if (!geometry) throw new Error('"geometry" is mandatory.');
     if (!material) throw new Error('"material" is mandatory.');
 
-    const { allowsEuler, renderer, createEntities } = params;
+    const { allowsEuler, renderer, createEntities, useDistanceForLOD } = params;
 
     super(geometry, null);
 
@@ -262,6 +267,7 @@ export class InstancedMesh2<
     this._renderer = renderer;
     this._capacity = capacity;
     this._parentLOD = LOD;
+    this._useDistanceForLOD = useDistanceForLOD;
     this._geometry = geometry;
     this.material = material;
     this._allowsEuler = allowsEuler ?? false;
