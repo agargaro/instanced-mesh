@@ -1,5 +1,5 @@
 import { BVHNode } from 'bvh.js';
-import { Camera, Frustum, Material, Matrix4, Sphere, Vector3 } from 'three';
+import { Camera, Frustum, Material, Matrix4, OrthographicCamera, PerspectiveCamera, Sphere, Vector3 } from 'three';
 import { sortOpaque, sortTransparent } from '../../utils/SortingUtils.js';
 import { InstancedMesh2 } from '../InstancedMesh2.js';
 import { InstancedRenderItem, InstancedRenderList } from '../utils/InstancedRenderList.js';
@@ -53,6 +53,7 @@ const _cameraPos = new Vector3();
 const _cameraLODPos = new Vector3();
 const _position = new Vector3();
 const _sphere = new Sphere();
+const _instanceMatrix = new Matrix4();
 
 InstancedMesh2.prototype.performFrustumCulling = function (camera: Camera, cameraLOD = camera) {
   const mainMesh = this._parentLOD ?? this;
@@ -250,11 +251,12 @@ InstancedMesh2.prototype.frustumCullingLOD = function (LODrenderList: LODRenderL
   if (this.bvh) this.BVHCullingLOD(LODrenderList, indexes, sortObjects, camera, cameraLOD);
   else this.linearCullingLOD(LODrenderList, indexes, sortObjects, camera, cameraLOD);
 
+  // todo this doesn't support screen space LOD
   if (sortObjects) {
     const customSort = this.customSort;
     const list = _renderList.array;
     let levelIndex = 0;
-    let levelDistance = levels[1].distance;
+    let levelDistance = levels[1].metricSquared;
 
     if (customSort === null) {
       list.sort(!(levels[0].object.material as Material)?.transparent ? sortOpaque : sortTransparent); // TODO improve multimaterial handling
@@ -267,7 +269,7 @@ InstancedMesh2.prototype.frustumCullingLOD = function (LODrenderList: LODRenderL
 
       if (item.depth > levelDistance) {
         levelIndex++;
-        levelDistance = levels[levelIndex + 1]?.distance ?? Infinity; // improve this condition and use for of instead
+        levelDistance = levels[levelIndex + 1]?.metricSquared ?? Infinity; // improve this condition and use for of instead
       }
 
       indexes[levelIndex][count[levelIndex]++] = item.index;
@@ -287,6 +289,13 @@ InstancedMesh2.prototype.BVHCullingLOD = function (LODrenderList: LODRenderList,
   const instancesArrayCount = this._instancesArrayCount;
   const onFrustumEnter = this.onFrustumEnter;
 
+  const orthographicCamera = camera as OrthographicCamera;
+  const viewSize = (orthographicCamera.top - orthographicCamera.bottom) / orthographicCamera.zoom;
+  const perspectiveCamera = camera as PerspectiveCamera;
+  const invProj = (Math.tan(perspectiveCamera.fov * 0.5 * (Math.PI / 180))) ** 2;
+  const useDistanceForLOD = this._useDistanceForLOD;
+  const isPerspectiveCamera = perspectiveCamera.isPerspectiveCamera;
+
   if (sortObjects) {
     this.bvh.frustumCulling(_projScreenMatrix, (node: BVHNode<{}, number>) => {
       const index = node.object;
@@ -297,21 +306,61 @@ InstancedMesh2.prototype.BVHCullingLOD = function (LODrenderList: LODRenderList,
       }
     });
   } else {
-    this.bvh.frustumCullingLOD(_projScreenMatrix, _cameraLODPos, levels, (node: BVHNode<{}, number>, level: number) => {
-      const index = node.object;
-      if (index < instancesArrayCount && this.getVisibilityAt(index)) {
-        if (level === null) {
-          const distance = this.getPositionAt(index).distanceToSquared(_cameraLODPos); // distance can be get by BVH, but is not the distance from center
-          level = this.getObjectLODIndexForDistance(levels, distance);
-        }
+    if (useDistanceForLOD) {
+      // take advantage of frustumCullingLOD method to get distances and LOD from the bvh itself
+      this.bvh.frustumCullingLOD(_projScreenMatrix, _cameraLODPos, levels, (node: BVHNode<{}, number>, level: number) => {
+        const index = node.object;
+        if (index < instancesArrayCount && this.getVisibilityAt(index)) {
+          if (level === null) {
+            let metric: number;
+            if (isPerspectiveCamera) {
+              const distance = this.getPositionAt(index).distanceToSquared(_cameraLODPos); // distance can be get by BVH, but is not the distance from center
+              metric = getLODMetricPerspective(useDistanceForLOD, _sphere, invProj, distance);
+            } else {
+              metric = getLODMetricOrthographic(useDistanceForLOD, _sphere, viewSize);
+            }
+            level = this.getObjectLODIndex(levels, metric, isPerspectiveCamera);
+          }
 
-        if (!onFrustumEnter || onFrustumEnter(index, camera, cameraLOD, level)) {
-          indexes[level][count[level]++] = index;
+          if (!onFrustumEnter || onFrustumEnter(index, camera, cameraLOD, level)) {
+            indexes[level][count[level]++] = index;
+          }
         }
-      }
-    });
+      });
+    } else {
+      this.bvh.frustumCulling(_projScreenMatrix, (node: BVHNode<{}, number>) => {
+        const index = node.object;
+        if (index < instancesArrayCount && this.getVisibilityAt(index)) {
+          let metric: number;
+          this.getMatrixAt(index, _instanceMatrix);
+          _sphere.radius = this._geometry.boundingSphere.radius;
+          _sphere.radius *= _instanceMatrix.getMaxScaleOnAxis();
+          if (isPerspectiveCamera) {
+            const distance = this.getPositionAt(index).distanceToSquared(_cameraLODPos); // distance can be get by BVH, but is not the distance from center
+            metric = getLODMetricPerspective(useDistanceForLOD, _sphere, invProj, distance);
+          } else {
+            metric = getLODMetricOrthographic(useDistanceForLOD, _sphere, viewSize);
+          }
+          const level = this.getObjectLODIndex(levels, metric, isPerspectiveCamera);
+
+          if (!onFrustumEnter || onFrustumEnter(index, camera, cameraLOD, level)) {
+            indexes[level][count[level]++] = index;
+          }
+        }
+      });
+    }
   }
 };
+
+function getLODMetricPerspective(useDistanceForLOD: boolean, sphere: Sphere, invProj: number, distance: number): number {
+  return useDistanceForLOD ? distance : ((sphere.radius ** 2) / (distance * invProj));
+}
+
+function getLODMetricOrthographic(useDistanceForLOD: boolean, sphere: Sphere, viewHeight: number): number {
+  // TODO refactor
+  if (useDistanceForLOD) throw new Error('BatchedMesh: useDistanceForLOD cannot be used with orthographic camera.');
+  return sphere.radius * 2 / viewHeight;
+}
 
 InstancedMesh2.prototype.linearCullingLOD = function (LODrenderList: LODRenderList, indexes: Uint32Array[], sortObjects: boolean, camera: Camera, cameraLOD: Camera) {
   const { count, levels } = LODrenderList;
@@ -324,6 +373,13 @@ InstancedMesh2.prototype.linearCullingLOD = function (LODrenderList: LODRenderLi
   const onFrustumEnter = this.onFrustumEnter;
 
   _frustum.setFromProjectionMatrix(_projScreenMatrix);
+
+  const orthographicCamera = camera as OrthographicCamera;
+  const viewSize = (orthographicCamera.top - orthographicCamera.bottom) / orthographicCamera.zoom;
+  const perspectiveCamera = camera as PerspectiveCamera;
+  const invProj = (Math.tan(perspectiveCamera.fov * 0.5 * (Math.PI / 180))) ** 2;
+  const useDistanceForLOD = this._useDistanceForLOD;
+  const isPerspectiveCamera = perspectiveCamera.isPerspectiveCamera;
 
   for (let i = 0; i < instancesArrayCount; i++) {
     if (!this.getActiveAndVisibilityAt(i)) continue;
@@ -342,8 +398,14 @@ InstancedMesh2.prototype.linearCullingLOD = function (LODrenderList: LODRenderLi
         const distance = _sphere.center.distanceToSquared(_cameraLODPos);
         _renderList.push(distance, i);
       } else {
-        const distance = _sphere.center.distanceToSquared(_cameraLODPos);
-        const levelIndex = this.getObjectLODIndexForDistance(levels, distance);
+        let metric: number;
+        if (isPerspectiveCamera) {
+          const distance = _sphere.center.distanceToSquared(_cameraLODPos);
+          metric = getLODMetricPerspective(useDistanceForLOD, _sphere, invProj, distance);
+        } else {
+          metric = getLODMetricOrthographic(useDistanceForLOD, _sphere, viewSize);
+        }
+        const levelIndex = this.getObjectLODIndex(levels, metric, isPerspectiveCamera);
 
         if (!onFrustumEnter || onFrustumEnter(i, camera, cameraLOD, levelIndex)) {
           indexes[levelIndex][count[levelIndex]++] = i;
