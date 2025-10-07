@@ -345,6 +345,12 @@ InstancedMesh2.prototype.removeLOD = function (levelIndex, removeObject = true) 
 };
 
 InstancedMesh2.prototype.patchLevel = function (obj: InstancedMesh2): void {
+  Object.defineProperty(obj, 'renderOrder', {
+    get(this: InstancedMesh2) {
+      return this._parentLOD.renderOrder;
+    }
+  });
+
   Object.defineProperty(obj, '_lastRenderInfo', {
     get(this: InstancedMesh2) {
       return this._parentLOD._lastRenderInfo;
