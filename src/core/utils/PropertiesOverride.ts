@@ -1,11 +1,11 @@
 import { MeshDistanceMaterial, WebGLRenderer } from 'three';
 
+// TODO: Fix if multiple renderers?
+
 /**
- * TODO Explain
+ * To prevent three.js from using the same shader between InstancedMesh and InstancedMesh2 if the material is the same
+ * (especially with `scene.overrideMaterial`), the `WebGLProperties` object is temporarily patched before each render of an InstancedMesh2.
  */
-
-// TODO Fix multiple renderer
-
 let propertiesGetBase: (obj: unknown) => unknown = null; // this can become const
 const propertiesGetMap = new WeakMap<any, () => unknown>();
 
@@ -32,7 +32,7 @@ export function addProperties(material: unknown): void {
 export function patchProperties(renderer: WebGLRenderer): void {
   const properties = renderer.properties;
   propertiesGetBase = properties.get;
-  properties.get = propertiesGet as (obj: unknown) => unknown;
+  properties.get = propertiesGet;
 }
 
 export function unpatchProperties(renderer: WebGLRenderer): void {
