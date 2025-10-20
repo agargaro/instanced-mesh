@@ -177,6 +177,7 @@ export class SquareDataTexture extends DataTexture {
     const textureProperties: any = renderer.properties.get(this);
     const versionChanged = this.version > 0 && textureProperties.__version !== this.version;
     const sizeChanged = this._lastWidth !== null && this._lastWidth !== this.image.width;
+
     if (!this._needsUpdate || !textureProperties.__webglTexture || versionChanged || sizeChanged) {
       this._lastWidth = this.image.width;
       this._needsUpdate = false;

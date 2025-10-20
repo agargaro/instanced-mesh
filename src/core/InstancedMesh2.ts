@@ -284,10 +284,7 @@ export class InstancedMesh2<
     }
 
     this.instanceIndex.update(this._renderer, this.count);
-    this.matricesTexture.update(renderer);
-    this.colorsTexture?.update(renderer);
-    this.uniformsTexture?.update(renderer);
-    this.boneTexture?.update(renderer);
+    this.updateAllTextures(renderer, depthMaterial);
     // TODO convert also morph texture to squared texture to use partial update
   }
 
@@ -307,27 +304,9 @@ export class InstancedMesh2<
       this.performFrustumCulling(camera);
     }
 
-    renderer.initTexture(this.matricesTexture);
-
     this.instanceIndex.update(this._renderer, this.count);
-    this.matricesTexture.update(renderer);
-    this.colorsTexture?.update(renderer);
-    this.uniformsTexture?.update(renderer);
-    this.boneTexture?.update(renderer);
+    this.updateAllTextures(renderer, material);
 
-    const gl = renderer.getContext();
-    const materialProperties = renderer.properties.get(material) as any;
-    const program = materialProperties?.currentProgram;
-
-    if (program?.program) {
-      const textureProperties = renderer.properties.get(this.matricesTexture) as any;
-
-      renderer.state.useProgram(program.program);
-      (renderer.state as any).bindTexture(gl.TEXTURE_2D, textureProperties.__webglTexture, gl.TEXTURE0 + 15); // TODO fix d.ts
-
-      const loc = gl.getUniformLocation(program.program, 'matricesTexture');
-      gl.uniform1i(loc, 15);
-    }
     // TODO convert also morph texture to squared texture to use partial update
   }
 
@@ -339,6 +318,44 @@ export class InstancedMesh2<
     this.unpatchMaterial(renderer, material);
     if (this.instanceIndex || (group && !this.isLastGroup(group.materialIndex))) return;
     this.initIndexAttribute();
+  }
+
+  protected updateAllTextures(renderer: WebGLRenderer, material: Material): void {
+    let slot = 16 - 1;
+    // let slot = maxTextures - 1;
+    slot = this.updateTexture(this.matricesTexture, material, renderer, slot, 'matricesTexture');
+    slot = this.updateTexture(this.colorsTexture, material, renderer, slot, 'colorsTexture');
+    slot = this.updateTexture(this.uniformsTexture, material, renderer, slot, 'uniformsTexture');
+    slot = this.updateTexture(this.boneTexture, material, renderer, slot, 'boneTexture');
+  }
+
+  protected updateTexture(texture: SquareDataTexture, material: Material, renderer: WebGLRenderer, slot: number, uniformName: string): number {
+    if (!texture) return slot;
+
+    const textureProperties = renderer.properties.get(texture) as any;
+
+    if (textureProperties.__version === undefined) { // TODO check if we can call only initTexture everytime
+      renderer.initTexture(texture);
+    }
+
+    texture.update(renderer);
+
+    const gl = renderer.getContext();
+    const materialProperties = renderer.properties.get(material) as any;
+    const program = materialProperties?.currentProgram?.program;
+
+    if (program) {
+      renderer.state.useProgram(program);
+      (renderer.state as any).bindTexture(gl.TEXTURE_2D, textureProperties.__webglTexture, gl.TEXTURE0 + slot); // TODO fix d.ts
+
+      const loc = gl.getUniformLocation(program, uniformName); // TODO use built-in method
+      gl.uniform1i(loc, slot);
+    } else {
+      debugger
+      console.error('ok'); // TODO improve
+    }
+
+    return slot - 1;
   }
 
   protected isFirstGroup(materialIndex: number): boolean {
@@ -439,7 +456,7 @@ export class InstancedMesh2<
     shader.uniforms.matricesTexture = { value: null };
 
     if (this.uniformsTexture) {
-      shader.uniforms.uniformsTexture = { value: this.uniformsTexture };
+      shader.uniforms.uniformsTexture = { value: null };
       const { vertex, fragment } = this.uniformsTexture.getUniformsGLSL('uniformsTexture', 'instanceIndex', 'uint');
       shader.vertexShader = shader.vertexShader.replace('void main() {', vertex);
       shader.fragmentShader = shader.fragmentShader.replace('void main() {', fragment);
@@ -447,7 +464,7 @@ export class InstancedMesh2<
 
     if (this.colorsTexture && shader.fragmentShader.includes('#include <color_pars_fragment>')) {
       shader.defines['USE_INSTANCING_COLOR_INDIRECT'] = '';
-      shader.uniforms.colorsTexture = { value: this.colorsTexture };
+      shader.uniforms.colorsTexture = { value: null };
       shader.vertexShader = shader.vertexShader.replace('<color_vertex>', '<instanced_color_vertex>');
 
       if (shader.vertexColors) {
@@ -467,7 +484,7 @@ export class InstancedMesh2<
       shader.uniforms.bindMatrix = { value: this.bindMatrix };
       shader.uniforms.bindMatrixInverse = { value: this.bindMatrixInverse };
       shader.uniforms.bonesPerInstance = { value: this.skeleton.bones.length };
-      shader.uniforms.boneTexture = { value: this.boneTexture };
+      shader.uniforms.boneTexture = { value: null };
     }
   };
 
