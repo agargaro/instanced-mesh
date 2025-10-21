@@ -44,5 +44,6 @@ setInterval(() => {
   boxes.addInstances(1, (obj, index) => {
     obj.position.x = index - 5;
     obj.position.y = -1.5;
+    obj.color = Math.random() * 0xffffff;
   });
 }, 1000);

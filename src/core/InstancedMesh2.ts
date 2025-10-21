@@ -1,10 +1,11 @@
-import { AttachedBindMode, BindMode, Box3, BufferAttribute, BufferGeometry, Camera, Color, ColorManagement, ColorRepresentation, DataTexture, DetachedBindMode, InstancedBufferAttribute, Material, Matrix4, Mesh, MeshDistanceMaterial, Object3D, Object3DEventMap, Scene, Skeleton, Sphere, TypedArray, Vector3, WebGLProgramParametersWithUniforms, WebGLRenderer } from 'three';
+import { AttachedBindMode, BindMode, Box3, BufferAttribute, BufferGeometry, Camera, Color, ColorManagement, ColorRepresentation, DataTexture, DetachedBindMode, InstancedBufferAttribute, Material, Matrix4, Mesh, Object3D, Object3DEventMap, Scene, Skeleton, Sphere, TypedArray, Vector3, WebGLProgramParametersWithUniforms, WebGLRenderer } from 'three';
 import { CustomSortCallback, OnFrustumEnterCallback } from './feature/FrustumCulling.js';
 import { Entity } from './feature/Instances.js';
 import { LODInfo } from './feature/LOD.js';
 import { InstancedEntity } from './InstancedEntity.js';
 import { BVHParams, InstancedMeshBVH } from './InstancedMeshBVH.js';
 import { GLInstancedBufferAttribute } from './utils/GLInstancedBufferAttribute.js';
+import { addProperties, patchProperties, unpatchProperties } from './utils/PropertiesOverride.js';
 import { SquareDataTexture } from './utils/SquareDataTexture.js';
 
 // TODO: Add check to not update partial texture if needsuupdate already true
@@ -183,15 +184,12 @@ export class InstancedMesh2<
   /** @internal */ _geometry: TGeometry;
   /** @internal */ _parentLOD: InstancedMesh2;
   /** @internal */ _lastRenderInfo: RenderInfo;
+  /** @internal */ _useOpacity = false;
   protected readonly _allowsEuler: boolean;
   protected readonly _tempInstance: InstancedEntity;
-  protected _useOpacity = false;
   protected _currentMaterial: Material = null;
   protected _customProgramCacheKeyBase: () => string = null;
   protected _onBeforeCompileBase: (parameters: WebGLProgramParametersWithUniforms, renderer: WebGLRenderer) => void = null;
-  protected _propertiesGetBase: (obj: unknown) => unknown = null;
-  protected _propertiesGetMap = new WeakMap<Material, (obj: unknown) => unknown>();
-  protected _properties = new WeakMap<Material, unknown>();
   protected _freeIds: number[] = [];
   protected _createEntities: boolean;
 
@@ -286,10 +284,7 @@ export class InstancedMesh2<
     }
 
     this.instanceIndex.update(this._renderer, this.count);
-    this.matricesTexture.update(renderer);
-    this.colorsTexture?.update(renderer);
-    this.uniformsTexture?.update(renderer);
-    this.boneTexture?.update(renderer);
+    this.updateAllTextures(renderer, depthMaterial);
     // TODO convert also morph texture to squared texture to use partial update
   }
 
@@ -305,15 +300,13 @@ export class InstancedMesh2<
     if (group && !this.isFirstGroup(group.materialIndex)) return;
 
     const frame = renderer.info.render.frame;
-    if (this.autoUpdate && !this.frustumCullingAlreadyPerformed(frame, camera, null)) {
+    if (this.autoUpdate && !this.frustumCullingAlreadyPerformed(frame, camera, null)) { // TODO remove frame?
       this.performFrustumCulling(camera);
     }
 
     this.instanceIndex.update(this._renderer, this.count);
-    this.matricesTexture.update(renderer);
-    this.colorsTexture?.update(renderer);
-    this.uniformsTexture?.update(renderer);
-    this.boneTexture?.update(renderer);
+    this.updateAllTextures(renderer, material);
+
     // TODO convert also morph texture to squared texture to use partial update
   }
 
@@ -325,6 +318,36 @@ export class InstancedMesh2<
     this.unpatchMaterial(renderer, material);
     if (this.instanceIndex || (group && !this.isLastGroup(group.materialIndex))) return;
     this.initIndexAttribute();
+  }
+
+  protected updateAllTextures(renderer: WebGLRenderer, material: Material): void {
+    this.updateTexture(this.matricesTexture, material, renderer, 'matricesTexture');
+    this.updateTexture(this.colorsTexture, material, renderer, 'colorsTexture');
+    this.updateTexture(this.uniformsTexture, material, renderer, 'uniformsTexture');
+    this.updateTexture(this.boneTexture, material, renderer, 'boneTexture');
+  }
+
+  protected updateTexture(texture: SquareDataTexture, material: Material, renderer: WebGLRenderer, uniformName: string): void {
+    if (!texture) return;
+
+    const materialProperties = renderer.properties.get(material) as any;
+    const textureProperties = renderer.properties.get(texture) as any;
+    const currentProgram = materialProperties?.currentProgram;
+
+    if (textureProperties.__version === undefined) {
+      renderer.initTexture(texture);
+    } else {
+      texture.update(renderer);
+    }
+
+    if (currentProgram?.program) { // improve
+      const slot = currentProgram.getUniforms().map[uniformName]?.cache[0]; // Check better
+      if (slot === undefined) return;
+
+      const gl = renderer.getContext();
+      renderer.state.useProgram(currentProgram.program);
+      (renderer.state as any).bindTexture(gl.TEXTURE_2D, textureProperties.__webglTexture, gl.TEXTURE0 + slot); // TODO fix d.ts
+    }
   }
 
   protected isFirstGroup(materialIndex: number): boolean {
@@ -413,7 +436,7 @@ export class InstancedMesh2<
   }
 
   protected _customProgramCacheKey = (): string => {
-    return `ezInstancedMesh2_${this.id}_${!!this.colorsTexture}_${this._useOpacity}_${!!this.boneTexture}_${!!this.uniformsTexture}_${this._customProgramCacheKeyBase.call(this._currentMaterial)}`;
+    return `ez_${!!this.colorsTexture}_${this._useOpacity}_${!!this.boneTexture}_${!!this.uniformsTexture}_${this._customProgramCacheKeyBase.call(this._currentMaterial)}`;
   };
 
   protected _onBeforeCompile = (shader: WebGLProgramParametersWithUniforms, renderer: WebGLRenderer): void => {
@@ -463,35 +486,13 @@ export class InstancedMesh2<
     this._onBeforeCompileBase = material.onBeforeCompile;
     material.customProgramCacheKey = this._customProgramCacheKey;
     material.onBeforeCompile = this._onBeforeCompile;
-
-    const propertiesBase = renderer.properties;
-
-    if (!this._properties.has(material)) {
-      const materialProperties: { [x: string]: any } = {};
-      this._properties.set(material, materialProperties);
-
-      const propertiesGetBase = this._propertiesGetBase = propertiesBase.get;
-
-      this._propertiesGetMap.set(material, (object) => {
-        if (object === material) {
-          // fix pointLight bug
-          // related: https://github.com/mrdoob/three.js/blob/dev/src/renderers/webgl/WebGLShadowMap.js#L333
-          if ((material as MeshDistanceMaterial).isMeshDistanceMaterial) {
-            const materialPropertiesBase = propertiesGetBase(object) as { [x: string]: any };
-            materialProperties.light = materialPropertiesBase.light;
-          }
-          return materialProperties;
-        }
-        return propertiesGetBase(object);
-      });
-    }
-
-    propertiesBase.get = this._propertiesGetMap.get(material);
+    patchProperties(this, renderer);
+    addProperties(material);
   }
 
   protected unpatchMaterial(renderer: WebGLRenderer, material: Material): void {
     this._currentMaterial = null;
-    renderer.properties.get = this._propertiesGetBase;
+    unpatchProperties(renderer);
     material.onBeforeCompile = this._onBeforeCompileBase;
     material.customProgramCacheKey = this._customProgramCacheKeyBase;
     this._onBeforeCompileBase = null;
