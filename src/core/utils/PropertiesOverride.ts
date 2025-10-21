@@ -9,7 +9,7 @@ import { InstancedMesh2 } from '../InstancedMesh2.js';
  */
 let propertiesGetBase: (obj: unknown) => unknown = null; // this can become const
 let propertiesGet: WeakMap<any, () => unknown> = null;
-const propertiesGetMap: WeakMap<any, () => unknown>[] = [];
+const propertiesGetMap: { [x: string]: WeakMap<any, () => unknown> } = {};
 
 export function propertiesGetCallback(object: unknown): unknown {
   return propertiesGet.get(object)?.() ?? propertiesGetBase(object);
