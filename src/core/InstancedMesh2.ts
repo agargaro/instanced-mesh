@@ -184,9 +184,9 @@ export class InstancedMesh2<
   /** @internal */ _geometry: TGeometry;
   /** @internal */ _parentLOD: InstancedMesh2;
   /** @internal */ _lastRenderInfo: RenderInfo;
+  /** @internal */ _useOpacity = false;
   protected readonly _allowsEuler: boolean;
   protected readonly _tempInstance: InstancedEntity;
-  protected _useOpacity = false;
   protected _currentMaterial: Material = null;
   protected _customProgramCacheKeyBase: () => string = null;
   protected _onBeforeCompileBase: (parameters: WebGLProgramParametersWithUniforms, renderer: WebGLRenderer) => void = null;
@@ -321,41 +321,33 @@ export class InstancedMesh2<
   }
 
   protected updateAllTextures(renderer: WebGLRenderer, material: Material): void {
-    let slot = 16 - 1;
-    // let slot = maxTextures - 1;
-    slot = this.updateTexture(this.matricesTexture, material, renderer, slot, 'matricesTexture');
-    slot = this.updateTexture(this.colorsTexture, material, renderer, slot, 'colorsTexture');
-    slot = this.updateTexture(this.uniformsTexture, material, renderer, slot, 'uniformsTexture');
-    slot = this.updateTexture(this.boneTexture, material, renderer, slot, 'boneTexture');
+    this.updateTexture(this.matricesTexture, material, renderer, 'matricesTexture');
+    this.updateTexture(this.colorsTexture, material, renderer, 'colorsTexture');
+    this.updateTexture(this.uniformsTexture, material, renderer, 'uniformsTexture');
+    this.updateTexture(this.boneTexture, material, renderer, 'boneTexture');
   }
 
-  protected updateTexture(texture: SquareDataTexture, material: Material, renderer: WebGLRenderer, slot: number, uniformName: string): number {
-    if (!texture) return slot;
+  protected updateTexture(texture: SquareDataTexture, material: Material, renderer: WebGLRenderer, uniformName: string): void {
+    if (!texture) return;
 
-    const textureProperties = renderer.properties.get(texture) as any;
-
-    if (textureProperties.__version === undefined) { // TODO check if we can call only initTexture everytime
-      renderer.initTexture(texture);
-    }
-
-    texture.update(renderer);
-
-    const gl = renderer.getContext();
     const materialProperties = renderer.properties.get(material) as any;
-    const program = materialProperties?.currentProgram?.program;
+    const textureProperties = renderer.properties.get(texture) as any;
+    const currentProgram = materialProperties?.currentProgram;
 
-    if (program) {
-      renderer.state.useProgram(program);
-      (renderer.state as any).bindTexture(gl.TEXTURE_2D, textureProperties.__webglTexture, gl.TEXTURE0 + slot); // TODO fix d.ts
-
-      const loc = gl.getUniformLocation(program, uniformName); // TODO use built-in method
-      gl.uniform1i(loc, slot);
+    if (textureProperties.__version === undefined) {
+      renderer.initTexture(texture);
     } else {
-      debugger
-      console.error('ok'); // TODO improve
+      texture.update(renderer);
     }
 
-    return slot - 1;
+    if (currentProgram?.program) { // improve
+      const slot = currentProgram.getUniforms().map[uniformName]?.cache[0]; // Check better
+      if (slot === undefined) return;
+
+      const gl = renderer.getContext();
+      renderer.state.useProgram(currentProgram.program);
+      (renderer.state as any).bindTexture(gl.TEXTURE_2D, textureProperties.__webglTexture, gl.TEXTURE0 + slot); // TODO fix d.ts
+    }
   }
 
   protected isFirstGroup(materialIndex: number): boolean {
@@ -444,7 +436,7 @@ export class InstancedMesh2<
   }
 
   protected _customProgramCacheKey = (): string => {
-    return `ezInstancedMesh2_${this.id}_${!!this.colorsTexture}_${this._useOpacity}_${!!this.boneTexture}_${!!this.uniformsTexture}_${this._customProgramCacheKeyBase.call(this._currentMaterial)}`;
+    return `ez_${!!this.colorsTexture}_${this._useOpacity}_${!!this.boneTexture}_${!!this.uniformsTexture}_${this._customProgramCacheKeyBase.call(this._currentMaterial)}`;
   };
 
   protected _onBeforeCompile = (shader: WebGLProgramParametersWithUniforms, renderer: WebGLRenderer): void => {
@@ -453,10 +445,10 @@ export class InstancedMesh2<
     shader.defines ??= {};
     shader.defines['USE_INSTANCING_INDIRECT'] = '';
 
-    shader.uniforms.matricesTexture = { value: null };
+    shader.uniforms.matricesTexture = { value: this.matricesTexture };
 
     if (this.uniformsTexture) {
-      shader.uniforms.uniformsTexture = { value: null };
+      shader.uniforms.uniformsTexture = { value: this.uniformsTexture };
       const { vertex, fragment } = this.uniformsTexture.getUniformsGLSL('uniformsTexture', 'instanceIndex', 'uint');
       shader.vertexShader = shader.vertexShader.replace('void main() {', vertex);
       shader.fragmentShader = shader.fragmentShader.replace('void main() {', fragment);
@@ -464,7 +456,7 @@ export class InstancedMesh2<
 
     if (this.colorsTexture && shader.fragmentShader.includes('#include <color_pars_fragment>')) {
       shader.defines['USE_INSTANCING_COLOR_INDIRECT'] = '';
-      shader.uniforms.colorsTexture = { value: null };
+      shader.uniforms.colorsTexture = { value: this.colorsTexture };
       shader.vertexShader = shader.vertexShader.replace('<color_vertex>', '<instanced_color_vertex>');
 
       if (shader.vertexColors) {
@@ -484,7 +476,7 @@ export class InstancedMesh2<
       shader.uniforms.bindMatrix = { value: this.bindMatrix };
       shader.uniforms.bindMatrixInverse = { value: this.bindMatrixInverse };
       shader.uniforms.bonesPerInstance = { value: this.skeleton.bones.length };
-      shader.uniforms.boneTexture = { value: null };
+      shader.uniforms.boneTexture = { value: this.boneTexture };
     }
   };
 
@@ -494,7 +486,7 @@ export class InstancedMesh2<
     this._onBeforeCompileBase = material.onBeforeCompile;
     material.customProgramCacheKey = this._customProgramCacheKey;
     material.onBeforeCompile = this._onBeforeCompile;
-    patchProperties(renderer);
+    patchProperties(this, renderer);
     addProperties(material);
   }
 

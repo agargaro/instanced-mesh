@@ -1,4 +1,5 @@
 import { MeshDistanceMaterial, WebGLRenderer } from 'three';
+import { InstancedMesh2 } from '../InstancedMesh2.js';
 
 // TODO: Fix if multiple renderers?
 
@@ -7,18 +8,19 @@ import { MeshDistanceMaterial, WebGLRenderer } from 'three';
  * (especially with `scene.overrideMaterial`), the `WebGLProperties` object is temporarily patched before each render of an InstancedMesh2.
  */
 let propertiesGetBase: (obj: unknown) => unknown = null; // this can become const
-const propertiesGetMap = new WeakMap<any, () => unknown>();
+let propertiesGet: WeakMap<any, () => unknown> = null;
+const propertiesGetMap: WeakMap<any, () => unknown>[] = [];
 
-export function propertiesGet(object: unknown): unknown {
-  return propertiesGetMap.get(object)?.() ?? propertiesGetBase(object);
+export function propertiesGetCallback(object: unknown): unknown {
+  return propertiesGet.get(object)?.() ?? propertiesGetBase(object);
 }
 
 export function addProperties(material: unknown): void {
-  if (propertiesGetMap.has(material)) return;
+  if (propertiesGet.has(material)) return;
 
   const materialProperties: { [x: string]: any } = {};
 
-  propertiesGetMap.set(material, () => {
+  propertiesGet.set(material, () => {
     // Fix pointLight bug. Related: https://github.com/mrdoob/three.js/blob/dev/src/renderers/webgl/WebGLShadowMap.js#L333
     if ((material as MeshDistanceMaterial).isMeshDistanceMaterial) {
       const materialPropertiesBase = propertiesGetBase(material) as { [x: string]: any };
@@ -29,10 +31,15 @@ export function addProperties(material: unknown): void {
   });
 }
 
-export function patchProperties(renderer: WebGLRenderer): void {
+export function patchProperties(obj: InstancedMesh2, renderer: WebGLRenderer): void {
   const properties = renderer.properties;
   propertiesGetBase = properties.get;
-  properties.get = propertiesGet;
+
+  const key = `${!!obj.colorsTexture}_${obj._useOpacity}_${!!obj.boneTexture}_${!!obj.uniformsTexture}`;
+  propertiesGetMap[key] ??= new WeakMap<any, () => unknown>();
+  propertiesGet = propertiesGetMap[key];
+
+  properties.get = propertiesGetCallback;
 }
 
 export function unpatchProperties(renderer: WebGLRenderer): void {
