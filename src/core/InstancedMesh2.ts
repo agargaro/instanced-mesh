@@ -346,8 +346,9 @@ export class InstancedMesh2<
 
       const gl = renderer.getContext();
       renderer.state.useProgram(currentProgram.program);
+      // set uniform too?
       (renderer.state as any).bindTexture(gl.TEXTURE_2D, textureProperties.__webglTexture, gl.TEXTURE0 + slot); // TODO fix d.ts
-      materialProperties.uniforms[uniformName].needsUpdate = false; // avoid the reset Texture before render
+      // materialProperties.uniforms[uniformName].needsUpdate = false; // avoid the reset Texture before render
 
       // TODO full manual update
     }
