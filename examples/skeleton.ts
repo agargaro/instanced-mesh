@@ -52,14 +52,13 @@ const geometry = dummy.geometry;
 dummy.geometry = await createSimplifiedGeometry(geometry, { ratio: 0.1, error: 1, lockBorder: true });
 
 // CREATE INSTANCEDMESH2 AND LODS
-const count = 3000;
+const count = 5000;
 const soldiers = createInstancedMesh2From<{ time: number; speed: number; offset: number }>(dummy, { capacity: count, createEntities: true });
-soldiers.boneTexture.partialUpdate = false;
 
-soldiers.addLOD(await createSimplifiedGeometry(geometry, { ratio: 0.07, error: 1 }), dummy.material.clone(), (1 / soldierScale) * 10);
-soldiers.addLOD(await createSimplifiedGeometry(geometry, { ratio: 0.05, error: 1 }), dummy.material.clone(), (1 / soldierScale) * 30);
-soldiers.addLOD(await createSimplifiedGeometry(geometry, { ratio: 0.03, error: 1 }), dummy.material.clone(), (1 / soldierScale) * 50);
-soldiers.addLOD(await createSimplifiedGeometry(geometry, { ratio: 0.02, error: 1, prune: true }), dummy.material.clone(), (1 / soldierScale) * 70);
+soldiers.addLOD(await createSimplifiedGeometry(geometry, { ratio: 0.07, error: 1 }), dummy.material, (1 / soldierScale) * 10);
+soldiers.addLOD(await createSimplifiedGeometry(geometry, { ratio: 0.05, error: 1 }), dummy.material, (1 / soldierScale) * 30);
+soldiers.addLOD(await createSimplifiedGeometry(geometry, { ratio: 0.03, error: 1 }), dummy.material, (1 / soldierScale) * 50);
+soldiers.addLOD(await createSimplifiedGeometry(geometry, { ratio: 0.02, error: 1, prune: true }), dummy.material, (1 / soldierScale) * 70);
 
 // ADD INSTANCES
 soldiers.addInstances(count, (obj, index) => {
