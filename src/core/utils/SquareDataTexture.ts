@@ -222,7 +222,6 @@ export class SquareDataTexture extends DataTexture {
   }
 
   protected updateRows(textureProperties: any, renderer: WebGLRenderer, info: UpdateRowInfo[]): void {
-    const state = renderer.state;
     const gl = renderer.getContext() as WebGL2RenderingContext;
     // @ts-expect-error Expected 2 arguments, but got 3.
     this._utils ??= new WebGLUtils(gl, renderer.extensions, renderer.capabilities); // third argument is necessary for older three versions
@@ -230,8 +229,9 @@ export class SquareDataTexture extends DataTexture {
     const glType = this._utils.convert(this.type);
     const { data, width } = this.image;
     const channels = this._channels;
+    const maxTextureUnits = renderer.capabilities.maxTextures;
 
-    state.bindTexture(gl.TEXTURE_2D, textureProperties.__webglTexture);
+    (renderer.state as any).bindTexture(gl.TEXTURE_2D, textureProperties.__webglTexture, gl.TEXTURE0 + maxTextureUnits - 1); // TODO fix d.ts
 
     const workingPrimaries = ColorManagement.getPrimaries(ColorManagement.workingColorSpace);
     const texturePrimaries = this.colorSpace === NoColorSpace ? null : ColorManagement.getPrimaries(this.colorSpace);

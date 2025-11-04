@@ -22,7 +22,7 @@ boxes.addInstances(1, (obj, index) => {
   obj.position.y = -1.5;
 });
 
-boxes2.addInstances(5, (obj, index) => {
+boxes2.addInstances(3, (obj, index) => {
   obj.position.x = index - 5;
   obj.position.y = 1.5;
 });
@@ -31,6 +31,10 @@ boxes3.addInstances(5, (obj, index) => {
   obj.position.x = index - 5;
   obj.position.y = 0;
 });
+
+boxes.frustumCulled = false;
+boxes2.frustumCulled = false;
+boxes3.frustumCulled = false;
 
 const box = new Mesh(new BoxGeometry(), material).translateX(2).translateY(2);
 const box2 = new Mesh(new BoxGeometry(), material2).translateX(2).translateY(0.5);

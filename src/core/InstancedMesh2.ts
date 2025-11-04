@@ -340,13 +340,16 @@ export class InstancedMesh2<
       texture.update(renderer);
     }
 
-    if (currentProgram?.program) { // improve
+    if (currentProgram?.program) { // Should we use always currentProgram?
       const slot = currentProgram.getUniforms().map[uniformName]?.cache[0]; // Check better
       if (slot === undefined) return;
 
       const gl = renderer.getContext();
       renderer.state.useProgram(currentProgram.program);
       (renderer.state as any).bindTexture(gl.TEXTURE_2D, textureProperties.__webglTexture, gl.TEXTURE0 + slot); // TODO fix d.ts
+      materialProperties.uniforms[uniformName].needsUpdate = false; // avoid the reset Texture before render
+
+      // TODO full manual update
     }
   }
 
