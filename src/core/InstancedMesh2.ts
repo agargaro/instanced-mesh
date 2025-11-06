@@ -331,24 +331,29 @@ export class InstancedMesh2<
     if (!texture) return;
 
     const materialProperties = renderer.properties.get(material) as any;
-    const textureProperties = renderer.properties.get(texture) as any;
-    const currentProgram = materialProperties?.currentProgram;
+    if (!materialProperties.uniforms) return;
 
+    materialProperties.uniforms[uniformName].value = texture;
+
+    const textureProperties = renderer.properties.get(texture) as any;
     if (textureProperties.__version === undefined) {
       renderer.initTexture(texture);
     } else {
       texture.update(renderer);
     }
 
+    const currentProgram = materialProperties?.currentProgram;
     if (currentProgram?.program) { // Should we use always currentProgram?
       const slot = currentProgram.getUniforms().map[uniformName]?.cache[0]; // Check better
       if (slot === undefined) return;
 
       const gl = renderer.getContext();
+      debugger
       renderer.state.useProgram(currentProgram.program);
-      // set uniform too?
+      // TODO add slot
       (renderer.state as any).bindTexture(gl.TEXTURE_2D, textureProperties.__webglTexture, gl.TEXTURE0 + slot); // TODO fix d.ts
-      // materialProperties.uniforms[uniformName].needsUpdate = false; // avoid the reset Texture before render
+
+      // restore latest material
 
       // TODO full manual update
     }
