@@ -275,6 +275,9 @@ export class InstancedMesh2<
   public override onBeforeShadow(renderer: WebGLRenderer, scene: Scene, camera: Camera, shadowCamera: Camera, geometry: BufferGeometry, depthMaterial: Material, group: any): void {
     this.patchMaterial(renderer, depthMaterial);
 
+    this.updateTextures(renderer, depthMaterial);
+    this.bindTextures(renderer, depthMaterial);
+
     // if multimaterial we compute frustum culling only on first material
     if (!this.instanceIndex || (group && !this.isFirstGroup(group.materialIndex))) return;
 
@@ -284,12 +287,14 @@ export class InstancedMesh2<
     }
 
     this.instanceIndex.update(this._renderer, this.count);
-    this.updateAllTextures(renderer, depthMaterial);
     // TODO convert also morph texture to squared texture to use partial update
   }
 
   public override onBeforeRender(renderer: WebGLRenderer, scene: Scene, camera: Camera, geometry: BufferGeometry, material: Material, group: any): void {
     this.patchMaterial(renderer, material);
+
+    this.updateTextures(renderer, material);
+    this.bindTextures(renderer, material);
 
     if (!this.instanceIndex) {
       this._renderer = renderer;
@@ -305,7 +310,6 @@ export class InstancedMesh2<
     }
 
     this.instanceIndex.update(this._renderer, this.count);
-    this.updateAllTextures(renderer, material);
 
     // TODO convert also morph texture to squared texture to use partial update
   }
@@ -320,7 +324,7 @@ export class InstancedMesh2<
     this.initIndexAttribute();
   }
 
-  protected updateAllTextures(renderer: WebGLRenderer, material: Material): void {
+  protected updateTextures(renderer: WebGLRenderer, material: Material): void {
     this.updateTexture(this.matricesTexture, material, renderer, 'matricesTexture');
     this.updateTexture(this.colorsTexture, material, renderer, 'colorsTexture');
     this.updateTexture(this.uniformsTexture, material, renderer, 'uniformsTexture');
@@ -331,31 +335,45 @@ export class InstancedMesh2<
     if (!texture) return;
 
     const materialProperties = renderer.properties.get(material) as any;
+    const currentProgram = materialProperties.currentProgram;
+    const slot = currentProgram?.getUniforms().map[uniformName]?.cache[0] as number; // we can probably just use latest slot
+    const textureProperties = renderer.properties.get(texture) as any;
+
+    if (textureProperties.__webglTexture) {
+      texture.update(renderer, slot);
+    } else {
+      renderer.initTexture(texture);
+    }
+
+    // TODO manual full update?
+  }
+
+  protected bindTextures(renderer: WebGLRenderer, material: Material): void {
+    this.bindTexture(this.matricesTexture, material, renderer, 'matricesTexture');
+    this.bindTexture(this.colorsTexture, material, renderer, 'colorsTexture');
+    this.bindTexture(this.uniformsTexture, material, renderer, 'uniformsTexture');
+    this.bindTexture(this.boneTexture, material, renderer, 'boneTexture');
+  }
+
+  protected bindTexture(texture: SquareDataTexture, material: Material, renderer: WebGLRenderer, uniformName: string): void {
+    if (!texture) return;
+
+    const materialProperties = renderer.properties.get(material) as any;
+    const currentProgram = materialProperties.currentProgram;
+    const slot = currentProgram?.getUniforms().map[uniformName]?.cache[0] as number;
+    const textureProperties = renderer.properties.get(texture) as any;
+
     if (!materialProperties.uniforms) return;
 
     materialProperties.uniforms[uniformName].value = texture;
 
-    const textureProperties = renderer.properties.get(texture) as any;
-    if (textureProperties.__version === undefined) {
-      renderer.initTexture(texture);
-    } else {
-      texture.update(renderer);
-    }
-
-    const currentProgram = materialProperties?.currentProgram;
-    if (currentProgram?.program) { // Should we use always currentProgram?
-      const slot = currentProgram.getUniforms().map[uniformName]?.cache[0]; // Check better
-      if (slot === undefined) return;
-
+    if (currentProgram.program) { // Should we use always currentProgram?
       const gl = renderer.getContext();
-      debugger
-      renderer.state.useProgram(currentProgram.program);
-      // TODO add slot
+      const activeProgram = gl.getParameter(gl.CURRENT_PROGRAM);
+
+      renderer.state.useProgram(currentProgram.program); // set the program
       (renderer.state as any).bindTexture(gl.TEXTURE_2D, textureProperties.__webglTexture, gl.TEXTURE0 + slot); // TODO fix d.ts
-
-      // restore latest material
-
-      // TODO full manual update
+      renderer.state.useProgram(activeProgram); // restore the old program to make three.js update uniforms correctly
     }
   }
 

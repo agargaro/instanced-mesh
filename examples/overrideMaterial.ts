@@ -55,33 +55,34 @@ const box = new Mesh(new BoxGeometry(), material).translateX(-7).translateY(1.5)
 const box2 = new Mesh(new BoxGeometry(), material2).translateX(-7);
 const box3 = new Mesh(new BoxGeometry(), material2).translateX(-7).translateY(-1.5);
 const overrideMaterial = new MeshBasicMaterial();
+overrideMaterial.name = 'overrideMaterial';
 
 scene.add(box, boxes, box2, boxes2, boxes3, box3, new AmbientLight());
 
 scene.activeSmartRendering();
 
-scene.on('animate', () => console.log('new frame'));
+scene.on('animate', () => console.log(main.renderer.info.memory.textures));
 
-// setInterval(() => {
-//   scene.overrideMaterial = scene.overrideMaterial !== overrideMaterial ? overrideMaterial : null;
+setInterval(() => {
+  scene.overrideMaterial = scene.overrideMaterial === overrideMaterial ? null : overrideMaterial;
 
-//   scene.needsRender = true;
+  scene.needsRender = true;
 
-//   boxes.addInstances(1, (obj, index) => {
-//     obj.position.x = index - 5;
-//     obj.position.y = 1.5;
-//     obj.color = Math.random() * 0xffffff;
-//   });
+  boxes.addInstances(1, (obj, index) => {
+    obj.position.x = index - 5;
+    obj.position.y = 1.5;
+    obj.color = Math.random() * 0xffffff;
+  });
 
-//   boxes2.addInstances(1, (obj, index) => {
-//     obj.position.x = index - 5;
-//     obj.position.y = 0;
-//     obj.color = Math.random() * 0xffffff;
-//   });
+  boxes2.addInstances(1, (obj, index) => {
+    obj.position.x = index - 5;
+    obj.position.y = 0;
+    obj.color = Math.random() * 0xffffff;
+  });
 
-//   boxes3.addInstances(1, (obj, index) => {
-//     obj.position.x = index - 5;
-//     obj.position.y = -1.5;
-//     obj.color = Math.random() * 0xffffff;
-//   });
-// }, 1000);
+  boxes3.addInstances(1, (obj, index) => {
+    obj.position.x = index - 5;
+    obj.position.y = -1.5;
+    obj.color = Math.random() * 0xffffff;
+  });
+}, 1000);

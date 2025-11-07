@@ -173,7 +173,7 @@ export class SquareDataTexture extends DataTexture {
    * This method is optimized to only update the rows that have changed, improving performance.
    * @param renderer The WebGLRenderer used for rendering.
    */
-  public update(renderer: WebGLRenderer): void {
+  public update(renderer: WebGLRenderer, slot?: number): void {
     const textureProperties: any = renderer.properties.get(this);
     const versionChanged = this.version > 0 && textureProperties.__version !== this.version;
     const sizeChanged = this._lastWidth !== null && this._lastWidth !== this.image.width;
@@ -197,7 +197,7 @@ export class SquareDataTexture extends DataTexture {
     if (rowsInfo.length > this.maxUpdateCalls) {
       this.needsUpdate = true; // three.js will update the whole texture
     } else {
-      this.updateRows(textureProperties, renderer, rowsInfo);
+      this.updateRows(textureProperties, renderer, rowsInfo, slot);
     }
 
     this._rowToUpdate.fill(false);
@@ -221,7 +221,7 @@ export class SquareDataTexture extends DataTexture {
     return result;
   }
 
-  protected updateRows(textureProperties: any, renderer: WebGLRenderer, info: UpdateRowInfo[]): void {
+  protected updateRows(textureProperties: any, renderer: WebGLRenderer, info: UpdateRowInfo[], slot?: number): void {
     const gl = renderer.getContext() as WebGL2RenderingContext;
     // @ts-expect-error Expected 2 arguments, but got 3.
     this._utils ??= new WebGLUtils(gl, renderer.extensions, renderer.capabilities); // third argument is necessary for older three versions
@@ -229,9 +229,9 @@ export class SquareDataTexture extends DataTexture {
     const glType = this._utils.convert(this.type);
     const { data, width } = this.image;
     const channels = this._channels;
-    const maxTextureUnits = renderer.capabilities.maxTextures;
+    slot ??= renderer.capabilities.maxTextures - 1;
 
-    (renderer.state as any).bindTexture(gl.TEXTURE_2D, textureProperties.__webglTexture, gl.TEXTURE0 + maxTextureUnits - 1); // TODO fix d.ts
+    (renderer.state as any).bindTexture(gl.TEXTURE_2D, textureProperties.__webglTexture, gl.TEXTURE0 + slot); // TODO fix d.ts
 
     const workingPrimaries = ColorManagement.getPrimaries(ColorManagement.workingColorSpace);
     const texturePrimaries = this.colorSpace === NoColorSpace ? null : ColorManagement.getPrimaries(this.colorSpace);
