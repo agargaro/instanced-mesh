@@ -5,7 +5,7 @@ import { LODInfo } from './feature/LOD.js';
 import { InstancedEntity } from './InstancedEntity.js';
 import { BVHParams, InstancedMeshBVH } from './InstancedMeshBVH.js';
 import { GLInstancedBufferAttribute } from './utils/GLInstancedBufferAttribute.js';
-import { addProperties, patchProperties, unpatchProperties } from './utils/PropertiesOverride.js';
+import { patchProperties, unpatchProperties } from './utils/PropertiesOverride.js';
 import { SquareDataTexture } from './utils/SquareDataTexture.js';
 
 // TODO: Add check to not update partial texture if needsuupdate already true
@@ -16,6 +16,8 @@ import { SquareDataTexture } from './utils/SquareDataTexture.js';
 // TODO LOD: BVH and handle raycastOnlyFrustum?;
 // TODO: check if check first and last material is right.. we should use the first valid index instead
 // TODO: use visible = false instead count = 0 for unused LOD?
+// TODO: convert also morph texture to squared texture to use partial update
+// TODO: sorting per each LODlevel
 
 /**
  * Parameters for configuring an `InstancedMesh2` instance.
@@ -276,42 +278,37 @@ export class InstancedMesh2<
     this.patchMaterial(renderer, depthMaterial);
 
     this.updateTextures(renderer, depthMaterial);
-    this.bindTextures(renderer, depthMaterial);
-
-    // if multimaterial we compute frustum culling only on first material
-    if (!this.instanceIndex || (group && !this.isFirstGroup(group.materialIndex))) return;
 
     const frame = renderer.info.render.frame;
-    if (this.autoUpdate && !this.frustumCullingAlreadyPerformed(frame, camera, shadowCamera)) {
+    if (this.instanceIndex && this.autoUpdate && !this.frustumCullingAlreadyPerformed(frame, camera, shadowCamera)) {
       this.performFrustumCulling(shadowCamera, camera);
     }
 
+    if (this.count === 0) return;
+
     this.instanceIndex.update(this._renderer, this.count);
-    // TODO convert also morph texture to squared texture to use partial update
+    this.bindTextures(renderer, depthMaterial);
   }
 
   public override onBeforeRender(renderer: WebGLRenderer, scene: Scene, camera: Camera, geometry: BufferGeometry, material: Material, group: any): void {
     this.patchMaterial(renderer, material);
 
     this.updateTextures(renderer, material);
-    this.bindTextures(renderer, material);
 
     if (!this.instanceIndex) {
       this._renderer = renderer;
       return;
     }
 
-    // if multimaterial we compute frustum culling only on first material
-    if (group && !this.isFirstGroup(group.materialIndex)) return;
-
     const frame = renderer.info.render.frame;
-    if (this.autoUpdate && !this.frustumCullingAlreadyPerformed(frame, camera, null)) { // TODO remove frame?
+    if (this.instanceIndex && this.autoUpdate && !this.frustumCullingAlreadyPerformed(frame, camera, null)) {
       this.performFrustumCulling(camera);
     }
 
-    this.instanceIndex.update(this._renderer, this.count);
+    if (this.count === 0) return;
 
-    // TODO convert also morph texture to squared texture to use partial update
+    this.instanceIndex.update(this._renderer, this.count);
+    this.bindTextures(renderer, material);
   }
 
   public override onAfterShadow(renderer: WebGLRenderer, scene: Scene, camera: Camera, shadowCamera: Camera, geometry: BufferGeometry, depthMaterial: Material, group: any): void {
@@ -367,23 +364,13 @@ export class InstancedMesh2<
 
     materialProperties.uniforms[uniformName].value = texture;
 
-    if (currentProgram.program) { // Should we use always currentProgram?
+    if (currentProgram.program && slot !== undefined) { // Should we use always currentProgram?
       const gl = renderer.getContext();
       const activeProgram = gl.getParameter(gl.CURRENT_PROGRAM);
 
       renderer.state.useProgram(currentProgram.program); // set the program
       (renderer.state as any).bindTexture(gl.TEXTURE_2D, textureProperties.__webglTexture, gl.TEXTURE0 + slot); // TODO fix d.ts
       renderer.state.useProgram(activeProgram); // restore the old program to make three.js update uniforms correctly
-    }
-  }
-
-  protected isFirstGroup(materialIndex: number): boolean {
-    const materials = this.material as Material[];
-
-    for (let i = 0; i <= materialIndex; i++) {
-      if (materials[i].visible) {
-        return i === materialIndex;
-      }
     }
   }
 
@@ -513,8 +500,7 @@ export class InstancedMesh2<
     this._onBeforeCompileBase = material.onBeforeCompile;
     material.customProgramCacheKey = this._customProgramCacheKey;
     material.onBeforeCompile = this._onBeforeCompile;
-    patchProperties(this, renderer);
-    addProperties(material);
+    patchProperties(this, renderer, material);
   }
 
   protected unpatchMaterial(renderer: WebGLRenderer, material: Material): void {

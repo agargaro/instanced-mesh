@@ -213,7 +213,7 @@ InstancedMesh2.prototype.addLevel = function (renderList: LODRenderList, geometr
     object.frustumCulled = false;
     this.patchLevel(object);
     objectsList.push(object);
-    this.add(object); // TODO handle render order?
+    this.add(object);
   } else {
     object = objectsList[objIndex];
     if (material) object.material = material;
@@ -345,63 +345,65 @@ InstancedMesh2.prototype.removeLOD = function (levelIndex, removeObject = true) 
 };
 
 InstancedMesh2.prototype.patchLevel = function (obj: InstancedMesh2): void {
+  const parentLOD = this;
+
   Object.defineProperty(obj, 'renderOrder', {
     get(this: InstancedMesh2) {
-      return this._parentLOD.renderOrder;
+      return parentLOD.renderOrder; // TODO reduce overdraw with renderOrder
     }
   });
 
   Object.defineProperty(obj, '_lastRenderInfo', {
     get(this: InstancedMesh2) {
-      return this._parentLOD._lastRenderInfo;
+      return parentLOD._lastRenderInfo;
     }
   });
 
   Object.defineProperty(obj, 'matricesTexture', {
     get(this: InstancedMesh2) {
-      return this._parentLOD.matricesTexture;
+      return parentLOD.matricesTexture;
     }
   });
 
   Object.defineProperty(obj, 'colorsTexture', {
     get(this: InstancedMesh2) {
-      return this._parentLOD.colorsTexture;
+      return parentLOD.colorsTexture;
     }
   });
 
   Object.defineProperty(obj, 'uniformsTexture', {
     get(this: InstancedMesh2) {
-      return this._parentLOD.uniformsTexture;
+      return parentLOD.uniformsTexture;
     }
   });
 
   Object.defineProperty(obj, 'morphTexture', { // TODO check if it's correct
     get(this: InstancedMesh2) {
-      return this._parentLOD.morphTexture;
+      return parentLOD.morphTexture;
     }
   });
 
   Object.defineProperty(obj, 'boneTexture', {
     get(this: InstancedMesh2) {
-      return this._parentLOD.boneTexture;
+      return parentLOD.boneTexture;
     }
   });
 
   Object.defineProperty(obj, 'skeleton', {
     get(this: InstancedMesh2) {
-      return this._parentLOD.skeleton;
+      return parentLOD.skeleton;
     }
   });
 
   Object.defineProperty(obj, 'bindMatrixInverse', {
     get(this: InstancedMesh2) {
-      return this._parentLOD.bindMatrixInverse;
+      return parentLOD.bindMatrixInverse;
     }
   });
 
   Object.defineProperty(obj, 'bindMatrix', {
     get(this: InstancedMesh2) {
-      return this._parentLOD.bindMatrix;
+      return parentLOD.bindMatrix;
     }
   });
 };

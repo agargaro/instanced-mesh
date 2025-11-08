@@ -11,11 +11,11 @@ let propertiesGetBase: (obj: unknown) => unknown = null; // this can become cons
 let propertiesGet: WeakMap<any, () => unknown> = null;
 const propertiesGetMap: { [x: string]: WeakMap<any, () => unknown> } = {};
 
-export function propertiesGetCallback(object: unknown): unknown {
+function propertiesGetCallback(object: unknown): unknown {
   return propertiesGet.get(object)?.() ?? propertiesGetBase(object);
 }
 
-export function addProperties(material: unknown): void {
+function addProperties(material: unknown): void {
   if (propertiesGet.has(material)) return;
 
   const materialProperties: { [x: string]: any } = {};
@@ -31,7 +31,7 @@ export function addProperties(material: unknown): void {
   });
 }
 
-export function patchProperties(obj: InstancedMesh2, renderer: WebGLRenderer): void {
+export function patchProperties(obj: InstancedMesh2, renderer: WebGLRenderer, material: unknown): void {
   const properties = renderer.properties;
   propertiesGetBase = properties.get;
 
@@ -40,6 +40,8 @@ export function patchProperties(obj: InstancedMesh2, renderer: WebGLRenderer): v
   propertiesGet = propertiesGetMap[key];
 
   properties.get = propertiesGetCallback;
+
+  addProperties(material);
 }
 
 export function unpatchProperties(renderer: WebGLRenderer): void {
