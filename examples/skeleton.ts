@@ -40,7 +40,7 @@ const propertyBindingsLOD: PropertyMixer[] = [];
 const interpolantsLOD: Interpolant[] = [];
 
 for (let i = 0; i < propertyBindings.length; i++) {
-  const boneName = propertyBindings[i].binding.node.name as string;
+  const boneName = propertyBindings[i].binding.node['name'] as string;
 
   if (!excludedBones.has(boneName)) {
     propertyBindingsLOD.push(propertyBindings[i]);
