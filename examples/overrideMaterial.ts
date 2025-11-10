@@ -61,8 +61,6 @@ scene.add(box, boxes, box2, boxes2, boxes3, box3, new AmbientLight());
 
 scene.activeSmartRendering();
 
-scene.on('animate', () => console.log(main.renderer.info.memory.textures));
-
 setInterval(() => {
   scene.overrideMaterial = scene.overrideMaterial === overrideMaterial ? null : overrideMaterial;
 

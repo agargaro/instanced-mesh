@@ -14,7 +14,7 @@ main.renderer.shadowMap.enabled = true;
 const camera = new PerspectiveCameraAuto(50).translateX(100).translateY(100).translateZ(100);
 const scene = new Scene();
 
-const gltf = await Asset.load<GLTF>(GLTFLoader, 'tree.glb');
+const gltf = await Asset.load<GLTF>(GLTFLoader, 'tree2.glb');
 const treeGroup = gltf.scene;
 const mergedGeo = mergeGeometries(treeGroup.children.map((x) => (x as Mesh).geometry), true);
 const materials = treeGroup.children.map((x) => (x as Mesh).material as Material);

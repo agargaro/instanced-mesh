@@ -322,39 +322,35 @@ export class InstancedMesh2<
   }
 
   protected updateTextures(renderer: WebGLRenderer, material: Material): void {
-    this.matricesTexture.update(renderer, material, 'matricesTexture');
-    this.colorsTexture?.update(renderer, material, 'colorsTexture');
-    this.uniformsTexture?.update(renderer, material, 'uniformsTexture');
-    this.boneTexture?.update(renderer, material, 'boneTexture');
+    const materialProperties = renderer.properties.get(material) as any;
+
+    this.matricesTexture.update(renderer, materialProperties, 'matricesTexture');
+    this.colorsTexture?.update(renderer, materialProperties, 'colorsTexture');
+    this.uniformsTexture?.update(renderer, materialProperties, 'uniformsTexture');
+    this.boneTexture?.update(renderer, materialProperties, 'boneTexture');
   }
 
   protected bindTextures(renderer: WebGLRenderer, material: Material): void {
-    this.bindTexture(this.matricesTexture, material, renderer, 'matricesTexture');
-    this.bindTexture(this.colorsTexture, material, renderer, 'colorsTexture');
-    this.bindTexture(this.uniformsTexture, material, renderer, 'uniformsTexture');
-    this.bindTexture(this.boneTexture, material, renderer, 'boneTexture');
-  }
-
-  protected bindTexture(texture: SquareDataTexture, material: Material, renderer: WebGLRenderer, uniformName: string): void {
-    if (!texture) return;
-
     const materialProperties = renderer.properties.get(material) as any;
-    const currentProgram = materialProperties.currentProgram;
-    const slot = currentProgram?.getUniforms().map[uniformName]?.cache[0] as number;
-    const textureProperties = renderer.properties.get(texture) as any;
+    const materialUniforms = materialProperties.uniforms;
+    if (!materialUniforms) return;
 
-    if (!materialProperties.uniforms) return;
+    const currentProgramProperties = materialProperties.currentProgram;
+    const currentProgram = currentProgramProperties?.program;
+    if (!currentProgram) return;
 
-    materialProperties.uniforms[uniformName].value = texture;
+    const gl = renderer.getContext() as WebGL2RenderingContext;
+    const programUniforms = currentProgramProperties.getUniforms().map;
 
-    if (currentProgram.program && slot !== undefined) { // Should we use always currentProgram?
-      const gl = renderer.getContext();
-      const activeProgram = gl.getParameter(gl.CURRENT_PROGRAM);
+    const activeProgram = gl.getParameter(gl.CURRENT_PROGRAM);
+    renderer.state.useProgram(currentProgram); // set the program
 
-      renderer.state.useProgram(currentProgram.program); // set the program
-      (renderer.state as any).bindTexture(gl.TEXTURE_2D, textureProperties.__webglTexture, gl.TEXTURE0 + slot); // TODO fix d.ts
-      renderer.state.useProgram(activeProgram); // restore the old program to make three.js update uniforms correctly
-    }
+    this.matricesTexture.bindToProgram(renderer, gl, programUniforms, materialUniforms, 'matricesTexture');
+    this.colorsTexture?.bindToProgram(renderer, gl, programUniforms, materialUniforms, 'colorsTexture');
+    this.uniformsTexture?.bindToProgram(renderer, gl, programUniforms, materialUniforms, 'uniformsTexture');
+    this.boneTexture?.bindToProgram(renderer, gl, programUniforms, materialUniforms, 'boneTexture');
+
+    renderer.state.useProgram(activeProgram); // restore the old program to make three.js update uniforms correctly
   }
 
   protected isLastGroup(materialIndex: number): boolean {

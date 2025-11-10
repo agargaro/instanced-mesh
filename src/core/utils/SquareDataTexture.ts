@@ -168,14 +168,24 @@ export class SquareDataTexture extends DataTexture {
     this._rowToUpdate[rowIndex] = true;
   }
 
+  public bindToProgram(renderer: WebGLRenderer, gl: WebGL2RenderingContext, programUniforms: unknown, materialUniforms: unknown, uniformName: string): void {
+    materialUniforms[uniformName].value = this;
+
+    const slot = this.getSlot(programUniforms, uniformName);
+    if (slot === undefined) return;
+
+    const textureProperties: any = renderer.properties.get(this);
+    (renderer.state as any).bindTexture(gl.TEXTURE_2D, textureProperties.__webglTexture, gl.TEXTURE0 + slot); // TODO fix d.ts
+  }
+
   /**
    * Updates the texture data based on the rows that need updating.
    * This method is optimized to only update the rows that have changed, improving performance.
    * @param renderer The WebGLRenderer used for rendering.
-   * @param material The material associated with the texture.
+   * @param materialProperties The material properties associated with the texture.
    * @param uniformName The name of the uniform in the shader.
    */
-  public update(renderer: WebGLRenderer, material: Material, uniformName: string): void {
+  public update(renderer: WebGLRenderer, materialProperties: any, uniformName: string): void {
     const textureProperties: any = renderer.properties.get(this);
     const versionChanged = textureProperties.__version !== this.version;
 
@@ -184,9 +194,9 @@ export class SquareDataTexture extends DataTexture {
     const sizeChanged = this._lastWidth !== this.image.width;
 
     if (!textureProperties.__webglTexture || sizeChanged) {
-      renderer.initTexture(this); // test the texture resize
+      renderer.initTexture(this);
     } else {
-      const slot = this.getSlot(renderer, material, uniformName);
+      const slot = this.getSlot(materialProperties, uniformName) ?? renderer.capabilities.maxTextures - 1;
 
       if (this.partialUpdate) {
         this.updatePartial(textureProperties, renderer, slot);
@@ -201,11 +211,8 @@ export class SquareDataTexture extends DataTexture {
     this._needsUpdate = false;
   }
 
-  protected getSlot(renderer: WebGLRenderer, material: Material, uniformName: string): number {
-    const materialProperties = renderer.properties.get(material) as any;
-    const currentProgram = materialProperties.currentProgram;
-    const slot = currentProgram?.getUniforms().map[uniformName]?.cache[0] as number | undefined;
-    return slot ?? renderer.capabilities.maxTextures - 1;
+  protected getSlot(programUniforms: any, uniformName: string): number | undefined {
+    return programUniforms[uniformName]?.cache[0] as number;
   }
 
   protected updateFull(textureProperties: any, renderer: WebGLRenderer, slot: number): void {
