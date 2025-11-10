@@ -345,65 +345,63 @@ InstancedMesh2.prototype.removeLOD = function (levelIndex, removeObject = true) 
 };
 
 InstancedMesh2.prototype.patchLevel = function (obj: InstancedMesh2): void {
-  const parentLOD = this;
-
   Object.defineProperty(obj, 'renderOrder', {
     get(this: InstancedMesh2) {
-      return parentLOD.renderOrder; // TODO reduce overdraw with renderOrder
+      return this._parentLOD.renderOrder; // TODO reduce overdraw with renderOrder
     }
   });
 
   Object.defineProperty(obj, '_lastRenderInfo', {
     get(this: InstancedMesh2) {
-      return parentLOD._lastRenderInfo;
+      return this._parentLOD._lastRenderInfo;
     }
   });
 
   Object.defineProperty(obj, 'matricesTexture', {
     get(this: InstancedMesh2) {
-      return parentLOD.matricesTexture;
+      return this._parentLOD.matricesTexture;
     }
   });
 
   Object.defineProperty(obj, 'colorsTexture', {
     get(this: InstancedMesh2) {
-      return parentLOD.colorsTexture;
+      return this._parentLOD.colorsTexture;
     }
   });
 
   Object.defineProperty(obj, 'uniformsTexture', {
     get(this: InstancedMesh2) {
-      return parentLOD.uniformsTexture;
+      return this._parentLOD.uniformsTexture;
     }
   });
 
   Object.defineProperty(obj, 'morphTexture', { // TODO check if it's correct
     get(this: InstancedMesh2) {
-      return parentLOD.morphTexture;
+      return this._parentLOD.morphTexture;
     }
   });
 
   Object.defineProperty(obj, 'boneTexture', {
     get(this: InstancedMesh2) {
-      return parentLOD.boneTexture;
+      return this._parentLOD.boneTexture;
     }
   });
 
   Object.defineProperty(obj, 'skeleton', {
     get(this: InstancedMesh2) {
-      return parentLOD.skeleton;
+      return this._parentLOD.skeleton;
     }
   });
 
   Object.defineProperty(obj, 'bindMatrixInverse', {
     get(this: InstancedMesh2) {
-      return parentLOD.bindMatrixInverse;
+      return this._parentLOD.bindMatrixInverse;
     }
   });
 
   Object.defineProperty(obj, 'bindMatrix', {
     get(this: InstancedMesh2) {
-      return parentLOD.bindMatrix;
+      return this._parentLOD.bindMatrix;
     }
   });
 };
