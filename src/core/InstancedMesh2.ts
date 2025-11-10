@@ -301,7 +301,7 @@ export class InstancedMesh2<
     }
 
     const frame = renderer.info.render.frame;
-    if (this.instanceIndex && this.autoUpdate && !this.frustumCullingAlreadyPerformed(frame, camera, null)) {
+    if (this.autoUpdate && !this.frustumCullingAlreadyPerformed(frame, camera, null)) {
       this.performFrustumCulling(camera);
     }
 
