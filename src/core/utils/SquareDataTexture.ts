@@ -1,4 +1,4 @@
-import { Color, ColorManagement, DataTexture, FloatType, IntType, Matrix3, Matrix4, NoColorSpace, PixelFormat, RedFormat, RedIntegerFormat, RGBAFormat, RGBAIntegerFormat, RGFormat, RGIntegerFormat, TextureDataType, TypedArray, UnsignedIntType, Vector2, Vector3, Vector4, WebGLRenderer, WebGLUtils } from 'three';
+import { Color, ColorManagement, DataTexture, FloatType, IntType, Material, Matrix3, Matrix4, NoColorSpace, PixelFormat, RedFormat, RedIntegerFormat, RGBAFormat, RGBAIntegerFormat, RGFormat, RGIntegerFormat, TextureDataType, TypedArray, UnsignedIntType, Vector2, Vector3, Vector4, WebGLRenderer, WebGLUtils } from 'three';
 
 /**
  * Represents the number of elements per pixel.
@@ -107,8 +107,8 @@ export class SquareDataTexture extends DataTexture {
   protected _uniformMap: UniformMap;
   protected _fetchUniformsInFragmentShader: boolean;
   protected _utils: WebGLUtils = null; // TODO add it to renderer instead of creating for each texture
-  protected _needsUpdate: boolean = false;
-  protected _lastWidth: number = null;
+  protected _needsUpdate = true;
+  protected _lastWidth = -1;
 
   /**
    * @param arrayType The constructor for the TypedArray.
@@ -172,30 +172,52 @@ export class SquareDataTexture extends DataTexture {
    * Updates the texture data based on the rows that need updating.
    * This method is optimized to only update the rows that have changed, improving performance.
    * @param renderer The WebGLRenderer used for rendering.
+   * @param material The material associated with the texture.
+   * @param uniformName The name of the uniform in the shader.
    */
-  public update(renderer: WebGLRenderer, slot?: number): void {
+  public update(renderer: WebGLRenderer, material: Material, uniformName: string): void {
     const textureProperties: any = renderer.properties.get(this);
-    const versionChanged = this.version > 0 && textureProperties.__version !== this.version;
-    const sizeChanged = this._lastWidth !== null && this._lastWidth !== this.image.width;
+    const versionChanged = textureProperties.__version !== this.version;
 
-    if (!this._needsUpdate || !textureProperties.__webglTexture || versionChanged || sizeChanged) {
-      this._lastWidth = this.image.width;
-      this._needsUpdate = false;
-      return;
+    if (!this._needsUpdate && !versionChanged) return;
+
+    const sizeChanged = this._lastWidth !== this.image.width;
+
+    if (!textureProperties.__webglTexture || sizeChanged) {
+      renderer.initTexture(this); // test the texture resize
+    } else {
+      const slot = this.getSlot(renderer, material, uniformName);
+
+      if (this.partialUpdate) {
+        this.updatePartial(textureProperties, renderer, slot);
+      } else {
+        this.updateFull(textureProperties, renderer, slot);
+      }
+
+      textureProperties.__version = this.version;
     }
 
+    this._lastWidth = this.image.width;
     this._needsUpdate = false;
+  }
 
-    if (!this.partialUpdate) {
-      this.needsUpdate = true; // three.js will update the whole texture
-      return;
-    }
+  protected getSlot(renderer: WebGLRenderer, material: Material, uniformName: string): number {
+    const materialProperties = renderer.properties.get(material) as any;
+    const currentProgram = materialProperties.currentProgram;
+    const slot = currentProgram?.getUniforms().map[uniformName]?.cache[0] as number | undefined;
+    return slot ?? renderer.capabilities.maxTextures - 1;
+  }
 
+  protected updateFull(textureProperties: any, renderer: WebGLRenderer, slot: number): void {
+    this.updateRows(textureProperties, renderer, [{ row: 0, count: this.image.height }], slot);
+  }
+
+  protected updatePartial(textureProperties: any, renderer: WebGLRenderer, slot: number): void {
     const rowsInfo = this.getUpdateRowsInfo();
     if (rowsInfo.length === 0) return;
 
     if (rowsInfo.length > this.maxUpdateCalls) {
-      this.needsUpdate = true; // three.js will update the whole texture
+      this.updateFull(textureProperties, renderer, slot);
     } else {
       this.updateRows(textureProperties, renderer, rowsInfo, slot);
     }
@@ -221,7 +243,7 @@ export class SquareDataTexture extends DataTexture {
     return result;
   }
 
-  protected updateRows(textureProperties: any, renderer: WebGLRenderer, info: UpdateRowInfo[], slot?: number): void {
+  protected updateRows(textureProperties: any, renderer: WebGLRenderer, info: UpdateRowInfo[], slot: number): void {
     const gl = renderer.getContext() as WebGL2RenderingContext;
     // @ts-expect-error Expected 2 arguments, but got 3.
     this._utils ??= new WebGLUtils(gl, renderer.extensions, renderer.capabilities); // third argument is necessary for older three versions
@@ -229,8 +251,8 @@ export class SquareDataTexture extends DataTexture {
     const glType = this._utils.convert(this.type);
     const { data, width } = this.image;
     const channels = this._channels;
-    slot ??= renderer.capabilities.maxTextures - 1;
 
+    renderer.state.activeTexture(gl.TEXTURE0 + slot);
     (renderer.state as any).bindTexture(gl.TEXTURE_2D, textureProperties.__webglTexture, gl.TEXTURE0 + slot); // TODO fix d.ts
 
     const workingPrimaries = ColorManagement.getPrimaries(ColorManagement.workingColorSpace);
@@ -246,7 +268,7 @@ export class SquareDataTexture extends DataTexture {
       gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, row, width, count, glFormat, glType, data, row * width * channels);
     }
 
-    if (this.onUpdate) this.onUpdate(this);
+    this.onUpdate?.(this);
   }
 
   /**

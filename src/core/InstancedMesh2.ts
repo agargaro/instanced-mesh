@@ -322,27 +322,10 @@ export class InstancedMesh2<
   }
 
   protected updateTextures(renderer: WebGLRenderer, material: Material): void {
-    this.updateTexture(this.matricesTexture, material, renderer, 'matricesTexture');
-    this.updateTexture(this.colorsTexture, material, renderer, 'colorsTexture');
-    this.updateTexture(this.uniformsTexture, material, renderer, 'uniformsTexture');
-    this.updateTexture(this.boneTexture, material, renderer, 'boneTexture');
-  }
-
-  protected updateTexture(texture: SquareDataTexture, material: Material, renderer: WebGLRenderer, uniformName: string): void {
-    if (!texture) return;
-
-    const materialProperties = renderer.properties.get(material) as any;
-    const currentProgram = materialProperties.currentProgram;
-    const slot = currentProgram?.getUniforms().map[uniformName]?.cache[0] as number; // we can probably just use latest slot
-    const textureProperties = renderer.properties.get(texture) as any;
-
-    if (textureProperties.__webglTexture) {
-      texture.update(renderer, slot);
-    } else {
-      renderer.initTexture(texture);
-    }
-
-    // TODO manual full update?
+    this.matricesTexture.update(renderer, material, 'matricesTexture');
+    this.colorsTexture?.update(renderer, material, 'colorsTexture');
+    this.uniformsTexture?.update(renderer, material, 'uniformsTexture');
+    this.boneTexture?.update(renderer, material, 'boneTexture');
   }
 
   protected bindTextures(renderer: WebGLRenderer, material: Material): void {
