@@ -169,6 +169,8 @@ export class SquareDataTexture extends DataTexture {
   }
 
   public bindToProgram(renderer: WebGLRenderer, gl: WebGL2RenderingContext, programUniforms: unknown, materialUniforms: unknown, uniformName: string): void {
+    if (!materialUniforms[uniformName]) return;
+
     materialUniforms[uniformName].value = this;
 
     const slot = this.getSlot(programUniforms, uniformName);
