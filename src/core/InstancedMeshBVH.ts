@@ -224,7 +224,7 @@ export class InstancedMeshBVH {
 
     const levelsArray = this.LODsMap.get(levels);
     for (let i = 0; i < levels.length; i++) {
-      levelsArray[i] = levels[i].distance;
+      levelsArray[i] = levels[i].metricSquared;
     }
 
     const camera = this._cameraPos;
