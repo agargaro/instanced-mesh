@@ -192,6 +192,7 @@ export class InstancedMesh2<
   protected _currentMaterial: Material = null;
   protected _customProgramCacheKeyBase: () => string = null;
   protected _onBeforeCompileBase: (parameters: WebGLProgramParametersWithUniforms, renderer: WebGLRenderer) => void = null;
+  protected _definesBase: { [key: string]: any } = null;
   protected _freeIds: number[] = [];
   protected _createEntities: boolean;
 
@@ -435,7 +436,7 @@ export class InstancedMesh2<
   protected _onBeforeCompile = (shader: WebGLProgramParametersWithUniforms, renderer: WebGLRenderer): void => {
     if (this._onBeforeCompileBase) this._onBeforeCompileBase.call(this._currentMaterial, shader, renderer);
 
-    shader.defines ??= {};
+    shader.defines = { ...shader.defines }; // clone to avoid problem with standard material when used for scene.overrideMaterial
     shader.defines['USE_INSTANCING_INDIRECT'] = '';
 
     shader.uniforms.matricesTexture = { value: this.matricesTexture };
@@ -477,6 +478,7 @@ export class InstancedMesh2<
     this._currentMaterial = material;
     this._customProgramCacheKeyBase = material.customProgramCacheKey; // avoid .bind(material); to prevent memory leak
     this._onBeforeCompileBase = material.onBeforeCompile;
+    this._definesBase = material.defines;
     material.customProgramCacheKey = this._customProgramCacheKey;
     material.onBeforeCompile = this._onBeforeCompile;
     patchProperties(this, renderer, material);
@@ -485,10 +487,12 @@ export class InstancedMesh2<
   protected unpatchMaterial(renderer: WebGLRenderer, material: Material): void {
     this._currentMaterial = null;
     unpatchProperties(renderer);
+    material.defines = this._definesBase;
     material.onBeforeCompile = this._onBeforeCompileBase;
     material.customProgramCacheKey = this._customProgramCacheKeyBase;
     this._onBeforeCompileBase = null;
     this._customProgramCacheKeyBase = null;
+    this._definesBase = null;
   }
 
   /**
