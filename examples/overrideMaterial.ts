@@ -1,5 +1,5 @@
 import { Main, PerspectiveCameraAuto } from '@three.ez/main';
-import { AmbientLight, BoxGeometry, Mesh, MeshBasicMaterial, MeshLambertMaterial, Scene } from 'three';
+import { AmbientLight, BoxGeometry, Mesh, MeshBasicMaterial, MeshLambertMaterial, MeshStandardMaterial, Scene } from 'three';
 import { OrbitControls } from 'three/examples/jsm/Addons.js';
 import { InstancedMesh2 } from '../src/index.js';
 
@@ -54,7 +54,7 @@ boxes2.material.name = 'material2';
 const box = new Mesh(new BoxGeometry(), material).translateX(-7).translateY(1.5);
 const box2 = new Mesh(new BoxGeometry(), material2).translateX(-7);
 const box3 = new Mesh(new BoxGeometry(), material2).translateX(-7).translateY(-1.5);
-const overrideMaterial = new MeshBasicMaterial();
+const overrideMaterial = new MeshLambertMaterial();
 overrideMaterial.name = 'overrideMaterial';
 
 scene.add(box, boxes, box2, boxes2, boxes3, box3, new AmbientLight());
