@@ -54,7 +54,7 @@ boxes2.material.name = 'material2';
 const box = new Mesh(new BoxGeometry(), material).translateX(-7).translateY(1.5);
 const box2 = new Mesh(new BoxGeometry(), material2).translateX(-7);
 const box3 = new Mesh(new BoxGeometry(), material2).translateX(-7).translateY(-1.5);
-const overrideMaterial = new MeshLambertMaterial();
+const overrideMaterial = new MeshStandardMaterial();
 overrideMaterial.name = 'overrideMaterial';
 
 scene.add(box, boxes, box2, boxes2, boxes3, box3, new AmbientLight());
