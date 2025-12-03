@@ -342,10 +342,10 @@ InstancedMesh2.prototype.linearCullingLOD = function (LODrenderList: LODRenderLi
 
     if (_frustum.intersectsSphere(_sphere)) {
       if (sortObjects) {
-        if (!onFrustumEnter || onFrustumEnter(i, camera, cameraLOD)) continue;
-
-        const distance = _sphere.center.distanceToSquared(_cameraLODPos);
-        _renderList.push(distance, i);
+        if (!onFrustumEnter || onFrustumEnter(i, camera, cameraLOD)) {
+          const distance = _sphere.center.distanceToSquared(_cameraLODPos);
+          _renderList.push(distance, i);
+        }
       } else {
         const distance = _sphere.center.distanceToSquared(_cameraLODPos);
         const levelIndex = this.getObjectLODIndexForDistance(levels, distance);
