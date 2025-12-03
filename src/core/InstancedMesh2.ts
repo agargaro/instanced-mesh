@@ -883,3 +883,10 @@ const _sphere = new Sphere();
 const _tempMat4 = new Matrix4();
 const _tempCol = new Color();
 const _position = new Vector3();
+
+/** @internal */
+declare module 'three' {
+  interface Material {
+    defines: { [key: string]: any };
+  }
+}

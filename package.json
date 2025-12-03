@@ -51,20 +51,20 @@
     "publish-major": "npm version major --git-tag-version false && npm run build && cd dist && npm publish --access public"
   },
   "devDependencies": {
-    "@eslint/js": "^9.28.0",
-    "@stylistic/eslint-plugin": "^4.4.0",
-    "@three.ez/main": "^0.5.10",
-    "@types/three": "^0.177.0",
-    "eslint": "^9.28.0",
-    "meshoptimizer": "^0.23.0",
+    "@eslint/js": "^9.39.1",
+    "@stylistic/eslint-plugin": "^5.6.1",
+    "@three.ez/main": "^0.5.11",
+    "@types/three": "^0.181.0",
+    "eslint": "^9.39.1",
+    "meshoptimizer": "^0.25.0",
     "simplex-noise": "^4.0.3",
     "three-hex-tiling": "^0.1.5",
-    "typescript": "^5.8.3",
-    "typescript-eslint": "^8.33.1",
-    "vite": "^6.3.5",
-    "vite-plugin-externalize-deps": "^0.9.0",
-    "vite-plugin-glsl": "^1.4.2",
-    "vite-plugin-static-copy": "^3.0.0"
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.48.1",
+    "vite": "^7.2.6",
+    "vite-plugin-externalize-deps": "^0.10.0",
+    "vite-plugin-glsl": "^1.5.5",
+    "vite-plugin-static-copy": "^3.1.4"
   },
   "peerDependencies": {
     "three": ">=0.159.0"
