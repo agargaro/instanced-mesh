@@ -6,8 +6,8 @@ import Stats from 'stats-gl';
 
 // NOTE: WebGPU buffer approach has a UBO limit of ~1000 instances
 // For larger counts, texture-based instancing is needed (not yet implemented)
-const count = 1000;
-const terrainSize = 100;
+const count = 10;
+const terrainSize = 10;
 
 async function init(): Promise<void> {
   // Create WebGPU renderer
@@ -52,17 +52,25 @@ async function init(): Promise<void> {
     new MeshNormalNodeMaterial()
   ];
 
-  const instancedMesh = new InstancedMesh2(new BoxGeometry(), materials, { capacity: count, renderer });
+  const instancedMesh = new InstancedMesh2(new BoxGeometry(3,3,3), materials, { capacity: count, renderer });
   instancedMesh.castShadow = true;
 
   // Add LOD levels with NodeMaterials
   instancedMesh.addLOD(new SphereGeometry(1, 8, 4), new MeshPhongNodeMaterial({ color: 0x00e6e6 }), 100);
-  instancedMesh.addShadowLOD(new BoxGeometry(2, 2, 2));
-  instancedMesh.addShadowLOD(new TorusKnotGeometry(0.8, 0.2, 32, 8), 80);
-  instancedMesh.addShadowLOD(new TorusGeometry(0.8, 0.2, 32, 8), 110);
+  // instancedMesh.addShadowLOD(new BoxGeometry(2, 2, 2));
+  // instancedMesh.addShadowLOD(new TorusKnotGeometry(0.8, 0.2, 32, 8), 80);
+  // instancedMesh.addShadowLOD(new TorusGeometry(0.8, 0.2, 32, 8), 110);
 
   instancedMesh.addInstances(count, (obj, index) => {
-    obj.position.setX(Math.random() * terrainSize - terrainSize / 2).setZ(Math.random() * terrainSize - terrainSize / 2);
+    // obj.position.setX(Math.random() * terrainSize - terrainSize / 2).setZ(Math.random() * terrainSize - terrainSize / 2);
+
+    // Deterministic placement: simple XY grid, spread evenly
+    const gridSize = Math.ceil(Math.sqrt(count));
+    const spacing = terrainSize / gridSize;
+    const x = (index % gridSize) * spacing - terrainSize / 2 + spacing / 2;
+    const z = Math.floor(index / gridSize) * spacing - terrainSize / 2 + spacing / 2;
+    obj.position.set(x, 0, z);
+
   });
 
   instancedMesh.computeBVH();
@@ -90,7 +98,7 @@ async function init(): Promise<void> {
   controls.maxDistance = 200;
   controls.target.set(0, 0, 0);
   controls.update();
-  controls.autoRotate = true;
+  // controls.autoRotate = true;
 
   // Handle window resize
   window.addEventListener('resize', () => {

@@ -6,7 +6,7 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
   workers: process.env.CI ? 1 : undefined,
-  reporter: 'html',
+  reporter: [['html', { open: 'never' }]],
   use: {
     baseURL: 'http://localhost:5173',
     trace: 'on-first-retry',
@@ -25,6 +25,9 @@ export default defineConfig({
             '--ignore-gpu-blocklist',
             // Use new headless mode which has better GPU support
             '--headless=new',
+            // Enable GPU-related logging to capture WebGPU validation errors
+            '--enable-logging=stderr',
+            '--vmodule=*/webgpu/*=1',
           ],
         },
       },

@@ -12,11 +12,11 @@
  * ```
  */
 
-// Import WebGPU-specific implementations first (order matters for prototype patching)
-import './core/InstancedMesh2.webgpu.js'; // WebGPU prototype extensions
-
-// Re-export everything from common (renderer-agnostic code)
+// Re-export everything from common FIRST (defines prototype methods like addLevel)
 export * from './index.common.js';
+
+// Import WebGPU-specific implementations AFTER common (overrides prototype methods)
+import './core/InstancedMesh2.webgpu.js'; // WebGPU prototype extensions
 
 // Export TSL nodes for advanced usage
 export * from './shaders/tsl/nodes.js';
