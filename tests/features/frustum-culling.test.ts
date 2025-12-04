@@ -14,7 +14,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { PerspectiveCamera } from 'three';
 import { createTestInstancedMesh } from '../setup';
-import { InstancedMesh2 } from '../../src/core/InstancedMesh2.common';
+import { InstancedMesh2 } from '../../src/core/InstancedMesh2';
 
 describe('Frustum Culling', () => {
   let mesh: InstancedMesh2;

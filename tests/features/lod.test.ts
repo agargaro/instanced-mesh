@@ -14,7 +14,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { BoxGeometry, MeshBasicMaterial, SphereGeometry } from 'three';
 import { createTestInstancedMesh } from '../setup';
-import { InstancedMesh2 } from '../../src/core/InstancedMesh2.common';
+import { InstancedMesh2 } from '../../src/core/InstancedMesh2';
 
 describe('Level of Detail (LOD)', () => {
   let mesh: InstancedMesh2;
@@ -39,7 +39,7 @@ describe('Level of Detail (LOD)', () => {
     });
 
     it('should set first LOD with default values', () => {
-      mesh.setFirstLODDistance();
+      mesh.setFirstLODDistance(0);
 
       const firstLevel = mesh.LODinfo.render.levels[0];
       expect(firstLevel.distance).toBe(0);
@@ -48,11 +48,12 @@ describe('Level of Detail (LOD)', () => {
     });
 
     it('should set first LOD with custom distance', () => {
-      mesh.setFirstLODDistance(100, 0.1);
+      mesh.setFirstLODDistance(100);
 
       const firstLevel = mesh.LODinfo.render.levels[0];
       expect(firstLevel.distance).toBe(100);
-      expect(firstLevel.hysteresis).toBe(0.1);
+      // Note: hysteresis is always 0 at first level, as per implementation
+      expect(firstLevel.hysteresis).toBe(0);
     });
 
     it('should be chainable', () => {

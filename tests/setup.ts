@@ -6,7 +6,7 @@
  */
 
 import { BoxGeometry, ColorManagement, MeshBasicMaterial, WebGLRenderer } from 'three';
-import { InstancedMesh2 } from '../src/core/InstancedMesh2.common';
+import { InstancedMesh2 } from '../src/core/InstancedMesh2';
 import { SquareDataTexture } from '../src/core/utils/SquareDataTexture';
 
 // Import feature modules to ensure prototype extensions are applied

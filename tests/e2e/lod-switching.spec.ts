@@ -26,7 +26,6 @@ test.describe('LOD Switching E2E', () => {
         renderer: window.renderer
       });
 
-      mesh.initMatricesTexture();
       mesh.addLOD(midGeometry, material, 50);
       mesh.addLOD(lowGeometry, material, 100);
 
@@ -60,7 +59,6 @@ test.describe('LOD Switching E2E', () => {
         renderer: window.renderer
       });
 
-      mesh.initMatricesTexture();
       mesh.addLOD(lowGeometry, material, 50);
 
       // Create instances at known distances
@@ -110,7 +108,6 @@ test.describe('LOD Switching E2E', () => {
         renderer: window.renderer
       });
 
-      mesh.initMatricesTexture();
       mesh.addLOD(lowGeometry, material, 30);
 
       // All instances at origin
@@ -168,7 +165,6 @@ test.describe('LOD Switching E2E', () => {
         renderer: window.renderer
       });
 
-      mesh.initMatricesTexture();
       mesh.addShadowLOD(shadowGeometry, 0);
       
       window.testMesh = mesh;
@@ -208,7 +204,6 @@ test.describe('Deterministic LOD Assignment', () => {
         renderer: window.renderer
       });
       
-      mesh.initMatricesTexture();
       mesh.addLOD(lowGeometry, material, 50); // LOD 1 at 50 units distance
       
       // Position camera at origin looking at -Z with wide FOV
@@ -269,7 +264,6 @@ test.describe('Deterministic LOD Assignment', () => {
         renderer: window.renderer
       });
       
-      mesh.initMatricesTexture();
       mesh.addLOD(lowGeometry, material, 50); // LOD 1 at 50 units
       
       // All 5 instances at origin
@@ -327,7 +321,6 @@ test.describe('Deterministic LOD Assignment', () => {
         renderer: window.renderer
       });
       
-      mesh.initMatricesTexture();
       mesh.addLOD(lowGeometry, material, 50); // Boundary at 50 units
       
       // Camera at origin
@@ -384,7 +377,6 @@ test.describe('Deterministic LOD Assignment', () => {
         renderer: window.renderer
       });
       
-      mesh.initMatricesTexture();
       mesh.addLOD(midGeometry, material, 30);  // LOD 1 at 30 units
       mesh.addLOD(lowGeometry, material, 60);  // LOD 2 at 60 units
       

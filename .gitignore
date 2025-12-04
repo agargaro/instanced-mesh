@@ -4,3 +4,4 @@ dist
 # Tests
 .last-run.json
 playwright-report/
+test-results/

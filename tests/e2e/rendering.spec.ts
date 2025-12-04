@@ -86,9 +86,8 @@ test.describe('Rendering E2E', () => {
     const result = await page.evaluate(() => {
       const mesh = window.createTestMesh({ count: 5, spread: 10 });
 
-      // Verify colorsTexture exists after mesh creation
-      const hasTexture = mesh.colorsTexture !== null;
-      const textureHasData = hasTexture && mesh.colorsTexture._data.length > 0;
+      // colorsTexture is lazily initialized - should be null before setting any colors
+      const hasTextureBeforeSet = mesh.colorsTexture !== null;
 
       // Set different colors using Color objects (should not throw)
       let setColorSuccess = false;
@@ -102,6 +101,10 @@ test.describe('Rendering E2E', () => {
         setColorSuccess = false;
       }
 
+      // After setting colors, colorsTexture should exist
+      const hasTextureAfterSet = mesh.colorsTexture !== null;
+      const textureHasData = hasTextureAfterSet && mesh.colorsTexture._data.length > 0;
+
       // Verify getColorAt doesn't throw
       let getColorSuccess = false;
       try {
@@ -114,14 +117,17 @@ test.describe('Rendering E2E', () => {
       }
 
       return {
-        hasTexture,
+        hasTextureBeforeSet,
+        hasTextureAfterSet,
         textureHasData,
         setColorSuccess,
         getColorSuccess
       };
     });
 
-    expect(result.hasTexture).toBe(true);
+    // colorsTexture is lazily initialized - only created when setColorAt is called
+    expect(result.hasTextureBeforeSet).toBe(false);
+    expect(result.hasTextureAfterSet).toBe(true);
     expect(result.textureHasData).toBe(true);
     expect(result.setColorSuccess).toBe(true);
     expect(result.getColorSuccess).toBe(true);
@@ -162,7 +168,6 @@ test.describe('Rendering E2E', () => {
         renderer: window.renderer
       });
 
-      mesh.initMatricesTexture();
       window.scene.add(mesh);
       window.testMesh = mesh;
 
@@ -219,11 +224,18 @@ test.describe('Rendering Pipeline Verification', () => {
       // Force a render
       window.renderer.render(window.scene, window.camera);
       
-      // Verify the texture exists and has data for the shader
+      // Verify the matricesTexture exists and has data for the shader
       const hasMatricesTexture = mesh.matricesTexture !== null;
       const matricesTextureHasData = hasMatricesTexture && mesh.matricesTexture._data.length > 0;
-      const hasColorsTexture = mesh.colorsTexture !== null;
-      const colorsTextureHasData = hasColorsTexture && mesh.colorsTexture._data.length > 0;
+      
+      // colorsTexture is lazily initialized - only exists after setColorAt is called
+      // So we don't expect it to exist without setting colors
+      const hasColorsTextureBeforeSet = mesh.colorsTexture !== null;
+      
+      // Set a color to initialize the colorsTexture
+      mesh.setColorAt(0, 0xff0000);
+      const hasColorsTextureAfterSet = mesh.colorsTexture !== null;
+      const colorsTextureHasData = hasColorsTextureAfterSet && mesh.colorsTexture._data.length > 0;
       
       // Verify the texture has the correct structure for shader binding
       const textureWidth = mesh.matricesTexture?.image?.width ?? 0;
@@ -232,7 +244,8 @@ test.describe('Rendering Pipeline Verification', () => {
       return { 
         hasMatricesTexture, 
         matricesTextureHasData,
-        hasColorsTexture,
+        hasColorsTextureBeforeSet,
+        hasColorsTextureAfterSet,
         colorsTextureHasData,
         textureWidth,
         textureHeight,
@@ -242,7 +255,10 @@ test.describe('Rendering Pipeline Verification', () => {
     
     expect(result.hasMatricesTexture).toBe(true);
     expect(result.matricesTextureHasData).toBe(true);
-    expect(result.hasColorsTexture).toBe(true);
+    // colorsTexture is lazily initialized
+    expect(result.hasColorsTextureBeforeSet).toBe(false);
+    expect(result.hasColorsTextureAfterSet).toBe(true);
+    expect(result.colorsTextureHasData).toBe(true);
     expect(result.hasValidDimensions).toBe(true);
   });
 
@@ -281,7 +297,6 @@ test.describe('Rendering Pipeline Verification', () => {
         renderer: window.renderer
       });
       
-      mesh.initMatricesTexture();
       
       // Add instances with known positions
       mesh.addInstances(3, (obj, index) => {
@@ -330,7 +345,6 @@ test.describe('Rendering Pipeline Verification', () => {
         renderer: window.renderer
       });
       
-      mesh.initMatricesTexture();
       mesh.addLOD(lowGeo, material, 50);
       
       mesh.addInstances(5, (obj, index) => {
@@ -409,7 +423,6 @@ test.describe('Rendering Pipeline Verification', () => {
         renderer: window.renderer
       });
       
-      mesh.initMatricesTexture();
       
       // Add instance with initial position
       mesh.addInstances(1, (obj, index) => {
@@ -454,7 +467,6 @@ test.describe('Rendering Pipeline Verification', () => {
         renderer: window.renderer
       });
       
-      mesh.initMatricesTexture();
       
       // Camera at z=50 looking at origin
       window.camera.position.set(0, 0, 50);
@@ -578,7 +590,6 @@ test.describe('Rendering Output Verification', () => {
         capacity: 10,
         renderer: window.renderer
       });
-      mesh.initMatricesTexture();
       
       // All instances BEHIND camera (positive Z)
       mesh.addInstances(10, (obj, i) => {
@@ -625,7 +636,6 @@ test.describe('Rendering Output Verification', () => {
         capacity: 10,
         renderer: window.renderer
       });
-      mesh.initMatricesTexture();
       
       // All instances IN FRONT of camera
       mesh.addInstances(10, (obj, i) => {

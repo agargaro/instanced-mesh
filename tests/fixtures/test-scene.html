@@ -26,24 +26,10 @@
     <div>FPS: <span id="fps">0</span></div>
   </div>
   
-  <script type="importmap">
-  {
-    "imports": {
-      "three": "/node_modules/three/build/three.module.js",
-      "three/addons/": "/node_modules/three/examples/jsm/",
-      "bvh.js": "/node_modules/bvh.js/build/index.js",
-      "@three.ez/instanced-mesh": "/src/index.ts"
-    }
-  }
-  </script>
-  
   <script type="module">
+    // Let Vite handle all module resolution - no import map needed
     import * as THREE from 'three';
     import { InstancedMesh2 } from '@three.ez/instanced-mesh';
-    import { extendInstancedMesh2PrototypeWebGL } from '/src/core/InstancedMesh2.webgl.ts';
-
-    // Initialize WebGL prototype methods
-    extendInstancedMesh2PrototypeWebGL();
 
     // Make available globally for Playwright tests
     window.THREE = THREE;
@@ -86,10 +72,6 @@
         createEntities,
         renderer
       });
-
-      // Initialize WebGL textures
-      mesh.initMatricesTexture();
-      mesh.initColorsTexture();
 
       mesh.addInstances(count, (obj, index) => {
         obj.position.set(

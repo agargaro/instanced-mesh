@@ -12,7 +12,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { Box3, Matrix4, Vector3 } from 'three';
 import { createTestInstancedMesh } from '../setup';
-import { InstancedMesh2 } from '../../src/core/InstancedMesh2.common';
+import { InstancedMesh2 } from '../../src/core/InstancedMesh2';
 
 describe('BVH Spatial Indexing', () => {
   let mesh: InstancedMesh2;

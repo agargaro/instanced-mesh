@@ -11,7 +11,7 @@
 
 import { describe, it, expect, beforeEach } from 'vitest';
 import { createTestInstancedMesh, createTestInstancedMeshWithEntities } from '../setup';
-import { InstancedMesh2 } from '../../src/core/InstancedMesh2.common';
+import { InstancedMesh2 } from '../../src/core/InstancedMesh2';
 
 describe('Dynamic Capacity', () => {
   let mesh: InstancedMesh2;

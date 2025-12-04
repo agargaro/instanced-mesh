@@ -56,11 +56,15 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",
+    "@playwright/test": "^1.57.0",
     "@stylistic/eslint-plugin": "^5.6.1",
     "@three.ez/main": "^0.5.11",
     "@types/three": "^0.181.0",
+    "@vitest/coverage-v8": "^4.0.15",
     "eslint": "^9.39.1",
+    "happy-dom": "^20.0.11",
     "meshoptimizer": "^0.25.0",
+    "playwright": "^1.57.0",
     "simplex-noise": "^4.0.3",
     "three-hex-tiling": "^0.1.5",
     "typescript": "^5.9.3",
@@ -68,7 +72,8 @@
     "vite": "^7.2.6",
     "vite-plugin-externalize-deps": "^0.10.0",
     "vite-plugin-glsl": "^1.5.5",
-    "vite-plugin-static-copy": "^3.1.4"
+    "vite-plugin-static-copy": "^3.1.4",
+    "vitest": "^4.0.15"
   },
   "peerDependencies": {
     "three": ">=0.159.0"

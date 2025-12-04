@@ -48,19 +48,23 @@ test.describe('Frustum Culling E2E', () => {
   });
 
   test('should respect perObjectFrustumCulled setting', async ({ page }) => {
-    await page.evaluate(() => {
+    const result = await page.evaluate(() => {
       const mesh = window.createTestMesh({ count: 50, spread: 1000 });
+      
+      // Disable auto update to prevent render loop from re-running culling
+      mesh.autoUpdate = false;
       mesh.perObjectFrustumCulled = false;
       mesh.performFrustumCulling(window.camera);
+      
+      // Get values immediately after performFrustumCulling
+      return {
+        renderCount: mesh.count,
+        totalCount: mesh.instancesCount
+      };
     });
 
-    await page.waitForTimeout(100);
-
-    // With culling disabled, all instances should be rendered
-    const renderCount = await page.evaluate(() => window.testMesh.count);
-    const totalCount = await page.evaluate(() => window.testMesh.instancesCount);
-    
-    expect(renderCount).toBe(totalCount);
+    // With perObjectFrustumCulled disabled, all instances should be rendered
+    expect(result.renderCount).toBe(result.totalCount);
   });
 
   test('should update culling when camera moves', async ({ page }) => {
@@ -155,7 +159,6 @@ test.describe('Deterministic Frustum Culling', () => {
         renderer: window.renderer
       });
       
-      mesh.initMatricesTexture();
       
       // Camera at (0, 0, 50) looking at origin
       window.camera.position.set(0, 0, 50);
@@ -216,7 +219,6 @@ test.describe('Deterministic Frustum Culling', () => {
         renderer: window.renderer
       });
       
-      mesh.initMatricesTexture();
       
       // Camera at origin looking at -Z with specific near/far
       window.camera.position.set(0, 0, 0);
@@ -274,7 +276,6 @@ test.describe('Deterministic Frustum Culling', () => {
         renderer: window.renderer
       });
       
-      mesh.initMatricesTexture();
       
       // Camera with known FOV to calculate exact frustum boundaries
       window.camera.position.set(0, 0, 0);
@@ -339,7 +340,6 @@ test.describe('Deterministic Frustum Culling', () => {
         renderer: window.renderer
       });
       
-      mesh.initMatricesTexture();
       
       // Camera setup
       window.camera.position.set(0, 0, 50);
@@ -403,7 +403,6 @@ test.describe('Deterministic Frustum Culling', () => {
         renderer: window.renderer
       });
       
-      mesh.initMatricesTexture();
       
       // Camera looking at origin
       window.camera.position.set(0, 0, 50);

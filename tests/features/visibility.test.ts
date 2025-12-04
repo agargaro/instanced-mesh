@@ -13,7 +13,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { Color } from 'three';
 import { createTestInstancedMesh, createTestInstancedMeshWithEntities } from '../setup';
-import { InstancedMesh2 } from '../../src/core/InstancedMesh2.common';
+import { InstancedMesh2 } from '../../src/core/InstancedMesh2';
 
 describe('Per-instance Visibility', () => {
   let mesh: InstancedMesh2;
