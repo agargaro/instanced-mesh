@@ -1,2 +1,8 @@
 node_modules
 dist
+
+# Tests
+.last-run.json
+test-results/
+playwright-report/
+coverage/

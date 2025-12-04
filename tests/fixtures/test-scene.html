@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>InstancedMesh2 Test Scene</title>
+  <style>
+    body { margin: 0; overflow: hidden; }
+    canvas { display: block; }
+    #info {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      color: white;
+      font-family: monospace;
+      background: rgba(0,0,0,0.7);
+      padding: 10px;
+      z-index: 100;
+    }
+    #error {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: red;
+      font-family: monospace;
+      background: rgba(0,0,0,0.9);
+      padding: 20px;
+      z-index: 200;
+      max-width: 80%;
+      display: none;
+      white-space: pre-wrap;
+    }
+  </style>
+</head>
+<body>
+  <div id="info">
+    <div>Renderer: <span id="renderer-type">webgl</span></div>
+    <div>Instances: <span id="instance-count">0</span></div>
+    <div>Rendered: <span id="render-count">0</span></div>
+    <div>FPS: <span id="fps">0</span></div>
+  </div>
+  <div id="error"></div>
+  
+  <script type="module">
+    // Import Three.js and InstancedMesh2 with WebGL support
+    // Use relative path from tests/fixtures/ to src/
+    import * as THREE from 'three';
+    import { InstancedMesh2 } from '../../src/index.webgl.ts';
+
+    // Store renderer type globally
+    window.rendererType = 'webgl';
+    
+    // Make available globally for Playwright tests
+    window.THREE = THREE;
+    window.InstancedMesh2 = InstancedMesh2;
+    
+    // Scene setup
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x222222);
+    
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.set(0, 50, 100);
+    camera.lookAt(0, 0, 0);
+    
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.body.appendChild(renderer.domElement);
+    
+    // Make renderer available for tests
+    window.renderer = renderer;
+    window.scene = scene;
+    window.camera = camera;
+    
+    // Test mesh - will be created by test scripts
+    window.testMesh = null;
+    
+    // Create default test mesh
+    function createTestMesh(options = {}) {
+      const {
+        count = 100,
+        spread = 50,
+        capacity = 1000,
+        createEntities = false
+      } = options;
+      
+      const geometry = new THREE.BoxGeometry(1, 1, 1);
+      const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+      
+      const mesh = new InstancedMesh2(geometry, material, {
+        capacity,
+        createEntities,
+        renderer
+      });
+
+      mesh.addInstances(count, (obj, index) => {
+        // NOSONAR – test-only randomness is fine here
+        obj.position.set(
+          (Math.random() - 0.5) * spread,
+          (Math.random() - 0.5) * spread,
+          (Math.random() - 0.5) * spread
+        );
+      });
+      
+      scene.add(mesh);
+      window.testMesh = mesh;
+      
+      return mesh;
+    }
+    
+    window.createTestMesh = createTestMesh;
+    
+    // Animation loop
+    let lastTime = performance.now();
+    let frameCount = 0;
+    
+    function animate() {
+      requestAnimationFrame(animate);
+      
+      // Update FPS counter
+      frameCount++;
+      const now = performance.now();
+      if (now - lastTime >= 1000) {
+        document.getElementById('fps').textContent = frameCount;
+        frameCount = 0;
+        lastTime = now;
+      }
+      
+      // Update info display
+      if (window.testMesh) {
+        document.getElementById('instance-count').textContent = window.testMesh.instancesCount;
+        document.getElementById('render-count').textContent = window.testMesh.count;
+      }
+      
+      renderer.render(scene, camera);
+    }
+    
+    animate();
+    
+    // Handle resize
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+    
+    // Signal that the scene is ready
+    window.sceneReady = true;
+    window.dispatchEvent(new CustomEvent('scene-ready'));
+    console.log('Scene ready!');
+  </script>
+</body>
+</html>
