@@ -30,6 +30,7 @@ test.describe('LOD Switching E2E', () => {
       mesh.addLOD(lowGeometry, material, 100);
 
       mesh.addInstances(50, (obj, index) => {
+        // NOSONAR – test-only randomness is fine here
         obj.position.set(
           (Math.random() - 0.5) * 100,
           (Math.random() - 0.5) * 100,

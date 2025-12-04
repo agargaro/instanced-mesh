@@ -74,6 +74,7 @@
       });
 
       mesh.addInstances(count, (obj, index) => {
+        // NOSONAR – test-only randomness is fine here
         obj.position.set(
           (Math.random() - 0.5) * spread,
           (Math.random() - 0.5) * spread,
