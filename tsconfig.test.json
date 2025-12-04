@@ -1,0 +1,25 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "strict": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "noImplicitAny": false,
+    "strictNullChecks": false,
+    "types": [
+      "vitest/globals",
+      "vite-plugin-glsl/ext"
+    ],
+    "baseUrl": ".",
+    "paths": {
+      "@three.ez/instanced-mesh": ["./src/index.ts"]
+    }
+  },
+  "include": [
+    "tests/**/*.ts",
+    "src/**/*.ts"
+  ]
+}
+
