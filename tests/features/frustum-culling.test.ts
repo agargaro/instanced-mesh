@@ -9,19 +9,21 @@
  * 
  * Note: Full frustum intersection tests are in e2e/frustum-culling.spec.ts
  * since they require a real camera and WebGL context.
+ * 
+ * Tests run against both WebGL and WebGPU renderers.
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { PerspectiveCamera } from 'three';
-import { createTestInstancedMesh } from '../setup';
-import { InstancedMesh2 } from '../../src/core/InstancedMesh2';
+import { describeForEachRenderer } from '../setup.js';
+import { InstancedMesh2 } from '../../src/core/InstancedMesh2.js';
 
-describe('Frustum Culling', () => {
+describeForEachRenderer('Frustum Culling', (rendererType, createMesh) => {
   let mesh: InstancedMesh2;
   let camera: PerspectiveCamera;
 
   beforeEach(() => {
-    mesh = createTestInstancedMesh({ capacity: 100 });
+    mesh = createMesh({ capacity: 100 });
     camera = new PerspectiveCamera(75, 1, 0.1, 1000);
     camera.position.set(0, 0, 10);
     camera.lookAt(0, 0, 0);
@@ -228,4 +230,3 @@ describe('Frustum Culling', () => {
     });
   });
 });
-

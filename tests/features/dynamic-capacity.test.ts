@@ -7,17 +7,19 @@
  * - Removing instances by ID
  * - Clearing all instances
  * - Reusing freed instance slots
+ * 
+ * Tests run against both WebGL and WebGPU renderers.
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
-import { createTestInstancedMesh, createTestInstancedMeshWithEntities } from '../setup';
-import { InstancedMesh2 } from '../../src/core/InstancedMesh2';
+import { describeForEachRenderer, createTestInstancedMeshWithEntities, RendererType } from '../setup.js';
+import { InstancedMesh2 } from '../../src/core/InstancedMesh2.js';
 
-describe('Dynamic Capacity', () => {
+describeForEachRenderer('Dynamic Capacity', (rendererType, createMesh) => {
   let mesh: InstancedMesh2;
 
   beforeEach(() => {
-    mesh = createTestInstancedMesh({ capacity: 10 });
+    mesh = createMesh({ capacity: 10 });
   });
 
   describe('addInstances', () => {
@@ -220,7 +222,7 @@ describe('Dynamic Capacity', () => {
     let meshWithEntities: InstancedMesh2;
 
     beforeEach(() => {
-      meshWithEntities = createTestInstancedMeshWithEntities(10);
+      meshWithEntities = createTestInstancedMeshWithEntities(10, rendererType);
     });
 
     it('should create entity objects when adding instances', () => {
@@ -257,4 +259,3 @@ describe('Dynamic Capacity', () => {
     });
   });
 });
-

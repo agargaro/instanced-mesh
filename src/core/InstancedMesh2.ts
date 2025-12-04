@@ -1,11 +1,9 @@
-import { AttachedBindMode, BindMode, Box3, BufferAttribute, BufferGeometry, Camera, Color, ColorManagement, ColorRepresentation, DataTexture, DetachedBindMode, InstancedBufferAttribute, Material, Matrix4, Mesh, Object3D, Object3DEventMap, Scene, Skeleton, Sphere, TypedArray, Vector3, WebGLProgramParametersWithUniforms, WebGLRenderer } from 'three';
+import { AttachedBindMode, BindMode, Box3, BufferAttribute, BufferGeometry, Camera, Color, ColorManagement, ColorRepresentation, DataTexture, DetachedBindMode, DynamicDrawUsage, InstancedBufferAttribute, Material, Matrix4, Mesh, Object3D, Object3DEventMap, Skeleton, Sphere, TypedArray, Vector3 } from 'three';
 import { CustomSortCallback, OnFrustumEnterCallback } from './feature/FrustumCulling.js';
 import { Entity } from './feature/Instances.js';
 import { LODInfo } from './feature/LOD.js';
 import { InstancedEntity } from './InstancedEntity.js';
 import { BVHParams, InstancedMeshBVH } from './InstancedMeshBVH.js';
-import { GLInstancedBufferAttribute } from './utils/GLInstancedBufferAttribute.js';
-import { patchProperties, unpatchProperties } from './utils/PropertiesOverride.js';
 import { SquareDataTexture } from './utils/SquareDataTexture.js';
 
 // TODO: Add check to not update partial texture if needsuupdate already true
@@ -41,18 +39,28 @@ export interface InstancedMesh2Params {
    */
   allowsEuler?: boolean;
   /**
-   * WebGL renderer instance.
+   * Renderer instance (WebGLRenderer or WebGPURenderer).
    * If not provided, buffers will be initialized during the first render, resulting in no instances being rendered initially.
    * @default null
    */
-  renderer?: WebGLRenderer;
+  renderer?: any;
 }
 
-interface RenderInfo {
+/** @internal */
+export interface RenderInfo {
   frame: number;
   camera: Camera | null;
   shadowCamera: Camera | null;
 }
+
+/**
+ * Type for instance index attribute - can be GLInstancedBufferAttribute (WebGL) or InstancedBufferAttribute (WebGPU)
+ */
+export type InstanceIndexAttribute = InstancedBufferAttribute & {
+  array: Uint32Array;
+  _needsUpdate?: boolean;
+  update?: (renderer: any, count: number) => void;
+};
 
 /**
  * Alternative `InstancedMesh` class to support additional features like frustum culling, fast raycasting, LOD and more.
@@ -87,7 +95,7 @@ export class InstancedMesh2<
   /**
    * Attribute storing indices of the instances to be rendered.
    */
-  public instanceIndex: GLInstancedBufferAttribute = null;
+  public instanceIndex: InstanceIndexAttribute = null;
   /**
    * Texture storing matrices for instances.
    */
@@ -176,7 +184,7 @@ export class InstancedMesh2<
    * Callback function called if an instance is inside the frustum.
    */
   public onFrustumEnter: OnFrustumEnterCallback = null;
-  /** @internal */ _renderer: WebGLRenderer = null;
+  /** @internal */ _renderer: any = null;
   /** @internal */ _instancesCount = 0;
   /** @internal */ _instancesArrayCount = 0;
   /** @internal */ _perObjectFrustumCulled = true;
@@ -189,10 +197,7 @@ export class InstancedMesh2<
   /** @internal */ _useOpacity = false;
   protected readonly _allowsEuler: boolean;
   protected readonly _tempInstance: InstancedEntity;
-  protected _currentMaterial: Material = null;
-  protected _customProgramCacheKeyBase: () => string = null;
-  protected _onBeforeCompileBase: (parameters: WebGLProgramParametersWithUniforms, renderer: WebGLRenderer) => void = null;
-  protected _definesBase: { [key: string]: any } = null;
+  /** @internal */ _currentMaterial: Material = null;
   protected _freeIds: number[] = [];
   protected _createEntities: boolean;
 
@@ -275,101 +280,20 @@ export class InstancedMesh2<
     this.initMatricesTexture();
   }
 
-  public override onBeforeShadow(renderer: WebGLRenderer, scene: Scene, camera: Camera, shadowCamera: Camera, geometry: BufferGeometry, depthMaterial: Material, group: any): void {
-    this.patchMaterial(renderer, depthMaterial);
-
-    this.updateTextures(renderer, depthMaterial);
-
-    const frame = renderer.info.render.frame;
-    if (this.instanceIndex && this.autoUpdate && !this.frustumCullingAlreadyPerformed(frame, camera, shadowCamera)) {
-      this.performFrustumCulling(shadowCamera, camera);
-    }
-
-    if (this.count === 0) return;
-
-    this.instanceIndex.update(this._renderer, this.count);
-    this.bindTextures(renderer, depthMaterial);
-  }
-
-  public override onBeforeRender(renderer: WebGLRenderer, scene: Scene, camera: Camera, geometry: BufferGeometry, material: Material, group: any): void {
-    this.patchMaterial(renderer, material);
-
-    this.updateTextures(renderer, material);
-
-    if (!this.instanceIndex) {
-      this._renderer = renderer;
-      return;
-    }
-
-    const frame = renderer.info.render.frame;
-    if (this.autoUpdate && !this.frustumCullingAlreadyPerformed(frame, camera, null)) {
-      this.performFrustumCulling(camera);
-    }
-
-    if (this.count === 0) return;
-
-    this.instanceIndex.update(this._renderer, this.count);
-    this.bindTextures(renderer, material);
-  }
-
-  public override onAfterShadow(renderer: WebGLRenderer, scene: Scene, camera: Camera, shadowCamera: Camera, geometry: BufferGeometry, depthMaterial: Material, group: any): void {
-    this.unpatchMaterial(renderer, depthMaterial);
-  }
-
-  public override onAfterRender(renderer: WebGLRenderer, scene: Scene, camera: Camera, geometry: BufferGeometry, material: Material, group: any): void {
-    this.unpatchMaterial(renderer, material);
-    if (this.instanceIndex || (group && !this.isLastGroup(group.materialIndex))) return;
-    this.initIndexAttribute();
-  }
-
-  protected updateTextures(renderer: WebGLRenderer, material: Material): void {
-    const materialProperties = renderer.properties.get(material) as any;
-
-    this.matricesTexture.update(renderer, materialProperties, 'matricesTexture');
-    this.colorsTexture?.update(renderer, materialProperties, 'colorsTexture');
-    this.uniformsTexture?.update(renderer, materialProperties, 'uniformsTexture');
-    this.boneTexture?.update(renderer, materialProperties, 'boneTexture');
-  }
-
-  protected bindTextures(renderer: WebGLRenderer, material: Material): void {
-    const materialProperties = renderer.properties.get(material) as any;
-    const materialUniforms = materialProperties.uniforms;
-    if (!materialUniforms) return;
-
-    const currentProgramProperties = materialProperties.currentProgram;
-    const currentProgram = currentProgramProperties?.program;
-    if (!currentProgram) return;
-
-    const gl = renderer.getContext() as WebGL2RenderingContext;
-    const programUniforms = currentProgramProperties.getUniforms().map;
-
-    const activeProgram = gl.getParameter(gl.CURRENT_PROGRAM);
-    renderer.state.useProgram(currentProgram); // set the program
-
-    this.matricesTexture.bindToProgram(renderer, gl, programUniforms, materialUniforms, 'matricesTexture');
-    this.colorsTexture?.bindToProgram(renderer, gl, programUniforms, materialUniforms, 'colorsTexture');
-    this.uniformsTexture?.bindToProgram(renderer, gl, programUniforms, materialUniforms, 'uniformsTexture');
-    this.boneTexture?.bindToProgram(renderer, gl, programUniforms, materialUniforms, 'boneTexture');
-
-    renderer.state.useProgram(activeProgram); // restore the old program to make three.js update uniforms correctly
-  }
-
-  protected isLastGroup(materialIndex: number): boolean {
-    const materials = this.material as Material[];
-    for (let i = materials.length - 1; i >= materialIndex; i--) {
-      if (materials[i].visible) {
-        return i === materialIndex;
-      }
-    }
-  }
-
-  protected initIndexAttribute(): void {
+  /**
+   * Initializes the index attribute for instance rendering.
+   * This method is overridden in renderer-specific implementations.
+   * @internal
+   */
+  public initIndexAttribute(): void {
+    // Base implementation - creates a simple InstancedBufferAttribute
+    // WebGL overrides this to use GLInstancedBufferAttribute
+    // WebGPU uses this base implementation or StorageInstancedBufferAttribute
     if (!this._renderer) {
       this.count = 0;
       return;
     }
 
-    const gl = this._renderer.getContext() as WebGL2RenderingContext;
     const capacity = this._capacity;
     const array = new Uint32Array(capacity);
 
@@ -377,7 +301,9 @@ export class InstancedMesh2<
       array[i] = i;
     }
 
-    this.instanceIndex = new GLInstancedBufferAttribute(gl, gl.UNSIGNED_INT, 1, 4, array);
+    const instanceIndex = new InstancedBufferAttribute(array, 1) as InstanceIndexAttribute;
+    instanceIndex.setUsage(DynamicDrawUsage);
+    this.instanceIndex = instanceIndex;
     this._geometry.setAttribute('instanceIndex', this.instanceIndex as unknown as BufferAttribute);
   }
 
@@ -387,13 +313,22 @@ export class InstancedMesh2<
     }
   }
 
+  /**
+   * Initializes the matrices texture for instance transforms.
+   * This method can be overridden in renderer-specific implementations.
+   */
   protected initMatricesTexture(): void {
     if (!this._parentLOD) {
       this.matricesTexture = new SquareDataTexture(Float32Array, 4, 4, this._capacity);
     }
   }
 
-  protected initColorsTexture(): void {
+  /**
+   * Initializes the colors texture for per-instance colors.
+   * This method can be overridden in renderer-specific implementations.
+   */
+  /** @internal */
+  public initColorsTexture(): void {
     if (!this._parentLOD) {
       this.colorsTexture = new SquareDataTexture(Float32Array, 4, 1, this._capacity);
       this.colorsTexture.colorSpace = ColorManagement.workingColorSpace;
@@ -414,85 +349,30 @@ export class InstancedMesh2<
   }
 
   protected patchGeometry(geometry: TGeometry): void {
-    const instanceIndex = geometry.getAttribute('instanceIndex') as unknown as GLInstancedBufferAttribute; // TODO fix d.ts
+    const instanceIndex = geometry.getAttribute('instanceIndex') as unknown as InstanceIndexAttribute;
 
     if (instanceIndex) {
       if (instanceIndex === this.instanceIndex) return;
 
       console.warn('The geometry has been cloned because it was already used.');
       geometry = geometry.clone();
-      geometry.deleteAttribute('instanceIndex'); // TODO rename it it ez_instancedIndex
+      geometry.deleteAttribute('instanceIndex');
     }
 
     if (this.instanceIndex) {
-      geometry.setAttribute('instanceIndex', this.instanceIndex as unknown as BufferAttribute); // TODO fix d.ts
+      geometry.setAttribute('instanceIndex', this.instanceIndex as unknown as BufferAttribute);
     }
   }
 
-  protected _customProgramCacheKey = (): string => {
-    return `ez_${!!this.colorsTexture}_${this._useOpacity}_${!!this.boneTexture}_${!!this.uniformsTexture}_${this._customProgramCacheKeyBase.call(this._currentMaterial)}`;
-  };
-
-  protected _onBeforeCompile = (shader: WebGLProgramParametersWithUniforms, renderer: WebGLRenderer): void => {
-    if (this._onBeforeCompileBase) this._onBeforeCompileBase.call(this._currentMaterial, shader, renderer);
-
-    shader.defines = { ...shader.defines }; // clone to avoid problem with standard material when used for scene.overrideMaterial
-    shader.defines['USE_INSTANCING_INDIRECT'] = '';
-
-    shader.uniforms.matricesTexture = { value: this.matricesTexture };
-
-    if (this.uniformsTexture) {
-      shader.uniforms.uniformsTexture = { value: this.uniformsTexture };
-      const { vertex, fragment } = this.uniformsTexture.getUniformsGLSL('uniformsTexture', 'instanceIndex', 'uint');
-      shader.vertexShader = shader.vertexShader.replace('void main() {', vertex);
-      shader.fragmentShader = shader.fragmentShader.replace('void main() {', fragment);
-    }
-
-    if (this.colorsTexture && shader.fragmentShader.includes('#include <color_pars_fragment>')) {
-      shader.defines['USE_INSTANCING_COLOR_INDIRECT'] = '';
-      shader.uniforms.colorsTexture = { value: this.colorsTexture };
-      shader.vertexShader = shader.vertexShader.replace('<color_vertex>', '<instanced_color_vertex>');
-
-      if (shader.vertexColors) {
-        shader.defines['USE_VERTEX_COLOR'] = '';
-      }
-
-      if (this._useOpacity) {
-        shader.defines['USE_COLOR_ALPHA'] = '';
-      } else {
-        shader.defines['USE_COLOR'] = '';
+  /** @internal */
+  public isLastGroup(materialIndex: number): boolean {
+    const materials = this.material as Material[];
+    for (let i = materials.length - 1; i >= materialIndex; i--) {
+      if (materials[i].visible) {
+        return i === materialIndex;
       }
     }
-
-    if (this.boneTexture) {
-      shader.defines['USE_SKINNING'] = '';
-      shader.defines['USE_INSTANCING_SKINNING'] = '';
-      shader.uniforms.bindMatrix = { value: this.bindMatrix };
-      shader.uniforms.bindMatrixInverse = { value: this.bindMatrixInverse };
-      shader.uniforms.bonesPerInstance = { value: this.skeleton.bones.length };
-      shader.uniforms.boneTexture = { value: this.boneTexture };
-    }
-  };
-
-  protected patchMaterial(renderer: WebGLRenderer, material: Material): void {
-    this._currentMaterial = material;
-    this._customProgramCacheKeyBase = material.customProgramCacheKey; // avoid .bind(material); to prevent memory leak
-    this._onBeforeCompileBase = material.onBeforeCompile;
-    this._definesBase = material.defines;
-    material.customProgramCacheKey = this._customProgramCacheKey;
-    material.onBeforeCompile = this._onBeforeCompile;
-    patchProperties(this, renderer, material);
-  }
-
-  protected unpatchMaterial(renderer: WebGLRenderer, material: Material): void {
-    this._currentMaterial = null;
-    unpatchProperties(renderer);
-    material.defines = this._definesBase;
-    material.onBeforeCompile = this._onBeforeCompileBase;
-    material.customProgramCacheKey = this._customProgramCacheKeyBase;
-    this._onBeforeCompileBase = null;
-    this._customProgramCacheKeyBase = null;
-    this._definesBase = null;
+    return false;
   }
 
   /**
@@ -800,7 +680,7 @@ export class InstancedMesh2<
     }
   }
 
-  public override clone(recursive?: boolean): this { // wrong three d.ts
+  public override clone(recursive?: boolean): this {
     const params: InstancedMesh2Params = {
       capacity: this._capacity,
       renderer: this._renderer,
@@ -877,7 +757,7 @@ export class InstancedMesh2<
   }
 }
 
-const _defaultCapacity = 1000;
+export const _defaultCapacity = 1000;
 const _box3 = new Box3();
 const _sphere = new Sphere();
 const _tempMat4 = new Matrix4();

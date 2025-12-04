@@ -9,21 +9,23 @@
  * - LOD level sorting and distance thresholds
  *
  * Note: Actual distance-based rendering tests are in e2e/lod-switching.spec.ts
+ * 
+ * Tests run against both WebGL and WebGPU renderers.
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
 import { BoxGeometry, MeshBasicMaterial, SphereGeometry } from 'three';
-import { createTestInstancedMesh } from '../setup';
-import { InstancedMesh2 } from '../../src/core/InstancedMesh2';
+import { describeForEachRenderer } from '../setup.js';
+import { InstancedMesh2 } from '../../src/core/InstancedMesh2.js';
 
-describe('Level of Detail (LOD)', () => {
+describeForEachRenderer('Level of Detail (LOD)', (rendererType, createMesh) => {
   let mesh: InstancedMesh2;
   let lowPolyGeometry: BoxGeometry;
   let midPolyGeometry: SphereGeometry;
   let material: MeshBasicMaterial;
 
   beforeEach(() => {
-    mesh = createTestInstancedMesh({ capacity: 100 });
+    mesh = createMesh({ capacity: 100 });
     lowPolyGeometry = new BoxGeometry(1, 1, 1, 1, 1, 1);
     midPolyGeometry = new SphereGeometry(0.5, 8, 8);
     material = new MeshBasicMaterial({ color: 0x00ff00 });
@@ -31,7 +33,7 @@ describe('Level of Detail (LOD)', () => {
 
   describe('setFirstLODDistance', () => {
     it('should initialize LODinfo structure', () => {
-      mesh.setFirstLODDistance(0, 0);
+      mesh.setFirstLODDistance(0);
 
       expect(mesh.LODinfo).not.toBeNull();
       expect(mesh.LODinfo.render).not.toBeNull();
@@ -57,12 +59,12 @@ describe('Level of Detail (LOD)', () => {
     });
 
     it('should be chainable', () => {
-      const result = mesh.setFirstLODDistance();
+      const result = mesh.setFirstLODDistance(0);
       expect(result).toBe(mesh);
     });
 
     it('should include mesh in objects list', () => {
-      mesh.setFirstLODDistance();
+      mesh.setFirstLODDistance(0);
 
       expect(mesh.LODinfo.objects).toContain(mesh);
     });
@@ -201,7 +203,7 @@ describe('Level of Detail (LOD)', () => {
 
     it('should account for hysteresis in distance calculation', () => {
       // Create new mesh with hysteresis
-      const meshWithHysteresis = createTestInstancedMesh({ capacity: 100 });
+      const meshWithHysteresis = createMesh({ capacity: 100 });
       meshWithHysteresis.setFirstLODDistance(0);
       meshWithHysteresis.addLOD(lowPolyGeometry, material, 100, 0.1); // 10% hysteresis
 

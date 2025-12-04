@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>InstancedMesh2 Test Scene (WebGPU)</title>
+  <style>
+    body { margin: 0; overflow: hidden; }
+    canvas { display: block; }
+    #info {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      color: white;
+      font-family: monospace;
+      background: rgba(0,0,0,0.7);
+      padding: 10px;
+      z-index: 100;
+    }
+    #error {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: red;
+      font-family: monospace;
+      background: rgba(0,0,0,0.9);
+      padding: 20px;
+      z-index: 200;
+      max-width: 80%;
+      display: none;
+      white-space: pre-wrap;
+    }
+  </style>
+</head>
+<body>
+  <div id="info">
+    <div>Renderer: <span id="renderer-type">webgpu</span></div>
+    <div>Instances: <span id="instance-count">0</span></div>
+    <div>Rendered: <span id="render-count">0</span></div>
+    <div>FPS: <span id="fps">0</span></div>
+  </div>
+  <div id="error"></div>
+  
+  <script type="module">
+    /*
+     * ============================================================================
+     * IMPORTANT: DO NOT ADD FALLBACK TO WEBGL!
+     * ============================================================================
+     * 
+     * This test fixture is specifically for testing WebGPU rendering.
+     * If WebGPU fails, the test MUST FAIL - not silently fall back to WebGL.
+     * 
+     * Silent fallbacks are DANGEROUS because:
+     * 1. They mask real bugs in WebGPU implementation
+     * 2. Tests pass when they should fail, giving false confidence
+     * 3. Bugs only surface in production when users try WebGPU
+     * 
+     * If you need to test WebGL, use test-scene.html instead.
+     * Each renderer has its own dedicated test fixture.
+     * 
+     * ============================================================================
+     */
+
+    // Import Three.js with WebGPU support
+    // IMPORTANT: Use node materials (from 'three/webgpu') NOT regular materials!
+    // Regular THREE.MeshBasicMaterial bypasses the TSL node system and won't
+    // catch bugs in our custom instancing TSL nodes.
+    import * as THREE from 'three';
+    import { WebGPURenderer, MeshBasicNodeMaterial } from 'three/webgpu';
+    import { InstancedMesh2 } from '../../src/index.webgpu.ts';
+
+    console.log('[WebGPU Test] Imports loaded successfully');
+    
+    // Store renderer type globally - this MUST be 'webgpu' for this fixture
+    window.rendererType = 'webgpu';
+    
+    // Make available globally for Playwright tests
+    window.THREE = THREE;
+    window.InstancedMesh2 = InstancedMesh2;
+    window.MeshBasicNodeMaterial = MeshBasicNodeMaterial;
+    console.log('[WebGPU Test] Globals set');
+    
+    /**
+     * Helper to add timeout to a promise
+     */
+    function withTimeout(promise, ms, timeoutMsg) {
+      return Promise.race([
+        promise,
+        new Promise((_, reject) => 
+          setTimeout(() => reject(new Error(timeoutMsg)), ms)
+        )
+      ]);
+    }
+
+    /**
+     * Show error and mark test as failed
+     * NO FALLBACK - fail loudly so tests catch the issue!
+     */
+    function showError(message) {
+      console.error('[WebGPU Test] FATAL ERROR:', message);
+      
+      const errorDiv = document.getElementById('error');
+      errorDiv.textContent = 'WebGPU FAILED:\n' + message;
+      errorDiv.style.display = 'block';
+      
+      document.getElementById('renderer-type').textContent = 'ERROR';
+      
+      // Set error state for tests to detect
+      window.rendererError = message;
+      window.rendererType = 'error';
+      
+      // Still signal ready so tests don't hang - they should check rendererError
+      window.sceneReady = true;
+      window.dispatchEvent(new CustomEvent('scene-ready'));
+      
+      // Throw to make it very clear something is wrong
+      throw new Error('WebGPU initialization failed: ' + message);
+    }
+
+    async function init() {
+      console.log('[WebGPU Test] init() called');
+      
+      // Check WebGPU support - navigator.gpu must exist
+      if (!navigator.gpu) {
+        showError('navigator.gpu is undefined - WebGPU not supported');
+        return;
+      }
+      console.log('[WebGPU Test] navigator.gpu exists');
+      
+      // Try to get a GPU adapter
+      // See: https://developer.chrome.com/docs/web-platform/webgpu/troubleshooting-tips
+      console.log('[WebGPU Test] Calling requestAdapter...');
+      let adapter;
+      try {
+        adapter = await withTimeout(
+          navigator.gpu.requestAdapter(),
+          5000,
+          'requestAdapter() timed out after 5s'
+        );
+        console.log('[WebGPU Test] requestAdapter returned:', adapter ? 'adapter' : 'null');
+      } catch (e) {
+        showError('requestAdapter() failed: ' + e.message);
+        return;
+      }
+      
+      if (!adapter) {
+        showError('requestAdapter() returned null (GPU may be blocklisted or unavailable)');
+        return;
+      }
+      
+      // Scene setup
+      const scene = new THREE.Scene();
+      scene.background = new THREE.Color(0x222222);
+      
+      const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+      camera.position.set(0, 50, 100);
+      camera.lookAt(0, 0, 0);
+      
+      // Create WebGPU renderer
+      const renderer = new WebGPURenderer({ antialias: true });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      document.body.appendChild(renderer.domElement);
+      
+      // Initialize WebGPU (required before rendering) - with timeout
+      console.log('[WebGPU Test] Calling renderer.init()...');
+      try {
+        await withTimeout(
+          renderer.init(),
+          10000,
+          'WebGPURenderer.init() timed out after 10s'
+        );
+        console.log('[WebGPU Test] renderer.init() succeeded');
+      } catch (e) {
+        showError('WebGPURenderer.init() failed: ' + e.message);
+        return;
+      }
+      
+      // Make renderer available for tests
+      window.renderer = renderer;
+      window.scene = scene;
+      window.camera = camera;
+      
+      console.log('[WebGPU Test] WebGPU initialized successfully');
+      setupScene();
+    }
+    
+    function setupScene() {
+      // Test mesh - will be created by test scripts
+      window.testMesh = null;
+      
+      // Create default test mesh
+      function createTestMesh(options = {}) {
+        const {
+          count = 100,
+          spread = 50,
+          capacity = 1000,
+          createEntities = false
+        } = options;
+        
+        const geometry = new THREE.BoxGeometry(1, 1, 1);
+        // CRITICAL: Use MeshBasicNodeMaterial (WebGPU node material) NOT THREE.MeshBasicMaterial!
+        // Regular materials bypass TSL nodes and won't catch bugs in instancing shaders.
+        const material = new MeshBasicNodeMaterial({ color: 0x00ff00 });
+        
+        const mesh = new window.InstancedMesh2(geometry, material, {
+          capacity,
+          createEntities,
+          renderer: window.renderer
+        });
+
+        mesh.addInstances(count, (obj, index) => {
+          // NOSONAR – test-only randomness is fine here
+          obj.position.set(
+            (Math.random() - 0.5) * spread,
+            (Math.random() - 0.5) * spread,
+            (Math.random() - 0.5) * spread
+          );
+        });
+        
+        window.scene.add(mesh);
+        window.testMesh = mesh;
+        
+        return mesh;
+      }
+      
+      window.createTestMesh = createTestMesh;
+      
+      // Track render errors for tests to detect
+      window._renderErrors = [];
+      let renderErrorCount = 0;
+      const MAX_RENDER_ERRORS = 5; // Only capture first few to avoid spam
+      
+      // Animation loop
+      let lastTime = performance.now();
+      let frameCount = 0;
+      
+      function animate() {
+        requestAnimationFrame(animate);
+        
+        // Update FPS counter
+        frameCount++;
+        const now = performance.now();
+        if (now - lastTime >= 1000) {
+          document.getElementById('fps').textContent = frameCount;
+          frameCount = 0;
+          lastTime = now;
+        }
+        
+        // Update info display
+        if (window.testMesh) {
+          document.getElementById('instance-count').textContent = window.testMesh.instancesCount;
+          document.getElementById('render-count').textContent = window.testMesh.count;
+        }
+        
+        // Wrap render in try-catch to capture shader errors
+        try {
+          window.renderer.render(window.scene, window.camera);
+        } catch (e) {
+          if (renderErrorCount < MAX_RENDER_ERRORS) {
+            const errorMsg = e.message || String(e);
+            console.error('[WebGPU Test] Render error:', errorMsg);
+            window._renderErrors.push(errorMsg);
+            renderErrorCount++;
+            
+            // Show error on screen
+            if (renderErrorCount === 1) {
+              showError('Render error: ' + errorMsg);
+            }
+          }
+        }
+      }
+      
+      animate();
+      
+      // Handle resize
+      window.addEventListener('resize', () => {
+        window.camera.aspect = window.innerWidth / window.innerHeight;
+        window.camera.updateProjectionMatrix();
+        window.renderer.setSize(window.innerWidth, window.innerHeight);
+      });
+      
+      // Signal that the scene is ready
+      window.sceneReady = true;
+      window.dispatchEvent(new CustomEvent('scene-ready'));
+      console.log('[WebGPU Test] Scene ready with renderer type:', window.rendererType);
+    }
+    
+    // Initialize the scene with a global timeout
+    const GLOBAL_INIT_TIMEOUT = 15000; // 15 seconds max for entire init
+    
+    Promise.race([
+      init(),
+      new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Global init timeout after 15s')), GLOBAL_INIT_TIMEOUT)
+      )
+    ]).catch((error) => {
+      // DO NOT FALL BACK TO WEBGL - just fail!
+      showError('Uncaught error: ' + error.message);
+    });
+  </script>
+</body>
+</html>

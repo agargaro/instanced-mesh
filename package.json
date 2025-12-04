@@ -1,12 +1,12 @@
 {
   "name": "@three.ez/instanced-mesh",
   "version": "0.3.13",
-  "description": "Enhanced InstancedMesh with frustum culling, fast raycasting (using BVH), sorting, visibility management and more.",
+  "description": "Enhanced InstancedMesh with frustum culling, fast raycasting (using BVH), sorting, visibility management and more. Supports both WebGL and WebGPU renderers.",
   "author": "Andrea Gargaro <devgargaro@gmail.com>",
   "license": "MIT",
   "type": "module",
-  "module": "build/index.js",
-  "main": "build/index.cjs",
+  "module": "build/index.es.js",
+  "main": "build/index.cjs.js",
   "types": "src/index.d.ts",
   "homepage": "https://agargaro.github.io/instanced-mesh",
   "repository": "https://github.com/three-ez/instanced-mesh",
@@ -14,11 +14,41 @@
     ".": {
       "import": {
         "types": "./src/index.d.ts",
-        "default": "./build/index.js"
+        "default": "./build/index.es.js"
       },
       "require": {
         "types": "./src/index.d.ts",
-        "default": "./build/index.cjs"
+        "default": "./build/index.cjs.js"
+      }
+    },
+    "./webgl": {
+      "import": {
+        "types": "./src/index.webgl.d.ts",
+        "default": "./build/webgl.es.js"
+      },
+      "require": {
+        "types": "./src/index.webgl.d.ts",
+        "default": "./build/webgl.cjs.js"
+      }
+    },
+    "./webgpu": {
+      "import": {
+        "types": "./src/index.webgpu.d.ts",
+        "default": "./build/webgpu.es.js"
+      },
+      "require": {
+        "types": "./src/index.webgpu.d.ts",
+        "default": "./build/webgpu.cjs.js"
+      }
+    },
+    "./common": {
+      "import": {
+        "types": "./src/index.common.d.ts",
+        "default": "./build/common.es.js"
+      },
+      "require": {
+        "types": "./src/index.common.d.ts",
+        "default": "./build/common.cjs.js"
       }
     }
   },
@@ -38,7 +68,9 @@
     "shadow-LOD",
     "uniform-per-instance",
     "instancedMesh2",
-    "skinning"
+    "skinning",
+    "webgl",
+    "webgpu"
   ],
   "scripts": {
     "start": "vite",
@@ -66,6 +98,7 @@
     "meshoptimizer": "^0.25.0",
     "playwright": "^1.57.0",
     "simplex-noise": "^4.0.3",
+    "stats-gl": "^3.8.0",
     "three-hex-tiling": "^0.1.5",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.48.1",
@@ -76,7 +109,7 @@
     "vitest": "^4.0.15"
   },
   "peerDependencies": {
-    "three": ">=0.159.0"
+    "three": ">=0.177.0"
   },
   "dependencies": {
     "bvh.js": "^0.0.13"

@@ -16,6 +16,17 @@ export default defineConfig({
       name: 'chromium',
       use: {
         ...devices['Desktop Chrome'],
+        launchOptions: {
+          args: [
+            // Enable WebGPU support in headless Chrome
+            // See: https://developer.chrome.com/docs/web-platform/webgpu/troubleshooting-tips
+            '--enable-unsafe-webgpu',
+            '--enable-features=Vulkan',
+            '--ignore-gpu-blocklist',
+            // Use new headless mode which has better GPU support
+            '--headless=new',
+          ],
+        },
       },
     },
   ],

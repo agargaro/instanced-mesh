@@ -17,20 +17,40 @@
       padding: 10px;
       z-index: 100;
     }
+    #error {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: red;
+      font-family: monospace;
+      background: rgba(0,0,0,0.9);
+      padding: 20px;
+      z-index: 200;
+      max-width: 80%;
+      display: none;
+      white-space: pre-wrap;
+    }
   </style>
 </head>
 <body>
   <div id="info">
+    <div>Renderer: <span id="renderer-type">webgl</span></div>
     <div>Instances: <span id="instance-count">0</span></div>
     <div>Rendered: <span id="render-count">0</span></div>
     <div>FPS: <span id="fps">0</span></div>
   </div>
+  <div id="error"></div>
   
   <script type="module">
-    // Let Vite handle all module resolution - no import map needed
+    // Import Three.js and InstancedMesh2 with WebGL support
+    // Use relative path from tests/fixtures/ to src/
     import * as THREE from 'three';
-    import { InstancedMesh2 } from '@three.ez/instanced-mesh';
+    import { InstancedMesh2 } from '../../src/index.webgl.ts';
 
+    // Store renderer type globally
+    window.rendererType = 'webgl';
+    
     // Make available globally for Playwright tests
     window.THREE = THREE;
     window.InstancedMesh2 = InstancedMesh2;
@@ -127,7 +147,7 @@
     // Signal that the scene is ready
     window.sceneReady = true;
     window.dispatchEvent(new CustomEvent('scene-ready'));
+    console.log('Scene ready!');
   </script>
 </body>
 </html>
-

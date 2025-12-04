@@ -8,18 +8,20 @@
  * - instances[i].opacity property (with entities)
  * - setActiveAt/getActiveAt methods
  * - Hidden instances excluded from render count
+ * 
+ * Tests run against both WebGL and WebGPU renderers.
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
 import { Color } from 'three';
-import { createTestInstancedMesh, createTestInstancedMeshWithEntities } from '../setup';
-import { InstancedMesh2 } from '../../src/core/InstancedMesh2';
+import { describeForEachRenderer, createTestInstancedMeshWithEntities, RendererType } from '../setup.js';
+import { InstancedMesh2 } from '../../src/core/InstancedMesh2.js';
 
-describe('Per-instance Visibility', () => {
+describeForEachRenderer('Per-instance Visibility', (rendererType, createMesh) => {
   let mesh: InstancedMesh2;
 
   beforeEach(() => {
-    mesh = createTestInstancedMesh({ capacity: 100 });
+    mesh = createMesh({ capacity: 100 });
     mesh.addInstances(10, (obj, index) => {
       obj.position.set(index, 0, 0);
     });
@@ -127,7 +129,7 @@ describe('Per-instance Visibility', () => {
     let meshWithEntities: InstancedMesh2;
 
     beforeEach(() => {
-      meshWithEntities = createTestInstancedMeshWithEntities(100);
+      meshWithEntities = createTestInstancedMeshWithEntities(100, rendererType);
       meshWithEntities.addInstances(10, (obj, index) => {
         obj.position.set(index, 0, 0);
       });
@@ -161,11 +163,11 @@ describe('Per-instance Visibility', () => {
   });
 });
 
-describe('Per-instance Opacity', () => {
+describeForEachRenderer('Per-instance Opacity', (rendererType, createMesh) => {
   let mesh: InstancedMesh2;
 
   beforeEach(() => {
-    mesh = createTestInstancedMesh({ capacity: 100 });
+    mesh = createMesh({ capacity: 100 });
     mesh.addInstances(10, (obj, index) => {
       obj.position.set(index, 0, 0);
     });
@@ -221,7 +223,7 @@ describe('Per-instance Opacity', () => {
     let meshWithEntities: InstancedMesh2;
 
     beforeEach(() => {
-      meshWithEntities = createTestInstancedMeshWithEntities(100);
+      meshWithEntities = createTestInstancedMeshWithEntities(100, rendererType);
       meshWithEntities.addInstances(10, (obj, index) => {
         obj.position.set(index, 0, 0);
       });
@@ -273,11 +275,11 @@ describe('Per-instance Opacity', () => {
   });
 });
 
-describe('Per-instance Color', () => {
+describeForEachRenderer('Per-instance Color', (rendererType, createMesh) => {
   let mesh: InstancedMesh2;
 
   beforeEach(() => {
-    mesh = createTestInstancedMesh({ capacity: 100 });
+    mesh = createMesh({ capacity: 100 });
     mesh.addInstances(5, (obj, index) => {
       obj.position.set(index, 0, 0);
     });
@@ -325,7 +327,7 @@ describe('Per-instance Color', () => {
     let meshWithEntities: InstancedMesh2;
 
     beforeEach(() => {
-      meshWithEntities = createTestInstancedMeshWithEntities(100);
+      meshWithEntities = createTestInstancedMeshWithEntities(100, rendererType);
       meshWithEntities.addInstances(5, (obj, index) => {
         obj.position.set(index, 0, 0);
       });
@@ -346,4 +348,3 @@ describe('Per-instance Color', () => {
     });
   });
 });
-

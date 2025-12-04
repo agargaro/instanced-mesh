@@ -7,18 +7,20 @@
  * - intersectBox() finds correct instances
  * - BVH integration with frustum culling
  * - disposeBVH() cleanup
+ * 
+ * Tests run against both WebGL and WebGPU renderers.
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
 import { Box3, Matrix4, Vector3 } from 'three';
-import { createTestInstancedMesh } from '../setup';
-import { InstancedMesh2 } from '../../src/core/InstancedMesh2';
+import { describeForEachRenderer } from '../setup.js';
+import { InstancedMesh2 } from '../../src/core/InstancedMesh2.js';
 
-describe('BVH Spatial Indexing', () => {
+describeForEachRenderer('BVH Spatial Indexing', (rendererType, createMesh) => {
   let mesh: InstancedMesh2;
 
   beforeEach(() => {
-    mesh = createTestInstancedMesh({ capacity: 100 });
+    mesh = createMesh({ capacity: 100 });
   });
 
   describe('computeBVH', () => {
@@ -303,4 +305,3 @@ describe('BVH Spatial Indexing', () => {
     });
   });
 });
-

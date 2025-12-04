@@ -7,20 +7,22 @@
  * - sortTransparent comparator (back-to-front)
  * - createRadixSort optimization
  * - customSort callback integration
+ * 
+ * Tests run against both WebGL and WebGPU renderers.
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { MeshBasicMaterial } from 'three';
-import { createTestInstancedMesh } from '../setup';
-import { InstancedMesh2 } from '../../src/core/InstancedMesh2';
-import { createRadixSort, sortOpaque, sortTransparent } from '../../src/utils/SortingUtils';
-import { InstancedRenderItem } from '../../src/core/utils/InstancedRenderList';
+import { describeForEachRenderer } from '../setup.js';
+import { InstancedMesh2 } from '../../src/core/InstancedMesh2.js';
+import { createRadixSort, sortOpaque, sortTransparent } from '../../src/utils/SortingUtils.js';
+import { InstancedRenderItem } from '../../src/core/utils/InstancedRenderList.js';
 
-describe('Sorting', () => {
+describeForEachRenderer('Sorting', (rendererType, createMesh) => {
   let mesh: InstancedMesh2;
 
   beforeEach(() => {
-    mesh = createTestInstancedMesh({ capacity: 100 });
+    mesh = createMesh({ capacity: 100 });
   });
 
   describe('sortObjects property', () => {
@@ -248,4 +250,3 @@ describe('Sorting', () => {
     });
   });
 });
-

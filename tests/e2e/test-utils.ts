@@ -3,9 +3,46 @@
  *
  * Reduces code duplication across test files by providing
  * common setup and helper functions.
+ * 
+ * Supports both WebGL and WebGPU renderer testing.
+ * 
+ * IMPORTANT: Each renderer type has its own dedicated test fixture.
+ * WebGPU tests use test-scene-webgpu.html and MUST use WebGPU renderer.
+ * WebGL tests use test-scene.html and MUST use WebGL renderer.
+ * There is NO FALLBACK - if the expected renderer fails, the test fails.
  */
 
 import type { Page } from '@playwright/test';
+
+/**
+ * Renderer type for E2E tests
+ */
+export type E2ERendererType = 'webgl' | 'webgpu';
+
+/**
+ * E2E renderer types to test against
+ * 
+ * Both WebGL and WebGPU are tested. WebGPU is enabled via Chrome launch args
+ * in playwright.config.ts.
+ * 
+ * IMPORTANT: There is NO fallback between renderers!
+ * If WebGPU initialization fails, tests FAIL - they don't silently use WebGL.
+ * This ensures we catch WebGPU-specific bugs rather than hiding them.
+ */
+export const E2E_RENDERER_TYPES: E2ERendererType[] = ['webgl', 'webgpu'];
+
+/**
+ * Get the test fixture URL for a specific renderer type
+ */
+export function getTestFixtureUrl(rendererType: E2ERendererType): string {
+  switch (rendererType) {
+    case 'webgpu':
+      return '/tests/fixtures/test-scene-webgpu.html';
+    case 'webgl':
+    default:
+      return '/tests/fixtures/test-scene.html';
+  }
+}
 
 /**
  * Helper functions to be used inside page.evaluate()
@@ -124,9 +161,107 @@ export async function initBrowserHelpers(page: Page): Promise<void> {
 
 /**
  * Common test setup that injects helpers and waits for scene ready
+ * @param rendererType - The renderer type to use (webgl or webgpu)
+ * @throws If the renderer fails to initialize (no fallback!)
  */
-export async function setupTestScene(page: Page): Promise<void> {
-  await page.goto('/tests/fixtures/test-scene.html');
-  await page.waitForFunction(() => window.sceneReady === true);
+export async function setupTestScene(page: Page, rendererType: E2ERendererType = 'webgl'): Promise<void> {
+  const url = getTestFixtureUrl(rendererType);
+  await page.goto(url);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  await page.waitForFunction(() => (window as any).sceneReady === true, { timeout: 30000 });
+  
+  // Check for renderer initialization errors - DO NOT ALLOW SILENT FAILURES!
+  await assertRendererInitialized(page, rendererType);
+  
   await initBrowserHelpers(page);
+}
+
+/**
+ * Get the actual renderer type being used
+ * NOTE: This should ALWAYS match the expected type - no fallback is allowed!
+ */
+export async function getActualRendererType(page: Page): Promise<string> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return await page.evaluate(() => (window as any).rendererType || 'unknown');
+}
+
+/**
+ * Assert that the renderer initialized successfully with the expected type.
+ * 
+ * IMPORTANT: This function FAILS THE TEST if:
+ * 1. The renderer encountered an error
+ * 2. The actual renderer type doesn't match the expected type
+ * 
+ * There is NO FALLBACK - WebGPU tests must use WebGPU, WebGL tests must use WebGL.
+ * This prevents bugs from being silently hidden when one renderer fails.
+ * 
+ * @param page - Playwright page object
+ * @param expectedType - The renderer type that should be active
+ * @throws If renderer failed or wrong type is active
+ */
+export async function assertRendererInitialized(page: Page, expectedType: E2ERendererType): Promise<void> {
+  const result = await page.evaluate(() => {
+    return {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      rendererType: (window as any).rendererType || 'unknown',
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      rendererError: (window as any).rendererError || null,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      hasRenderer: !!(window as any).renderer
+    };
+  });
+
+  // Check for initialization error
+  if (result.rendererError) {
+    throw new Error(
+      `${expectedType.toUpperCase()} renderer initialization FAILED: ${result.rendererError}\n` +
+      'DO NOT add fallback code - fix the underlying issue instead!'
+    );
+  }
+
+  // Check renderer type matches expected
+  if (result.rendererType === 'error') {
+    throw new Error(
+      `${expectedType.toUpperCase()} renderer is in error state. Check console for details.`
+    );
+  }
+
+  if (result.rendererType !== expectedType) {
+    throw new Error(
+      `Expected ${expectedType} renderer but got ${result.rendererType}.\n` +
+      'Each test fixture must use its designated renderer - NO FALLBACK ALLOWED!'
+    );
+  }
+
+  if (!result.hasRenderer) {
+    throw new Error(
+      `${expectedType.toUpperCase()} renderer object is null/undefined after initialization.`
+    );
+  }
+}
+
+// Extend window interface for TypeScript
+declare global {
+  interface Window {
+    THREE: unknown;
+    InstancedMesh2: unknown;
+    renderer: unknown;
+    scene: unknown;
+    camera: unknown;
+    testMesh: unknown;
+    sceneReady: boolean;
+    rendererType: string;
+    createTestMesh: (options?: unknown) => unknown;
+    testHelpers: {
+      createGeometries: () => unknown;
+      createMaterial: (color?: number) => unknown;
+      createMesh: (geometry: unknown, material: unknown, capacity?: number) => unknown;
+      createLODMesh: (lodDistance?: number, capacity?: number) => unknown;
+      createMultiLODMesh: (midDistance?: number, farDistance?: number, capacity?: number) => unknown;
+      setupCamera: (position: { x: number; y: number; z: number }, target?: { x: number; y: number; z: number }, options?: unknown) => void;
+      getLODInfo: (mesh: unknown, levelCount?: number) => { counts: number[]; ids: number[][] };
+      getRenderedInfo: (mesh: unknown) => { count: number; ids: number[] };
+      addToScene: (mesh: unknown) => unknown;
+    };
+  }
 }
