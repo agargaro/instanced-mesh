@@ -4,12 +4,20 @@
  * Tests that InstancedMesh2 renders correctly in a real WebGL context.
  */
 
-import { test, expect } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
+import { initBrowserHelpers } from './test-utils.js';
+
+// Shared beforeEach setup
+const setupScene = async (page: Page) => {
+  await page.goto('/tests/fixtures/test-scene.html');
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  await page.waitForFunction(() => (window as any).sceneReady === true);
+  await initBrowserHelpers(page);
+};
 
 test.describe('Rendering E2E', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/tests/fixtures/test-scene.html');
-    await page.waitForFunction(() => window.sceneReady === true);
+    await setupScene(page);
   });
 
   test('should render instances on screen', async ({ page }) => {
@@ -97,7 +105,7 @@ test.describe('Rendering E2E', () => {
         mesh.setColorAt(1, new Color(0, 1, 0)); // Green
         mesh.setColorAt(2, new Color(0, 0, 1)); // Blue
         setColorSuccess = true;
-      } catch (e) {
+      } catch {
         setColorSuccess = false;
       }
 
@@ -112,7 +120,7 @@ test.describe('Rendering E2E', () => {
         mesh.getColorAt(1);
         mesh.getColorAt(2);
         getColorSuccess = true;
-      } catch (e) {
+      } catch {
         getColorSuccess = false;
       }
 
@@ -158,18 +166,12 @@ test.describe('Rendering E2E', () => {
 
   test('should support capacity expansion', async ({ page }) => {
     const expanded = await page.evaluate(() => {
-      // Start with small capacity
       const { BoxGeometry, MeshBasicMaterial } = window.THREE;
       const geometry = new BoxGeometry(1, 1, 1);
       const material = new MeshBasicMaterial({ color: 0x00ff00 });
       
-      const mesh = new window.InstancedMesh2(geometry, material, {
-        capacity: 10,
-        renderer: window.renderer
-      });
-
-      window.scene.add(mesh);
-      window.testMesh = mesh;
+      const mesh = window.testHelpers.createMesh(geometry, material, 10);
+      window.testHelpers.addToScene(mesh);
 
       const initialCapacity = mesh.capacity;
 
@@ -213,8 +215,7 @@ test.describe('Rendering E2E', () => {
  */
 test.describe('Rendering Pipeline Verification', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/tests/fixtures/test-scene.html');
-    await page.waitForFunction(() => window.sceneReady === true);
+    await setupScene(page);
   });
 
   test('should have matricesTexture available for shader', async ({ page }) => {
@@ -287,16 +288,11 @@ test.describe('Rendering Pipeline Verification', () => {
 
   test('should store correct transforms in matricesTexture', async ({ page }) => {
     const result = await page.evaluate(() => {
-      const { BoxGeometry, MeshBasicMaterial, Matrix4, Vector3 } = window.THREE;
+      const { BoxGeometry, MeshBasicMaterial } = window.THREE;
       
       const geometry = new BoxGeometry(1, 1, 1);
       const material = new MeshBasicMaterial({ color: 0x00ff00 });
-      
-      const mesh = new window.InstancedMesh2(geometry, material, {
-        capacity: 10,
-        renderer: window.renderer
-      });
-      
+      const mesh = window.testHelpers.createMesh(geometry, material, 10);
       
       // Add instances with known positions
       mesh.addInstances(3, (obj, index) => {
@@ -305,7 +301,7 @@ test.describe('Rendering Pipeline Verification', () => {
         if (index === 2) obj.position.set(0, 0, 30);
       });
       
-      window.scene.add(mesh);
+      window.testHelpers.addToScene(mesh);
       window.renderer.render(window.scene, window.camera);
       
       // Read back matrix data from texture
@@ -340,18 +336,14 @@ test.describe('Rendering Pipeline Verification', () => {
       const lowGeo = new BoxGeometry(1, 1, 1);
       const material = new MeshBasicMaterial({ color: 0x00ff00 });
       
-      const mesh = new window.InstancedMesh2(highGeo, material, {
-        capacity: 100,
-        renderer: window.renderer
-      });
-      
+      const mesh = window.testHelpers.createMesh(highGeo, material);
       mesh.addLOD(lowGeo, material, 50);
       
-      mesh.addInstances(5, (obj, index) => {
+      mesh.addInstances(5, (obj) => {
         obj.position.set(0, 0, -20); // All instances in front
       });
       
-      window.scene.add(mesh);
+      window.testHelpers.addToScene(mesh);
       
       // Get geometry vertex counts for verification
       const lod0Geometry = mesh.LODinfo.objects[0].geometry;
@@ -417,19 +409,14 @@ test.describe('Rendering Pipeline Verification', () => {
       
       const geometry = new BoxGeometry(1, 1, 1);
       const material = new MeshBasicMaterial({ color: 0x00ff00 });
-      
-      const mesh = new window.InstancedMesh2(geometry, material, {
-        capacity: 10,
-        renderer: window.renderer
-      });
-      
+      const mesh = window.testHelpers.createMesh(geometry, material, 10);
       
       // Add instance with initial position
-      mesh.addInstances(1, (obj, index) => {
+      mesh.addInstances(1, (obj) => {
         obj.position.set(5, 5, 5);
       });
       
-      window.scene.add(mesh);
+      window.testHelpers.addToScene(mesh);
       window.renderer.render(window.scene, window.camera);
       
       const data = mesh.matricesTexture._data;
@@ -461,17 +448,10 @@ test.describe('Rendering Pipeline Verification', () => {
       
       const geometry = new BoxGeometry(1, 1, 1);
       const material = new MeshBasicMaterial({ color: 0x00ff00 });
-      
-      const mesh = new window.InstancedMesh2(geometry, material, {
-        capacity: 100,
-        renderer: window.renderer
-      });
-      
+      const mesh = window.testHelpers.createMesh(geometry, material);
       
       // Camera at z=50 looking at origin
-      window.camera.position.set(0, 0, 50);
-      window.camera.lookAt(0, 0, 0);
-      window.camera.updateMatrixWorld();
+      window.testHelpers.setupCamera({ x: 0, y: 0, z: 50 });
       
       // Create instances: some in view, some out
       mesh.addInstances(6, (obj, index) => {
@@ -485,19 +465,17 @@ test.describe('Rendering Pipeline Verification', () => {
         }
       });
       
-      window.scene.add(mesh);
+      window.testHelpers.addToScene(mesh);
       
       mesh.performFrustumCulling(window.camera);
       window.renderer.render(window.scene, window.camera);
       
-      // Get the instance indices that will be rendered
-      const renderedCount = mesh.count;
-      const renderedIndices = Array.from(mesh.instanceIndex.array.slice(0, renderedCount));
+      const info = window.testHelpers.getRenderedInfo(mesh);
       
       return {
         totalInstances: mesh.instancesCount,
-        renderedCount,
-        renderedIndices: renderedIndices.sort((a, b) => a - b)
+        renderedCount: info.count,
+        renderedIndices: [...info.ids].sort((a, b) => a - b)
       };
     });
     
@@ -521,8 +499,7 @@ test.describe('Rendering Pipeline Verification', () => {
  */
 test.describe('Rendering Output Verification', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/tests/fixtures/test-scene.html');
-    await page.waitForFunction(() => window.sceneReady === true);
+    await setupScene(page);
   });
 
   test('should execute draw calls when rendering', async ({ page }) => {
@@ -585,18 +562,14 @@ test.describe('Rendering Output Verification', () => {
       
       const geometry = new BoxGeometry(1, 1, 1);
       const material = new MeshBasicMaterial({ color: 0xff0000 });
-      
-      const mesh = new window.InstancedMesh2(geometry, material, {
-        capacity: 10,
-        renderer: window.renderer
-      });
+      const mesh = window.testHelpers.createMesh(geometry, material, 10);
       
       // All instances BEHIND camera (positive Z)
-      mesh.addInstances(10, (obj, i) => {
+      mesh.addInstances(10, (obj) => {
         obj.position.set(0, 0, 100); // Behind camera
       });
       
-      window.scene.add(mesh);
+      window.testHelpers.addToScene(mesh);
       
       mesh.performFrustumCulling(camera);
       window.renderer.info.reset();
@@ -631,18 +604,14 @@ test.describe('Rendering Output Verification', () => {
       
       const geometry = new BoxGeometry(1, 1, 1);
       const material = new MeshBasicMaterial({ color: 0xff0000 });
-      
-      const mesh = new window.InstancedMesh2(geometry, material, {
-        capacity: 10,
-        renderer: window.renderer
-      });
+      const mesh = window.testHelpers.createMesh(geometry, material, 10);
       
       // All instances IN FRONT of camera
-      mesh.addInstances(10, (obj, i) => {
-        obj.position.set((i - 5) * 2, 0, 0); // Spread in view
+      mesh.addInstances(10, (obj, index) => {
+        obj.position.set((index - 5) * 2, 0, 0); // Spread in view
       });
       
-      window.scene.add(mesh);
+      window.testHelpers.addToScene(mesh);
       
       mesh.performFrustumCulling(camera);
       window.renderer.info.reset();
@@ -681,7 +650,7 @@ test.describe('Rendering Output Verification', () => {
           success: false,
           meshCount: 0,
           triangles: 0,
-          error: e.message
+          error: (e as Error).message
         };
       }
     });
@@ -692,4 +661,3 @@ test.describe('Rendering Output Verification', () => {
     expect(result.triangles).toBeGreaterThan(0);
   });
 });
-

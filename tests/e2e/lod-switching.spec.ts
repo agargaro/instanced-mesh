@@ -4,32 +4,27 @@
  * Tests actual distance-based LOD switching with real rendering.
  */
 
-import { test, expect } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
+import { initBrowserHelpers } from './test-utils.js';
+
+// Shared beforeEach setup
+const setupScene = async (page: Page) => {
+  await page.goto('/tests/fixtures/test-scene.html');
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  await page.waitForFunction(() => (window as any).sceneReady === true);
+  await initBrowserHelpers(page);
+};
 
 test.describe('LOD Switching E2E', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/tests/fixtures/test-scene.html');
-    await page.waitForFunction(() => window.sceneReady === true);
+    await setupScene(page);
   });
 
   test('should create LOD levels', async ({ page }) => {
     const hasLOD = await page.evaluate(() => {
-      const { BoxGeometry, SphereGeometry, MeshBasicMaterial } = window.THREE;
-      
-      const highGeometry = new SphereGeometry(0.5, 32, 32);
-      const midGeometry = new SphereGeometry(0.5, 16, 16);
-      const lowGeometry = new BoxGeometry(1, 1, 1);
-      const material = new MeshBasicMaterial({ color: 0x00ff00 });
-      
-      const mesh = new window.InstancedMesh2(highGeometry, material, {
-        capacity: 100,
-        renderer: window.renderer
-      });
+      const mesh = window.testHelpers.createMultiLODMesh(50, 100);
 
-      mesh.addLOD(midGeometry, material, 50);
-      mesh.addLOD(lowGeometry, material, 100);
-
-      mesh.addInstances(50, (obj, index) => {
+      mesh.addInstances(50, (obj) => {
         // NOSONAR – test-only randomness is fine here
         obj.position.set(
           (Math.random() - 0.5) * 100,
@@ -38,8 +33,7 @@ test.describe('LOD Switching E2E', () => {
         );
       });
       
-      window.scene.add(mesh);
-      window.testMesh = mesh;
+      window.testHelpers.addToScene(mesh);
       
       return mesh.LODinfo !== null && mesh.LODinfo.render.levels.length === 3;
     });
@@ -49,18 +43,7 @@ test.describe('LOD Switching E2E', () => {
 
   test('should render different LOD levels based on distance', async ({ page }) => {
     await page.evaluate(() => {
-      const { BoxGeometry, SphereGeometry, MeshBasicMaterial } = window.THREE;
-      
-      const highGeometry = new SphereGeometry(0.5, 32, 32);
-      const lowGeometry = new BoxGeometry(1, 1, 1);
-      const material = new MeshBasicMaterial({ color: 0x00ff00 });
-      
-      const mesh = new window.InstancedMesh2(highGeometry, material, {
-        capacity: 100,
-        renderer: window.renderer
-      });
-
-      mesh.addLOD(lowGeometry, material, 50);
+      const mesh = window.testHelpers.createLODMesh(50);
 
       // Create instances at known distances
       mesh.addInstances(10, (obj, index) => {
@@ -73,8 +56,7 @@ test.describe('LOD Switching E2E', () => {
         }
       });
       
-      window.scene.add(mesh);
-      window.testMesh = mesh;
+      window.testHelpers.addToScene(mesh);
       
       // Trigger culling
       mesh.performFrustumCulling(window.camera);
@@ -98,33 +80,19 @@ test.describe('LOD Switching E2E', () => {
 
   test('should update LOD when camera moves', async ({ page }) => {
     await page.evaluate(() => {
-      const { BoxGeometry, SphereGeometry, MeshBasicMaterial } = window.THREE;
-      
-      const highGeometry = new SphereGeometry(0.5, 32, 32);
-      const lowGeometry = new BoxGeometry(1, 1, 1);
-      const material = new MeshBasicMaterial({ color: 0x00ff00 });
-      
-      const mesh = new window.InstancedMesh2(highGeometry, material, {
-        capacity: 100,
-        renderer: window.renderer
-      });
-
-      mesh.addLOD(lowGeometry, material, 30);
+      const mesh = window.testHelpers.createLODMesh(30);
 
       // All instances at origin
-      mesh.addInstances(20, (obj, index) => {
+      mesh.addInstances(20, (obj) => {
         obj.position.set(0, 0, 0);
       });
       
-      window.scene.add(mesh);
-      window.testMesh = mesh;
+      window.testHelpers.addToScene(mesh);
     });
 
     // Camera close - should use high LOD
     await page.evaluate(() => {
-      window.camera.position.set(0, 0, 20);
-      window.camera.lookAt(0, 0, 0);
-      window.camera.updateMatrixWorld();
+      window.testHelpers.setupCamera({ x: 0, y: 0, z: 20 });
       window.testMesh.performFrustumCulling(window.camera);
     });
 
@@ -134,9 +102,7 @@ test.describe('LOD Switching E2E', () => {
 
     // Camera far - should use low LOD
     await page.evaluate(() => {
-      window.camera.position.set(0, 0, 100);
-      window.camera.lookAt(0, 0, 0);
-      window.camera.updateMatrixWorld();
+      window.testHelpers.setupCamera({ x: 0, y: 0, z: 100 });
       window.testMesh.performFrustumCulling(window.camera);
     });
 
@@ -161,10 +127,7 @@ test.describe('LOD Switching E2E', () => {
       const shadowGeometry = new BoxGeometry(1, 1, 1);
       const material = new MeshBasicMaterial({ color: 0x00ff00 });
       
-      const mesh = new window.InstancedMesh2(highGeometry, material, {
-        capacity: 100,
-        renderer: window.renderer
-      });
+      const mesh = window.testHelpers.createMesh(highGeometry, material);
 
       mesh.addShadowLOD(shadowGeometry, 0);
       
@@ -187,39 +150,22 @@ test.describe('LOD Switching E2E', () => {
  */
 test.describe('Deterministic LOD Assignment', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/tests/fixtures/test-scene.html');
-    await page.waitForFunction(() => window.sceneReady === true);
+    await setupScene(page);
   });
 
   test('should assign instances to correct LOD based on exact distance', async ({ page }) => {
     const result = await page.evaluate(() => {
-      const { BoxGeometry, SphereGeometry, MeshBasicMaterial } = window.THREE;
-      
-      // Setup: LOD 0 for 0-50 units, LOD 1 for 50+ units
-      const highGeometry = new SphereGeometry(0.5, 32, 32);
-      const lowGeometry = new BoxGeometry(1, 1, 1);
-      const material = new MeshBasicMaterial({ color: 0x00ff00 });
-      
-      const mesh = new window.InstancedMesh2(highGeometry, material, {
-        capacity: 100,
-        renderer: window.renderer
-      });
-      
-      mesh.addLOD(lowGeometry, material, 50); // LOD 1 at 50 units distance
+      const mesh = window.testHelpers.createLODMesh(50);
       
       // Position camera at origin looking at -Z with wide FOV
-      window.camera.position.set(0, 0, 0);
-      window.camera.lookAt(0, 0, -1);
-      window.camera.fov = 90;
-      window.camera.near = 1;
-      window.camera.far = 500;
-      window.camera.updateProjectionMatrix();
-      window.camera.updateMatrixWorld();
+      window.testHelpers.setupCamera(
+        { x: 0, y: 0, z: 0 },
+        { x: 0, y: 0, z: -1 },
+        { fov: 90, near: 1, far: 500 }
+      );
       
       // Create 4 instances at known distances from camera (at origin)
       // All instances placed IN FRONT of camera (in -Z direction) to stay in frustum
-      // Instances 0,1: at ~30 units distance (should be LOD 0)
-      // Instances 2,3: at ~80 units distance (should be LOD 1)
       mesh.addInstances(4, (obj, index) => {
         if (index === 0) obj.position.set(0, 0, -30);     // 30 units in front - LOD 0
         if (index === 1) obj.position.set(5, 0, -29.6);   // ~30 units in front - LOD 0
@@ -227,19 +173,20 @@ test.describe('Deterministic LOD Assignment', () => {
         if (index === 3) obj.position.set(10, 0, -79.4);  // ~80 units in front - LOD 1
       });
       
-      window.scene.add(mesh);
-      window.testMesh = mesh;
+      window.testHelpers.addToScene(mesh);
       
       // Perform frustum culling (which also does LOD assignment)
       mesh.performFrustumCulling(window.camera);
       
       // Extract LOD assignment data
-      const lod0Count = mesh.LODinfo.objects[0].count;
-      const lod1Count = mesh.LODinfo.objects[1].count;
-      const lod0Ids = Array.from(mesh.LODinfo.objects[0].instanceIndex.array.slice(0, lod0Count));
-      const lod1Ids = Array.from(mesh.LODinfo.objects[1].instanceIndex.array.slice(0, lod1Count));
+      const lodInfo = window.testHelpers.getLODInfo(mesh, 2);
       
-      return { lod0Count, lod1Count, lod0Ids, lod1Ids };
+      return { 
+        lod0Count: lodInfo.counts[0], 
+        lod1Count: lodInfo.counts[1], 
+        lod0Ids: lodInfo.ids[0], 
+        lod1Ids: lodInfo.ids[1] 
+      };
     });
     
     // Verify exact counts
@@ -254,39 +201,23 @@ test.describe('Deterministic LOD Assignment', () => {
   test('should reassign LOD levels when camera distance changes', async ({ page }) => {
     // Setup: Create instances all at origin
     await page.evaluate(() => {
-      const { BoxGeometry, SphereGeometry, MeshBasicMaterial } = window.THREE;
-      
-      const highGeometry = new SphereGeometry(0.5, 32, 32);
-      const lowGeometry = new BoxGeometry(1, 1, 1);
-      const material = new MeshBasicMaterial({ color: 0x00ff00 });
-      
-      const mesh = new window.InstancedMesh2(highGeometry, material, {
-        capacity: 100,
-        renderer: window.renderer
-      });
-      
-      mesh.addLOD(lowGeometry, material, 50); // LOD 1 at 50 units
+      const mesh = window.testHelpers.createLODMesh(50);
       
       // All 5 instances at origin
-      mesh.addInstances(5, (obj, index) => {
+      mesh.addInstances(5, (obj) => {
         obj.position.set(0, 0, 0);
       });
       
-      window.scene.add(mesh);
-      window.testMesh = mesh;
+      window.testHelpers.addToScene(mesh);
     });
     
     // Phase 1: Camera close (20 units) - all should be LOD 0
     const closeResult = await page.evaluate(() => {
-      window.camera.position.set(0, 0, 20);
-      window.camera.lookAt(0, 0, 0);
-      window.camera.updateMatrixWorld();
+      window.testHelpers.setupCamera({ x: 0, y: 0, z: 20 });
       window.testMesh.performFrustumCulling(window.camera);
       
-      return {
-        lod0Count: window.testMesh.LODinfo.objects[0].count,
-        lod1Count: window.testMesh.LODinfo.objects[1].count
-      };
+      const lodInfo = window.testHelpers.getLODInfo(window.testMesh, 2);
+      return { lod0Count: lodInfo.counts[0], lod1Count: lodInfo.counts[1] };
     });
     
     expect(closeResult.lod0Count).toBe(5);
@@ -294,15 +225,11 @@ test.describe('Deterministic LOD Assignment', () => {
     
     // Phase 2: Camera far (100 units) - all should be LOD 1
     const farResult = await page.evaluate(() => {
-      window.camera.position.set(0, 0, 100);
-      window.camera.lookAt(0, 0, 0);
-      window.camera.updateMatrixWorld();
+      window.testHelpers.setupCamera({ x: 0, y: 0, z: 100 });
       window.testMesh.performFrustumCulling(window.camera);
       
-      return {
-        lod0Count: window.testMesh.LODinfo.objects[0].count,
-        lod1Count: window.testMesh.LODinfo.objects[1].count
-      };
+      const lodInfo = window.testHelpers.getLODInfo(window.testMesh, 2);
+      return { lod0Count: lodInfo.counts[0], lod1Count: lodInfo.counts[1] };
     });
     
     expect(farResult.lod0Count).toBe(0);
@@ -311,23 +238,13 @@ test.describe('Deterministic LOD Assignment', () => {
 
   test('should handle instance at exact LOD boundary distance', async ({ page }) => {
     const result = await page.evaluate(() => {
-      const { BoxGeometry, SphereGeometry, MeshBasicMaterial } = window.THREE;
-      
-      const highGeometry = new SphereGeometry(0.5, 32, 32);
-      const lowGeometry = new BoxGeometry(1, 1, 1);
-      const material = new MeshBasicMaterial({ color: 0x00ff00 });
-      
-      const mesh = new window.InstancedMesh2(highGeometry, material, {
-        capacity: 100,
-        renderer: window.renderer
-      });
-      
-      mesh.addLOD(lowGeometry, material, 50); // Boundary at 50 units
+      const mesh = window.testHelpers.createLODMesh(50);
       
       // Camera at origin
-      window.camera.position.set(0, 0, 0);
-      window.camera.lookAt(0, 0, -1);
-      window.camera.updateMatrixWorld();
+      window.testHelpers.setupCamera(
+        { x: 0, y: 0, z: 0 },
+        { x: 0, y: 0, z: -1 }
+      );
       
       // Create instances at and around boundary
       mesh.addInstances(4, (obj, index) => {
@@ -337,17 +254,17 @@ test.describe('Deterministic LOD Assignment', () => {
         if (index === 3) obj.position.set(0, 0, -60);    // Clearly LOD 1
       });
       
-      window.scene.add(mesh);
-      window.testMesh = mesh;
-      
+      window.testHelpers.addToScene(mesh);
       mesh.performFrustumCulling(window.camera);
       
-      const lod0Count = mesh.LODinfo.objects[0].count;
-      const lod1Count = mesh.LODinfo.objects[1].count;
-      const lod0Ids = Array.from(mesh.LODinfo.objects[0].instanceIndex.array.slice(0, lod0Count));
-      const lod1Ids = Array.from(mesh.LODinfo.objects[1].instanceIndex.array.slice(0, lod1Count));
+      const lodInfo = window.testHelpers.getLODInfo(mesh, 2);
       
-      return { lod0Count, lod1Count, lod0Ids, lod1Ids };
+      return { 
+        lod0Count: lodInfo.counts[0], 
+        lod1Count: lodInfo.counts[1], 
+        lod0Ids: lodInfo.ids[0], 
+        lod1Ids: lodInfo.ids[1] 
+      };
     });
     
     // Instance 0 (49.9) should be in LOD 0
@@ -366,29 +283,14 @@ test.describe('Deterministic LOD Assignment', () => {
 
   test('should correctly assign multiple LOD levels (3+ levels)', async ({ page }) => {
     const result = await page.evaluate(() => {
-      const { BoxGeometry, SphereGeometry, MeshBasicMaterial } = window.THREE;
-      
-      const highGeometry = new SphereGeometry(0.5, 32, 32);
-      const midGeometry = new SphereGeometry(0.5, 16, 16);
-      const lowGeometry = new BoxGeometry(1, 1, 1);
-      const material = new MeshBasicMaterial({ color: 0x00ff00 });
-      
-      const mesh = new window.InstancedMesh2(highGeometry, material, {
-        capacity: 100,
-        renderer: window.renderer
-      });
-      
-      mesh.addLOD(midGeometry, material, 30);  // LOD 1 at 30 units
-      mesh.addLOD(lowGeometry, material, 60);  // LOD 2 at 60 units
+      const mesh = window.testHelpers.createMultiLODMesh(30, 60);
       
       // Camera at origin looking at -Z with wide FOV
-      window.camera.position.set(0, 0, 0);
-      window.camera.lookAt(0, 0, -1);
-      window.camera.fov = 90;
-      window.camera.near = 1;
-      window.camera.far = 500;
-      window.camera.updateProjectionMatrix();
-      window.camera.updateMatrixWorld();
+      window.testHelpers.setupCamera(
+        { x: 0, y: 0, z: 0 },
+        { x: 0, y: 0, z: -1 },
+        { fov: 90, near: 1, far: 500 }
+      );
       
       // Create 6 instances: 2 for each LOD level
       // All instances in front of camera to stay in frustum
@@ -401,21 +303,18 @@ test.describe('Deterministic LOD Assignment', () => {
         if (index === 5) obj.position.set(15, 0, -78.6);  // ~80 units -> LOD 2
       });
       
-      window.scene.add(mesh);
-      window.testMesh = mesh;
-      
+      window.testHelpers.addToScene(mesh);
       mesh.performFrustumCulling(window.camera);
       
-      const lod0Count = mesh.LODinfo.objects[0].count;
-      const lod1Count = mesh.LODinfo.objects[1].count;
-      const lod2Count = mesh.LODinfo.objects[2].count;
-      const lod0Ids = Array.from(mesh.LODinfo.objects[0].instanceIndex.array.slice(0, lod0Count));
-      const lod1Ids = Array.from(mesh.LODinfo.objects[1].instanceIndex.array.slice(0, lod1Count));
-      const lod2Ids = Array.from(mesh.LODinfo.objects[2].instanceIndex.array.slice(0, lod2Count));
+      const lodInfo = window.testHelpers.getLODInfo(mesh, 3);
       
       return { 
-        lod0Count, lod1Count, lod2Count,
-        lod0Ids, lod1Ids, lod2Ids,
+        lod0Count: lodInfo.counts[0], 
+        lod1Count: lodInfo.counts[1], 
+        lod2Count: lodInfo.counts[2],
+        lod0Ids: lodInfo.ids[0], 
+        lod1Ids: lodInfo.ids[1], 
+        lod2Ids: lodInfo.ids[2],
         totalLevels: mesh.LODinfo.render.levels.length
       };
     });
@@ -430,4 +329,3 @@ test.describe('Deterministic LOD Assignment', () => {
     expect(result.lod2Ids.sort((a, b) => a - b)).toEqual([4, 5]);
   });
 });
-

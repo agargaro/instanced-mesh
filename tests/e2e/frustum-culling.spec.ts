@@ -4,12 +4,20 @@
  * Tests actual WebGL rendering with real camera frustum calculations.
  */
 
-import { test, expect } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
+import { initBrowserHelpers } from './test-utils.js';
+
+// Shared beforeEach setup
+const setupScene = async (page: Page) => {
+  await page.goto('/tests/fixtures/test-scene.html');
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  await page.waitForFunction(() => (window as any).sceneReady === true);
+  await initBrowserHelpers(page);
+};
 
 test.describe('Frustum Culling E2E', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/tests/fixtures/test-scene.html');
-    await page.waitForFunction(() => window.sceneReady === true);
+    await setupScene(page);
   });
 
   test('should render instances within camera frustum', async ({ page }) => {
@@ -32,7 +40,7 @@ test.describe('Frustum Culling E2E', () => {
       const mesh = window.createTestMesh({ count: 100, spread: 0 });
       
       // Move all instances behind the camera
-      mesh.updateInstances((obj, index) => {
+      mesh.updateInstances((obj) => {
         obj.position.set(0, 0, 200); // Behind camera at z=100
       });
       
@@ -80,8 +88,7 @@ test.describe('Frustum Culling E2E', () => {
 
     // Move camera far away
     await page.evaluate(() => {
-      window.camera.position.set(0, 0, 10000);
-      window.camera.updateMatrixWorld();
+      window.testHelpers.setupCamera({ x: 0, y: 0, z: 10000 });
       window.testMesh.performFrustumCulling(window.camera);
     });
 
@@ -143,8 +150,7 @@ test.describe('Frustum Culling E2E', () => {
  */
 test.describe('Deterministic Frustum Culling', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/tests/fixtures/test-scene.html');
-    await page.waitForFunction(() => window.sceneReady === true);
+    await setupScene(page);
   });
 
   test('should cull specific instances outside frustum and keep specific instances inside', async ({ page }) => {
@@ -153,20 +159,14 @@ test.describe('Deterministic Frustum Culling', () => {
       
       const geometry = new BoxGeometry(1, 1, 1);
       const material = new MeshBasicMaterial({ color: 0x00ff00 });
-      
-      const mesh = new window.InstancedMesh2(geometry, material, {
-        capacity: 100,
-        renderer: window.renderer
-      });
-      
+      const mesh = window.testHelpers.createMesh(geometry, material);
       
       // Camera at (0, 0, 50) looking at origin
-      window.camera.position.set(0, 0, 50);
-      window.camera.lookAt(0, 0, 0);
-      window.camera.near = 1;
-      window.camera.far = 200;
-      window.camera.updateProjectionMatrix();
-      window.camera.updateMatrixWorld();
+      window.testHelpers.setupCamera(
+        { x: 0, y: 0, z: 50 },
+        { x: 0, y: 0, z: 0 },
+        { near: 1, far: 200 }
+      );
       
       // Create instances at known positions relative to camera
       // Camera is at z=50 looking toward origin (negative Z direction)
@@ -181,30 +181,24 @@ test.describe('Deterministic Frustum Culling', () => {
         }
       });
       
-      window.scene.add(mesh);
-      window.testMesh = mesh;
-      
+      window.testHelpers.addToScene(mesh);
       mesh.performFrustumCulling(window.camera);
       
-      // Get the rendered instance IDs
-      const renderedCount = mesh.count;
-      const renderedIds = Array.from(mesh.instanceIndex.array.slice(0, renderedCount));
-      
-      return { count: renderedCount, renderedIds };
+      return window.testHelpers.getRenderedInfo(mesh);
     });
     
     // Verify exact count
     expect(result.count).toBe(3);
     
     // Verify specific instances are rendered (0, 2, 4 are in view)
-    expect(result.renderedIds).toContain(0);
-    expect(result.renderedIds).toContain(2);
-    expect(result.renderedIds).toContain(4);
+    expect(result.ids).toContain(0);
+    expect(result.ids).toContain(2);
+    expect(result.ids).toContain(4);
     
     // Verify specific instances are culled (1, 3, 5 are out of view)
-    expect(result.renderedIds).not.toContain(1);
-    expect(result.renderedIds).not.toContain(3);
-    expect(result.renderedIds).not.toContain(5);
+    expect(result.ids).not.toContain(1);
+    expect(result.ids).not.toContain(3);
+    expect(result.ids).not.toContain(5);
   });
 
   test('should correctly handle instances at frustum near/far boundaries', async ({ page }) => {
@@ -213,20 +207,14 @@ test.describe('Deterministic Frustum Culling', () => {
       
       const geometry = new BoxGeometry(1, 1, 1);
       const material = new MeshBasicMaterial({ color: 0x00ff00 });
-      
-      const mesh = new window.InstancedMesh2(geometry, material, {
-        capacity: 100,
-        renderer: window.renderer
-      });
-      
+      const mesh = window.testHelpers.createMesh(geometry, material);
       
       // Camera at origin looking at -Z with specific near/far
-      window.camera.position.set(0, 0, 0);
-      window.camera.lookAt(0, 0, -1);
-      window.camera.near = 10;
-      window.camera.far = 100;
-      window.camera.updateProjectionMatrix();
-      window.camera.updateMatrixWorld();
+      window.testHelpers.setupCamera(
+        { x: 0, y: 0, z: 0 },
+        { x: 0, y: 0, z: -1 },
+        { near: 10, far: 100 }
+      );
       
       // Create instances at boundary positions
       mesh.addInstances(6, (obj, index) => {
@@ -240,26 +228,21 @@ test.describe('Deterministic Frustum Culling', () => {
         }
       });
       
-      window.scene.add(mesh);
-      window.testMesh = mesh;
-      
+      window.testHelpers.addToScene(mesh);
       mesh.performFrustumCulling(window.camera);
       
-      const renderedCount = mesh.count;
-      const renderedIds = Array.from(mesh.instanceIndex.array.slice(0, renderedCount));
-      
-      return { count: renderedCount, renderedIds };
+      return window.testHelpers.getRenderedInfo(mesh);
     });
     
     // Instances 1, 2, 3, 5 should be visible (within near-far range)
-    expect(result.renderedIds).toContain(1);
-    expect(result.renderedIds).toContain(2);
-    expect(result.renderedIds).toContain(3);
-    expect(result.renderedIds).toContain(5);
+    expect(result.ids).toContain(1);
+    expect(result.ids).toContain(2);
+    expect(result.ids).toContain(3);
+    expect(result.ids).toContain(5);
     
     // Instances 0 and 4 should be culled (outside near-far range)
-    expect(result.renderedIds).not.toContain(0);
-    expect(result.renderedIds).not.toContain(4);
+    expect(result.ids).not.toContain(0);
+    expect(result.ids).not.toContain(4);
     
     expect(result.count).toBe(4);
   });
@@ -270,22 +253,16 @@ test.describe('Deterministic Frustum Culling', () => {
       
       const geometry = new BoxGeometry(1, 1, 1);
       const material = new MeshBasicMaterial({ color: 0x00ff00 });
-      
-      const mesh = new window.InstancedMesh2(geometry, material, {
-        capacity: 100,
-        renderer: window.renderer
-      });
-      
+      const mesh = window.testHelpers.createMesh(geometry, material);
       
       // Camera with known FOV to calculate exact frustum boundaries
-      window.camera.position.set(0, 0, 0);
-      window.camera.lookAt(0, 0, -1);
-      window.camera.fov = 90; // 90 degree FOV makes calculations easier
+      window.testHelpers.setupCamera(
+        { x: 0, y: 0, z: 0 },
+        { x: 0, y: 0, z: -1 },
+        { fov: 90, near: 1, far: 100 }
+      );
       window.camera.aspect = 1; // Square aspect ratio
-      window.camera.near = 1;
-      window.camera.far = 100;
       window.camera.updateProjectionMatrix();
-      window.camera.updateMatrixWorld();
       
       // At 90 degree FOV and aspect 1, at distance Z, frustum width = 2*Z
       // At z=-20, frustum extends from x=-20 to x=+20
@@ -302,28 +279,23 @@ test.describe('Deterministic Frustum Culling', () => {
         }
       });
       
-      window.scene.add(mesh);
-      window.testMesh = mesh;
-      
+      window.testHelpers.addToScene(mesh);
       mesh.performFrustumCulling(window.camera);
       
-      const renderedCount = mesh.count;
-      const renderedIds = Array.from(mesh.instanceIndex.array.slice(0, renderedCount));
-      
-      return { count: renderedCount, renderedIds };
+      return window.testHelpers.getRenderedInfo(mesh);
     });
     
     // Instances 0-4 should be visible (inside frustum)
-    expect(result.renderedIds).toContain(0);
-    expect(result.renderedIds).toContain(1);
-    expect(result.renderedIds).toContain(2);
-    expect(result.renderedIds).toContain(3);
-    expect(result.renderedIds).toContain(4);
+    expect(result.ids).toContain(0);
+    expect(result.ids).toContain(1);
+    expect(result.ids).toContain(2);
+    expect(result.ids).toContain(3);
+    expect(result.ids).toContain(4);
     
     // Instances 5-7 should be culled (outside frustum)
-    expect(result.renderedIds).not.toContain(5);
-    expect(result.renderedIds).not.toContain(6);
-    expect(result.renderedIds).not.toContain(7);
+    expect(result.ids).not.toContain(5);
+    expect(result.ids).not.toContain(6);
+    expect(result.ids).not.toContain(7);
     
     expect(result.count).toBe(5);
   });
@@ -334,17 +306,10 @@ test.describe('Deterministic Frustum Culling', () => {
       
       const geometry = new BoxGeometry(1, 1, 1);
       const material = new MeshBasicMaterial({ color: 0x00ff00 });
-      
-      const mesh = new window.InstancedMesh2(geometry, material, {
-        capacity: 200,
-        renderer: window.renderer
-      });
-      
+      const mesh = window.testHelpers.createMesh(geometry, material, 200);
       
       // Camera setup
-      window.camera.position.set(0, 0, 50);
-      window.camera.lookAt(0, 0, 0);
-      window.camera.updateMatrixWorld();
+      window.testHelpers.setupCamera({ x: 0, y: 0, z: 50 });
       
       // Create instances at various positions
       mesh.addInstances(50, (obj, index) => {
@@ -358,25 +323,24 @@ test.describe('Deterministic Frustum Culling', () => {
         );
       });
       
-      window.scene.add(mesh);
-      window.testMesh = mesh;
+      window.testHelpers.addToScene(mesh);
       
       // Culling WITHOUT BVH
       mesh.performFrustumCulling(window.camera);
-      const withoutBVHCount = mesh.count;
-      const withoutBVHIds = Array.from(mesh.instanceIndex.array.slice(0, withoutBVHCount)).sort((a, b) => a - b);
+      const withoutBVH = window.testHelpers.getRenderedInfo(mesh);
+      const withoutBVHIds = [...withoutBVH.ids].sort((a, b) => a - b);
       
       // Create BVH
       mesh.computeBVH();
       
       // Culling WITH BVH
       mesh.performFrustumCulling(window.camera);
-      const withBVHCount = mesh.count;
-      const withBVHIds = Array.from(mesh.instanceIndex.array.slice(0, withBVHCount)).sort((a, b) => a - b);
+      const withBVH = window.testHelpers.getRenderedInfo(mesh);
+      const withBVHIds = [...withBVH.ids].sort((a, b) => a - b);
       
       return {
-        withoutBVH: { count: withoutBVHCount, ids: withoutBVHIds },
-        withBVH: { count: withBVHCount, ids: withBVHIds },
+        withoutBVH: { count: withoutBVH.count, ids: withoutBVHIds },
+        withBVH: { count: withBVH.count, ids: withBVHIds },
         hasBVH: mesh.bvh !== null
       };
     });
@@ -397,17 +361,10 @@ test.describe('Deterministic Frustum Culling', () => {
       
       const geometry = new BoxGeometry(1, 1, 1);
       const material = new MeshBasicMaterial({ color: 0x00ff00 });
-      
-      const mesh = new window.InstancedMesh2(geometry, material, {
-        capacity: 100,
-        renderer: window.renderer
-      });
-      
+      const mesh = window.testHelpers.createMesh(geometry, material);
       
       // Camera looking at origin
-      window.camera.position.set(0, 0, 50);
-      window.camera.lookAt(0, 0, 0);
-      window.camera.updateMatrixWorld();
+      window.testHelpers.setupCamera({ x: 0, y: 0, z: 50 });
       
       // Create 10 instances all in view
       mesh.addInstances(10, (obj, index) => {
@@ -419,33 +376,27 @@ test.describe('Deterministic Frustum Culling', () => {
       mesh.setVisibilityAt(5, false);
       mesh.setVisibilityAt(8, false);
       
-      window.scene.add(mesh);
-      window.testMesh = mesh;
-      
+      window.testHelpers.addToScene(mesh);
       mesh.performFrustumCulling(window.camera);
       
-      const renderedCount = mesh.count;
-      const renderedIds = Array.from(mesh.instanceIndex.array.slice(0, renderedCount));
-      
-      return { count: renderedCount, renderedIds };
+      return window.testHelpers.getRenderedInfo(mesh);
     });
     
     // 10 instances - 3 hidden = 7 visible
     expect(result.count).toBe(7);
     
     // Hidden instances should not be in render list
-    expect(result.renderedIds).not.toContain(2);
-    expect(result.renderedIds).not.toContain(5);
-    expect(result.renderedIds).not.toContain(8);
+    expect(result.ids).not.toContain(2);
+    expect(result.ids).not.toContain(5);
+    expect(result.ids).not.toContain(8);
     
     // Visible instances should be in render list
-    expect(result.renderedIds).toContain(0);
-    expect(result.renderedIds).toContain(1);
-    expect(result.renderedIds).toContain(3);
-    expect(result.renderedIds).toContain(4);
-    expect(result.renderedIds).toContain(6);
-    expect(result.renderedIds).toContain(7);
-    expect(result.renderedIds).toContain(9);
+    expect(result.ids).toContain(0);
+    expect(result.ids).toContain(1);
+    expect(result.ids).toContain(3);
+    expect(result.ids).toContain(4);
+    expect(result.ids).toContain(6);
+    expect(result.ids).toContain(7);
+    expect(result.ids).toContain(9);
   });
 });
-
