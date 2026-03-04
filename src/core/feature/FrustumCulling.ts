@@ -67,7 +67,7 @@ InstancedMesh2.prototype.performFrustumCulling = function (camera: Camera, camer
     for (const object of LODinfo.objects) {
       object.count = 0;
     }
-  } else {
+  } else if (mainMesh._perObjectFrustumCulled || mainMesh._sortObjects) {
     mainMesh.count = 0;
   }
 
