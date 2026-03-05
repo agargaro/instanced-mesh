@@ -457,11 +457,7 @@ export class InstancedMesh2<
         shader.defines['USE_VERTEX_COLOR'] = '';
       }
 
-      if (this._useOpacity) {
-        shader.defines['USE_COLOR_ALPHA'] = '';
-      } else {
-        shader.defines['USE_COLOR'] = '';
-      }
+      shader.defines['USE_COLOR_ALPHA'] = '';
     }
 
     if (this.boneTexture) {
