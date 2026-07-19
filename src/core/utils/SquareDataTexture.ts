@@ -268,6 +268,11 @@ export class SquareDataTexture extends DataTexture {
     const texturePrimaries = this.colorSpace === NoColorSpace ? null : ColorManagement.getPrimaries(this.colorSpace);
     const unpackConversion = this.colorSpace === NoColorSpace || workingPrimaries === texturePrimaries ? gl.NONE : gl.BROWSER_DEFAULT_WEBGL;
 
+    const currentFlipY = gl.getParameter(gl.UNPACK_FLIP_Y_WEBGL);
+    const currentPremultiplyAlpha = gl.getParameter(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL);
+    const currentAlignment = gl.getParameter(gl.UNPACK_ALIGNMENT);
+    const currentColorspaceConversion = gl.getParameter(gl.UNPACK_COLORSPACE_CONVERSION_WEBGL);
+
     gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, this.flipY);
     gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, this.premultiplyAlpha);
     gl.pixelStorei(gl.UNPACK_ALIGNMENT, this.unpackAlignment);
@@ -276,6 +281,11 @@ export class SquareDataTexture extends DataTexture {
     for (const { count, row } of info) {
       gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, row, width, count, glFormat, glType, data, row * width * channels);
     }
+
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, currentFlipY);
+    gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, currentPremultiplyAlpha);
+    gl.pixelStorei(gl.UNPACK_ALIGNMENT, currentAlignment);
+    gl.pixelStorei(gl.UNPACK_COLORSPACE_CONVERSION_WEBGL, currentColorspaceConversion);
 
     this.onUpdate?.(this);
   }
