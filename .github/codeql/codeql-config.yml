@@ -3,3 +3,4 @@ name: "CodeQL config"
 paths-ignore:
   - "node_modules"
   - "examples"
+  - "tests"
