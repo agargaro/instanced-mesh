@@ -1,19 +1,25 @@
 {
   "compilerOptions": {
-    "target": "ES2020",
-    "module": "NodeNext",
-    "moduleResolution": "NodeNext",
-    "strict": true,
     "declaration": true,
-    "sourceMap": true,
     "declarationMap": true,
-    "noImplicitOverride": true,
-    "strictNullChecks": false,
-    "stripInternal": true,
-    "outDir": "dist/src",
     "esModuleInterop": true,
-    "noImplicitAny": false,
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
+    "noErrorTruncation": true,
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitOverride": true,
+    "noImplicitReturns": true,
+    "outDir": "dist/src",
+    "paths": {
+      "@three.ez/instanced-mesh": [
+        "./src/index.js"
+      ]
+    },
     "skipLibCheck": true,
+    "sourceMap": true,
+    "strict": true,
+    "stripInternal": true,
+    "target": "ES2020",
     "types": [
       "vite-plugin-glsl/ext"
     ]
