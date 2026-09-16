@@ -205,7 +205,7 @@ export class InstancedMesh2<
   // HACK TO MAKE IT WORK WITHOUT UPDATE CORE
   /** @internal */ isInstancedMesh = true; // must be set to use instancing rendering
   /** @internal */ instanceMatrix = new InstancedBufferAttribute(new Float32Array(0), 16); // must be init to avoid exception
-  /** @internal */ instanceColor = null; // must be null to avoid exception
+  /** @internal */ instanceColor: InstancedBufferAttribute = null; // must be null to avoid exception
 
   /**
    * The capacity of the instance buffers.
@@ -368,6 +368,7 @@ export class InstancedMesh2<
         return i === materialIndex;
       }
     }
+    return false;
   }
 
   protected initIndexAttribute(): void {
@@ -867,12 +868,11 @@ export class InstancedMesh2<
   /**
    * Frees the GPU-related resources allocated.
    */
-  public dispose(): void {
-    this.dispatchEvent<any>({ type: 'dispose' });
+  public override dispose(): void {
+    super.dispose();
 
     this.matricesTexture.dispose();
     this.colorsTexture?.dispose();
-    this.morphTexture?.dispose();
     this.boneTexture?.dispose();
     this.uniformsTexture?.dispose();
   }
@@ -898,10 +898,3 @@ const _sphere = new Sphere();
 const _tempMat4 = new Matrix4();
 const _tempCol = new Color();
 const _position = new Vector3();
-
-/** @internal */
-declare module 'three' {
-  interface Material {
-    defines: { [key: string]: any };
-  }
-}

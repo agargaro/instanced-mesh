@@ -1,19 +1,29 @@
 {
   "compilerOptions": {
-    "target": "ES2020",
+    "target": "ES2022",
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
     "strict": true,
-    "declaration": true,
-    "sourceMap": true,
-    "declarationMap": true,
+    "allowUnreachableCode": false,
+    "allowUnusedLabels": false,
+    "exactOptionalPropertyTypes": false, // change in v4
+    "strictNullChecks": false, // REMOVE in v4
+    "noImplicitAny": false, // REMOVE in v4
+    "noUncheckedIndexedAccess": false, // change in v4
+    "noPropertyAccessFromIndexSignature": false, // change in v4
     "noImplicitOverride": true,
-    "strictNullChecks": false,
-    "stripInternal": true,
-    "outDir": "dist/src",
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "isolatedModules": true,
+    "isolatedDeclarations": false, // REMOVE in v4
+    "verbatimModuleSyntax": false, // change in v4
+    "moduleDetection": "force",
+    "forceConsistentCasingInFileNames": true,
     "esModuleInterop": true,
-    "noImplicitAny": false,
     "skipLibCheck": true,
+    "noErrorTruncation": true,
+    "stripInternal": true,
+    "useDefineForClassFields": false,
     "types": [
       "vite-plugin-glsl/ext"
     ]
