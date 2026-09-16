@@ -1,4 +1,4 @@
-import { Main, PerspectiveCameraAuto } from '@three.ez/main';
+import { Main, OrthographicCameraAuto } from '@three.ez/main';
 import { AmbientLight, Color, DirectionalLight, MeshLambertMaterial, Scene, SphereGeometry } from 'three';
 import { OrbitControls } from 'three/examples/jsm/Addons.js';
 import { InstancedMesh2 } from '../src/index.js';
@@ -7,11 +7,12 @@ import { PRNG } from './objects/random.js';
 const spawnRange = 10000;
 
 const random = new PRNG(10000);
-const camera = new PerspectiveCameraAuto(50, 0.1, 10000).translateZ(100).translateY(20);
+const camera = new OrthographicCameraAuto(40, false, 0.1, 10000).translateY(20);
 const scene = new Scene();
 const main = new Main();
 main.createView({ scene, camera });
 const controls = new OrbitControls(camera, main.renderer.domElement);
+controls.enableRotate = false;
 controls.update();
 
 const instancedMeshLOD = new InstancedMesh2(new SphereGeometry(5, 30, 15), new MeshLambertMaterial(), { capacity: 400000, useDistanceForLOD: false });

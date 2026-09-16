@@ -303,7 +303,7 @@ export class SquareDataTexture extends DataTexture {
     if (size === 1) {
       this._data[id * stride + offset] = value as number;
     } else {
-      (value as UniformValueObj).toArray(this._data, id * stride + offset);
+      (value as Exclude<UniformValueObj, Matrix4>).toArray(this._data, id * stride + offset); // we exclude matrix4 because of three.js d.ts bug
     }
   }
 
