@@ -22,7 +22,7 @@ export default defineConfig(({ command }) => ({
     glsl(),
     viteStaticCopy({
       targets: [{
-        src: ['LICENSE', 'package.json', 'README.md'],
+        src: ['LICENSE', 'package.json', 'README.md', 'llms.txt'],
         dest: './'
       }]
     })

@@ -2,7 +2,15 @@
 title: Performance Tips
 ---
 
-WIP
-
-// use sort if you have overdraw or transparency
-// dont use bvh if no instances added or if instances are not valorized in callback
+- Enable [sorting](https://agargaro.github.io/instanced-mesh/basics/07-sorting/) if you have overdraw or transparent instances,
+  and use [`createRadixSort`](https://agargaro.github.io/instanced-mesh/api/functions/createradixsort/) for faster sorting.
+- Don't build a [BVH](https://agargaro.github.io/instanced-mesh/basics/09-bvh-build/) if instances are few, highly dynamic, or
+  if they aren't positioned when it is created.
+- Prefer [`updateMatrixPosition`](https://agargaro.github.io/instanced-mesh/api/classes/instancedentity/#updatematrixposition)
+  over `updateMatrix` when only the position changes.
+- Animate only visible instances using the
+  [`onFrustumEnter`](https://agargaro.github.io/instanced-mesh/basics/06-frustum-culling/) callback.
+- Set an initial [`capacity`](https://agargaro.github.io/instanced-mesh/advanced/buffer-capacity/) close to the final number of
+  instances, to avoid resizing buffers.
+- Disable [`perObjectFrustumCulled`](https://agargaro.github.io/instanced-mesh/basics/06-frustum-culling/) if most instances are
+  always visible.

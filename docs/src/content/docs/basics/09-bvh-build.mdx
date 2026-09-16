@@ -2,6 +2,47 @@
 title: Build a BVH
 ---
 
-WIP
+A **BVH** (Bounding Volume Hierarchy) is a spatial index that stores the bounding boxes of all instances. <br/>
+It speeds up [frustum culling](https://agargaro.github.io/instanced-mesh/basics/06-frustum-culling/) and
+[raycasting](https://agargaro.github.io/instanced-mesh/basics/08-raycasting/) by discarding entire branches of the tree at once.
 
-// dynamic and static scenes
+```ts
+iMesh.computeBVH();
+```
+
+:::tip
+Build the BVH **after** positioning all instances. Once created, it is updated automatically when instances move
+(see [`autoUpdateBVH`](https://agargaro.github.io/instanced-mesh/api/classes/instancedmesh2/#autoupdatebvh)).
+:::
+
+### Dynamic and Static Scenes
+
+- **Static or mostly static scenes:** building the BVH once is the fastest option, as culling and raycasting become much cheaper.
+- **Highly dynamic scenes:** updating the BVH can cost more than it saves. Passing a `margin` makes updates faster, or the linear
+  approach may be preferable.
+
+### Configuration
+
+```ts
+iMesh.computeBVH({
+  margin: 10,                  // extra space around each box, for moving instances
+  getBBoxFromBSphere: false,   // compute boxes from the geometry bounding sphere (faster, less precise)
+  accurateCulling: true        // ignore the margin during frustum culling, avoiding false positives (default)
+});
+```
+
+See [`BVHParams`](https://agargaro.github.io/instanced-mesh/api/interfaces/bvhparams/) for more details.
+
+:::note
+`getBBoxFromBSphere` requires a geometry with the bounding sphere centered at the origin.
+:::
+
+### Remove the BVH
+
+```ts
+iMesh.disposeBVH(); // back to the linear approach
+```
+
+:::note
+See the [`InstancedMeshBVH`](https://agargaro.github.io/instanced-mesh/api/classes/instancedmeshbvh/) API for the available methods.
+:::

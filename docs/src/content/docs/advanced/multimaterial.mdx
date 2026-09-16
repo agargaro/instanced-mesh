@@ -2,4 +2,18 @@
 title: Multi Material
 ---
 
-WIP
+`InstancedMesh2` supports multiple materials like a regular `Mesh`: pass an array of materials and use a geometry with groups.
+
+```ts
+const iMesh = new InstancedMesh2(new BoxGeometry(), [
+  new MeshBasicMaterial({ color: 'red' }),
+  new MeshNormalMaterial(),
+  // ...
+]);
+```
+
+Each group is rendered with the corresponding material, and all materials share the same instance data (matrices, colors, uniforms).
+
+:::note
+Frustum culling and sorting are computed once per frame, not once per group.
+:::

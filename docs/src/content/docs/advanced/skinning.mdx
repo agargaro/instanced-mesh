@@ -2,4 +2,38 @@
 title: Skinning
 ---
 
-WIP
+Instances can play skeletal animations, each with its own pose.
+
+```ts
+iMesh.initSkeleton(skeleton);
+
+for (const instance of iMesh.instances) {
+  mixer.setTime(instance.time);
+  instance.updateBones();
+}
+```
+
+[`initSkeleton`](https://agargaro.github.io/instanced-mesh/api/classes/instancedmesh2/#initskeleton) disables the automatic matrix
+update of the bones (they are updated per instance), improving performance.
+
+### Only Visible Instances
+
+To animate only the instances inside the camera frustum, use the
+[`onFrustumEnter`](https://agargaro.github.io/instanced-mesh/basics/06-frustum-culling/) callback:
+
+```ts
+iMesh.onFrustumEnter = (index) => {
+  iMesh.instances[index].updateBones();
+  return true;
+};
+```
+
+:::tip
+[`updateBones`](https://agargaro.github.io/instanced-mesh/api/classes/instancedentity/#updatebones) accepts an optional set of bone
+names to skip, useful to use a simplified animation for distant instances.
+:::
+
+:::note
+See [`createInstancedMesh2From`](https://agargaro.github.io/instanced-mesh/api/functions/createinstancedmesh2from/) to create an
+`InstancedMesh2` from a skinned mesh.
+:::

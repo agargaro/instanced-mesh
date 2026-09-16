@@ -2,4 +2,52 @@
 title: Patch Shader
 ---
 
-WIP
+`InstancedMesh2` renders through indirect instancing, adding a `USE_INSTANCING_INDIRECT` define. <br/>
+three.js shaders are patched automatically, but **external or custom shaders** that check `USE_INSTANCING` must be patched too.
+
+```ts
+import { patchShader } from '@three.ez/instanced-mesh';
+
+const patched = patchShader(externalShaderSource);
+```
+
+[`patchShader`](https://agargaro.github.io/instanced-mesh/api/functions/patchshader/) replaces:
+
+```glsl
+#ifdef USE_INSTANCING
+```
+
+with:
+
+```glsl
+#if defined USE_INSTANCING || defined USE_INSTANCING_INDIRECT
+```
+
+:::note
+This is required for some three.js addons, for example `OutlinePass` and `CurveModifier`.
+:::
+
+### Custom Chunks
+
+When writing a vertex shader from scratch, the library registers custom chunks in three.js
+[`ShaderChunk`](https://threejs.org/docs/#api/en/renderers/shaders/ShaderChunk), so they can be included with `#include <...>`:
+
+- `<instanced_pars_vertex>` — declares `instanceIndex`, `matricesTexture` and the `getInstancedMatrix()` helper.
+- `<instanced_vertex>` — computes `instanceMatrix` (include it inside `main`, before using the matrix).
+- `<instanced_color_pars_vertex>` / `<instanced_color_vertex>` — per-instance color.
+- `<instanced_skinning_pars_vertex>` — per-instance bones (replaces `skinning_pars_vertex`).
+
+```glsl
+#include <instanced_pars_vertex>
+
+void main() {
+  #include <instanced_vertex>
+
+  vec4 worldPosition = instanceMatrix * vec4(position, 1.0);
+  gl_Position = projectionMatrix * modelViewMatrix * worldPosition;
+}
+```
+
+:::note
+The chunks take effect only when `USE_INSTANCING_INDIRECT` is defined, which `InstancedMesh2` sets automatically.
+:::

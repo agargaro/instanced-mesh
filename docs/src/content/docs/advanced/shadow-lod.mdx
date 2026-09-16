@@ -2,4 +2,21 @@
 title: Shadow LOD
 ---
 
-WIP
+Shadow LOD reduces the detail of the geometry used to cast shadows for distant instances, saving GPU time during shadow rendering.
+
+```ts
+iMesh.addShadowLOD(new BoxGeometry(2, 2, 2));
+iMesh.addShadowLOD(new TorusKnotGeometry(0.8, 0.2, 32, 8), 80);
+iMesh.addShadowLOD(new TorusGeometry(0.8, 0.2, 32, 8), 110);
+```
+
+The metric and hysteresis behave like [LOD](https://agargaro.github.io/instanced-mesh/advanced/lod/).
+
+```ts
+iMesh.updateShadowLOD(1, 100);
+iMesh.updateAllShadowLOD([80, 110]);
+```
+
+:::note
+Shadow LODs are independent from render LODs: you can use different geometries and metrics.
+:::
