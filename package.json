@@ -1,6 +1,6 @@
 {
   "name": "@three.ez/instanced-mesh",
-  "version": "0.3.14",
+  "version": "0.3.16",
   "description": "Enhanced InstancedMesh with frustum culling, fast raycasting (using BVH), sorting, visibility management and more.",
   "author": "Andrea Gargaro <devgargaro@gmail.com>",
   "license": "MIT",
@@ -51,23 +51,22 @@
     "publish-major": "npm version major --git-tag-version false && npm run build && cd dist && npm publish --access public"
   },
   "devDependencies": {
-    "@eslint/js": "^9.39.1",
-    "@stylistic/eslint-plugin": "^5.6.1",
-    "@three.ez/main": "^0.5.11",
-    "@types/three": "^0.181.0",
-    "eslint": "^9.39.1",
-    "meshoptimizer": "^0.25.0",
+    "@eslint/js": "^10.0.1",
+    "@stylistic/eslint-plugin": "^5.10.0",
+    "@three.ez/main": "^0.5.12",
+    "@types/three": "^0.186.0",
+    "eslint": "^10.10.0",
+    "meshoptimizer": "^1.2.0",
     "simplex-noise": "^4.0.3",
     "three-hex-tiling": "^0.1.5",
-    "typescript": "^5.9.3",
-    "typescript-eslint": "^8.48.1",
-    "vite": "^7.2.6",
-    "vite-plugin-externalize-deps": "^0.10.0",
-    "vite-plugin-glsl": "^1.5.5",
-    "vite-plugin-static-copy": "^3.1.4"
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.70.0",
+    "vite": "^8.3.0",
+    "vite-plugin-glsl": "^1.6.1",
+    "vite-plugin-static-copy": "^4.1.1"
   },
   "peerDependencies": {
-    "three": ">=0.159.0"
+    "three": ">=0.186.0"
   },
   "dependencies": {
     "bvh.js": "^0.0.13"
