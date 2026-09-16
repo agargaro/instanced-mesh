@@ -21,7 +21,7 @@ export function createRadixSort(target: InstancedMesh2): radixSortCallback {
   };
 
   return function sortFunction(list: InstancedRenderItem[]): void {
-    options.reversed = !!(target.material as Material)?.transparent;
+    options.reversed = !!(target.material as Material)?.transparent; // multimaterials are considered opaque
 
     if (target._capacity > options.aux.length) {
       options.aux.length = target._capacity;

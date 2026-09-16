@@ -235,7 +235,7 @@ InstancedMesh2.prototype.addLevel = function (renderList: LODRenderList, geometr
     object.frustumCulled = false;
     this.patchLevel(object);
     objectsList.push(object);
-    this.add(object); // TODO handle render order?
+    this.add(object);
   } else {
     object = objectsList[objIndex];
     if (material) object.material = material;
@@ -382,6 +382,12 @@ InstancedMesh2.prototype.removeLOD = function (levelIndex, removeObject = true) 
 };
 
 InstancedMesh2.prototype.patchLevel = function (obj: InstancedMesh2): void {
+  Object.defineProperty(obj, 'renderOrder', {
+    get(this: InstancedMesh2) {
+      return this._parentLOD.renderOrder; // TODO reduce overdraw with renderOrder
+    }
+  });
+
   Object.defineProperty(obj, '_lastRenderInfo', {
     get(this: InstancedMesh2) {
       return this._parentLOD._lastRenderInfo;

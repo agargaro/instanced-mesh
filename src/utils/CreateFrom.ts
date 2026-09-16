@@ -14,7 +14,7 @@ export function createInstancedMesh2From<TData = {}>(mesh: Mesh, params: Instanc
   return new InstancedMesh2<TData>(mesh.geometry, mesh.material, params);
 
   function createFromSkinnedMesh<TData = {}>(mesh: SkinnedMesh): InstancedMesh2<TData> {
-    const instancedMesh = new InstancedMesh2<TData>(mesh.geometry, mesh.material, params);
+    const instancedMesh = new InstancedMesh2<TData>(mesh.geometry.clone(), mesh.material, params);
     instancedMesh.initSkeleton(mesh.skeleton);
     return instancedMesh;
   }

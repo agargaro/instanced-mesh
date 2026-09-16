@@ -31,6 +31,7 @@ declare module '../InstancedMesh2.js' {
      */
     performFrustumCulling(camera: Camera, cameraLOD?: Camera): void;
 
+    /** @internal */ updateLastRenderInfo(frame: number, camera: Camera, shadowCamera: Camera | null): void;
     /** @internal */ frustumCullingAlreadyPerformed(frame: number, camera: Camera, shadowCamera: Camera | null): boolean;
     /** @internal */ frustumCulling(camera: Camera): void;
     /** @internal */ updateIndexArray(): void;
@@ -70,7 +71,7 @@ InstancedMesh2.prototype.performFrustumCulling = function (camera: Camera, camer
     for (const object of LODinfo.objects) {
       object.count = 0;
     }
-  } else {
+  } else if (mainMesh._perObjectFrustumCulled || mainMesh._sortObjects) {
     mainMesh.count = 0;
   }
 
@@ -80,16 +81,20 @@ InstancedMesh2.prototype.performFrustumCulling = function (camera: Camera, camer
   else mainMesh.frustumCulling(camera);
 };
 
+InstancedMesh2.prototype.updateLastRenderInfo = function (frame, camera, shadowCamera) {
+  const lastRenderInfo = this._lastRenderInfo;
+  lastRenderInfo.frame = frame;
+  lastRenderInfo.camera = camera;
+  lastRenderInfo.shadowCamera = shadowCamera;
+};
+
 InstancedMesh2.prototype.frustumCullingAlreadyPerformed = function (frame, camera, shadowCamera) {
   const lastRenderInfo = this._lastRenderInfo;
   if (lastRenderInfo.frame === frame && lastRenderInfo.camera === camera && lastRenderInfo.shadowCamera === shadowCamera) {
     return true;
   }
 
-  lastRenderInfo.frame = frame;
-  lastRenderInfo.camera = camera;
-  lastRenderInfo.shadowCamera = shadowCamera;
-
+  this.updateLastRenderInfo(frame, camera, shadowCamera);
   return false;
 };
 
@@ -233,16 +238,16 @@ InstancedMesh2.prototype.linearCulling = function (camera: Camera) {
 
 InstancedMesh2.prototype.frustumCullingLOD = function (LODrenderList: LODRenderList, camera: Camera, cameraLOD: Camera) {
   const { count, levels } = LODrenderList;
-  const isShadowRendering = camera !== cameraLOD;
-  const sortObjects = !isShadowRendering && this._sortObjects; // sort is disabled when render shadows
 
   for (let i = 0; i < levels.length; i++) {
-    count[i] = 0;
+    if (!levels[i].object.instanceIndex) return;
 
-    if (levels[i].object.instanceIndex) {
-      levels[i].object.instanceIndex._needsUpdate = true; // TODO improve
-    }
+    count[i] = 0;
+    levels[i].object.instanceIndex._needsUpdate = true; // TODO improve
   }
+
+  const isShadowRendering = camera !== cameraLOD;
+  const sortObjects = !isShadowRendering && this._sortObjects; // sort is disabled when render shadows
 
   _projScreenMatrix.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse).multiply(this.matrixWorld);
   _invMatrixWorld.copy(this.matrixWorld).invert();
@@ -381,10 +386,10 @@ InstancedMesh2.prototype.linearCullingLOD = function (LODrenderList: LODRenderLi
 
     if (_frustum.intersectsSphere(_sphere)) {
       if (sortObjects) {
-        if (!onFrustumEnter || onFrustumEnter(i, camera, cameraLOD)) continue;
-
-        const distance = _sphere.center.distanceToSquared(_cameraLODPos);
-        _renderList.push(distance, i);
+        if (!onFrustumEnter || onFrustumEnter(i, camera, cameraLOD)) {
+          const distance = _sphere.center.distanceToSquared(_cameraLODPos);
+          _renderList.push(distance, i);
+        }
       } else {
         let metric: number;
         if (isPerspectiveCamera) {
