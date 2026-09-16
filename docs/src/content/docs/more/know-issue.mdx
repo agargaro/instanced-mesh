@@ -2,4 +2,16 @@
 title: Know Issue
 ---
 
-WIP
+### Limitations
+
+- Works only with [`WebGLRenderer`](https://threejs.org/docs/#api/en/renderers/WebGLRenderer).
+- A geometry **cannot be shared** between two `InstancedMesh2`: if reused, it is cloned automatically (an instance index
+  attribute is added to it).
+- Morph target data (`morphTexture`) is a plain `DataTexture` and does not support
+  [partial updates](https://agargaro.github.io/instanced-mesh/advanced/texture-partial-update/).
+- `createEntities` uses more memory: enable it only when instances need to be manipulated individually.
+
+### Open Issues
+
+For the current list of bugs and known limitations, search the
+[GitHub issues](https://github.com/three-ez/instanced-mesh/issues).

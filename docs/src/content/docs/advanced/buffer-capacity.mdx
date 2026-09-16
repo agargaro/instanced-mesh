@@ -2,6 +2,34 @@
 title: Buffer capacity
 ---
 
-WIP
+The [`capacity`](https://agargaro.github.io/instanced-mesh/api/classes/instancedmesh2/#capacity) is the maximum number of
+instances the internal buffers can hold. <br/>
+It defaults to `1000` and grows automatically when needed, so it doesn't have to be exact.
 
-// reduce buffer capacity
+```ts
+const iMesh = new InstancedMesh2(geo, mat, { capacity: 10000 });
+```
+
+### Automatic Growth
+
+When the requested number of instances exceeds the current `capacity`, the buffers are resized to:
+
+```text
+newCapacity = capacity + (capacity >> 1) + 512
+```
+
+That is about **1.5x** the current capacity plus `512`, and the calculation is repeated until the new capacity is large enough. <br/>
+This is the same geometric growth strategy used by JavaScript arrays in V8: adding instances one by one is amortized **O(1)**,
+and resizes become rarer as the mesh grows.
+
+### Resize Buffers
+
+Buffers can also be resized manually, for example to **reduce** the capacity and free memory after many instances have been removed:
+
+```ts
+iMesh.resizeBuffers(1000);
+```
+
+:::caution
+Do not set a capacity lower than the current number of instances, otherwise instances will be lost.
+:::

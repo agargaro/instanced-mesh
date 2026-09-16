@@ -2,6 +2,60 @@
 title: LOD
 ---
 
-WIP
+Level of Detail renders distant instances using progressively simpler geometries. <br/>
+Each LOD level is a separate `InstancedMesh2`, so **each level costs one draw call**.
 
-// specifica quante draw call
+```ts
+const iMesh = new InstancedMesh2(new SphereGeometry(5, 30, 15), mat, { capacity: 100000 });
+
+iMesh.addLOD(new SphereGeometry(5, 20, 10), mat, 100);
+iMesh.addLOD(new SphereGeometry(5, 10, 5), mat, 200);
+iMesh.addLOD(new SphereGeometry(5, 5, 3), mat, 300);
+```
+
+### Metric
+
+The metric is the **distance from the camera** by default, and metrics must increase. <br/>
+Set [`useDistanceForLOD`](https://agargaro.github.io/instanced-mesh/api/interfaces/instancedmesh2params/#usedistanceforlod)
+to `false` to use the **screen size** instead, with decreasing metrics:
+
+```ts
+const iMesh = new InstancedMesh2(geo, mat, { useDistanceForLOD: false });
+
+iMesh.addLOD(geometryMid, mat, 0.1);
+iMesh.addLOD(geometryLow, mat, 0.02);
+```
+
+An optional `hysteresis` (between `0` and `1`) prevents flickering when an instance is close to a threshold:
+
+```ts
+iMesh.addLOD(geometryMid, mat, 100, 0.1);
+```
+
+### First LOD
+
+The first LOD (index `0`) is the mesh itself and doesn't need to be added. Its metric defaults to `0` when distance-based or
+`Infinity` when screen-size based. <br/>
+Change it with
+[`setFirstLODMetric`](https://agargaro.github.io/instanced-mesh/api/classes/instancedmesh2/#setfirstlodmetric) **before**
+`addLOD`: it's useful when the parent mesh is **not** the most detailed one, so a more detailed level is used near the camera.
+
+```ts
+iMesh.setFirstLODMetric(50);
+```
+
+### Update and Remove
+
+```ts
+iMesh.updateLOD(1, 150);         // change the metric of a level
+iMesh.updateAllLOD([100, 200]);  // change all metrics
+iMesh.removeLOD(2);              // remove a level
+```
+
+:::note
+Screen-size LOD is required for orthographic cameras: distance-based LOD is not supported there.
+:::
+
+:::tip
+With distance-based LOD, [building a BVH](https://agargaro.github.io/instanced-mesh/basics/09-bvh-build/) makes LOD selection faster.
+:::

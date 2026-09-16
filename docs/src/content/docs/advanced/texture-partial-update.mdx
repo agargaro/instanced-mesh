@@ -2,4 +2,25 @@
 title: Texture Partial Update
 ---
 
-WIP
+Instance data (matrices, colors, uniforms, bones) is stored in
+[`SquareDataTexture`](https://agargaro.github.io/instanced-mesh/api/classes/squaredatatexture/) objects. <br/>
+When only a few instances change, only the texture rows containing them are uploaded to the GPU, instead of the whole texture.
+
+Every setter marks its instance for update automatically:
+
+```ts
+iMesh.setMatrixAt(index, matrix);
+iMesh.setColorAt(index, color);
+iMesh.setUniformAt(index, 'metalness', 0.5);
+```
+
+### Configuration
+
+```ts
+iMesh.matricesTexture.partialUpdate = false; // always upload the full texture
+iMesh.matricesTexture.maxUpdateCalls = 10;   // fall back to a full update above this many uploads
+```
+
+:::note
+This optimization is mostly automatic: it only matters when many instances change in the same frame.
+:::

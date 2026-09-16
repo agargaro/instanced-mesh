@@ -2,4 +2,33 @@
 title: Uniforms per Instance
 ---
 
-WIP
+Each instance can have its own shader uniform values, stored in a texture and automatically injected into the material shader.
+
+```ts
+iMesh.initUniformsPerInstance({
+  vertex: { wave: 'float' },
+  fragment: { metalness: 'float', roughness: 'float', emissive: 'vec3' }
+});
+```
+
+Supported types are `float`, `vec2`, `vec3`, `vec4`, `mat3` and `mat4`.
+
+### Set and Get Values
+
+```ts
+iMesh.setUniformAt(index, 'metalness', 0.5);
+
+// if an array of instances has been created
+iMesh.instances[index].setUniform('emissive', new Color('white'));
+```
+
+Values can be a `number` or a three.js object (`Vector2`, `Vector3`, `Vector4`, `Color`, `Matrix3`, `Matrix4`).
+
+:::caution
+[`initUniformsPerInstance`](https://agargaro.github.io/instanced-mesh/api/classes/instancedmesh2/#inituniformsperinstance)
+must be called **before** setting or getting any uniform, otherwise an error is thrown.
+:::
+
+:::tip
+Declare a uniform in `vertex` to fetch it in the vertex shader, otherwise declare it in `fragment`.
+:::

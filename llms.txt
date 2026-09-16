@@ -1,0 +1,48 @@
+# InstancedMesh2 (@three.ez/instanced-mesh)
+
+> Enhanced `InstancedMesh` for three.js with dynamic capacity, per-instance frustum culling, fast raycasting via a dynamic BVH, sorting, per-instance visibility/opacity/uniforms, LOD, shadow LOD and skinning.
+
+Use this library when a three.js scene needs to render and efficiently manage thousands to millions of instances with per-instance control. It is an alternative to `THREE.InstancedMesh`.
+
+## Installation
+
+```bash
+npm install @three.ez/instanced-mesh three
+```
+
+```ts
+import { InstancedMesh2 } from '@three.ez/instanced-mesh';
+
+const mesh = new InstancedMesh2(geometry, material, { capacity: 1000 });
+mesh.addInstances(1000, (obj, index) => {
+  obj.position.x = index;
+});
+scene.add(mesh);
+```
+
+## Core API
+
+- `new InstancedMesh2(geometry, material, params?)` - `params`: `{ capacity = 1000, createEntities = false, allowsEuler = false, useDistanceForLOD = false, renderer? }`.
+- `addInstances(count, callback)` / `removeInstances(...ids)` / `clearInstances()` - dynamic capacity, buffers expand automatically.
+- `instances[i]` - `InstancedEntity` (Object3D-like) when `createEntities: true`. Call `instance.updateMatrix()` after transforms.
+- `computeBVH({ margin }?)` - build the dynamic BVH to accelerate raycasting and frustum culling.
+- `sortObjects` + `customSort = createRadixSort(mesh)` - sort instances to reduce overdraw and render transparency.
+- `setVisibilityAt(id, value)` / `setOpacityAt(id, value)` / `setColorAt(id, color)`.
+- `initUniformsPerInstance({ fragment: { ... } })` + `setUniformAt(id, name, value)` - per-instance shader uniforms.
+- `addLOD(geometry, material, distance)` / `addShadowLOD(geometry, distance?)` - level of detail.
+- `initSkeleton(skeleton)` + `setBonesAt(id)` - instanced skinning.
+
+## Key notes
+
+- Requires three.js >= 0.159.0.
+- Geometry cannot be shared: if reused across meshes it is cloned automatically.
+- Call `updateMatrix()` on an `InstancedEntity` after changing its transform.
+- Updating a BVH is expensive; build it once instances are mostly static.
+- `capacity` defaults to 1000 and grows automatically.
+
+## Links
+
+- Documentation: https://agargaro.github.io/instanced-mesh/
+- Full LLM context: https://agargaro.github.io/instanced-mesh/llms-full.txt
+- npm: https://www.npmjs.com/package/@three.ez/instanced-mesh
+- Repository: https://github.com/three-ez/instanced-mesh

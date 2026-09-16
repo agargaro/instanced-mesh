@@ -2,11 +2,35 @@
 title: FAQ
 ---
 
-WIP
+### When should I not use `InstancedMesh2`?
 
-// When not to use?
-// why don't instances update?
-// why do they suddenly disappear?
-// don't use instancedBufferAttribute.
-// updateInstances doesn't update instances correctly. Are you using createEntities? // otherwise you have no persistent state.
-// when I start from 0 instances and add instances later, raycasting doesn't work. Use BVH or watch out for the boundingbox
+If none of the extra features are needed, plain `InstancedMesh` is slightly faster when rendering ***all*** instances, because
+indirect instancing adds a small overhead.
+
+### Why don't my instance changes show up?
+
+If `createEntities` is `false`, instances have no persistent `position`, `scale` and `quaternion`: they are reset on each update. <br/>
+Either enable `createEntities`, or update the matrices directly:
+
+```ts
+iMesh.updateInstances((obj) => {
+  obj.scale.x += 0.1;
+});
+```
+
+### Why do instances suddenly disappear?
+
+1. **Frustum culling** may discard them if the geometry bounding sphere is wrong (a centered geometry works best).
+2. The **bounding sphere** may be stale after transforming instances: call `computeBoundingSphere`.
+3. If a **BVH** is used, it is updated automatically only when `autoUpdateBVH` is `true`.
+
+### Can I use `InstancedBufferAttribute` for instance data?
+
+No. `InstancedMesh2` stores instance data in textures (`matricesTexture`, `colorsTexture`, ...) and uses an
+`InstancedBufferAttribute` only for the indices to render. Use the provided setters instead.
+
+### Raycasting doesn't work when instances are added after the first render
+
+Bounding volumes are computed during the first render, so a mesh that starts empty may not be raycastable later. <br/>
+Either [build a BVH](https://agargaro.github.io/instanced-mesh/basics/09-bvh-build/) or call `computeBoundingSphere` /
+`computeBoundingBox` after adding instances.
