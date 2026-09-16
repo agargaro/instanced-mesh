@@ -22,7 +22,7 @@ import { SquareDataTexture } from './utils/SquareDataTexture.js';
 export interface InstancedMesh2Params {
   /**
    * If `true`, LOD uses camera distance; otherwise it uses screen size.
-   * @default undefined
+   * @default true
    */
   useDistanceForLOD?: boolean;
   /**
@@ -188,6 +188,7 @@ export class InstancedMesh2<
   /** @internal */ _geometry: TGeometry;
   /** @internal */ _parentLOD: InstancedMesh2;
   /** @internal */ _lastRenderInfo: RenderInfo;
+  /** @internal */ _useDistanceForLOD: boolean;
   protected readonly _allowsEuler: boolean;
   protected readonly _tempInstance: InstancedEntity;
   protected _useOpacity = false;
@@ -267,7 +268,7 @@ export class InstancedMesh2<
     this._renderer = renderer;
     this._capacity = capacity;
     this._parentLOD = LOD;
-    this._useDistanceForLOD = useDistanceForLOD;
+    this._useDistanceForLOD = useDistanceForLOD ?? true;
     this._geometry = geometry;
     this.material = material;
     this._allowsEuler = allowsEuler ?? false;
@@ -575,6 +576,22 @@ export class InstancedMesh2<
     const offset = index * 16;
     const array = this.matricesTexture._data;
 
+    position.x = array[offset + 12];
+    position.y = array[offset + 13];
+    position.z = array[offset + 14];
+
+    return this._getMaxScaleOnAxisAt(offset, array);
+  }
+
+  /** @internal */
+  public getMaxScaleOnAxisAt(index: number): number {
+    const offset = index * 16;
+    const array = this.matricesTexture._data;
+    return this._getMaxScaleOnAxisAt(offset, array);
+  }
+
+  /** @internal */
+  public _getMaxScaleOnAxisAt(offset: number, array: TypedArray): number {
     const te0 = array[offset + 0];
     const te1 = array[offset + 1];
     const te2 = array[offset + 2];
@@ -589,10 +606,6 @@ export class InstancedMesh2<
     const te9 = array[offset + 9];
     const te10 = array[offset + 10];
     const scaleZSq = te8 * te8 + te9 * te9 + te10 * te10;
-
-    position.x = array[offset + 12];
-    position.y = array[offset + 13];
-    position.z = array[offset + 14];
 
     return Math.sqrt(Math.max(scaleXSq, scaleYSq, scaleZSq));
   }

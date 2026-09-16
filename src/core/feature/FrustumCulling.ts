@@ -53,9 +53,12 @@ const _cameraPos = new Vector3();
 const _cameraLODPos = new Vector3();
 const _position = new Vector3();
 const _sphere = new Sphere();
-const _instanceMatrix = new Matrix4();
 
 InstancedMesh2.prototype.performFrustumCulling = function (camera: Camera, cameraLOD = camera) {
+  if ((camera as OrthographicCamera).isOrthographicCamera && this._useDistanceForLOD) {
+    throw new Error('Distance-based LOD is not supported for orthographic cameras. Set useDistanceForLOD to false during creation.');
+  }
+
   const mainMesh = this._parentLOD ?? this;
   const LODinfo = mainMesh.LODinfo;
   let LODrenderList: LODRenderList;
@@ -289,12 +292,11 @@ InstancedMesh2.prototype.BVHCullingLOD = function (LODrenderList: LODRenderList,
   const instancesArrayCount = this._instancesArrayCount;
   const onFrustumEnter = this.onFrustumEnter;
 
-  const orthographicCamera = camera as OrthographicCamera;
-  const viewSize = (orthographicCamera.top - orthographicCamera.bottom) / orthographicCamera.zoom;
-  const perspectiveCamera = camera as PerspectiveCamera;
-  const invProj = (Math.tan(perspectiveCamera.fov * 0.5 * (Math.PI / 180))) ** 2;
-  const useDistanceForLOD = this._useDistanceForLOD;
-  const isPerspectiveCamera = perspectiveCamera.isPerspectiveCamera;
+  const isPerspectiveCamera = (camera as PerspectiveCamera).isPerspectiveCamera;
+  // TODO check if width is less than height and adjust viewSize accordingly
+  const viewSize = ((camera as OrthographicCamera).top - (camera as OrthographicCamera).bottom) / (camera as OrthographicCamera).zoom; // if orthographic
+  const invProj = (Math.tan((camera as PerspectiveCamera).fov * 0.5 * (Math.PI / 180))) ** 2; // if perspective
+  const baseRadius = this._geometry.boundingSphere.radius;
 
   if (sortObjects) {
     this.bvh.frustumCulling(_projScreenMatrix, (node: BVHNode<{}, number>) => {
@@ -306,20 +308,14 @@ InstancedMesh2.prototype.BVHCullingLOD = function (LODrenderList: LODRenderList,
       }
     });
   } else {
-    if (useDistanceForLOD) {
-      // take advantage of frustumCullingLOD method to get distances and LOD from the bvh itself
+    if (this._useDistanceForLOD) {
       this.bvh.frustumCullingLOD(_projScreenMatrix, _cameraLODPos, levels, (node: BVHNode<{}, number>, level: number) => {
         const index = node.object;
         if (index < instancesArrayCount && this.getVisibilityAt(index)) {
           if (level === null) {
-            let metric: number;
-            if (isPerspectiveCamera) {
-              const distance = this.getPositionAt(index).distanceToSquared(_cameraLODPos); // distance can be get by BVH, but is not the distance from center
-              metric = getLODMetricPerspective(useDistanceForLOD, _sphere, invProj, distance);
-            } else {
-              metric = getLODMetricOrthographic(useDistanceForLOD, _sphere, viewSize);
-            }
-            level = this.getObjectLODIndex(levels, metric, isPerspectiveCamera);
+            // distance can be get by BVH, but is not the distance from center
+            const distance = this.getPositionAt(index).distanceToSquared(_cameraLODPos);
+            level = this.getObjectLODIndex(levels, distance, true); // TODO create separate method for better performance? check benchmark i don't think is worth
           }
 
           if (!onFrustumEnter || onFrustumEnter(index, camera, cameraLOD, level)) {
@@ -330,17 +326,20 @@ InstancedMesh2.prototype.BVHCullingLOD = function (LODrenderList: LODRenderList,
     } else {
       this.bvh.frustumCulling(_projScreenMatrix, (node: BVHNode<{}, number>) => {
         const index = node.object;
+
         if (index < instancesArrayCount && this.getVisibilityAt(index)) {
           let metric: number;
-          this.getMatrixAt(index, _instanceMatrix);
-          _sphere.radius = this._geometry.boundingSphere.radius;
-          _sphere.radius *= _instanceMatrix.getMaxScaleOnAxis();
+
           if (isPerspectiveCamera) {
-            const distance = this.getPositionAt(index).distanceToSquared(_cameraLODPos); // distance can be get by BVH, but is not the distance from center
-            metric = getLODMetricPerspective(useDistanceForLOD, _sphere, invProj, distance);
+            const scale = this.getPositionAndMaxScaleOnAxisAt(index, _position);
+            const radius = baseRadius * scale;
+            const distance = _position.distanceToSquared(_cameraLODPos); // distance can be get by BVH, but is not the distance from center
+            metric = getPerspectiveScreenPercentage(radius, invProj, distance);
           } else {
-            metric = getLODMetricOrthographic(useDistanceForLOD, _sphere, viewSize);
+            const radius = baseRadius * this.getMaxScaleOnAxisAt(index);
+            metric = getOrthographicScreenPercentage(radius, viewSize);
           }
+
           const level = this.getObjectLODIndex(levels, metric, isPerspectiveCamera);
 
           if (!onFrustumEnter || onFrustumEnter(index, camera, cameraLOD, level)) {
@@ -351,16 +350,6 @@ InstancedMesh2.prototype.BVHCullingLOD = function (LODrenderList: LODRenderList,
     }
   }
 };
-
-function getLODMetricPerspective(useDistanceForLOD: boolean, sphere: Sphere, invProj: number, distance: number): number {
-  return useDistanceForLOD ? distance : ((sphere.radius ** 2) / (distance * invProj));
-}
-
-function getLODMetricOrthographic(useDistanceForLOD: boolean, sphere: Sphere, viewHeight: number): number {
-  // TODO refactor
-  if (useDistanceForLOD) throw new Error('BatchedMesh: useDistanceForLOD cannot be used with orthographic camera.');
-  return sphere.radius * 2 / viewHeight;
-}
 
 InstancedMesh2.prototype.linearCullingLOD = function (LODrenderList: LODRenderList, indexes: Uint32Array[], sortObjects: boolean, camera: Camera, cameraLOD: Camera) {
   const { count, levels } = LODrenderList;
@@ -374,12 +363,11 @@ InstancedMesh2.prototype.linearCullingLOD = function (LODrenderList: LODRenderLi
 
   _frustum.setFromProjectionMatrix(_projScreenMatrix);
 
-  const orthographicCamera = camera as OrthographicCamera;
-  const viewSize = (orthographicCamera.top - orthographicCamera.bottom) / orthographicCamera.zoom;
-  const perspectiveCamera = camera as PerspectiveCamera;
-  const invProj = (Math.tan(perspectiveCamera.fov * 0.5 * (Math.PI / 180))) ** 2;
+  const isPerspectiveCamera = (camera as PerspectiveCamera).isPerspectiveCamera;
+  // TODO check if width is less than height and adjust viewSize accordingly
+  const viewSize = ((camera as OrthographicCamera).top - (camera as OrthographicCamera).bottom) / (camera as OrthographicCamera).zoom; // if orthographic
+  const invProj = (Math.tan((camera as PerspectiveCamera).fov * 0.5 * (Math.PI / 180))) ** 2; // if perspective
   const useDistanceForLOD = this._useDistanceForLOD;
-  const isPerspectiveCamera = perspectiveCamera.isPerspectiveCamera;
 
   for (let i = 0; i < instancesArrayCount; i++) {
     if (!this.getActiveAndVisibilityAt(i)) continue;
@@ -401,9 +389,9 @@ InstancedMesh2.prototype.linearCullingLOD = function (LODrenderList: LODRenderLi
         let metric: number;
         if (isPerspectiveCamera) {
           const distance = _sphere.center.distanceToSquared(_cameraLODPos);
-          metric = getLODMetricPerspective(useDistanceForLOD, _sphere, invProj, distance);
+          metric = getLODMetricPerspective(useDistanceForLOD, _sphere.radius, invProj, distance);
         } else {
-          metric = getLODMetricOrthographic(useDistanceForLOD, _sphere, viewSize);
+          metric = getOrthographicScreenPercentage(_sphere.radius, viewSize);
         }
         const levelIndex = this.getObjectLODIndex(levels, metric, isPerspectiveCamera);
 
@@ -414,3 +402,15 @@ InstancedMesh2.prototype.linearCullingLOD = function (LODrenderList: LODRenderLi
     }
   }
 };
+
+function getLODMetricPerspective(useDistanceForLOD: boolean, bSphereRadius: number, invProj: number, distance: number): number {
+  return useDistanceForLOD ? distance : ((bSphereRadius ** 2) / (distance * invProj));
+}
+
+function getPerspectiveScreenPercentage(bSphereRadius: number, invProj: number, distance: number): number {
+  return (bSphereRadius ** 2) / (distance * invProj);
+}
+
+function getOrthographicScreenPercentage(bSphereRadius: number, viewHeight: number): number {
+  return bSphereRadius * 2 / viewHeight;
+}
