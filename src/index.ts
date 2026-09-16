@@ -13,6 +13,7 @@ export * from './core/feature/Uniforms.js';
 
 export * from './core/utils/GLInstancedBufferAttribute.js';
 export * from './core/utils/InstancedRenderList.js';
+export * from './core/utils/PropertiesOverride.js';
 export * from './core/utils/SquareDataTexture.js';
 
 export * from './shaders/ShaderChunk.js';

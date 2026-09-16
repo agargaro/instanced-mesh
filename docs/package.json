@@ -15,6 +15,7 @@
     "@astrojs/check": "^0.9.4",
     "@astrojs/mdx": "^4.1.1",
     "@astrojs/starlight": "^0.32.2",
+    "@playwright/test": "^1.63.0",
     "@stackblitz/sdk": "^1.11.0",
     "@three.ez/instanced-mesh": "^0.3.1",
     "@three.ez/main": "latest",

@@ -1,6 +1,6 @@
-import { Asset, Main, PerspectiveCameraAuto } from '@three.ez/main';
+import { load, Main, PerspectiveCameraAuto } from '@three.ez/main';
 import { AnimationMixer, DirectionalLight, Fog, HemisphereLight, Mesh, MeshStandardMaterial, PlaneGeometry, Scene } from 'three';
-import { GLTF, GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { InstancedMesh2 } from '../src/index.js';
 
 const count = 1024;
@@ -22,7 +22,7 @@ light.position.set(200, 1000, 50);
 const ground = new Mesh(new PlaneGeometry(1000000, 1000000), new MeshStandardMaterial({ color: 0x669933 }));
 ground.rotation.x = -Math.PI / 2;
 
-const glb = await Asset.load<GLTF>(GLTFLoader, 'https://threejs.org/examples/models/gltf/Horse.glb');
+const glb = await load(GLTFLoader, 'https://threejs.org/examples/models/gltf/Horse.glb');
 const dummy = glb.scene.children[0] as Mesh;
 
 const horses = new InstancedMesh2(dummy.geometry, dummy.material, { capacity: count });

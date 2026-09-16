@@ -1,10 +1,11 @@
-import { AttachedBindMode, BindMode, Box3, BufferAttribute, BufferGeometry, Camera, Color, ColorManagement, ColorRepresentation, DataTexture, DetachedBindMode, InstancedBufferAttribute, Material, Matrix4, Mesh, MeshDistanceMaterial, Object3D, Object3DEventMap, Scene, Skeleton, Sphere, TypedArray, Vector3, WebGLProgramParametersWithUniforms, WebGLRenderer } from 'three';
+import { AttachedBindMode, BindMode, Box3, BufferAttribute, BufferGeometry, Camera, Color, ColorManagement, ColorRepresentation, DataTexture, DetachedBindMode, InstancedBufferAttribute, Material, Matrix4, Mesh, Object3D, Object3DEventMap, Scene, Skeleton, Sphere, TypedArray, Vector3, WebGLProgramParametersWithUniforms, WebGLRenderer } from 'three';
 import { CustomSortCallback, OnFrustumEnterCallback } from './feature/FrustumCulling.js';
 import { Entity } from './feature/Instances.js';
 import { LODInfo } from './feature/LOD.js';
 import { InstancedEntity } from './InstancedEntity.js';
 import { BVHParams, InstancedMeshBVH } from './InstancedMeshBVH.js';
 import { GLInstancedBufferAttribute } from './utils/GLInstancedBufferAttribute.js';
+import { patchProperties, unpatchProperties } from './utils/PropertiesOverride.js';
 import { SquareDataTexture } from './utils/SquareDataTexture.js';
 
 // TODO: Add check to not update partial texture if needsuupdate already true
@@ -15,11 +16,18 @@ import { SquareDataTexture } from './utils/SquareDataTexture.js';
 // TODO LOD: BVH and handle raycastOnlyFrustum?;
 // TODO: check if check first and last material is right.. we should use the first valid index instead
 // TODO: use visible = false instead count = 0 for unused LOD?
+// TODO: convert also morph texture to squared texture to use partial update
+// TODO: sorting per each LODlevel
 
 /**
  * Parameters for configuring an `InstancedMesh2` instance.
  */
 export interface InstancedMesh2Params {
+  /**
+   * If `true`, LOD uses camera distance; otherwise it uses screen size.
+   * @default true
+   */
+  useDistanceForLOD?: boolean;
   /**
    * Determines the maximum number of instances that buffers can hold.
    * The buffers will be expanded automatically if necessary.
@@ -183,15 +191,14 @@ export class InstancedMesh2<
   /** @internal */ _geometry: TGeometry;
   /** @internal */ _parentLOD: InstancedMesh2;
   /** @internal */ _lastRenderInfo: RenderInfo;
+  /** @internal */ _useDistanceForLOD: boolean;
+  /** @internal */ _useOpacity = false;
   protected readonly _allowsEuler: boolean;
   protected readonly _tempInstance: InstancedEntity;
-  protected _useOpacity = false;
   protected _currentMaterial: Material = null;
   protected _customProgramCacheKeyBase: () => string = null;
   protected _onBeforeCompileBase: (parameters: WebGLProgramParametersWithUniforms, renderer: WebGLRenderer) => void = null;
-  protected _propertiesGetBase: (obj: unknown) => unknown = null;
-  protected _propertiesGetMap = new WeakMap<Material, (obj: unknown) => unknown>();
-  protected _properties = new WeakMap<Material, unknown>();
+  protected _definesBase: { [key: string]: any } = null;
   protected _freeIds: number[] = [];
   protected _createEntities: boolean;
 
@@ -254,7 +261,7 @@ export class InstancedMesh2<
     if (!geometry) throw new Error('"geometry" is mandatory.');
     if (!material) throw new Error('"material" is mandatory.');
 
-    const { allowsEuler, renderer, createEntities } = params;
+    const { allowsEuler, renderer, createEntities, useDistanceForLOD } = params;
 
     super(geometry, null);
 
@@ -262,6 +269,7 @@ export class InstancedMesh2<
     this._renderer = renderer;
     this._capacity = capacity;
     this._parentLOD = LOD;
+    this._useDistanceForLOD = useDistanceForLOD ?? true;
     this._geometry = geometry;
     this.material = material;
     this._allowsEuler = allowsEuler ?? false;
@@ -277,44 +285,38 @@ export class InstancedMesh2<
   public override onBeforeShadow(renderer: WebGLRenderer, scene: Scene, camera: Camera, shadowCamera: Camera, geometry: BufferGeometry, depthMaterial: Material, group: any): void {
     this.patchMaterial(renderer, depthMaterial);
 
-    // if multimaterial we compute frustum culling only on first material
-    if (!this.instanceIndex || (group && !this.isFirstGroup(group.materialIndex))) return;
+    this.updateTextures(renderer, depthMaterial);
 
     const frame = renderer.info.render.frame;
-    if (this.autoUpdate && !this.frustumCullingAlreadyPerformed(frame, camera, shadowCamera)) {
+    if (this.instanceIndex && this.autoUpdate && !this.frustumCullingAlreadyPerformed(frame, camera, shadowCamera)) {
       this.performFrustumCulling(shadowCamera, camera);
     }
 
+    if (this.count === 0) return;
+
     this.instanceIndex.update(this._renderer, this.count);
-    this.matricesTexture.update(renderer);
-    this.colorsTexture?.update(renderer);
-    this.uniformsTexture?.update(renderer);
-    this.boneTexture?.update(renderer);
-    // TODO convert also morph texture to squared texture to use partial update
+    this.bindTextures(renderer, depthMaterial);
   }
 
   public override onBeforeRender(renderer: WebGLRenderer, scene: Scene, camera: Camera, geometry: BufferGeometry, material: Material, group: any): void {
     this.patchMaterial(renderer, material);
+
+    this.updateTextures(renderer, material);
 
     if (!this.instanceIndex) {
       this._renderer = renderer;
       return;
     }
 
-    // if multimaterial we compute frustum culling only on first material
-    if (group && !this.isFirstGroup(group.materialIndex)) return;
-
     const frame = renderer.info.render.frame;
     if (this.autoUpdate && !this.frustumCullingAlreadyPerformed(frame, camera, null)) {
       this.performFrustumCulling(camera);
     }
 
+    if (this.count === 0) return;
+
     this.instanceIndex.update(this._renderer, this.count);
-    this.matricesTexture.update(renderer);
-    this.colorsTexture?.update(renderer);
-    this.uniformsTexture?.update(renderer);
-    this.boneTexture?.update(renderer);
-    // TODO convert also morph texture to squared texture to use partial update
+    this.bindTextures(renderer, material);
   }
 
   public override onAfterShadow(renderer: WebGLRenderer, scene: Scene, camera: Camera, shadowCamera: Camera, geometry: BufferGeometry, depthMaterial: Material, group: any): void {
@@ -327,14 +329,36 @@ export class InstancedMesh2<
     this.initIndexAttribute();
   }
 
-  protected isFirstGroup(materialIndex: number): boolean {
-    const materials = this.material as Material[];
+  protected updateTextures(renderer: WebGLRenderer, material: Material): void {
+    const materialProperties = renderer.properties.get(material) as any;
 
-    for (let i = 0; i <= materialIndex; i++) {
-      if (materials[i].visible) {
-        return i === materialIndex;
-      }
-    }
+    this.matricesTexture.update(renderer, materialProperties, 'matricesTexture');
+    this.colorsTexture?.update(renderer, materialProperties, 'colorsTexture');
+    this.uniformsTexture?.update(renderer, materialProperties, 'uniformsTexture');
+    this.boneTexture?.update(renderer, materialProperties, 'boneTexture');
+  }
+
+  protected bindTextures(renderer: WebGLRenderer, material: Material): void {
+    const materialProperties = renderer.properties.get(material) as any;
+    const materialUniforms = materialProperties.uniforms;
+    if (!materialUniforms) return;
+
+    const currentProgramProperties = materialProperties.currentProgram;
+    const currentProgram = currentProgramProperties?.program;
+    if (!currentProgram) return;
+
+    const gl = renderer.getContext() as WebGL2RenderingContext;
+    const programUniforms = currentProgramProperties.getUniforms().map;
+
+    const activeProgram = gl.getParameter(gl.CURRENT_PROGRAM);
+    renderer.state.useProgram(currentProgram); // set the program
+
+    this.matricesTexture.bindToProgram(renderer, gl, programUniforms, materialUniforms, 'matricesTexture');
+    this.colorsTexture?.bindToProgram(renderer, gl, programUniforms, materialUniforms, 'colorsTexture');
+    this.uniformsTexture?.bindToProgram(renderer, gl, programUniforms, materialUniforms, 'uniformsTexture');
+    this.boneTexture?.bindToProgram(renderer, gl, programUniforms, materialUniforms, 'boneTexture');
+
+    renderer.state.useProgram(activeProgram); // restore the old program to make three.js update uniforms correctly
   }
 
   protected isLastGroup(materialIndex: number): boolean {
@@ -413,15 +437,13 @@ export class InstancedMesh2<
   }
 
   protected _customProgramCacheKey = (): string => {
-    return `ezInstancedMesh2_${this.id}_${!!this.colorsTexture}_${this._useOpacity}_${!!this.boneTexture}_${!!this.uniformsTexture}_${this._customProgramCacheKeyBase.call(this._currentMaterial)}`;
+    return `ez_${!!this.colorsTexture}_${this._useOpacity}_${!!this.boneTexture}_${!!this.uniformsTexture}_${this._customProgramCacheKeyBase.call(this._currentMaterial)}`;
   };
 
   protected _onBeforeCompile = (shader: WebGLProgramParametersWithUniforms, renderer: WebGLRenderer): void => {
     if (this._onBeforeCompileBase) this._onBeforeCompileBase.call(this._currentMaterial, shader, renderer);
 
-    shader.instancing = false;
-
-    shader.defines ??= {};
+    shader.defines = { ...shader.defines }; // clone to avoid problem with standard material when used for scene.overrideMaterial
     shader.defines['USE_INSTANCING_INDIRECT'] = '';
 
     shader.uniforms.matricesTexture = { value: this.matricesTexture };
@@ -442,11 +464,7 @@ export class InstancedMesh2<
         shader.defines['USE_VERTEX_COLOR'] = '';
       }
 
-      if (this._useOpacity) {
-        shader.defines['USE_COLOR_ALPHA'] = '';
-      } else {
-        shader.defines['USE_COLOR'] = '';
-      }
+      shader.defines['USE_COLOR_ALPHA'] = '';
     }
 
     if (this.boneTexture) {
@@ -463,41 +481,21 @@ export class InstancedMesh2<
     this._currentMaterial = material;
     this._customProgramCacheKeyBase = material.customProgramCacheKey; // avoid .bind(material); to prevent memory leak
     this._onBeforeCompileBase = material.onBeforeCompile;
+    this._definesBase = material.defines;
     material.customProgramCacheKey = this._customProgramCacheKey;
     material.onBeforeCompile = this._onBeforeCompile;
-
-    const propertiesBase = renderer.properties;
-
-    if (!this._properties.has(material)) {
-      const materialProperties: { [x: string]: any } = {};
-      this._properties.set(material, materialProperties);
-
-      const propertiesGetBase = this._propertiesGetBase = propertiesBase.get;
-
-      this._propertiesGetMap.set(material, (object) => {
-        if (object === material) {
-          // fix pointLight bug
-          // related: https://github.com/mrdoob/three.js/blob/dev/src/renderers/webgl/WebGLShadowMap.js#L333
-          if ((material as MeshDistanceMaterial).isMeshDistanceMaterial) {
-            const materialPropertiesBase = propertiesGetBase(object) as { [x: string]: any };
-            materialProperties.light = materialPropertiesBase.light;
-          }
-          return materialProperties;
-        }
-        return propertiesGetBase(object);
-      });
-    }
-
-    propertiesBase.get = this._propertiesGetMap.get(material);
+    patchProperties(this, renderer, material);
   }
 
   protected unpatchMaterial(renderer: WebGLRenderer, material: Material): void {
     this._currentMaterial = null;
-    renderer.properties.get = this._propertiesGetBase;
+    unpatchProperties(renderer);
+    material.defines = this._definesBase;
     material.onBeforeCompile = this._onBeforeCompileBase;
     material.customProgramCacheKey = this._customProgramCacheKeyBase;
     this._onBeforeCompileBase = null;
     this._customProgramCacheKeyBase = null;
+    this._definesBase = null;
   }
 
   /**
@@ -571,6 +569,22 @@ export class InstancedMesh2<
     const offset = index * 16;
     const array = this.matricesTexture._data;
 
+    position.x = array[offset + 12];
+    position.y = array[offset + 13];
+    position.z = array[offset + 14];
+
+    return this._getMaxScaleOnAxisAt(offset, array);
+  }
+
+  /** @internal */
+  public getMaxScaleOnAxisAt(index: number): number {
+    const offset = index * 16;
+    const array = this.matricesTexture._data;
+    return this._getMaxScaleOnAxisAt(offset, array);
+  }
+
+  /** @internal */
+  public _getMaxScaleOnAxisAt(offset: number, array: TypedArray): number {
     const te0 = array[offset + 0];
     const te1 = array[offset + 1];
     const te2 = array[offset + 2];
@@ -585,10 +599,6 @@ export class InstancedMesh2<
     const te9 = array[offset + 9];
     const te10 = array[offset + 10];
     const scaleZSq = te8 * te8 + te9 * te9 + te10 * te10;
-
-    position.x = array[offset + 12];
-    position.y = array[offset + 13];
-    position.z = array[offset + 14];
 
     return Math.sqrt(Math.max(scaleXSq, scaleYSq, scaleZSq));
   }
@@ -888,3 +898,10 @@ const _sphere = new Sphere();
 const _tempMat4 = new Matrix4();
 const _tempCol = new Color();
 const _position = new Vector3();
+
+/** @internal */
+declare module 'three' {
+  interface Material {
+    defines: { [key: string]: any };
+  }
+}
