@@ -63,11 +63,6 @@ export interface LODLevel<TData = {}> {
 declare module '../InstancedMesh2.js' {
   interface InstancedMesh2 {
     /**
-     * If `true`, LOD uses camera distance; otherwise it uses screen size.
-     * @default undefined
-     */
-    _useDistanceForLOD?: boolean;
-    /**
      * Retrieves the index of the LOD level for a given metric.
      * @param levels The array of LOD levels.
      * @param metric The calculated screen-space metric for the object or the squared distance from the camera to the object.
@@ -79,7 +74,7 @@ declare module '../InstancedMesh2.js' {
      * Sets the first LOD (using current geometry) metric.
      * @returns The current `InstancedMesh2` instance.
      */
-    setFirstLODMetric(): this;
+    setFirstLODMetric(metric: number): this;
     /**
      * Adds a new LOD level with the given geometry, material, and metric.
      * @param geometry The geometry for the LOD level.
@@ -143,7 +138,8 @@ declare module '../InstancedMesh2.js' {
   }
 }
 
-InstancedMesh2.prototype.getObjectLODIndex = function (levels: LODLevel[], metric: number, useDistSquared = false): number {
+// TODO metricKey should be based on useDistanceForLOD instead of useDistSquared?
+InstancedMesh2.prototype.getObjectLODIndex = function (levels: LODLevel[], metric: number, useDistSquared: boolean): number {
   const metricKey: keyof LODLevel = useDistSquared ? 'metricSquared' : 'metric';
 
   if (this._useDistanceForLOD) {
@@ -165,7 +161,7 @@ InstancedMesh2.prototype.getObjectLODIndex = function (levels: LODLevel[], metri
   return 0;
 };
 
-InstancedMesh2.prototype.setFirstLODMetric = function (): InstancedMesh2 {
+InstancedMesh2.prototype.setFirstLODMetric = function (metric: number): InstancedMesh2 {
   if (this._parentLOD) {
     throw new Error('Cannot create LOD for this InstancedMesh2.');
   }
@@ -176,10 +172,7 @@ InstancedMesh2.prototype.setFirstLODMetric = function (): InstancedMesh2 {
 
   if (!this.LODinfo.render) {
     this.LODinfo.render = {
-      levels: [this._useDistanceForLOD
-        ? { metric: 0, metricSquared: 0, hysteresis: 0, object: this } // hysteresis is always 0 at first level
-        : { metric: Infinity, metricSquared: Infinity, hysteresis: 0, object: this }
-      ],
+      levels: [{ metric, metricSquared: metric ** 2, hysteresis: 0, object: this }], // hysteresis is always 0 at first level, TODO check if we use screen size instead of distance
       count: [0]
     };
   }
@@ -192,14 +185,16 @@ InstancedMesh2.prototype.addLOD = function (geometry: BufferGeometry, material: 
     throw new Error('Cannot create LOD for this InstancedMesh2.');
   }
 
-  if (!this.LODinfo?.render && this._useDistanceForLOD && metric === 0) {
+  const useDistanceForLOD = this._useDistanceForLOD;
+
+  if (!this.LODinfo?.render && useDistanceForLOD && metric === 0) {
     throw new Error('Cannot set metric to 0 for the first LOD. Call "setFirstLODMetric" method before use "addLOD".');
   }
-  if (!this.LODinfo?.render && !this._useDistanceForLOD && metric === Infinity) {
+  if (!this.LODinfo?.render && !useDistanceForLOD && metric === Infinity) {
     throw new Error('Cannot set metric to Infinity for the first LOD. Call "setFirstLODMetric" method before use "addLOD".');
   }
 
-  this.setFirstLODMetric();
+  this.setFirstLODMetric(useDistanceForLOD ? 0 : Infinity);
 
   this.addLevel(this.LODinfo.render, geometry, material, metric, hysteresis);
 
@@ -291,11 +286,12 @@ InstancedMesh2.prototype.updateAllLevels = function (renderList, metrics, hyster
   if (!renderList?.levels) throw new Error('Invalid LOD list.');
   const levels = renderList.levels;
   const isRender = this.LODinfo?.render === renderList;
+  const useDistanceForLOD = this._useDistanceForLOD;
 
   const start = isRender ? 1 : 0; // for shadowLOD
   if (isRender) {
-    levels[0].metric = this._useDistanceForLOD ? 0 : Infinity;
-    levels[0].metricSquared = this._useDistanceForLOD ? 0 : Infinity;
+    levels[0].metric = useDistanceForLOD ? 0 : Infinity;
+    levels[0].metricSquared = useDistanceForLOD ? 0 : Infinity;
   }
   const hasMetrics = metrics?.length > 0;
 
@@ -304,7 +300,7 @@ InstancedMesh2.prototype.updateAllLevels = function (renderList, metrics, hyster
     _metrics = (isRender && (metrics[0] === Infinity || metrics[0] === 0)) // If user give 0 for first metric, handle this w/o throw error
       ? metrics.slice(1, Math.min(levels.length, metrics.length))
       : metrics.slice(0, Math.min(levels.length - start, metrics.length));
-    if (this._useDistanceForLOD) {
+    if (useDistanceForLOD) {
       // Validate
       _metrics.every((_d, i) => {
         if (i > 0 && _d <= _metrics[i - 1]) throw new Error(`LOD metrics must be strictly increasing: d[${i - 1}]=${_metrics[i - 1]} < d[${i}]=${_d}`);
