@@ -1,2 +1,10 @@
 node_modules
 dist
+
+# Impeccable: ephemeral session state, derived direction artifacts, vendored tool
+.impeccable/live/
+.impeccable/decision-round-*.json
+.impeccable/surface-brief-*.md
+.github/skills/
+.github/agents/
+.github/hooks/

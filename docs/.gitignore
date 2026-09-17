@@ -27,6 +27,9 @@ public/examples/**
 #screen recordings
 .tmp_frames/
 
+# Impeccable: docs-local ephemeral live state (config.json was uncovered)
+.impeccable/live/
+
 # impeccable-live-ignore-start
 .impeccable/hook.cache.json
 .impeccable/hook.pending.json
