@@ -61,7 +61,7 @@
     "globby": "^14.1.0",
     "meshoptimizer": "^1.2.0",
     "playwright": "^1.55.0",
-    "sharp": "^0.34.3",
+    "sharp": "^0.35.4",
     "simplex-noise": "^4.0.3",
     "three-hex-tiling": "^0.1.5",
     "typescript": "^6.0.3",

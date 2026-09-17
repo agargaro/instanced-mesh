@@ -27,7 +27,7 @@
     "@three.ez/main": "latest",
     "astro": "^7.3.3",
     "astro-auto-import": "^0.6.0",
-    "sharp": "^0.32.5",
+    "sharp": "^0.35.4",
     "starlight-typedoc": "^0.23.1",
     "three": "~0.172.0",
     "tweakpane": "^4.0.5",
