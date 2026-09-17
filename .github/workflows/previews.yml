@@ -1,0 +1,39 @@
+name: Build & Generate Example Previews
+
+on:
+  push:
+    paths:
+      - 'src/pages/examples/**'
+      - 'scripts/generate-previews.mjs'
+  workflow_dispatch:
+
+jobs:
+  build-previews:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      # Playwright dipendenze di sistema (WebGL headless)
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+
+      - run: npm run build
+      - run: npm run preview & sleep 2
+
+      - name: Generate previews (JPG + WebP + GIF)
+        run: |
+          CAPTURE_SECS=3 FPS=12 READY_TIMEOUT_MS=60000 \
+          VIEWPORT_W=1024 VIEWPORT_H=576 \
+          npm run previews
+
+      - name: Commit thumbs & manifest
+        run: |
+          git config user.name "ci-bot"
+          git config user.email "ci@example"
+          git add public/examples src/data/examples.manifest.json
+          git commit -m "chore: update example previews" || echo "no changes"
+          git push || true
