@@ -1,0 +1,32 @@
+---
+import Pagination from "@astrojs/starlight/components/Pagination.astro";
+
+/* Revision block: the sheet's footer, pinned to the bottom of the pane so the
+   page never trails off into empty paper. */
+const year = new Date().getFullYear();
+---
+
+<Pagination />
+
+<footer class="sl-flex revision">
+  <div class="revision-cell">
+    <span class="revision-label">Project</span>
+    <span class="revision-value">InstancedMesh2</span>
+  </div>
+  <div class="revision-cell">
+    <span class="revision-label">Draw</span>
+    <span class="revision-value">@three.ez/instanced-mesh</span>
+  </div>
+  <div class="revision-cell">
+    <span class="revision-label">Sheet</span>
+    <span class="revision-value">{year} · rev. A</span>
+  </div>
+  <div class="revision-cell revision-cell--wide">
+    <span class="revision-label">Links</span>
+    <span class="revision-value">
+      <a href="https://github.com/agargaro/instanced-mesh">GitHub</a>
+      <a href="https://discord.gg/MVTwrdX3JM">Discord</a>
+      <a href="https://www.npmjs.com/package/@three.ez/instanced-mesh">npm</a>
+    </span>
+  </div>
+</footer>

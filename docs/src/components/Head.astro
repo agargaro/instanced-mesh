@@ -1,0 +1,16 @@
+---
+import antonLatin from '@fontsource/anton/files/anton-latin-400-normal.woff2?url';
+import interLatin from '@fontsource-variable/inter/files/inter-latin-wght-normal.woff2?url';
+import jetbrainsLatin from '@fontsource-variable/jetbrains-mono/files/jetbrains-mono-latin-wght-normal.woff2?url';
+
+const { head } = Astro.locals.starlightRoute;
+---
+
+{head.map(({ tag: Tag, attrs, content }) => <Tag {...attrs} set:html={content} />)}
+
+<!-- Self-hosted typefaces: preload the latin subsets that above-the-fold text
+     actually sets, so the swap to Anton / Inter / JetBrains Mono does not reflow. -->
+<link rel="preload" href={antonLatin} as="font" type="font/woff2" crossorigin />
+<link rel="preload" href={interLatin} as="font" type="font/woff2" crossorigin />
+ <link rel="preload" href={jetbrainsLatin} as="font" type="font/woff2" crossorigin />
+

@@ -1,5 +1,6 @@
 ---
 title: Add and Remove Instances
+description: Add instances without a fixed length, set an initial capacity, and remove or clear instances by ID.
 ---
 
 You can add instances without specifying a length: buffers will automatically expand as needed. <br/>
@@ -10,7 +11,7 @@ To set a specific initial buffer capacity, set the [`capacity`](https://agargaro
 const iMesh = new InstancedMesh2(geo, mat, { capacity: 10000 });
 ```
 
-### Add Instances
+## Add Instances
 
 ```ts
 iMesh.addInstances(count, (obj, index) => {
@@ -19,7 +20,7 @@ iMesh.addInstances(count, (obj, index) => {
 });
 ```
 
-### Remove Instances
+## Remove Instances
 
 It's possible to remove instances by their IDs. When an instance is removed:
 - The instance is marked as inactive
@@ -30,13 +31,13 @@ It's possible to remove instances by their IDs. When an instance is removed:
 iMesh.removeInstances(id0, id1, ...);
 ```
 
-### Clear Instances
+## Clear Instances
 
 ```ts
 iMesh.clearInstances();
 ```
 
-### Example
+## Example
 
 In this example, instances can be added and removed by clicking:
 

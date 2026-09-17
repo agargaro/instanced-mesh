@@ -1,8 +1,11 @@
 ---
 title: Raycasting
+description: Raycast instances linearly or with a BVH, and restrict checks to instances rendered in the previous frame with raycastOnlyFrustum.
 ---
 
-### How It Works
+This page covers the two raycasting approaches and the `raycastOnlyFrustum` option.
+
+## How It Works
 
 Raycasting is performed in two ways:
 - **Linear (default):** Iterates through all instances, calling [`raycast`](https://threejs.org/docs/#api/en/core/Object3D.raycast) 
@@ -17,7 +20,7 @@ If complex geometry is used, it's recommended to use [`three-mesh-bvh`](https://
 to acelerate the raycasting of a mesh, creating a BVH containing the triangles.
 :::
 
-### `raycastOnlyFrustum` Property
+## `raycastOnlyFrustum` Property
 
 Using the linear approach, you can iterate only the instances rendered in the previous frame, in this way:
 
@@ -29,6 +32,6 @@ iMesh.raycastOnlyFrustum = true;
 If a BVH has been built, this property will be ignored.
 :::
 
-### Example
+## Example
 
 <Example path='raycasting'/>

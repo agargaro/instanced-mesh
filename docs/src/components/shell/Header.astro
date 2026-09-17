@@ -1,0 +1,45 @@
+---
+import Search from "@astrojs/starlight/components/Search.astro";
+import SiteTitle from "@astrojs/starlight/components/SiteTitle.astro";
+import SocialIcons from "@astrojs/starlight/components/SocialIcons.astro";
+import ThemeSelect from "@astrojs/starlight/components/ThemeSelect.astro";
+
+/* The eyecatch bar: an 80s title strip over the page. Tabs are the sections;
+   the thick vermillion underline is the cel register's only accent here.
+   Every tab opens a page that exists (the section roots are not pages), and
+   the active state derives from the section root of each target. */
+const tabs = [
+  { label: "Start", href: "/instanced-mesh/getting-started/00-introduction/" },
+  { label: "Basics", href: "/instanced-mesh/basics/00-add-remove/" },
+  { label: "Advanced", href: "/instanced-mesh/advanced/buffer-capacity/" },
+  { label: "Examples", href: "/instanced-mesh/examples-list/list/", match: "/instanced-mesh/examples" },
+  { label: "API", href: "/instanced-mesh/api/readme/" },
+];
+const path = Astro.url.pathname;
+const section = (href: string) => href.replace(/\/$/, "").split("/").slice(0, 3).join("/");
+const current = (tab: (typeof tabs)[number]) =>
+  [section(tab.href), tab.match].some((root) => root && root.length > 1 && path.startsWith(root));
+---
+
+<div class="header eyecatch">
+  <div class="eyecatch-inner">
+    <a class="eyecatch-mark" href="/instanced-mesh/" aria-label="InstancedMesh2 home">
+      <span aria-hidden="true">IM2</span>
+    </a>
+    <SiteTitle />
+    <nav class="eyecatch-tabs" aria-label="Sections">
+      {
+        tabs.map((tab) => (
+          <a href={tab.href} aria-current={current(tab) ? "page" : undefined}>
+            {tab.label}
+          </a>
+        ))
+      }
+    </nav>
+    <div class="eyecatch-right">
+      <Search />
+      <ThemeSelect />
+      <SocialIcons />
+    </div>
+  </div>
+</div>

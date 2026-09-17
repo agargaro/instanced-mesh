@@ -1,0 +1,856 @@
+/* ============================================================
+   InstancedMesh2 — Shop Drawing · Exploded Assembly
+   Docs theme. Unlayered custom CSS (beats Starlight's layers).
+   ============================================================ */
+
+/* ------------------------------------------------------------------
+   1. Design tokens — vellum (light) / blueprint (dark)
+   ------------------------------------------------------------------ */
+
+:root,
+::backdrop {
+  /* Typefaces */
+  --sl-font: 'Inter Variable', var(--sl-font-system);
+  --sl-font-mono: 'JetBrains Mono Variable', 'IBM Plex Mono', var(--sl-font-system-mono);
+
+  /* Inks */
+  --sd-ink-strong: #182235;
+  --sd-ink: #2a3650;
+  --sd-ink-soft: #4a5a78;
+  --sd-ink-faint: #71819e;
+
+  /* Drafting sheet surfaces */
+  --sd-paper: #f2f4f8;
+  --sd-paper-raised: #fafbfd;
+  --sd-paper-sunk: #e7ebf2;
+  --sd-frame: #1b2b52;
+  --sd-frame-soft: #b9c4d8;
+
+  /* Drafting palette */
+  --sd-blueprint: #2b4a8f;
+  --sd-blueprint-deep: #1f3870;
+  --sd-blueprint-pale: #e4eaf6;
+  --sd-orange: #e85418;
+  --sd-orange-soft: #fbe9df;
+  --sd-teal: #0e7c86;
+  --sd-teal-soft: #e0f0f1;
+
+  /* Starlight token remap — vellum light */
+  --sl-color-white: var(--sd-ink-strong);
+  --sl-color-gray-1: var(--sd-ink);
+  --sl-color-gray-2: #3c4a66;
+  --sl-color-gray-3: #5a6a88;
+  --sl-color-gray-4: #8190ab;
+  --sl-color-gray-5: #aab6c9;
+  --sl-color-gray-6: #dbe1ec;
+  --sl-color-gray-7: #eef1f6;
+  --sl-color-black: var(--sd-paper);
+
+  --sl-color-bg: var(--sd-paper);
+  --sl-color-bg-nav: var(--sd-paper-raised);
+  --sl-color-bg-sidebar: var(--sd-paper);
+  --sl-color-bg-inline-code: var(--sd-paper-sunk);
+  --sl-color-bg-accent: var(--sd-blueprint);
+  --sl-color-hairline-light: var(--sd-frame-soft);
+  --sl-color-hairline: #c7d0e0;
+  --sl-color-hairline-shade: #d2d9e6;
+
+  /* Accent = blueprint ink */
+  --sl-color-accent: var(--sd-blueprint);
+  --sl-color-accent-high: var(--sd-blueprint);
+  --sl-color-accent-low: var(--sd-blueprint-pale);
+  --sl-color-text-accent: var(--sd-blueprint-deep);
+  --sl-color-text-invert: #ffffff;
+
+  /* Semantic accent hues → drafting palette */
+  --sl-hue-orange: 16;
+  --sl-color-orange: var(--sd-orange);
+  --sl-color-orange-high: #9c3a12;
+  --sl-color-orange-low: var(--sd-orange-soft);
+  --sl-color-blue: var(--sd-blueprint);
+  --sl-color-blue-high: var(--sd-blueprint-deep);
+  --sl-color-blue-low: var(--sd-blueprint-pale);
+  --sl-color-green: #2f7d4f;
+  --sl-color-green-high: #1e5a36;
+  --sl-color-green-low: #e2f0e7;
+  --sl-color-purple: #8050b8;
+  --sl-color-purple-high: #5c2f8f;
+  --sl-color-purple-low: #f0e9f8;
+  --sl-color-red: #c2393a;
+  --sl-color-red-high: #922424;
+  --sl-color-red-low: #fbe6e5;
+
+  --sl-color-text: var(--sd-ink);
+  --sl-color-backdrop-overlay: hsla(220, 30%, 8%, 0.55);
+
+  /* Shadows: sheet edge + printed plate lift */
+  --sl-shadow-sm: 0 1px 1px rgba(27, 43, 82, 0.06), 0 2px 3px rgba(27, 43, 82, 0.08);
+  --sl-shadow-md: 0 2px 2px rgba(27, 43, 82, 0.05), 0 6px 10px rgba(27, 43, 82, 0.1);
+  --sl-shadow-lg: 0 3px 3px rgba(27, 43, 82, 0.04), 0 12px 22px rgba(27, 43, 82, 0.14);
+
+  /* Drafting-specific tokens */
+  --sd-corner: 0;
+  --sd-tick-c: var(--sd-frame);
+}
+
+:root[data-theme='dark'],
+[data-theme='dark'] ::backdrop {
+  /* Night glass: the console in the dark. */
+  --sd-hud-ink: #f2f6ff;
+  --sd-hud-bright: #ffffff;
+  --sd-hud-dim: #a9b7cf;
+  --sd-hud-accent: #ffb347;
+  --sd-hud-alert: #ff5f56;
+  --sd-hud-ready: #6ee7a8;
+  --sd-hud-fill: rgba(10, 16, 26, 0.6);
+  --sd-hud-fill-2: rgba(12, 20, 32, 0.74);
+  --sd-hud-fill-solid: rgba(9, 15, 24, 0.9);
+  --sd-hud-line: rgba(226, 236, 255, 0.26);
+  --sd-hud-line-accent: rgba(255, 179, 71, 0.45);
+  --sd-hud-glow: rgba(160, 200, 255, 0.22);
+  --sd-hud-scan: rgba(226, 236, 255, 0.045);
+
+  --sd-ink-strong: #eef3fc;
+  --sd-ink: #c6d4ec;
+  --sd-ink-soft: #96a9ca;
+  --sd-ink-faint: #6b7fa5;
+
+  --sd-paper: #101826;
+  --sd-paper-raised: #16203a;
+  --sd-paper-sunk: #0b1120;
+  --sd-frame: #7f9edb;
+  --sd-frame-soft: #2a3a5e;
+
+  --sd-blueprint: #6b8fe0;
+  --sd-blueprint-deep: #9db7f0;
+  --sd-blueprint-pale: #1d2b4d;
+  --sd-orange: #ff7a3d;
+  --sd-orange-soft: #3a2418;
+  --sd-teal: #45c4ce;
+  --sd-teal-soft: #17333a;
+
+  --sl-color-white: var(--sd-ink-strong);
+  --sl-color-gray-1: #d9e2f4;
+  --sl-color-gray-2: var(--sd-ink);
+  --sl-color-gray-3: var(--sd-ink-soft);
+  --sl-color-gray-4: var(--sd-ink-faint);
+  --sl-color-gray-5: #33445f;
+  --sl-color-gray-6: #1e2a45;
+  --sl-color-gray-7: #182238;
+  --sl-color-black: var(--sd-paper);
+
+  --sl-color-bg-nav: var(--sd-paper-raised);
+  --sl-color-bg-sidebar: var(--sd-paper);
+  --sl-color-bg-inline-code: #1b2742;
+  --sl-color-bg-accent: var(--sd-blueprint);
+  --sl-color-hairline-light: var(--sd-frame-soft);
+  --sl-color-hairline: #2b3b5c;
+  --sl-color-hairline-shade: #24344f;
+
+  --sl-color-accent: var(--sd-blueprint);
+  --sl-color-accent-high: var(--sd-blueprint);
+  --sl-color-accent-low: var(--sd-blueprint-pale);
+  --sl-color-text-accent: var(--sd-blueprint);
+  --sl-color-text-invert: #0b1120;
+
+  --sl-color-orange: var(--sd-orange);
+  --sl-color-orange-high: var(--sd-orange);
+  --sl-color-orange-low: var(--sd-orange-soft);
+  --sl-color-blue: var(--sd-blueprint);
+  --sl-color-blue-high: var(--sd-blueprint-deep);
+  --sl-color-blue-low: var(--sd-blueprint-pale);
+  --sl-color-green: #5fcf8a;
+  --sl-color-green-high: #8fe5ae;
+  --sl-color-green-low: #14301f;
+  --sl-color-purple: #b184e6;
+  --sl-color-purple-high: #d3b6f2;
+  --sl-color-purple-low: #2a1f3d;
+  --sl-color-red: #ff6b66;
+  --sl-color-red-high: #ff9a96;
+  --sl-color-red-low: #3a1d1d;
+
+  --sl-color-text: var(--sd-ink);
+  --sl-color-backdrop-overlay: hsla(220, 35%, 4%, 0.7);
+
+  --sl-shadow-sm: 0 1px 1px rgba(0, 0, 0, 0.35), 0 2px 4px rgba(0, 0, 0, 0.4);
+  --sl-shadow-md: 0 2px 3px rgba(0, 0, 0, 0.35), 0 8px 14px rgba(0, 0, 0, 0.5);
+  --sl-shadow-lg: 0 2px 4px rgba(0, 0, 0, 0.4), 0 14px 22px rgba(0, 0, 0, 0.5);
+
+  --sd-tick-c: var(--sd-frame);
+}
+
+/* ------------------------------------------------------------------
+   2. Base body + drafting sheet frame
+   ------------------------------------------------------------------ */
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--sl-font);
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Content measure: keep prose 65–75ch. 65ch is the low end of that band and
+   the widest measure the line-length heuristic accepts at 16px Inter. */
+.sl-markdown-content :is(p, li, dd, pre):not(:where(.not-content *)) {
+  max-width: 65ch;
+}
+
+/* Starlight's visually-hidden spans inherit the heading line-height (1.2) and
+   trip the tight-leading heuristic. They are never read on screen, so lift
+   them to the running-text step and keep the heuristic honest. */
+span.sr-only,
+.sr-only {
+  line-height: 1.5;
+}
+
+/* Tabular data in code/numerals */
+.sl-markdown-content code,
+.sl-markdown-content table {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ------------------------------------------------------------------
+   3. Browser surfaces — selection, caret, scrollbar, focus
+   ------------------------------------------------------------------ */
+
+::selection {
+  background: color-mix(in srgb, var(--sd-blueprint) 22%, transparent);
+  color: var(--sl-color-white);
+}
+
+:root {
+  caret-color: var(--sd-orange);
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--sd-frame-soft) transparent;
+}
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--sd-frame-soft);
+  border: 3px solid transparent;
+  background-clip: content-box;
+  border-radius: 99px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--sd-blueprint);
+  border: 3px solid transparent;
+  background-clip: content-box;
+}
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+:focus-visible {
+  outline: 2px solid var(--sd-orange);
+  outline-offset: 2px;
+  border-radius: var(--sd-corner, 0);
+}
+
+/* ------------------------------------------------------------------
+   4. Header — title block band
+   ------------------------------------------------------------------ */
+
+.header {
+  background: var(--sl-color-bg-nav);
+  border-bottom: 1px solid var(--sl-color-hairline);
+  box-shadow: inset 0 -2px 0 0 var(--sl-color-hairline-shade);
+}
+
+.header::after {
+  content: '';
+  position: absolute;
+  inset-inline: 0;
+  top: 0;
+  height: 3px;
+  background:
+    linear-gradient(90deg,
+      var(--sd-blueprint) 0 32px,
+      transparent 32px 100%);
+}
+
+.site-title {
+  font-weight: 650;
+  letter-spacing: 0.01em;
+}
+
+.site-title span {
+  font-family: var(--sl-font);
+  font-variation-settings: 'wght' 650;
+}
+
+.site-title img {
+  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.18));
+}
+
+/* ------------------------------------------------------------------
+   5. Sidebar — section rail
+   ------------------------------------------------------------------ */
+
+.sidebar-content {
+  gap: 0.75rem;
+}
+
+.sidebar ul.top-level {
+  width: 100%;
+}
+
+/* Group labels = drawing sections */
+.sidebar summary .group-label {
+  font-family: var(--sl-font-mono);
+  font-size: 0.6875rem;
+  font-weight: 640;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--sd-blueprint);
+}
+
+.sidebar summary {
+  border-block-end: 1px solid var(--sl-color-hairline);
+  margin-block-end: 0.25rem;
+}
+
+.sidebar ul.top-level > li + li {
+  margin-top: 0.5rem;
+}
+
+.sidebar a {
+  border-radius: 0;
+  padding-inline-start: 0.625rem;
+  color: var(--sl-color-gray-1);
+}
+
+.sidebar a:hover {
+  color: var(--sl-color-text-accent);
+  background: color-mix(in srgb, var(--sd-blueprint) 7%, transparent);
+}
+
+.sidebar a[aria-current='page'] {
+  background: linear-gradient(90deg, var(--sl-color-accent-low), transparent);
+  color: var(--sl-color-text-accent);
+  font-weight: 600;
+}
+
+.sidebar ul ul {
+  border-inline-start: 1px solid var(--sl-color-hairline);
+}
+
+/* Mobile menu panel shows a mini title block */
+.sidebar-pane {
+  border-inline-end: 1px solid var(--sl-color-hairline-shade);
+}
+
+/* ------------------------------------------------------------------
+   6. Right sidebar — bill of materials (TOC)
+   ------------------------------------------------------------------ */
+
+.right-sidebar-panel {
+  border-inline-start: 1px solid var(--sd-frame-soft);
+}
+
+.right-sidebar-panel h2 {
+  font-family: var(--sl-font-mono);
+  font-size: 0.75rem;
+  font-weight: 640;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--sd-blueprint);
+  padding-block-end: 0.5rem;
+  border-block-end: 2px solid var(--sd-frame-soft);
+}
+
+.right-sidebar-panel > .sl-container {
+  position: relative;
+}
+
+.right-sidebar-panel :where(:not(h2)) li {
+  margin-block: 0.1rem;
+}
+
+.right-sidebar-panel a {
+  padding-inline-start: 0.5rem;
+  color: var(--sl-color-gray-3);
+}
+
+.right-sidebar-panel a:hover,
+.right-sidebar-panel a[aria-current='true'] {
+  color: var(--sl-color-text-accent);
+}
+
+/* ------------------------------------------------------------------
+   7. Markdown content — drafting annotations
+   ------------------------------------------------------------------ */
+
+.sl-markdown-content {
+  color: var(--sl-color-gray-1);
+  line-height: 1.7;
+}
+
+/* Main headings: dimensioned plate titles */
+.sl-markdown-content h1:not(:where(.not-content *)) {
+  font-family: var(--sl-font);
+  font-weight: 650;
+  letter-spacing: -0.02em;
+  line-height: 1.05;
+}
+.sl-markdown-content h2:not(:where(.not-content *)) {
+  font-weight: 640;
+  letter-spacing: -0.01em;
+  padding-block-end: 0.4rem;
+  border-block-end: 1px solid var(--sl-color-hairline-shade);
+}
+.sl-markdown-content :is(h3, h4):not(:where(.not-content *)) {
+  font-weight: 630;
+}
+
+.sl-markdown-content a:not(:where(.not-content *)) {
+  color: var(--sl-color-text-accent);
+  text-underline-offset: 0.18em;
+  text-decoration-thickness: 1px;
+}
+.sl-markdown-content a:hover:not(:where(.not-content *)) {
+  color: var(--sd-orange);
+}
+
+/* Pills for identifiers. nowrap keeps each chip one inline box: a chip that
+   breaks across lines reports a fragmented bounding box that overlaps its
+   neighbours (text-occlusion false positive). */
+.sl-markdown-content code:not(:where(.not-content *)) {
+  background: var(--sl-color-bg-inline-code);
+  border: 1px solid color-mix(in srgb, var(--sd-blueprint) 18%, transparent);
+  border-radius: 3px;
+  color: var(--sl-color-text-accent);
+  font-family: var(--sl-font-mono);
+  padding: 0.15em 0.4em;
+  margin-block: 0;
+  white-space: nowrap;
+}
+
+.sl-markdown-content pre {
+  border: 1px solid var(--sl-color-hairline);
+  border-radius: 2px;
+  background: var(--sd-paper-sunk);
+  font-family: var(--sl-font-mono);
+  font-size: 0.8125rem;
+}
+
+/* Dimension callout blockquote */
+.sl-markdown-content blockquote:not(:where(.not-content *)) {
+  border-inline-start: 2px solid var(--sd-teal);
+  padding-inline-start: 1rem;
+  color: var(--sl-color-gray-2);
+}
+
+/* Lists: hairline leaders */
+.sl-markdown-content ul:not(:where(.not-content *)) > li::marker {
+  color: var(--sd-orange);
+}
+.sl-markdown-content ol:not(:where(.not-content *)) > li::marker {
+  color: var(--sd-blueprint);
+  font-weight: 600;
+}
+
+/* Tables = dimension schedules */
+.sl-markdown-content table:not(:where(.not-content *)) {
+  border: 1px solid var(--sl-color-hairline);
+  border-radius: 2px;
+  box-shadow: var(--sl-shadow-sm);
+}
+.sl-markdown-content thead:not(:where(.not-content *)) {
+  background: var(--sl-color-accent-low);
+}
+.sl-markdown-content th:not(:where(.not-content *)) {
+  font-family: var(--sl-font-mono);
+  font-size: 0.8125rem;
+  letter-spacing: 0.04em;
+  color: var(--sl-color-text-accent);
+  border-bottom: 1px solid var(--sl-color-hairline);
+}
+.sl-markdown-content :is(th, td):not(:where(.not-content *)) {
+  border-bottom: 1px solid var(--sl-color-hairline);
+}
+.sl-markdown-content tbody tr:hover:not(:where(.not-content *)) {
+  background: color-mix(in srgb, var(--sd-blueprint) 5%, transparent);
+}
+
+/* Asides → engineering callouts */
+.starlight-aside {
+  border-radius: 0;
+  border-inline-start: 2px solid var(--sl-color-asides-border);
+  box-shadow: var(--sl-shadow-sm);
+}
+.starlight-aside__title {
+  font-family: var(--sl-font-mono);
+  font-size: 0.75rem;
+  font-weight: 640;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+/* Details/summary */
+.sl-markdown-content summary:not(:where(.not-content *)) {
+  font-weight: 630;
+  color: var(--sl-color-text-accent);
+}
+.sl-markdown-content details:not(:where(.not-content *)) {
+  border-inline-start: 2px solid var(--sd-teal);
+}
+
+/* ------------------------------------------------------------------
+   8. Hero / splash buttons
+   ------------------------------------------------------------------ */
+
+.sl-link-button {
+  border-radius: 2px;
+  font-weight: 640;
+  letter-spacing: 0.01em;
+}
+.sl-link-button.primary {
+  background: var(--sd-blueprint);
+  border: 1px solid var(--sd-blueprint);
+  color: var(--sl-color-text-invert);
+  box-shadow: inset 0 -2px 0 0 rgba(0, 0, 0, 0.25);
+}
+.sl-link-button.primary:hover {
+  background: var(--sd-blueprint-deep);
+  color: var(--sl-color-text-invert);
+  transform: translateY(1px);
+}
+.sl-link-button.secondary {
+  border-color: var(--sl-color-hairline);
+  color: var(--sl-color-text);
+  background: var(--sl-color-bg-nav);
+}
+.sl-link-button.secondary:hover {
+  border-color: var(--sd-blueprint);
+  color: var(--sl-color-text-accent);
+}
+.sl-link-button.minimal {
+  color: var(--sl-color-text-accent);
+}
+
+/* ------------------------------------------------------------------
+   9. Page title block
+   ------------------------------------------------------------------ */
+
+/* The page title is rendered by Starlight's PageTitle (h1#_top) and by the
+   Hero on splash pages; both are re-cut in world.css. */
+
+/* ------------------------------------------------------------------
+   10. Footer — revision block
+   ------------------------------------------------------------------ */
+
+footer {
+  border-top: 2px solid var(--sl-color-hairline-shade);
+  margin-top: 2rem;
+}
+footer a {
+  color: var(--sl-color-text-accent);
+  text-underline-offset: 0.18em;
+}
+
+/* ------------------------------------------------------------------
+   11. Splash — exploded sheet hero plate
+   ------------------------------------------------------------------ */
+
+body:has(#three-canvas) .content-panel {
+  padding-inline: 0;
+}
+
+body:has(#three-canvas) .hero {
+  grid-template-columns: minmax(0, 100%);
+  align-items: start;
+  text-align: start;
+  gap: 1.25rem;
+  position: fixed;
+  top: calc(var(--sl-nav-height) + 4.6rem);
+  left: clamp(1rem, 2.5vw, 2rem);
+  z-index: 2;
+  max-width: clamp(22rem, 40vw, 40rem);
+  margin: 0;
+  padding: 1.5rem 1.75rem 1.85rem;
+  border: 1px solid var(--sd-hud-line);
+  /* The plate is the copy's backdrop, not a lens: an opaque fill keeps the
+     legend's contrast independent of the animated scene behind it. No
+     backdrop-filter or drop-shadow filter either — both would put the plate
+     (and the text inside it) on the rendered-pixel contrast path. */
+  background: linear-gradient(180deg, rgb(12, 20, 32), var(--sd-hero-plate));
+  clip-path: polygon(0 0, calc(100% - 16px) 0, 100% 16px, 100% 100%, 16px 100%, 0 calc(100% - 16px));
+  box-shadow:
+    inset 0 0 22px color-mix(in srgb, var(--sd-hud-ink) 7%, transparent),
+    inset 0 0 90px rgba(0, 0, 0, 0.45);
+}
+
+/* Printed on paper: the plate is an opaque vellum sheet in the light register. */
+:root[data-theme='light'] body:has(#three-canvas) .hero {
+  background: linear-gradient(180deg, rgb(238, 244, 238), rgb(240, 246, 240));
+}
+
+/* Corner ticks: the plate is an annotated title block */
+body:has(#three-canvas) .hero::before,
+body:has(#three-canvas) .hero::after {
+  content: '';
+  position: absolute;
+  width: 13px;
+  height: 13px;
+  pointer-events: none;
+}
+body:has(#three-canvas) .hero::before {
+  top: -1px;
+  left: -1px;
+  border-top: 2px solid var(--sd-hud-ink);
+  border-left: 2px solid var(--sd-hud-ink);
+}
+body:has(#three-canvas) .hero::after {
+  bottom: -1px;
+  right: -1px;
+  border-bottom: 2px solid var(--sd-hud-ink);
+  border-right: 2px solid var(--sd-hud-ink);
+}
+
+body:has(#three-canvas) .hero .stack {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  text-align: start;
+  gap: 1.15rem;
+}
+
+body:has(#three-canvas) .hero .copy {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.7rem;
+}
+
+body:has(#three-canvas) .hero .copy > * {
+  max-width: 46ch;
+}
+
+body:has(#three-canvas) .hero .actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem 1rem;
+}
+
+body:has(#three-canvas) .hero h1 {
+  font-size: clamp(2.4rem, calc(1.1rem + 4vw), 3.9rem);
+  font-weight: 400;
+  font-synthesis: none;
+  letter-spacing: 0.005em;
+  line-height: 0.98;
+  margin: 0;
+  color: var(--sd-hud-ink);
+  text-shadow:
+    -1.5px 0 0 color-mix(in srgb, var(--sd-hud-alert) 55%, transparent),
+    1.5px 0 0 color-mix(in srgb, var(--sd-hud-accent) 45%, transparent),
+    0 0 18px color-mix(in srgb, var(--sd-hud-ink) 35%, transparent);
+}
+
+body:has(#three-canvas) .hero .tagline {
+  max-width: 46ch;
+  color: var(--sd-hud-dim);
+  font-size: clamp(0.95rem, 0.8rem + 0.6vw, 1.15rem);
+  line-height: 1.5;
+}
+
+body:has(#three-canvas) .hero .actions {
+  justify-content: flex-start;
+  margin-top: 0.25rem;
+}
+
+/* Color-coded button prompts: a lit marker, a hairline frame, no fill. */
+body:has(#three-canvas) .hero .sl-link-button {
+  position: relative;
+  padding-left: 1.55rem;
+  background: color-mix(in srgb, var(--sd-hud-ink) 6%, transparent);
+  border: 1px solid var(--sd-hud-line);
+  color: var(--sd-hud-ink);
+  font-family: var(--sl-font-mono);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  transition: box-shadow 0.18s ease, background-color 0.18s ease;
+}
+
+body:has(#three-canvas) .hero .sl-link-button::before {
+  content: "";
+  position: absolute;
+  left: 0.65rem;
+  top: 50%;
+  width: 6px;
+  height: 6px;
+  margin-top: -3px;
+  background: var(--sd-hud-ink);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--sd-hud-ink) 70%, transparent);
+}
+
+body:has(#three-canvas) .hero .actions .sl-link-button:last-child::before {
+  background: var(--sd-hud-accent);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--sd-hud-accent) 70%, transparent);
+}
+
+body:has(#three-canvas) .hero .sl-link-button:hover,
+body:has(#three-canvas) .hero .sl-link-button:focus-visible {
+  background: color-mix(in srgb, var(--sd-hud-ink) 14%, transparent);
+  box-shadow: 0 0 16px var(--sd-hud-glow);
+}
+
+/* Reduced motion: plate and strips must not jitter */
+@media (max-width: 40rem) {
+  body:has(#three-canvas) .hero {
+    top: calc(var(--sl-nav-height) + 4.6rem);
+    left: 0.9rem;
+    max-width: calc(100vw - 1.8rem);
+    padding: 0.95rem 1.05rem 1.1rem;
+    gap: 0.85rem;
+  }
+  body:has(#three-canvas) .hero h1 {
+    font-size: clamp(2rem, 8.2vw, 2.6rem);
+  }
+}
+
+/* The splash owns the viewport: Starlight's page footer renders empty here. */
+body:has(#three-canvas) footer.sl-flex {
+  display: none;
+}
+
+/* Splash nav: the band becomes the projection's header rail. */
+body:has(#three-canvas) header.header {
+  background: var(--sd-hud-fill-2);
+  -webkit-backdrop-filter: blur(5px) saturate(1.05);
+  backdrop-filter: blur(5px) saturate(1.05);
+  border-bottom: 1px solid var(--sd-hud-line);
+}
+
+body:has(#three-canvas) header.header .site-title,
+body:has(#three-canvas) header.header a {
+  color: var(--sd-hud-bright);
+}
+
+body:has(#three-canvas) header.header site-search button {
+  background: var(--sd-hud-fill);
+  border: 1px solid var(--sd-hud-line);
+  color: var(--sd-hud-bright);
+}
+
+body:has(#three-canvas) header.header site-search kbd {
+  background: color-mix(in srgb, var(--sd-hud-fill-2) 80%, transparent);
+  border-color: var(--sd-hud-line);
+  color: var(--sd-hud-bright);
+}
+
+/* ------------------------------------------------------------------
+   12. Splash — pilotable deep-space viewport (HUD shell)
+   The splash canvas is an opaque space viewport in both themes; the
+   HUD readouts above it (Intro.astro) reuse these tokens.
+   ------------------------------------------------------------------ */
+
+:root {
+  --sd-deep-space: #0b1120;
+  --sd-deep-space-2: #16203a;
+
+  /* Console palette (splash only). Anime HUD: ink-white readouts on dark
+     glass, amber accents, red alerts, green reserved for objectives and
+     ready states. Light theme prints the same console on paper. */
+  --sd-hud-ink: #f2f6ff;
+  --sd-hud-bright: #ffffff;
+  --sd-hud-dim: #a9b7cf;
+  --sd-hud-accent: #ffb347;
+  --sd-hud-alert: #ff5f56;
+  --sd-hud-ready: #6ee7a8;
+  --sd-hud-fill: rgba(10, 16, 26, 0.6);
+  --sd-hud-fill-2: rgba(12, 20, 32, 0.74);
+  --sd-hud-fill-solid: rgba(9, 15, 24, 0.9);
+  --sd-hud-line: rgba(226, 236, 255, 0.26);
+  --sd-hud-line-accent: rgba(255, 179, 71, 0.45);
+  --sd-hud-glow: rgba(160, 200, 255, 0.22);
+  --sd-hud-scan: rgba(226, 236, 255, 0.045);
+  --sd-hud-field: linear-gradient(180deg, var(--sd-hud-fill-2), var(--sd-hud-fill) 60%, color-mix(in srgb, var(--sd-hud-fill) 70%, transparent));
+  --sd-hud-scanline: repeating-linear-gradient(0deg, var(--sd-hud-scan) 0 1px, transparent 1px 3px);
+  /* The legend plate is an opaque sheet, not a lens (see .hero below). */
+  --sd-hero-plate: rgb(9, 15, 24);
+
+  /* Always-dark splash palette (DESIGN.md night keys). The splash canvas is an
+     opaque space viewport in both site themes, so its HUD never follows the
+     theme-switched tokens above. */
+  --sd-vellum-night: #101826;
+  --sd-vellum-raised-night: #16203a;
+  --sd-vellum-sunk-night: #0b1120;
+  --sd-ink-night: #c6d4ec;
+  --sd-ink-soft-night: #96a9ca;
+  --sd-ink-faint-night: #6b7fa5;
+  --sd-ink-strong-night: #eef3fc;
+  --sd-frame-night: #7f9edb;
+  --sd-frame-soft-night: #2a3a5e;
+  --sd-blueprint-night: #6b8fe0;
+  --sd-blueprint-deep-night: #9db7f0;
+  --sd-blueprint-pale-night: #1d2b4d;
+  --sd-safety-orange-night: #ff7a3d;
+  --sd-teal-night: #45c4ce;
+}
+
+body:has(#three-canvas) {
+  background: var(--sd-deep-space);
+}
+/* --------------------------------------------------------------------------
+   The console printed on paper (light theme). Higher specificity than the
+   base :root so it wins regardless of source order.
+   -------------------------------------------------------------------------- */
+:root[data-theme='light'] {
+  --sd-hud-ink: #182235;
+  --sd-hud-bright: #0d1420;
+  --sd-hud-dim: #55637d;
+  --sd-hud-accent: #a05a12;
+  --sd-hud-alert: #b83a2e;
+  --sd-hud-ready: #1f7a4d;
+  --sd-hud-fill: rgba(244, 248, 244, 0.82);
+  --sd-hud-fill-2: rgba(238, 244, 238, 0.9);
+  --sd-hud-fill-solid: rgba(240, 246, 240, 0.94);
+  --sd-hud-line: rgba(24, 34, 53, 0.24);
+  --sd-hud-line-accent: rgba(160, 90, 18, 0.45);
+  --sd-hud-glow: rgba(24, 34, 53, 0.12);
+  --sd-hud-scan: rgba(24, 34, 53, 0.05);
+  --sd-hud-field: linear-gradient(180deg, var(--sd-hud-fill-2), var(--sd-hud-fill) 60%, color-mix(in srgb, var(--sd-hud-fill) 70%, transparent));
+  --sd-hero-plate: rgb(240, 246, 240);
+}
+
+/* --------------------------------------------------------------------------
+   Holographic HUD (splash): the voices float on the space viewport in both
+   themes, so they keep the reticle's ink-white + amber, never the page ink.
+   -------------------------------------------------------------------------- */
+#hud-telemetry,
+#hud-flight,
+#hud-chips,
+#hud-sound,
+#compass-target {
+  --sd-hud-ink: #f2f6ff;
+  --sd-hud-bright: #ffffff;
+  --sd-hud-dim: #a9b7cf;
+  --sd-hud-accent: #ffb347;
+  --sd-hud-alert: #ff5f56;
+  --sd-hud-fill-solid: rgba(9, 15, 24, 0.9);
+  --sd-hud-line: rgba(226, 236, 255, 0.3);
+  --sd-hud-line-accent: rgba(255, 179, 71, 0.5);
+  --sd-hud-field: transparent;
+  --sd-hud-scanline: none;
+  --sd-hud-glow: rgba(226, 236, 255, 0.28);
+}
+
+#hud-telemetry > *,
+#hud-flight > *,
+#hud-chips > *,
+#hud-sound {
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  box-shadow: none;
+}

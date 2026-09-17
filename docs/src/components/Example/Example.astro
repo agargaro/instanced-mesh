@@ -39,6 +39,11 @@ export interface Props {
    * @property {boolean} [hideStackblitz=false] - When true, the Stackblitz editor button will not be displayed
    */
   hideStackblitz?: boolean;
+  /**
+   * Additional source files mapped by their relative path, merged into
+   * the files discovered from the example directory.
+   */
+  files?: Record<string, string>;
 }
 
 const allModules = import.meta.glob('../../examples/**/*', {

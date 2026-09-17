@@ -1,5 +1,6 @@
 ---
-title: Sorting instances
+title: Sorting Instances
+description: Sort instances to reduce overdraw and handle transparent rendering, with an optional custom radix sort.
 ---
 
 Sorting instances is useful to:
@@ -10,7 +11,7 @@ Sorting instances is useful to:
 iMesh.sortObjects = true; // default is false
 ```
 
-### Custom Sort
+## Custom Sort
 
 It's possible to set a custom sort and use **radix sort** usually faster than default sort.
 
@@ -18,7 +19,7 @@ It's possible to set a custom sort and use **radix sort** usually faster than de
 iMesh.customSort = createRadixSort(iMesh);
 ```
 
-### Disable Autoupdate
+## Disable Autoupdate
 
 It's possible to disable the automatic computing of frustum culling and sorting before each rendering in this way:
 
@@ -29,6 +30,6 @@ iMesh.autoUpdate = false;
 iMesh.performFrustumCulling(camera);
 ```
 
-### Example
+## Example
 
 <Example path='sorting'/>

@@ -1,5 +1,6 @@
 ---
 title: Frustum Culling
+description: Skip rendering instances outside the camera frustum with linear or BVH culling and an onFrustumEnter callback.
 ---
 
 With frustum culling, instances outside the camera's frustum are not rendered. <br/>
@@ -9,7 +10,7 @@ This saves GPU resources by using the CPU to calculate the indices to render.
 iMesh.perObjectFrustumCulled = true; // default is true
 ```
 
-### How It Works
+## How It Works
 
 Frustum culling is performed every frame in two ways:
 - **Linear (default):** Iterates through all instances, checking if their boundingSphere is inside the camera's frustum. <br/>
@@ -22,14 +23,14 @@ Frustum culling is performed every frame in two ways:
 Linear frustum culling works better if the geometry is centered.
 :::
 
-### When Not to Use It
+## When Not to Use It
 
 Sometimes, frustum culling can be more costly than beneficial, so it's better to skip it if:
 
 - Most instances are always within the camera's frustum.
 - The geometry is too simple (e.g., cubes, blades of grass, etc.).
 
-### Disable Autoupdate
+## Disable Autoupdate
 
 It's possible to disable the automatic computing of frustum culling and sorting before each rendering in this way:
 
@@ -40,7 +41,7 @@ iMesh.autoUpdate = false;
 iMesh.performFrustumCulling(camera);
 ```
 
-### `OnFrustumEnter` Callback
+## `OnFrustumEnter` Callback
 
 When frustum culling is performed, the [`onFrustumEnter`](https://agargaro.github.io/instanced-mesh/api/classes/instancedmesh2/#onfrustumenter) 
 callback is called for each instance in the camera frustum. 
@@ -59,6 +60,6 @@ iMesh.onFrustumEnter = (index, camera) => {
 Do not update `position`, `scale`, or `quaternion` in this callback, otherwise frustum culling will not work properly.
 :::
 
-### Example
+## Example
 
 <Example path='frustum-culling'/>

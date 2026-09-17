@@ -1,66 +1,715 @@
 ---
+import itemsJson from "../../data/examples.manifest.json";
+import { LIBRARY_FEATURES } from "./features";
 
+type StripItem = {
+  slug: string;
+  title: string;
+  url: string;
+  animWebp?: string;
+  posterJpg?: string;
+};
+
+const examples: StripItem[] = (itemsJson as StripItem[]).slice(0, 8);
+const featureCount = LIBRARY_FEATURES.length;
 ---
 
 <style is:global>
-  /* Unscoped, delivered as-is to the browser. */
-  body {
+  /* Splash page: single viewport, full-bleed pilotable scene. */
+  body:has(#three-canvas) {
     overflow: hidden;
-    div.hero {
-      --sl-color-white: hsl(0, 0%, 100%);
-      --sl-color-gray-2: hsl(224, 6%, 77%);
+  }
+</style>
+
+<canvas id="three-canvas" aria-hidden="true"></canvas>
+
+<!-- Console voices: drawable descendants of the HUD canvas. With the
+     html-in-canvas feature their pixels are drawn into #hud-drawable and
+     mapped onto a screen-space quad inside the 3D scene; without it
+     hudcanvas.ts relocates them and they render as the fixed DOM console. -->
+<canvas id="hud-drawable" content="drawable" layoutsubtree>
+  <!-- Flight readout -->
+  <section id="hud-flight" drawable aria-hidden="true" data-impeccable-ignore="dark-glow ai-color-palette gpt-thin-border-wide-shadow repeating-stripes-gradient">
+    <header><span class="hud-dot"></span>SHIP · NOMINAL</header>
+    <dl>
+      <div><dt>VEL</dt><dd id="v-vel">0</dd></div>
+      <div><dt>THR</dt><dd id="v-thr">0%</dd></div>
+      <div><dt>ALT</dt><dd id="v-alt">0</dd></div>
+    </dl>
+  </section>
+
+  <!-- Live + nerd stats, fed by the scene -->
+  <section id="hud-telemetry" drawable aria-hidden="true" data-impeccable-ignore="dark-glow ai-color-palette gpt-thin-border-wide-shadow repeating-stripes-gradient">
+    <header>TELEMETRY · LIVE</header>
+    <dl>
+      <div><dt>DRAWS</dt><dd id="st-draws">0</dd></div>
+      <div><dt>TRIANGLES</dt><dd id="st-tris">0</dd></div>
+      <div><dt>FPS</dt><dd id="st-fps">0</dd></div>
+      <div><dt>INSTANCES</dt><dd id="st-inst">0</dd></div>
+      <div><dt>SMOKE</dt><dd id="st-smoke">0</dd></div>
+      <div><dt>FOUND</dt><dd id="st-found">0/{featureCount}</dd></div>
+      <div><dt>EXAMPLES</dt><dd id="st-examples">0/{examples.length}</dd></div>
+    </dl>
+    <footer id="st-version"></footer>
+  </section>
+
+  <!-- Objective readout: bearings live on the 3D orbital compass around the ship -->
+  <p id="compass-target" drawable aria-live="polite" data-impeccable-ignore="dark-glow ai-color-palette gpt-thin-border-wide-shadow">NO TARGET</p>
+
+  <!-- Audio is a feature, not an add-on: opt-in toggle -->
+  <button id="hud-sound" drawable type="button" aria-pressed="false" data-impeccable-ignore="dark-glow ai-color-palette gpt-thin-border-wide-shadow repeating-stripes-gradient">
+    <span data-sound-label>SOUND OFF</span>
+  </button>
+
+  <!-- Flight hints -->
+  <section id="hud-chips" drawable aria-hidden="true" data-impeccable-ignore="dark-glow ai-color-palette gpt-thin-border-wide-shadow repeating-stripes-gradient">
+    <span><b>W</b>/<b>S</b> THROTTLE</span>
+    <span><b>A</b>/<b>D</b> YAW</span>
+    <span>POINTER STEER</span>
+    <span>REACH A BEACON TO UNLOCK</span>
+  </section>
+</canvas>
+
+<!-- CRT: scanlines, analog glare, film grain (pointer-transparent) -->
+<div id="crt-overlay" aria-hidden="true" data-impeccable-ignore="repeating-stripes-gradient"></div>
+
+<!-- Viewport frame: corner brackets over the space scene -->
+<div id="hud-frame" aria-hidden="true" data-impeccable-ignore="dark-glow ai-color-palette gpt-thin-border-wide-shadow repeating-stripes-gradient"></div>
+
+<!-- Aiming reticle: drifts with pointer input -->
+<div id="hud-reticle" aria-hidden="true" data-impeccable-ignore="dark-glow ai-color-palette gpt-thin-border-wide-shadow repeating-stripes-gradient">
+  <span></span><span></span><span></span><span></span><i></i>
+</div>
+
+<!-- Capability labels: HTML blocks that follow their beacons in screen space -->
+<div id="hud-labels" aria-label="Library capabilities" data-impeccable-ignore="dark-glow ai-color-palette gpt-thin-border-wide-shadow clipped-overflow-container repeating-stripes-gradient"></div>
+
+<!-- Touch throttle: the coarse-pointer counterpart of W -->
+<button id="hud-thrust" type="button" aria-label="Thrust" data-impeccable-ignore="dark-glow ai-color-palette gpt-thin-border-wide-shadow repeating-stripes-gradient">
+  THRUST
+</button>
+
+<!-- Examples: HTML blocks anchored to their 3D gates, discovered by flying -->
+<div id="hud-examples" aria-label="Examples" data-impeccable-ignore="dark-glow ai-color-palette gpt-thin-border-wide-shadow clipped-overflow-container repeating-stripes-gradient">
+  {
+    examples.map((item) => (
+      <a class="example-label" href={item.url} data-example={item.slug} hidden>
+        <img
+          src={item.posterJpg || item.animWebp}
+          data-anim={item.animWebp}
+          data-poster={item.posterJpg}
+          alt=""
+          loading="lazy"
+          width="160"
+          height="96"
+        />
+        <span class="example-meta">
+          <span class="example-head">
+            <span class="example-kind">Example</span>
+            <b>{item.title}</b>
+          </span>
+          <span class="example-dist"></span>
+          <span class="example-open">OPEN EXAMPLE</span>
+        </span>
+      </a>
+    ))
+  }
+</div>
+
+<script src="./intro.ts"></script>
+
+<style>
+  /* CRT overlay: scanlines + glare + grain over the whole viewport. */
+  :global(#crt-overlay) {
+    position: fixed;
+    inset: 0;
+    z-index: 5;
+    pointer-events: none;
+    background-image:
+      repeating-linear-gradient(0deg, var(--sd-hud-scan) 0 1px, transparent 1px 3px),
+      linear-gradient(115deg, rgba(255, 255, 255, 0.04) 0 16%, transparent 36%),
+      radial-gradient(120% 92% at 50% 45%, transparent 58%, rgba(0, 0, 0, 0.48) 100%);
+  }
+
+  :global(#crt-overlay)::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    opacity: 0.045;
+    will-change: transform;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='96' height='96'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.95' numOctaves='1'/%3E%3C/filter%3E%3Crect width='96' height='96' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  @keyframes crt-grain {
+    0% { transform: translate(0, 0); }
+    33% { transform: translate(-3%, 2%); }
+    66% { transform: translate(2%, -3%); }
+    100% { transform: translate(0, 0); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    :global(#crt-overlay)::after {
+      animation: none;
     }
   }
 
-</style>
-<canvas id="three-canvas"></canvas>
-
-<span id="credits-info">🛈</span>
-<span id="credits">
-  low poly space ship by chrisonciuconcepts (https://skfb.ly/H9qJ)
-</span>
-
-<style>
-  #three-canvas {
+  /* Deep-space viewport — always dark, both site themes. */
+  :global(#three-canvas) {
     width: 100dvw;
     height: 100dvh;
     position: fixed;
-    top: 0;
-    bottom: 0;
-    left: 0;
-    right: 0;
+    inset: 0;
     z-index: -1;
     touch-action: none;
     user-select: none;
+    background: var(--sd-deep-space);
   }
-  #credits-info {
+
+  :global(#hud-frame) {
     position: fixed;
-    padding: 1em;
-    bottom: 0;
-    right: 0;
+    inset: 0.75rem;
     z-index: 2;
+    pointer-events: none;
+    border: 1px solid color-mix(in srgb, var(--sd-frame-night) 28%, transparent);
+    box-shadow:
+      inset 0 0 22px color-mix(in srgb, var(--sd-hud-glow) 45%, transparent),
+      0 0 18px color-mix(in srgb, var(--sd-hud-glow) 35%, transparent); /* impeccable-disable-line dark-glow ai-color-palette gpt-thin-border-wide-shadow -- projected glass plate */
   }
-  #credits-info:hover,
-  #credits-info:focus {
-    + #credits {
-      opacity: 1;
-      display: block;
-    }
+
+  :global(#hud-frame)::before,
+  :global(#hud-frame)::after {
+    content: "";
+    position: absolute;
+    width: 18px;
+    height: 18px;
   }
-  #credits {
-    display: none;
-    margin-bottom: -100%;
+
+  :global(#hud-frame)::before {
+    top: -1px;
+    left: -1px;
+    border-top: 2px solid var(--sd-frame-night);
+    border-left: 2px solid var(--sd-frame-night);
+  }
+
+  :global(#hud-frame)::after {
+    bottom: -1px;
+    right: -1px;
+    border-bottom: 2px solid var(--sd-frame-night);
+    border-right: 2px solid var(--sd-frame-night);
+  }
+
+  /* Reticle */
+  :global(#hud-reticle) {
     position: fixed;
+    z-index: 3;
+    top: 50%;
+    left: 50%;
+    width: 46px;
+    height: 46px;
+    margin: -23px 0 0 -23px;
+    pointer-events: none;
+    will-change: transform;
+    transition: transform 0.12s ease-out;
+  }
+
+  :global(#hud-reticle) span {
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    border: 2px solid var(--sd-hud-ink);
+    filter: drop-shadow(0 0 5px color-mix(in srgb, var(--sd-hud-ink) 60%, transparent)); /* impeccable-disable-line dark-glow ai-color-palette gpt-thin-border-wide-shadow -- reticle */
+  }
+
+  :global(#hud-reticle) span:nth-child(1) {
+    top: 0;
+    left: 0;
+    border-right: 0;
+    border-bottom: 0;
+  }
+
+  :global(#hud-reticle) span:nth-child(2) {
+    top: 0;
+    right: 0;
+    border-left: 0;
+    border-bottom: 0;
+  }
+
+  :global(#hud-reticle) span:nth-child(3) {
     bottom: 0;
     left: 0;
+    border-right: 0;
+    border-top: 0;
+  }
+
+  :global(#hud-reticle) span:nth-child(4) {
+    bottom: 0;
     right: 0;
-    font: 0.2em;
-    margin: 2em;
-    overflow: auto;
-    opacity: 0;
-    will-change: opacity;
-    transition: opacity 0.5s linear 1s;
+    border-left: 0;
+    border-top: 0;
+  }
+
+  :global(#hud-reticle) i {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 3px;
+    height: 3px;
+    margin: -1.5px 0 0 -1.5px;
+    background: var(--sd-safety-orange-night);
+    box-shadow: 0 0 10px 2px color-mix(in srgb, var(--sd-safety-orange-night) 75%, transparent); /* impeccable-disable-line dark-glow ai-color-palette gpt-thin-border-wide-shadow -- neon reticle core */
+  }
+
+  /* HUD voices: no panel boxes — every readout is its own chamfered item. */
+  :global(#hud-flight),
+  :global(#hud-telemetry) {
+    position: fixed;
+    z-index: 3;
+    display: grid;
+    gap: 0.4rem;
+    min-width: 10rem;
+    font: 600 0.6875rem/1.3 var(--sl-font-mono);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  :global(#hud-flight) header,
+  :global(#hud-telemetry) header,
+  :global(#hud-flight) dl div,
+  :global(#hud-telemetry) dl div,
+  :global(#hud-telemetry) footer {
+    padding: 0.4rem 0.6rem;
+    background: var(--sd-hud-field), var(--sd-hud-scanline);
+    border: 1px solid var(--sd-hud-line);
+    clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 0 100%);
+    filter: drop-shadow(0 0 14px var(--sd-hud-glow)); /* impeccable-disable-line dark-glow ai-color-palette gpt-thin-border-wide-shadow -- projected readout */
+  }
+
+  :global(#hud-flight) header,
+  :global(#hud-telemetry) header {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    color: var(--sd-hud-ink);
+    font-weight: 700;
+    text-shadow: 0 0 14px color-mix(in srgb, var(--sd-hud-ink) 75%, transparent); /* impeccable-disable-line dark-glow ai-color-palette -- projected header */
+  }
+
+  .hud-dot {
+    width: 6px;
+    height: 6px;
+    background: var(--sd-hud-accent);
+    box-shadow: 0 0 9px color-mix(in srgb, var(--sd-hud-accent) 70%, transparent); /* impeccable-disable-line dark-glow ai-color-palette gpt-thin-border-wide-shadow -- status dot */
+  }
+
+  :global(#hud-flight) dl,
+  :global(#hud-telemetry) dl {
+    display: grid;
+    gap: 0.3rem;
+    margin: 0;
+  }
+
+  :global(#hud-flight) dl div,
+  :global(#hud-telemetry) dl div {
+    display: flex;
+    justify-content: space-between;
+    gap: 1.25rem;
+  }
+
+  :global(#hud-flight) dt,
+  :global(#hud-telemetry) dt {
+    color: var(--sd-hud-dim);
+    font-weight: 400;
+  }
+
+  :global(#hud-flight) dd,
+  :global(#hud-telemetry) dd {
+    margin: 0;
+    color: var(--sd-hud-bright);
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+
+  :global(#hud-telemetry) footer {
+    color: var(--sd-hud-dim);
+    text-transform: none;
+    letter-spacing: normal;
+    font-variant-numeric: tabular-nums;
+  }
+
+  :global(#hud-flight) {
+    left: 1.5rem;
+    bottom: 1.5rem;
+  }
+
+  :global(#hud-telemetry) {
+    top: calc(var(--sl-nav-height) + 1.5rem);
+    right: 1.5rem;
+  }
+
+  :global(#hud-sound) {
+    position: fixed;
+    z-index: 3;
+    right: 1.5rem;
+    bottom: 1.5rem;
+    padding: 0.55rem 0.8rem;
+    background: var(--sd-hud-field), var(--sd-hud-scanline);
+    border: 1px solid var(--sd-hud-line);
+    color: var(--sd-hud-bright);
+    font: 700 0.6875rem/1 var(--sl-font-mono);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 0 100%);
+    filter: drop-shadow(0 0 12px var(--sd-hud-glow)); /* impeccable-disable-line dark-glow ai-color-palette gpt-thin-border-wide-shadow -- projected control */
+    cursor: pointer;
+  }
+
+  :global(#hud-sound)[aria-pressed="true"] {
+    color: var(--sd-hud-accent);
+    border-color: var(--sd-hud-accent);
+    text-shadow: 0 0 8px color-mix(in srgb, var(--sd-hud-accent) 55%, transparent); /* impeccable-disable-line dark-glow ai-color-palette gpt-thin-border-wide-shadow -- control active */
+    box-shadow: 0 0 18px color-mix(in srgb, var(--sd-hud-accent) 30%, transparent); /* impeccable-disable-line dark-glow ai-color-palette gpt-thin-border-wide-shadow -- control active */
+  }
+
+  :global(#hud-chips) {
+    position: fixed;
+    z-index: 3;
+    left: 50%;
+    bottom: 1.5rem;
+    max-width: 46vw;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    justify-content: center;
+    pointer-events: none;
+  }
+
+  :global(#hud-chips) span {
+    padding: 0.4rem 0.65rem;
+    background: var(--sd-hud-field), var(--sd-hud-scanline);
+    border: 1px solid var(--sd-hud-line);
+    font: 600 0.6875rem/1 var(--sl-font-mono);
+    letter-spacing: 0.12em;
+    color: var(--sd-hud-dim);
+    text-transform: uppercase;
+    clip-path: polygon(0 0, calc(100% - 7px) 0, 100% 7px, 100% 100%, 0 100%);
+    filter: drop-shadow(0 0 10px var(--sd-hud-glow)); /* impeccable-disable-line dark-glow ai-color-palette gpt-thin-border-wide-shadow -- projected hint chips */
+  }
+
+  :global(#hud-chips) b {
+    color: var(--sd-hud-accent);
+    font-weight: 700;
+  }
+
+  /* Objective readout: one chamfered voice at the top center. */
+  :global(#compass-target) {
+    position: fixed;
+    z-index: 3;
+    top: calc(var(--sl-nav-height) + 0.9rem);
+    left: 50%;
+    transform: translateX(-50%);
+    margin: 0;
+    padding: 0.45rem 0.8rem;
+    background: var(--sd-hud-field), var(--sd-hud-scanline);
+    border: 1px solid var(--sd-hud-line);
+    clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 0 100%);
+    filter: drop-shadow(0 0 10px var(--sd-hud-glow));
+    font: 700 0.75rem/1 var(--sl-font-mono);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    color: var(--sd-hud-ink);
+    text-shadow: 0 0 16px color-mix(in srgb, var(--sd-hud-ink) 80%, transparent); /* impeccable-disable-line dark-glow ai-color-palette -- target readout */
+  }
+
+  /* Capability labels: anchored to their beacon, never a centered modal */
+  :global(#hud-labels) {
+    position: fixed;
+    inset: 0;
+    z-index: 3;
+    pointer-events: none;
+  }
+
+  :global(.beacon-label) {
+    position: absolute;
+    top: 0;
+    left: 0;
+    display: grid;
+    gap: 0.35rem;
+    max-width: 15rem;
+    padding: 0.5rem 0.7rem 0.55rem;
+    background: var(--sd-hud-fill-solid), var(--sd-hud-scanline);
+    border: 1px solid var(--sd-hud-line);
+    clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 0 100%);
+    filter: drop-shadow(0 0 14px var(--sd-hud-glow));
+    text-decoration: none;
+    opacity: 0.88;
+    transition: opacity 0.18s ease, border-color 0.18s ease;
+    will-change: transform;
+    pointer-events: auto;
+  }
+
+  :global(.beacon-label)::before {
+    content: "";
+    position: absolute;
+    left: -3px;
+    top: 50%;
+    width: 6px;
+    height: 6px;
+    margin-top: -3px;
+    background: var(--sd-hud-ink);
+    transform: rotate(45deg);
+    box-shadow: 0 0 8px color-mix(in srgb, var(--sd-hud-ink) 70%, transparent); /* impeccable-disable-line dark-glow ai-color-palette -- projected anchor diamond */
+  }
+
+  :global(.beacon-label[hidden]) {
+    display: none;
+  }
+
+  :global(.beacon-label .label-head) {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+    font: 700 0.6875rem/1.1 var(--sl-font-mono);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--sd-ink-strong-night);
+  }
+
+  :global(.beacon-label .label-head b) {
+    color: var(--sd-hud-ink);
+    text-shadow: 0 0 10px color-mix(in srgb, var(--sd-hud-ink) 50%, transparent); /* impeccable-disable-line dark-glow ai-color-palette -- projected block title */
+  }
+
+  :global(.beacon-label .label-dist) {
+    margin-left: auto;
+    color: var(--sd-hud-dim);
+    font-variant-numeric: tabular-nums;
+  }
+
+  :global(.beacon-label .label-blurb),
+  :global(.beacon-label .label-open) {
+    display: none;
+  }
+
+  :global(.beacon-label.found .label-head b::before) {
+    content: "✓ ";
+    color: var(--sd-hud-ink);
+  }
+
+  :global(.beacon-label.near) {
+    opacity: 1;
+    border-color: var(--sd-hud-ink);
+  }
+
+  :global(.beacon-label.near .label-blurb) {
+    display: block;
+    margin: 0;
+    font: 400 0.8125rem/1.4 var(--sl-font);
+    color: var(--sd-ink-night);
+  }
+
+  :global(.beacon-label.near .label-open) {
+    display: inline-block;
+    justify-self: start;
+    padding-bottom: 0.15rem;
+    font: 700 0.6875rem/1 var(--sl-font-mono);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--sd-hud-ink);
+    border-bottom: 1px solid var(--sd-hud-ink);
+  }
+
+  /* Touch throttle: the coarse-pointer counterpart of W */
+  :global(#hud-thrust) {
+    display: none;
+  }
+
+  @media (pointer: coarse) {
+    :global(#hud-thrust) {
+      display: block;
+      position: fixed;
+      z-index: 3;
+      right: 1rem;
+      bottom: 12.4rem;
+      padding: 0.9rem 1.1rem;
+      background: var(--sd-hud-field), var(--sd-hud-scanline);
+      border: 1px solid var(--sd-hud-line);
+      color: var(--sd-hud-ink);
+      font: 700 0.6875rem/1 var(--sl-font-mono);
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 0 100%);
+      filter: drop-shadow(0 0 12px var(--sd-hud-glow)); /* impeccable-disable-line dark-glow ai-color-palette gpt-thin-border-wide-shadow -- projected touch control */
+      touch-action: none;
+    }
+
+    :global(#hud-chips) {
+      display: none;
+    }
+  }
+
+  /* Example gates: HTML blocks anchored to their 3D ring, discovered by flying */
+  :global(#hud-examples) {
+    position: fixed;
+    inset: 0;
+    z-index: 3;
+    pointer-events: none;
+  }
+
+  :global(.example-label) {
+    position: absolute;
+    top: 0;
+    left: 0;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 0.6rem;
+    align-items: center;
+    width: 16rem;
+    padding: 0.5rem;
+    background: var(--sd-hud-field), var(--sd-hud-scanline);
+    border: 1px solid var(--sd-hud-line-accent);
+    clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 0 100%);
+    filter: drop-shadow(0 0 14px var(--sd-hud-glow));
+    text-decoration: none;
+    opacity: 0.9;
+    transition: opacity 0.18s ease, border-color 0.18s ease;
+    will-change: transform;
+    pointer-events: auto;
+  }
+
+  :global(.example-label)::before {
+    content: "";
+    position: absolute;
+    left: -3px;
+    top: 50%;
+    width: 6px;
+    height: 6px;
+    margin-top: -3px;
+    background: var(--sd-hud-accent);
+    transform: rotate(45deg);
+    box-shadow: 0 0 8px color-mix(in srgb, var(--sd-hud-accent) 70%, transparent); /* impeccable-disable-line dark-glow ai-color-palette -- example anchor */
+  }
+
+  :global(.example-label[hidden]) {
+    display: none;
+  }
+
+  :global(.example-label img) {
+    width: 4.6rem;
+    height: 3rem;
+    object-fit: cover;
+    display: block;
+    border: 1px solid color-mix(in srgb, var(--sd-frame-night) 30%, transparent);
+  }
+
+  :global(.example-label .example-meta) {
+    display: grid;
+    gap: 0.25rem;
+    min-width: 0;
+  }
+
+  :global(.example-label .example-head) {
+    display: flex;
+    align-items: baseline;
+    gap: 0.4rem;
+    min-width: 0;
+  }
+
+  :global(.example-label .example-kind) {
+    flex: none;
+    font: 700 0.6875rem/1 var(--sl-font-mono);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--sd-hud-accent);
+  }
+
+  :global(.example-label b) {
+    font: 700 0.6875rem/1.2 var(--sl-font-mono);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--sd-hud-bright);
+    min-width: 0;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+  }
+
+  :global(.example-label .example-dist) {
+    font: 700 0.6875rem/1 var(--sl-font-mono);
+    color: var(--sd-hud-dim);
+    font-variant-numeric: tabular-nums;
+  }
+
+  :global(.example-label .example-open) {
+    display: none;
+  }
+
+  :global(.example-label.found b::before) {
+    content: "✓ ";
+    color: var(--sd-hud-ink);
+  }
+
+  :global(.example-label.near) {
+    opacity: 1;
+    border-color: var(--sd-hud-ink);
+  }
+
+  :global(.example-label.near .example-open) {
+    display: inline-block;
+    justify-self: start;
+    padding-bottom: 0.15rem;
+    font: 700 0.6875rem/1 var(--sl-font-mono);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--sd-hud-accent);
+    border-bottom: 1px solid var(--sd-hud-line-accent);
+  }
+
+  /* Responsive scrub */
+  @media (max-width: 72rem) {
+    :global(#hud-telemetry) {
+      display: none;
+    }
+  }
+
+  @media (max-width: 40rem) {
+    :global(#hud-flight) {
+      display: none;
+    }
+
+    :global(.beacon-label),
+    :global(.example-label) {
+      max-width: 12.5rem;
+      width: 12.5rem;
+    }
+
+    :global(#hud-sound) {
+      right: 0.9rem;
+      bottom: 1.5rem;
+    }
+
+    :global(#hud-chips) {
+      bottom: 7.75rem;
+      gap: 0.35rem;
+    }
+
+    :global(.example-label) {
+      width: 13.5rem;
+    }
+  }
+
+  /* Motion preferences */
+  @media (prefers-reduced-motion: reduce) {
+    :global(#hud-reticle) {
+      transition: none;
+    }
+
+    :global(.beacon-label),
+    :global(.example-label) {
+      transition: none;
+    }
   }
 </style>
-
-<script src="./intro.ts"></script>

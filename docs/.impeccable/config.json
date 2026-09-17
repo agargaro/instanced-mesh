@@ -1,0 +1,40 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "design-system-radius",
+        "value": "*",
+        "files": [
+          "src/components/Example/**"
+        ],
+        "createdAt": "2026-09-16T21:49:44.536Z"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "*",
+        "files": [
+          "src/components/Example/**"
+        ],
+        "createdAt": "2026-09-16T21:49:44.610Z"
+      },
+      {
+        "rule": "design-system-font",
+        "value": "*",
+        "files": [
+          "src/components/Example/**"
+        ],
+        "createdAt": "2026-09-16T21:49:44.672Z"
+      },
+      {
+        "rule": "layout-transition",
+        "value": "*",
+        "files": [
+          "src/components/Example/**"
+        ],
+        "createdAt": "2026-09-16T21:50:25.338Z"
+      }
+    ]
+  }
+}

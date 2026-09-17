@@ -1,0 +1,52 @@
+---
+import { LinkButton } from '@astrojs/starlight/components';
+
+const { data } = Astro.locals.starlightRoute.entry;
+const { title = data.title, tagline, actions = [] } = data.hero || {};
+---
+
+<div
+  class="hero"
+  data-impeccable-ignore="dark-glow ai-color-palette gpt-thin-border-wide-shadow clipped-overflow-container low-contrast repeating-stripes-gradient"
+>
+  <button
+    id="hero-toggle"
+    class="hero-toggle"
+    type="button"
+    aria-expanded="true"
+    aria-controls="hero-body"
+    aria-label="Hide the legend plate"
+  >
+    <span class="hero-toggle-hint" aria-hidden="true">TAP TO EXPAND</span>
+  </button>
+  <div class="sl-flex stack" id="hero-body">
+    <div class="sl-flex copy">
+      <h1 id="_top" data-page-title set:html={title} />
+      {tagline && <div class="tagline" set:html={tagline} />}
+    </div>
+    {
+      actions.length > 0 && (
+        <div class="sl-flex actions">
+          {actions.map(({ attrs: { class: className, ...attrs } = {}, icon, link: href, text, variant }) => (
+            <LinkButton {href} {variant} icon={icon?.name} class:list={[className]} {...attrs}>
+              {text}
+              {icon?.html && <Fragment set:html={icon.html} />}
+            </LinkButton>
+          ))}
+        </div>
+      )
+    }
+  </div>
+</div>
+
+<script>
+  const toggle = document.getElementById("hero-toggle");
+  if (toggle) {
+    const syncLabel = () => {
+      const expanded = toggle.getAttribute("aria-expanded") !== "false";
+      toggle.setAttribute("aria-label", expanded ? "Hide the legend plate" : "Show the legend plate");
+    };
+    new MutationObserver(syncLabel).observe(toggle, { attributes: true, attributeFilter: ["aria-expanded"] });
+    syncLabel();
+  }
+</script>

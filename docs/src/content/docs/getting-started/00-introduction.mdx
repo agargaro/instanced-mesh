@@ -1,5 +1,6 @@
 ---
 title: Introduction
+description: An overview of InstancedMesh2, its features, and how it differs from three.js InstancedMesh.
 ---
 
 `InstancedMesh2` is an enhanced alternative to [`InstancedMesh`](https://threejs.org/docs/#api/en/objects/InstancedMesh), 
@@ -16,27 +17,27 @@ offering improved performance and usability with features such as:
 - **Shadow LOD** – *Optimize shadow rendering by reducing detail for distant instances.*
 - **Skinning** – *Apply skeletal animations for complex and dynamic movements.*
 
-:::note 
+:::note
 Currently, `InstancedMesh2` only works with [`WebGLRenderer`](https://threejs.org/docs/#api/en/renderers/WebGLRenderer) 
 and requires [`three.js r159+`](https://github.com/mrdoob/three.js).
 :::
 
-### Differences from `InstancedMesh`
+## Differences from `InstancedMesh`
 
-##### `InstancedMesh`
+### `InstancedMesh`
 - Uses an [`InstancedBufferAttribute`](https://threejs.org/docs/#api/en/core/InstancedBufferAttribute) to store instance matrices and data.
 - Renders instances sequentially, meaning all instances are processed in the order they were added, without skipping or reordering. 
   This can be inefficient when dealing with a large number of instances, especially if many are off-screen or require different sorting orders for transparency.
 
-##### `InstancedMesh2`
+### `InstancedMesh2`
 - Uses [`SquareDataTexture`](https://agargaro.github.io/instanced-mesh/api/classes/squaredatatexture/) 
   (an extended version of [`DataTexture`](https://threejs.org/docs/#api/en/textures/DataTexture) supporting partial updates) 
   to store instance matrices and data.
 - Uses an `InstancedBufferAttribute` to manage the indexes of instances to be rendered, allowing for selective rendering, efficient culling, 
   and sorting before sending data to the GPU.
 
-:::note 
+:::note
 Due to this additional indirection, rendering ***all*** instances is slightly slower. <br/>
 However, the benefits of efficient culling and sorting often outweigh the minor overhead. <br/>
 If none of the extra features are needed, using `InstancedMesh` is recommended.
-::: 
+:::

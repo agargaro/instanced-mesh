@@ -1,0 +1,388 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-09-17T21:23:46Z",
+  "title": "Design System: InstancedMesh2 Docs",
+  "extensions": {
+    "colorMeta": {
+      "void": {
+        "displayName": "Void Indigo",
+        "role": "surface",
+        "canonical": "#12142a",
+        "tonalRamp": [
+          "#0b0c16",
+          "#12142a",
+          "#1a1d38",
+          "#262a48",
+          "#3a3f66",
+          "#5a6090",
+          "#8b90b8",
+          "#c9cbe0"
+        ]
+      },
+      "print": {
+        "displayName": "Vellum",
+        "role": "surface",
+        "canonical": "#f2ecdf",
+        "tonalRamp": [
+          "#7d7259",
+          "#a89b7f",
+          "#c9bda3",
+          "#e6dccb",
+          "#f2ecdf",
+          "#faf6ec",
+          "#fdfaf3",
+          "#ffffff"
+        ]
+      },
+      "ink-strong": {
+        "displayName": "Graphite",
+        "role": "text",
+        "canonical": "#171a26",
+        "tonalRamp": [
+          "#171a26",
+          "#262b3d",
+          "#4b5064",
+          "#767a8c",
+          "#9ea2b0",
+          "#c3c5cd",
+          "#e0e1e5",
+          "#f4f5f7"
+        ]
+      },
+      "cel-red": {
+        "displayName": "Cel Vermillion",
+        "role": "signal",
+        "canonical": "#ff5a36",
+        "tonalRamp": [
+          "#3a1a12",
+          "#7a2c19",
+          "#c93c1b",
+          "#ff5a36",
+          "#ff8a6e",
+          "#ffb3a0",
+          "#ffd5ca",
+          "#ffefeb"
+        ]
+      },
+      "cel-cyan": {
+        "displayName": "Cel Cyan",
+        "role": "accent",
+        "canonical": "#39c7d6",
+        "tonalRamp": [
+          "#143038",
+          "#1d5a66",
+          "#2a93a3",
+          "#39c7d6",
+          "#7fe0ea",
+          "#a8ecf2",
+          "#cdf4f7",
+          "#ebfafc"
+        ]
+      },
+      "hud-accent": {
+        "displayName": "Console Amber",
+        "role": "accent",
+        "canonical": "#ffb347",
+        "tonalRamp": [
+          "#3a2410",
+          "#7a4c1a",
+          "#b8772a",
+          "#ffb347",
+          "#ffc977",
+          "#ffdca6",
+          "#ffe9c9",
+          "#fff5e6"
+        ]
+      },
+      "planet-blue": {
+        "displayName": "Planet Blue",
+        "role": "accent",
+        "canonical": "#6fb3ff",
+        "tonalRamp": [
+          "#12294a",
+          "#1f4a80",
+          "#2f6db4",
+          "#6fb3ff",
+          "#93c7ff",
+          "#b8dbff",
+          "#d9ebff",
+          "#eff6ff"
+        ]
+      },
+      "planet-coral": {
+        "displayName": "Planet Coral",
+        "role": "accent",
+        "canonical": "#ff8a5c",
+        "tonalRamp": [
+          "#3a1a12",
+          "#7a3a22",
+          "#b85a36",
+          "#ff8a5c",
+          "#ffab8a",
+          "#ffc9b2",
+          "#ffe0d3",
+          "#fff2eb"
+        ]
+      },
+      "ink-hull": {
+        "displayName": "Ink Hull",
+        "role": "accent",
+        "canonical": "#05090b",
+        "tonalRamp": [
+          "#05090b",
+          "#0d1420",
+          "#1b2431",
+          "#2f3b4a",
+          "#4d5a6b",
+          "#77848f",
+          "#a9b3ba",
+          "#dfe4e8"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Anton",
+        "purpose": "Uppercase title blocks, tabs, plate titles, the wordmark. Single 400 weight, never faux-bolded."
+      },
+      "body": {
+        "displayName": "Inter Variable",
+        "purpose": "Prose at a 72ch measure; the lede under the docs title block."
+      },
+      "label": {
+        "displayName": "JetBrains Mono",
+        "purpose": "Instrument voice: labels, readouts, distances, revision cells, tables. Tabular numerals wherever numbers are compared."
+      }
+    },
+    "shadows": [
+      {
+        "name": "sheet-edge",
+        "value": "0 1px 1px rgba(27,43,82,0.06), 0 2px 3px rgba(27,43,82,0.08)",
+        "purpose": "--sl-shadow-sm: data panels and printed plates at rest."
+      },
+      {
+        "name": "overlay-lift",
+        "value": "0 2px 2px rgba(27,43,82,0.05), 0 6px 10px rgba(27,43,82,0.1)",
+        "purpose": "--sl-shadow-md: incumbent overlay chrome (search modal, menus)."
+      },
+      {
+        "name": "overlay-deep",
+        "value": "0 3px 3px rgba(27,43,82,0.04), 0 12px 22px rgba(27,43,82,0.14)",
+        "purpose": "--sl-shadow-lg: the largest incumbent overlay. The cel register swaps all three to black alphas."
+      }
+    ],
+    "motion": [
+      {
+        "name": "frame-cap",
+        "value": "1000 / 60 accumulator gate",
+        "purpose": "The splash renders at most 60fps; physics keeps the rAF cadence, world updates feed the drawn frames."
+      },
+      {
+        "name": "boot",
+        "value": "2.4s cubic ease-out",
+        "purpose": "Schematic phosphor assembles into the cel surface; reduced motion snaps to the finished frame."
+      },
+      {
+        "name": "launch-shake",
+        "value": "0.5s burst",
+        "purpose": "One cockpit shake when the throttle first bites, then a stable frame."
+      },
+      {
+        "name": "camera-orbit",
+        "value": "0.7s parked, pi x 0.46, +85% height",
+        "purpose": "The chase camera eases to a high side profile while parked and swings back on throttle."
+      },
+      {
+        "name": "label-lerp",
+        "value": "0.2 per frame at 8Hz projections",
+        "purpose": "Anchored doc labels chase their projected targets; reduced motion snaps instead."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "mobile",
+        "value": "50rem"
+      },
+      {
+        "name": "toc",
+        "value": "72rem"
+      },
+      {
+        "name": "content-measure",
+        "value": "72ch"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Eyecatch bar",
+      "kind": "nav",
+      "refersTo": "eyecatch-bar",
+      "description": "The 3.5rem title strip: skew-cut vermillion mark, Anton wordmark, mono-caps panel tabs with a 3px active underline.",
+      "html": "<header class=\"ds-eyecatch\"><a class=\"ds-eyecatch-mark\" href=\"#\" aria-label=\"Home\"><span>IM2</span></a><span class=\"ds-eyecatch-title\">InstancedMesh2</span><nav class=\"ds-eyecatch-tabs\" aria-label=\"Sections\"><a href=\"#\" aria-current=\"page\">Basics</a><a href=\"#\">Advanced</a><a href=\"#\">API</a></nav></header>",
+      "css": ".ds-eyecatch{display:flex;align-items:center;gap:1.25rem;height:3.5rem;padding-inline:1.25rem;background:#1a1d38;border-bottom:2px solid #ff5a36}.ds-eyecatch-mark{display:grid;place-items:center;width:2.1rem;height:2.1rem;flex:none;background:#ff5a36;color:#fff;font-family:Anton,'Arial Narrow',sans-serif;font-size:.95rem;line-height:1;letter-spacing:.02em;text-decoration:none;transform:skewX(-8deg)}.ds-eyecatch-mark span{display:block;transform:skewX(8deg)}.ds-eyecatch-title{font-family:Anton,'Arial Narrow',sans-serif;font-size:1.15rem;font-weight:400;line-height:1;letter-spacing:.01em;text-transform:uppercase;color:#f4efe2;white-space:nowrap}.ds-eyecatch-tabs{display:flex;align-items:stretch;gap:.15rem;margin-inline-start:.5rem}.ds-eyecatch-tabs a{display:flex;align-items:center;padding:0 .7rem;color:#a8a394;font:700 .6875rem/1 'JetBrains Mono','IBM Plex Mono',monospace;letter-spacing:.12em;text-transform:uppercase;text-decoration:none;border-bottom:3px solid transparent}.ds-eyecatch-tabs a:hover{color:#fff;background:rgba(255,90,54,.12)}.ds-eyecatch-tabs a[aria-current=page]{color:#f4efe2;border-bottom-color:#ff5a36}"
+    },
+    {
+      "name": "HUD primary CTA",
+      "kind": "button",
+      "refersTo": "hud-primary-cta",
+      "description": "The single filled action per surface: cel vermillion with ink text and a lit 6px marker.",
+      "html": "<a class=\"ds-cta-primary\" href=\"#\">Tutorial <span aria-hidden=\"true\">&rarr;</span></a>",
+      "css": ".ds-cta-primary{position:relative;display:inline-flex;align-items:center;gap:.6rem;padding:.9rem 1.1rem .9rem 1.55rem;background:#ff5a36;border:1px solid #ff5a36;color:#0b0c16;font:700 .75rem/1 'JetBrains Mono','IBM Plex Mono',monospace;letter-spacing:.12em;text-transform:uppercase;text-decoration:none;transition:background-color .18s ease}.ds-cta-primary::before{content:\"\";position:absolute;left:.65rem;top:50%;width:6px;height:6px;margin-top:-3px;background:#0b0c16}.ds-cta-primary:hover{background:#ff7a5c;border-color:#ff7a5c}.ds-cta-primary:focus-visible{outline:2px solid #ff5a36;outline-offset:2px}"
+    },
+    {
+      "name": "HUD CTA",
+      "kind": "button",
+      "refersTo": "hud-cta",
+      "description": "A hairline peer action: glass fill, hud-line border, lit marker, no boxes.",
+      "html": "<a class=\"ds-cta\" href=\"#\">Examples <span aria-hidden=\"true\">&rarr;</span></a>",
+      "css": ".ds-cta{position:relative;display:inline-flex;align-items:center;gap:.6rem;padding:.9rem 1.1rem .9rem 1.55rem;background:rgba(10,16,26,.6);border:1px solid rgba(226,236,255,.45);color:#f2f6ff;font:700 .75rem/1 'JetBrains Mono','IBM Plex Mono',monospace;letter-spacing:.12em;text-transform:uppercase;text-decoration:none;transition:background-color .18s ease,box-shadow .18s ease}.ds-cta::before{content:\"\";position:absolute;left:.65rem;top:50%;width:6px;height:6px;margin-top:-3px;background:#f2f6ff;box-shadow:0 0 8px rgba(242,246,255,.7)}.ds-cta:hover{background:rgba(242,246,255,.14);box-shadow:0 0 16px rgba(160,200,255,.22)}.ds-cta:focus-visible{outline:2px solid #ffb347;outline-offset:2px}"
+    },
+    {
+      "name": "HUD voice",
+      "kind": "custom",
+      "refersTo": "hud-voice",
+      "description": "One console readout: mono label + bright tabular value, a hairline underline, never a box.",
+      "html": "<div class=\"ds-voice\"><span>VEL</span><b>312</b></div>",
+      "css": ".ds-voice{display:flex;justify-content:space-between;gap:1.25rem;padding:.4rem .6rem;border-bottom:1px solid rgba(226,236,255,.26);color:#f2f6ff;font:700 .75rem/1 'JetBrains Mono','IBM Plex Mono',monospace;letter-spacing:.14em;text-transform:uppercase;text-shadow:0 1px 1px rgba(9,15,24,.8),0 0 3px rgba(9,15,24,.6)}.ds-voice span{color:#a9b7cf}.ds-voice b{color:#fff;font-weight:700;font-variant-numeric:tabular-nums}"
+    },
+    {
+      "name": "Revision cell",
+      "kind": "card",
+      "refersTo": "revision-cell",
+      "description": "The footer's label/value cell, pinned to the bottom of the sheet; cells are separated by the ink grid, not by shadows.",
+      "html": "<div class=\"ds-revision\"><div class=\"ds-revision-cell\"><span class=\"ds-revision-label\">Draw</span><span class=\"ds-revision-value\">@three.ez/instanced-mesh</span></div><div class=\"ds-revision-cell\"><span class=\"ds-revision-label\">Sheet</span><span class=\"ds-revision-value\">2026 &middot; rev. A</span></div></div>",
+      "css": ".ds-revision{display:flex;flex-wrap:wrap;gap:1px;background:#171a26;border:1px solid #171a26}.ds-revision-cell{display:flex;flex-direction:column;gap:.25rem;min-width:9rem;padding:.7rem .9rem;background:#faf6ec}.ds-revision-label{font:700 .625rem/1 'JetBrains Mono','IBM Plex Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#4b5064}.ds-revision-value{font:400 .8125rem/1.3 'JetBrains Mono','IBM Plex Mono',monospace;color:#4b5064}"
+    },
+    {
+      "name": "Example plate",
+      "kind": "card",
+      "refersTo": "example-plate",
+      "description": "A wall plate: sunk cover, Anton title, mono slug, and a SHEET escape that appears on hover or focus.",
+      "html": "<article class=\"ds-plate\"><button class=\"ds-plate-open\" type=\"button\"><span class=\"ds-plate-cover\"></span><span class=\"ds-plate-meta\"><span class=\"ds-plate-title\">Frustum Culling</span><span class=\"ds-plate-slug\">frustum-culling</span></span></button><a class=\"ds-plate-sheet\" href=\"#\">SHEET &nearr;</a></article>",
+      "css": ".ds-plate{position:relative;background:#faf6ec;border:1px solid #c9bfa8}.ds-plate-open{display:block;width:100%;padding:0;border:0;background:transparent;text-align:start;cursor:pointer}.ds-plate-cover{display:block;aspect-ratio:16/10;background:#e6dccb;border-bottom:1px solid #c9bfa8}.ds-plate-meta{display:flex;align-items:baseline;justify-content:space-between;gap:.6rem;padding:.7rem .8rem}.ds-plate-title{font-family:Anton,'Arial Narrow',sans-serif;font-size:1.1rem;font-weight:400;line-height:1.1;letter-spacing:.01em;text-transform:uppercase;color:#171a26}.ds-plate-slug{font:400 .6875rem/1 'JetBrains Mono','IBM Plex Mono',monospace;letter-spacing:.08em;color:#767a8c}.ds-plate-sheet{position:absolute;top:.5rem;right:.5rem;padding:.3rem .45rem;background:#faf6ec;border:1px solid #171a26;color:#171a26;font:700 .5625rem/1 'JetBrains Mono','IBM Plex Mono',monospace;letter-spacing:.12em;text-decoration:none;opacity:0;transition:opacity .14s linear}.ds-plate:hover .ds-plate-sheet,.ds-plate:focus-within .ds-plate-sheet{opacity:1}.ds-plate-open:focus-visible,.ds-plate-sheet:focus-visible{outline:2px solid #ff5a36;outline-offset:2px}"
+    },
+    {
+      "name": "Filter chip",
+      "kind": "chip",
+      "refersTo": "filter-chip",
+      "description": "A mono-caps filter key with a count; the active chip inverts to ink and the count re-inks to the frame.",
+      "html": "<button class=\"ds-chip\" type=\"button\" aria-pressed=\"true\">All <span>8</span></button>",
+      "css": ".ds-chip{display:inline-flex;align-items:center;gap:.45rem;height:2.5rem;padding:.45rem .7rem;border:1px solid #c9bfa8;background:#faf6ec;color:#4b5064;font:700 .6875rem/1 'JetBrains Mono','IBM Plex Mono',monospace;letter-spacing:.12em;text-transform:uppercase;cursor:pointer}.ds-chip span{color:#767a8c}.ds-chip:hover{border-color:#171a26;color:#171a26}.ds-chip[aria-pressed=true]{background:#262b3d;border-color:#262b3d;color:#faf6ec}.ds-chip[aria-pressed=true] span{color:#c9bfa8}.ds-chip:focus-visible{outline:2px solid #ff5a36;outline-offset:2px}"
+    },
+    {
+      "name": "Cockpit arc",
+      "kind": "custom",
+      "refersTo": "cockpit-arc",
+      "description": "The dashboard falloff under the bottom voices: a radial cockpit-arc gradient with a hairline canopy edge. The only full-width decoration in the scene.",
+      "html": "<div class=\"ds-cockpit-arc\" aria-hidden=\"true\"></div>",
+      "css": ".ds-cockpit-arc{position:relative;height:17vh;pointer-events:none;background:radial-gradient(130% 120% at 50% 148%,rgba(5,7,12,.82) 0 34%,rgba(5,7,12,.34) 52%,transparent 70%)}.ds-cockpit-arc::after{content:\"\";position:absolute;inset:0 6% 0 6%;border-radius:50% 50% 0 0/22% 22% 0 0;border-top:1px solid rgba(226,236,255,.22);box-shadow:0 -1px 0 rgba(0,0,0,.5)}@media (max-width:50rem){.ds-cockpit-arc{height:22vh}}"
+    },
+    {
+      "name": "Data panel",
+      "kind": "card",
+      "refersTo": "data-panel",
+      "description": "A dimension schedule: ink border, print-sunk header in mono caps, hairline rows, tabular numerals, sheet-edge shadow.",
+      "html": "<table class=\"ds-data-panel\"><thead><tr><th>Option</th><th>Default</th><th>Type</th></tr></thead><tbody><tr><td>capacity</td><td>1000</td><td>number</td></tr><tr><td>createEntities</td><td>false</td><td>boolean</td></tr><tr><td>allowsEuler</td><td>true</td><td>boolean</td></tr></tbody></table>",
+      "css": ".ds-data-panel{width:100%;border:1px solid #171a26;border-radius:2px;border-collapse:collapse;background:#f2ecdf;color:#262b3d;font:400 .875rem/1.7 'Inter Variable',system-ui,sans-serif;box-shadow:0 1px 1px rgba(27,43,82,.06),0 2px 3px rgba(27,43,82,.08)}.ds-data-panel th{background:#e6dccb;border-bottom:1px solid #c9bfa8;padding:.5rem 1rem;font:700 .6875rem/1.4 'JetBrains Mono','IBM Plex Mono',monospace;letter-spacing:.1em;text-transform:uppercase;text-align:left;color:#171a26}.ds-data-panel td{border-bottom:1px solid #c9bfa8;padding:.5rem 1rem;font-variant-numeric:tabular-nums}.ds-data-panel th:first-child,.ds-data-panel td:first-child{padding-inline-start:0}.ds-data-panel th:last-child,.ds-data-panel td:last-child{padding-inline-end:0}.ds-data-panel tbody tr:hover{background:rgba(23,96,109,.05)}"
+    }
+  ],
+  "narrative": {
+    "northStar": "Cel & Retino — an 1980s comic magazine printing an anime: one world, two registers, three marks (ink line, flat cel colour, 45% halftone).",
+    "overview": "**The cel register (splash).** A pilotable deep-space viewport drawn by hand: every body carries an ink hull outline, lit surfaces quantize into four hard toon bands, rocks are unlit flat-albedo hulls, planets are each their own colour — one flat base with blob continents wrapped around the sphere — with a moon apiece and hash-derived rings on the ringed worlds, the belt drifts over a seeded map, and exhaust is a dense cyan plume from two alternating nozzles. The console floats on the glass as **line-work** — no boxes, no blur, no glow slabs — so the world stays visible behind every readout. The one exception is the legend plate: a filled caption box, because it is the page's only product statement.\n\n**The print register (docs).** Vellum paper in light, deep indigo in dark, an eyecatch bar with a vermillion mark and panel tabs, a ticked numbered index, title blocks whose frontmatter description prints as the lead line, caption boxes for asides, data panels for tables, sheet tabs for pagination, and a revision block pinned to the bottom so no page trails off into empty paper.",
+    "keyCharacteristics": [
+      "Ink outlines on every 3D body; hard toon bands on the lit ones, flat per-instance albedo on the unlit rocks and smoke.",
+      "A neutral console (ink-white + amber + red) so the sky carries the colour.",
+      "Halftone as texture, never as a reading surface.",
+      "The world is seeded: same map, same rings, same sky on every visit.",
+      "Scale you can see: the telemetry counts the instances, the console never lies.",
+      "The console can be drawn by the scene itself: the same five voices render as DOM line-work or as a texture on a screen-space quad inside the canvas."
+    ],
+    "rules": [
+      {
+        "name": "The Two Registers Rule",
+        "body": "One world, two registers: splash = cel (flat colour, ink line, acetate); docs = print (45% halftone on margins, transitions, heading tails).",
+        "section": "colors"
+      },
+      {
+        "name": "The Cel Rule",
+        "body": "Four hard luminance bands and one hard rim step on lit bodies; no smooth gradients, no cast reflections — the void lights, nothing reflects.",
+        "section": "colors"
+      },
+      {
+        "name": "The Sky Carries the Colour Rule",
+        "body": "The sky carries the colour: one distinct hue per planet, cyan exhaust, neutral rocks. The console stays ink-white + amber + red; green only for objectives.",
+        "section": "colors"
+      },
+      {
+        "name": "The Seed Rule",
+        "body": "The map follows seeds: orbit radii and ringed worlds derive from `hashString(name)`, so the system reads the same on every visit.",
+        "section": "colors"
+      },
+      {
+        "name": "The Anton 400 Rule",
+        "body": "Anton ships a single 400; it is never faux-bolded — `font-weight: 400` with `font-synthesis: none` on every Anton role, the splash h1 included.",
+        "section": "typography"
+      },
+      {
+        "name": "The Cockpit Rule",
+        "body": "The console wraps the canopy: every voice leans with the curve, and the bottom row shares one 1.5rem baseline.",
+        "section": "layout"
+      },
+      {
+        "name": "The Drawn-Depth Rule",
+        "body": "Elevation is a change of line weight, a chamfer, a halftone field or an ink hull. Shadows belong to printed panels and overlay chrome; they never touch the console or a 3D body.",
+        "section": "elevation"
+      },
+      {
+        "name": "The Halftone Rule",
+        "body": "Halftone never sits under body text; it lives on margins, heading tails, transitions.",
+        "section": "elevation"
+      },
+      {
+        "name": "The Ink Rule",
+        "body": "Every 3D body carries an ink hull outline — white on the dark ship, black on bright bodies. No outline, no anime.",
+        "section": "elevation"
+      },
+      {
+        "name": "The Curvature Rule",
+        "body": "Curvature is a per-voice lean plus a dashboard arc, never a bevel or a gradient card.",
+        "section": "shapes"
+      },
+      {
+        "name": "The Line-Work Rule",
+        "body": "The console has no boxes: readouts are line-work on the viewport, so the world stays visible behind them.",
+        "section": "components"
+      },
+      {
+        "name": "The One Primary Rule",
+        "body": "Exactly one primary action per surface; everything else is a hairline peer.",
+        "section": "components"
+      },
+      {
+        "name": "The Plate Is Control Rule",
+        "body": "The legend plate is a control, not an interruption: it collapses only when the pilot takes the controls, and the toggle brings it back on any device.",
+        "section": "components"
+      }
+    ],
+    "dos": [
+      "Do draw with ink, flat colour and halftone; keep the world visible behind the console.",
+      "Do let the sky carry the colour; keep the console ink-white + amber + red.",
+      "Do keep one primary action per surface and hairlines for every peer.",
+      "Do seed the map and the rings from the name hash, so the sky is stable.",
+      "Do keep the plate a control: it collapses on scene input and always reopens.",
+      "Do cap at 60fps, count the instances in the telemetry, and honour `prefers-reduced-motion`.",
+      "Do keep the console line-work — no boxes, no blur, no glow slabs."
+    ],
+    "donts": [
+      "Don't put boxes, blur or glow slabs in the console — line-work only.",
+      "Don't wash the screen in one hue, and don't use green outside objectives.",
+      "Don't ship a 3D body without its ink hull, or smooth-shade a banded surface.",
+      "Don't put halftone under body text, or decorative texture on a reading surface.",
+      "Don't auto-dismiss the entry point on a bare keypress, and don't hide the CTAs from the tab order.",
+      "Don't let the readout collide with the plate on mobile: the plate wins while it is open.",
+      "Don't cast shadows on the console or a 3D body — printed lift belongs to data panels and overlay chrome.",
+      "Don't ship functional text below the 0.6875rem floor, and don't copy the five current violators."
+    ]
+  }
+}

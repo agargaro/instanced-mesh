@@ -5,6 +5,7 @@ import starlightTypeDoc, { typeDocSidebarGroup } from 'starlight-typedoc';
 import AutoImport from 'astro-auto-import';
 import { resolve } from 'path';
 import mdx from '@astrojs/mdx';
+import { celRetinoDark, celRetinoLight } from './src/styles/code-theme.mjs';
 // https://astro.build/config
 export default defineConfig({
   site: 'https://agargaro.github.io/instanced-mesh',
@@ -33,35 +34,64 @@ export default defineConfig({
         }),
       ],
       title: 'InstancedMesh2',
+      // Cel & Retino code register: the world's own syntax theme (see
+      // src/styles/code-theme.mjs). The palette is hand-audited, so the
+      // automatic contrast fixer must not re-value the token colors.
+      expressiveCode: {
+        themes: [celRetinoDark, celRetinoLight],
+        minSyntaxHighlightingColorContrast: 0,
+        // The world draws depth with lines, not cast shadows; the stock
+        // frame lift would also read as a nested card on the sheet.
+        styleOverrides: {
+          frames: { frameBoxShadowCssValue: 'none' },
+        },
+      },
+      components: {
+        Head: './src/components/Head.astro',
+        Hero: './src/components/Hero.astro',
+        Header: './src/components/shell/Header.astro',
+        Footer: './src/components/shell/Footer.astro',
+        MobileMenuFooter: './src/components/shell/MobileMenuFooter.astro',
+        PageTitle: './src/components/shell/PageTitle.astro',
+      },
       logo: {
         src: './src/assets/samoyed-mascot.png',
         alt: 'logo-samoyed-mascot',
       },
       favicon: './favicon.ico',
-      social: {
-        github: 'https://github.com/agargaro/instanced-mesh',
-        discord: 'https://discord.gg/MVTwrdX3JM',
-      },
+      customCss: [
+        // Self-hosted typefaces: Anton (display), Inter (body), JetBrains Mono (notation).
+        '@fontsource/anton',
+        '@fontsource-variable/inter',
+        '@fontsource-variable/jetbrains-mono',
+        // Cel & Retino: the incumbent sheet theme, then the world layer.
+        './src/styles/theme.css',
+        './src/styles/world.css',
+      ],
+      social: [
+        { icon: 'github', label: 'GitHub', href: 'https://github.com/agargaro/instanced-mesh' },
+        { icon: 'discord', label: 'Discord', href: 'https://discord.gg/MVTwrdX3JM' },
+      ],
       sidebar: [
         {
           label: 'Getting Started',
-          autogenerate: { directory: 'getting-started' },
+          items: [{ autogenerate: { directory: 'getting-started' } }],
         },
         {
           label: 'Basics',
-          autogenerate: { directory: 'basics' },
+          items: [{ autogenerate: { directory: 'basics' } }],
         },
         {
           label: 'Advanced',
-          autogenerate: { directory: 'advanced' },
+          items: [{ autogenerate: { directory: 'advanced' } }],
         },
         {
           label: 'More',
-          autogenerate: { directory: 'more' },
+          items: [{ autogenerate: { directory: 'more' } }],
         },
         // {
         //   label: 'Reference',
-        //   autogenerate: { directory: 'reference' },
+        //   items: [{ autogenerate: { directory: 'reference' } }],
         // },
         // Add the generated sidebar group to the sidebar.
         typeDocSidebarGroup,

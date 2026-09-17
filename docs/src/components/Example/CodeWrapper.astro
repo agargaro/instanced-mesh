@@ -132,7 +132,7 @@ display: flex;
     height: 5rem;
     overflow: hidden;
     display: block;
-    transition: height 300ms ease-out;
+    transition: opacity 300ms ease-out;
   }
   .code-wrapper--open {
     height: 100%;
@@ -150,8 +150,8 @@ display: flex;
     border-radius: 0 0 0.5rem 0.5rem;
   }
   .code-toggle-container-btn:hover .code-toggle-btn {
-    width: 4rem;
-    transition: width 300ms ease-out;
+    transform: scaleX(2);
+    transition: transform 300ms ease-out;
   }
   .code-toggle-btn {
     position: absolute;
@@ -161,8 +161,9 @@ display: flex;
     margin: auto;
     width: 2rem;
     height: 5px;
+    transform: scaleX(1);
     cursor: pointer;
-    transition: width 300ms 0.5s ease-out;
+    transition: transform 300ms 0.5s ease-out;
   }
 
   .section-expressive-code {

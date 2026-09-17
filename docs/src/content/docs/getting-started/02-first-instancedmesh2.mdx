@@ -1,8 +1,11 @@
 ---
 title: Your First InstancedMesh2
+description: Initialize an InstancedMesh2, add instances and set their positions, followed by a complete live example.
 ---
 
-### Initializing `InstancedMesh2`
+This guide walks through creating an `InstancedMesh2`, adding instances and positioning them.
+
+## Initializing `InstancedMesh2`
 
 Start by initializing an `InstancedMesh2`:
 
@@ -10,7 +13,7 @@ Start by initializing an `InstancedMesh2`:
 const iMesh = new InstancedMesh2(geometry, material);
 ```
 
-### Adding and Positioning Instances
+## Adding and Positioning Instances
 
 Next, add instances and set their positions:
 
@@ -25,9 +28,9 @@ The `obj` used in the callback is an [`InstancedEntity`](https://agargaro.github
 an object similar to [`Object3D`](https://threejs.org/docs/#api/en/core/Object3D), allowing transformations and custom data.
 :::
 
-### Example
+## Example
 
-:::note 
+:::note
 All examples use the [`@three.ez/main`](https://github.com/agargaro/three.ez) package to simplify application development. <br/>
 However, `InstancedMesh2` is fully compatible with other libraries.
 :::

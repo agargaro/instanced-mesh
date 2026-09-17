@@ -1,5 +1,6 @@
 ---
 title: Use Rotation Property
+description: Rotation uses quaternion by default; enable the Euler rotation property with the allowsEuler constructor flag.
 ---
 
 By default, rotation in [`InstancedEntity`](https://agargaro.github.io/instanced-mesh/api/classes/instancedentity) is handled using 
@@ -10,7 +11,7 @@ By default, rotation in [`InstancedEntity`](https://agargaro.github.io/instanced
 This design choice avoids the computational overhead of keeping `quaternion` and `rotation` synchronized, as both representations must be 
 updated simultaneously for consistency.
 
-### Enabling the `rotation` Property
+## Enabling the `rotation` Property
 
 If you prefer to work with `Euler` angles instead of quaternions, you can enable the `rotation` property by setting the 
 [`allowsEuler`](https://agargaro.github.io/instanced-mesh/api/interfaces/instancedmesh2params/#allowseuler) flag in the constructor:
@@ -22,6 +23,6 @@ const iMesh = new InstancedMesh2(geo, mat, { createEntities: true, allowsEuler: 
 Enabling this option allows you to modify rotation using `Euler` angles but comes with a minor performance trade-off due to the additional 
 synchronization required.
 
-### Example
+## Example
 
 <Example path='euler'/>

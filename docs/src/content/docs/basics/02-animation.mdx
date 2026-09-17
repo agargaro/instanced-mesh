@@ -1,10 +1,13 @@
 ---
 title: Animate Instances
+description: Animate one or many instances using updateMatrix, a for loop, or the recommended updateInstances method.
 ---
 
-### Animate one instance
+Instances can be animated individually, in a loop, or all at once with `updateInstances`.
 
-[If an array of instances has been created](https://agargaro.github.io/instanced-mesh/basics/00-Instancedentity/), 
+## Animate one instance
+
+[If an array of instances has been created](https://agargaro.github.io/instanced-mesh/basics/01-instancedentity/), 
 it's possible to update an instance in this way:
 
 
@@ -24,9 +27,9 @@ For better performance, if only `position` is updated, use the
 [`updateMatrixPosition`](https://agargaro.github.io/instanced-mesh/api/classes/instancedentity/#updatematrixposition) method instead.
 :::
 
-### Animate multiple instances with for loop
+## Animate multiple instances with for loop
 
-[If an array of instances has been created](https://agargaro.github.io/instanced-mesh/basics/00-Instancedentity/), 
+[If an array of instances has been created](https://agargaro.github.io/instanced-mesh/basics/01-instancedentity/), 
 it's possible to update an instance in this way:
 
 ```ts
@@ -38,7 +41,7 @@ for (const instance of iMesh.instances) {
 }
 ```
 
-### Animate all instances using `updateInstances`
+## Animate all instances using `updateInstances`
 
 **This is the recommended method.** <br/>
 This method iterates over all active instances and automatically calls the `updateMatrix` method.
@@ -55,10 +58,10 @@ For better performance, if only `position` is updated, use the
 :::
 
 :::caution
-[If an array of instances](https://agargaro.github.io/instanced-mesh/basics/00-Instancedentity/) has **not** been created,
+[If an array of instances](https://agargaro.github.io/instanced-mesh/basics/01-instancedentity/) has **not** been created,
 the `position`, `scale` and `quaternion` of the instances will not be maintained and thus reset in the callback.
 :::
 
-### Example
+## Example
 
 <Example path='animation'/>

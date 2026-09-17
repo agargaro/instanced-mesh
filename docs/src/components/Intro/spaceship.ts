@@ -1,56 +1,36 @@
-import { Asset } from "@three.ez/main";
-import { BufferGeometry, Group, Mesh, MeshLambertMaterial, PointLight, Vector2, Vector3 } from "three";
+import { get, preload } from "@three.ez/main";
+import { BufferGeometry, Color, Group, Mesh, MeshLambertMaterial } from "three";
+import { prepareOutlineGeometry, bootProgress, outlineMaterial, patchCelMaterial } from "./shader";
 import { GLTFLoader, type GLTF } from "three/examples/jsm/Addons.js";
 
 const GLB_PATH = "/instanced-mesh/low_poly_space_ship.glb";
-Asset.preload(GLTFLoader, GLB_PATH);
+preload(GLTFLoader, GLB_PATH);
 
 export class SpaceShip extends Group {
-
   constructor() {
     super();
     this.loadModel();
 
-    const pointLight = new PointLight('white', 6, 12, 1).translateY(10);
-    this.add(pointLight);
-
-    this.position.set(0, 5, 20);
+    /* Spawn inside the innermost orbit, clear of every seeded world. */
+    this.position.set(0, 3, 60);
     this.rotation.y = Math.PI;
-    this.scale.setScalar(0.15);
-
-    this.bindInteraction();
+    this.scale.setScalar(1);
   }
 
   private loadModel(): void {
-    const gltf = Asset.get<GLTF>(GLB_PATH);
+    const gltf = get<GLTF>(GLB_PATH);
     const mesh = gltf.scene.querySelector("Mesh") as Mesh<BufferGeometry, MeshLambertMaterial>;
+    prepareOutlineGeometry(mesh.geometry);
     mesh.material = new MeshLambertMaterial({ map: mesh.material.map });
+    patchCelMaterial(mesh.material, { boot: bootProgress, phosphor: new Color("#ffffff"), rim: 0.08 });
+
+    /* Thin hull drawn after the surface: a contour, never a white slab. */
+    const ink = new Mesh(mesh.geometry, outlineMaterial(0.03, 0xffffff));
+    ink.renderOrder = 1;
+    ink.position.copy(mesh.position);
+    ink.quaternion.copy(mesh.quaternion);
+    ink.scale.copy(mesh.scale);
+    mesh.parent?.add(ink);
     this.add(gltf.scene.children[0]);
-  }
-
-  private bindInteraction(): void {
-    const pointer = new Vector2();
-    const newPosition = new Vector3(0, 0, -2.5);
-    const minPosition = new Vector3(-1, 0, -5);
-    const maxPosition = new Vector3(1, 0, -1.5); 
-
-    window.addEventListener("pointermove", (e) => {
-      pointer.x = e.clientX / window.innerWidth;
-      pointer.y = e.clientY / window.innerHeight;
-
-      newPosition.x = (pointer.x * (maxPosition.x - minPosition.x)) + minPosition.x;
-      newPosition.z = (pointer.y * (maxPosition.z - minPosition.z)) + minPosition.z;
-    });
-
-
-    this.on("animate", (e) => {
-      if (!newPosition) return;
-
-      this.position.x += (newPosition.x - this.position.x) * e.delta * 5;
-      this.position.z += (newPosition.z - this.position.z) * e.delta * 5;
-
-      this.rotation.z = (newPosition.x - this.position.x) * e.delta * 20;
-      this.rotation.x = (newPosition.z - this.position.z) * e.delta * 20;
-    });
   }
 }

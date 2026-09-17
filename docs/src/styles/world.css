@@ -1,0 +1,1478 @@
+/* ==========================================================================
+   World: Cel & Retino
+   An 1980s comic magazine printing an anime. Cel register: ink line, flat
+   colour, acetate. Print register: 45% halftone on shadows, margins and
+   transitions only — never under body text. This layer re-values the sheet
+   tokens and rebuilds the Starlight chrome as a printed page.
+   ========================================================================== */
+
+:root {
+  /* Cel palette */
+  --sd-void: #12142a;
+  --sd-void-raised: #1a1d38;
+  --sd-void-sunk: #0b0c16;
+  --sd-print: #f2ecdf;
+  --sd-print-raised: #faf6ec;
+  --sd-print-sunk: #e6dccb;
+  --sd-cel-red: #ff5a36;
+  --sd-cel-cyan: #39c7d6;
+  --sd-cel-magenta: #ff4f9a;
+  --sd-cel-cream: #ffe9b0;
+  --sd-cel-green: #8fd14f;
+  --sd-ink: #0b0c16;
+
+  --sl-nav-height: 3.5rem;
+  --sl-content-width: 68rem;
+}
+
+/* ---------- Print register (light) ---------- */
+:root,
+:root[data-theme='light'] {
+  --sd-ink-strong: #171a26;
+  --sd-ink: #262b3d;
+  --sd-ink-soft: #4b5064;
+  --sd-ink-faint: #767a8c;
+  --sd-paper: var(--sd-print);
+  --sd-paper-raised: var(--sd-print-raised);
+  --sd-paper-sunk: var(--sd-print-sunk);
+  --sd-frame: #1c2033;
+  --sd-frame-soft: #c9bfa8;
+  --sd-blueprint: #17606d;
+  --sd-blueprint-deep: #114b56;
+  --sd-blueprint-pale: #d9e7e8;
+  --sd-orange: #c93c1b;
+  --sd-orange-soft: #f6e0d8;
+  --sd-teal: #17606d;
+  --sd-teal-soft: #d9e7e8;
+}
+
+/* ---------- Cel register (dark) ---------- */
+:root[data-theme='dark'] {
+  --sd-ink-strong: #f4efe2;
+  --sd-ink: #d9d3c4;
+  --sd-ink-soft: #a8a394;
+  --sd-ink-faint: #7c7a70;
+  --sd-paper: var(--sd-void);
+  --sd-paper-raised: var(--sd-void-raised);
+  --sd-paper-sunk: var(--sd-void-sunk);
+  --sd-frame: #3a3f66;
+  --sd-frame-soft: #262a48;
+  --sd-blueprint: #ffb347;
+  --sd-blueprint-deep: #ffd08a;
+  --sd-blueprint-pale: #3a2412;
+  --sd-orange: var(--sd-cel-red);
+  --sd-orange-soft: #3a1a12;
+  --sd-teal: #ffe9b0;
+  --sd-teal-soft: #3a2412;
+}
+
+/* ---------- Type: Anton display, Inter body, JetBrains Mono notation ---------- */
+/* Metric-compatible fallback faces. The webfonts load with `font-display:
+   swap`, so these faces carry the fallback during the swap and keep the
+   line boxes (and therefore the page) from reflowing. Values were computed
+   from the shipped woff2 files against Arial / Arial Narrow / Courier New
+   (Liberation Sans / Nimbus Sans Narrow / Liberation Mono on Linux). */
+@font-face {
+  font-family: 'Inter Fallback'; /* impeccable-disable-line overused-font -- metric-compatible fallback face, not a primary typeface */
+  src: local('Arial'), local('Liberation Sans'), local('Helvetica');
+  size-adjust: 106.96%;
+  ascent-override: 90.57%;
+  descent-override: 22.55%;
+  line-gap-override: 0%;
+}
+
+@font-face {
+  font-family: 'Anton Fallback'; /* impeccable-disable-line overused-font -- metric-compatible fallback face, not a primary typeface */
+  src: local('Nimbus Sans Narrow'), local('Liberation Sans Narrow'), local('Arial Narrow'),
+    local('Helvetica Narrow');
+  size-adjust: 99.44%;
+  ascent-override: 118.29%;
+  descent-override: 33.1%;
+  line-gap-override: 0%;
+}
+
+@font-face {
+  font-family: 'JetBrains Mono Fallback'; /* impeccable-disable-line overused-font -- metric-compatible fallback face, not a primary typeface */
+  src: local('Liberation Mono'), local('Nimbus Mono PS'), local('Courier New');
+  size-adjust: 99.98%;
+  ascent-override: 102.02%;
+  descent-override: 30%;
+  line-gap-override: 0%;
+}
+
+:root {
+  --sl-font: 'Inter Variable', 'Inter Fallback', var(--sl-font-system);
+  --sl-font-mono: 'JetBrains Mono Variable', 'JetBrains Mono Fallback', 'IBM Plex Mono',
+    var(--sl-font-system-mono);
+  --sd-display: 'Anton', 'Anton Fallback', 'Arial Narrow', var(--sl-font-system);
+}
+
+/* ---------- Eyecatch bar ---------- */
+.eyecatch {
+  display: flex;
+  align-items: stretch;
+  height: 100%;
+  border-bottom: 2px solid var(--sd-cel-red);
+  background: var(--sl-color-bg-nav);
+  box-shadow: none;
+  /* The tabs stretch to the bar's bottom edge; this inset keeps the strip's
+     children off the vermillion rule without moving any of them. */
+  padding-block-end: 4px;
+}
+
+/* The bar owns its rule: the incumbent sheet's inset shadow and top accent
+   would double the vermillion underline. PageFrame's outer <header> carries
+   the same stock chrome, so both layers are neutralized. */
+.eyecatch::after,
+header.header::after {
+  content: none;
+}
+
+header.header {
+  border-bottom: 0;
+  box-shadow: none;
+  /* The bar is full-height: the vermillion rule is its bottom edge, not a
+     line floating inside the stock padding. */
+  padding-block: 0;
+}
+
+.eyecatch-inner {
+  display: flex;
+  align-items: stretch;
+  gap: 1.25rem;
+  width: 100%;
+  /* The parent reserves a 4px inset above its rule; the inner reclaims it so
+     the bar's children keep their original boxes (the rule stays the bottom
+     edge of the strip, the layout does not shift). */
+  height: calc(100% + 4px);
+  padding-inline: var(--sl-nav-pad-x);
+}
+
+.eyecatch-mark {
+  display: grid;
+  place-items: center;
+  width: 2.1rem;
+  height: 2.1rem;
+  background: var(--sd-cel-red);
+  color: #fff;
+  font: 400 0.95rem/1 var(--sd-display);
+  letter-spacing: 0.02em;
+  font-synthesis: none;
+  text-decoration: none;
+  transform: skewX(-8deg);
+  flex: none;
+}
+
+.eyecatch-mark span {
+  display: block;
+  transform: skewX(8deg);
+}
+
+.eyecatch .site-title,
+.eyecatch .site-title span {
+  font-family: var(--sd-display);
+  font-weight: 400;
+  font-synthesis: none;
+  font-size: 1.15rem;
+  line-height: 1;
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.eyecatch-tabs {
+  display: flex;
+  align-items: stretch;
+  gap: 0.15rem;
+  margin-inline-start: 0.5rem;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.eyecatch-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.eyecatch-tabs a {
+  display: flex;
+  align-items: center;
+  padding: 0 0.7rem;
+  color: var(--sl-color-gray-3);
+  font: 700 0.6875rem/1 var(--sl-font-mono);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  text-decoration: none;
+  border-bottom: 3px solid transparent;
+  white-space: nowrap;
+}
+
+.eyecatch-tabs a:hover {
+  color: var(--sl-color-white);
+  background: color-mix(in srgb, var(--sd-cel-red) 12%, transparent);
+}
+
+.eyecatch-tabs a[aria-current='page'] {
+  color: var(--sl-color-white);
+  border-bottom-color: var(--sd-cel-red);
+}
+
+/* The splash paints the bar's own fill as a visible boundary; lift the tab
+   rail off the top edge so the full-height tabs are not flush against it.
+   The rail stays anchored to the vermillion rule at the bottom. */
+body:has(#three-canvas) .eyecatch-tabs {
+  margin-block-start: 5px;
+}
+
+.eyecatch-right {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-inline-start: auto;
+}
+
+/* ---------- Header chrome: search + theme select as instrument keys ---------- */
+@media (min-width: 50rem) {
+  .eyecatch-right site-search button[data-open-modal] {
+    border: 1px solid var(--sd-ink);
+    border-radius: 0;
+    background: var(--sd-paper-raised);
+    color: var(--sd-ink);
+    font: 700 0.6875rem/1 var(--sl-font-mono);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .eyecatch-right site-search button[data-open-modal]:hover {
+    background: color-mix(in srgb, var(--sd-cel-red) 8%, var(--sd-paper-raised));
+    color: var(--sd-ink-strong);
+  }
+
+  .eyecatch-right site-search button[data-open-modal] kbd {
+    border-radius: 0;
+    border: 1px solid var(--sd-frame-soft);
+    background: var(--sd-paper-sunk);
+    color: var(--sd-ink-soft);
+    font-family: var(--sl-font-mono);
+  }
+}
+
+/* The theme picker is a mono-caps key in the bar and in the mobile menu
+   footer; the stock width truncates the label once it sets the world font. */
+starlight-theme-select select {
+  width: calc(6.25em + 3.25rem);
+  border: 1px solid var(--sd-ink);
+  border-radius: 0;
+  background: var(--sd-paper-raised);
+  color: var(--sd-ink);
+  font: 700 0.6875rem/1 var(--sl-font-mono);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+starlight-theme-select label {
+  border-radius: 0;
+  color: var(--sd-ink);
+}
+
+starlight-theme-select select option {
+  background: var(--sd-paper-raised);
+  color: var(--sd-ink);
+}
+
+site-search dialog {
+  border-radius: 0;
+  border: 1px solid var(--sd-ink);
+  background: var(--sd-paper-raised);
+  color: var(--sd-ink);
+  box-shadow: none;
+}
+
+site-search dialog .dialog-frame {
+  gap: 1rem;
+}
+
+site-search dialog button[data-close-modal] {
+  border-radius: 0;
+  color: var(--sd-ink);
+  font: 700 0.6875rem/1 var(--sl-font-mono);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+site-search dialog #starlight__search {
+  --pagefind-ui-primary: var(--sd-ink);
+  --pagefind-ui-text: var(--sd-ink);
+  --pagefind-ui-font: var(--sl-font);
+  --pagefind-ui-background: var(--sd-paper-raised);
+  --pagefind-ui-border: var(--sd-frame-soft);
+  --pagefind-ui-border-width: 1px;
+  --pagefind-ui-tag: var(--sd-paper-sunk);
+}
+
+site-search dialog #starlight__search .pagefind-ui__search-input {
+  border-radius: 0;
+  color: var(--sd-ink-strong);
+  font-family: var(--sl-font-mono);
+}
+
+/* The veil prints flat: no glass in the print register. */
+site-search dialog::backdrop {
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+site-search dialog #starlight__search input:focus {
+  --pagefind-ui-border: var(--sd-orange);
+}
+
+site-search dialog #starlight__search .pagefind-ui__message {
+  font: 700 0.6875rem/1.6 var(--sl-font-mono);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--sd-ink-soft);
+}
+
+site-search dialog #starlight__search .pagefind-ui__result-link {
+  font-family: var(--sd-display);
+  font-weight: 400;
+  font-synthesis: none;
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+  line-height: 1.15;
+}
+
+site-search dialog #starlight__search .pagefind-ui__result-excerpt {
+  font-size: 0.875rem;
+  color: var(--sd-ink-soft);
+}
+
+site-search dialog #starlight__search mark {
+  color: var(--sd-ink-strong);
+  background: color-mix(in srgb, var(--sd-cel-red) 16%, transparent);
+}
+
+/* Results hover as a hairline plate, not a stock outline. */
+site-search dialog #starlight__search .pagefind-ui__result-title:hover,
+site-search dialog #starlight__search .pagefind-ui__result-title:focus-within,
+site-search dialog #starlight__search .pagefind-ui__result-nested:hover,
+site-search dialog #starlight__search .pagefind-ui__result-nested:focus-within {
+  outline: 1px solid var(--sd-cel-red);
+}
+
+site-search dialog #starlight__search .pagefind-ui__result-title:focus-within,
+site-search dialog #starlight__search .pagefind-ui__result-nested:focus-within {
+  background: color-mix(in srgb, var(--sd-cel-red) 7%, var(--sd-paper-raised));
+}
+
+site-search dialog #starlight__search .pagefind-ui__button {
+  border: 1px solid var(--sd-ink);
+  border-radius: 0;
+  background: var(--sd-paper-raised);
+  color: var(--sd-ink);
+  font: 700 0.6875rem/1 var(--sl-font-mono);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+site-search dialog #starlight__search .pagefind-ui__button:hover {
+  background: color-mix(in srgb, var(--sd-cel-red) 8%, var(--sd-paper-raised));
+  color: var(--sd-ink-strong);
+}
+
+/* ---------- Skip link: a sheet tab that appears under the bar ---------- */
+.sl-skip-link {
+  font: 700 0.6875rem/1 var(--sl-font-mono);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.sl-skip-link:focus {
+  top: calc(var(--sl-nav-height) + 0.6rem);
+  padding: 0.6rem 0.9rem;
+  border: 1px solid var(--sd-ink);
+  background: var(--sd-paper-raised);
+  color: var(--sd-ink-strong);
+  box-shadow: none;
+}
+
+/* ---------- Sidebar: numbered index with ticks ---------- */
+#starlight__sidebar .sidebar-content {
+  border-inline-end: 1px solid var(--sd-frame-soft);
+}
+
+#starlight__sidebar a {
+  position: relative;
+  padding-inline-start: 1.15rem;
+  border-radius: 0;
+}
+
+#starlight__sidebar a::before {
+  content: '';
+  position: absolute;
+  inset-inline-start: 0.45rem;
+  top: 50%;
+  width: 4px;
+  height: 4px;
+  margin-top: -2px;
+  background: var(--sd-frame-soft);
+}
+
+#starlight__sidebar a:hover {
+  background: color-mix(in srgb, var(--sd-cel-red) 7%, transparent);
+}
+
+/* The active item carries exactly one marker: the vermillion tick. The
+   incumbent theme's side-tab border and inset shadow are neutralized here. */
+#starlight__sidebar a[aria-current='page'],
+#starlight__sidebar a[aria-current='page']:hover {
+  border-inline-start-color: transparent;
+  box-shadow: none;
+  background: color-mix(in srgb, var(--sd-cel-red) 10%, transparent);
+  font-weight: 700;
+}
+
+#starlight__sidebar a[aria-current='page']::before {
+  width: 6px;
+  height: 6px;
+  margin-top: -3px;
+  background: var(--sd-cel-red);
+}
+
+#starlight__sidebar .group-label .large,
+#starlight__sidebar .group-label span {
+  font: 700 0.6875rem/1 var(--sl-font-mono);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+/* Index numbering: one sequence per top-level section. */
+#starlight__sidebar .top-level > li {
+  counter-reset: sd-index;
+}
+
+#starlight__sidebar .top-level > li a {
+  counter-increment: sd-index;
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
+#starlight__sidebar .top-level > li a::after {
+  content: counter(sd-index, decimal-leading-zero);
+  margin-inline-start: auto;
+  flex: none;
+  font: 400 0.6875rem/1 var(--sl-font-mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.08em;
+  color: var(--sd-ink-faint);
+}
+
+#starlight__sidebar a[aria-current='page']::after {
+  color: var(--sd-cel-red);
+}
+
+/* ---------- Right sidebar (TOC): bill of materials with ticks ---------- */
+.right-sidebar {
+  border-inline-start-color: var(--sd-frame-soft);
+}
+
+.right-sidebar-panel a {
+  position: relative;
+  padding-inline-start: calc(1rem * var(--depth, 0) + 0.9rem);
+  border-radius: 0;
+}
+
+/* Starlight ships the TOC links at 1.25 — the only running-text role under
+   1.3. Lift both the desktop rail and the mobile dropdown to 1.4. */
+.right-sidebar-panel a,
+mobile-starlight-toc .dropdown a {
+  line-height: 1.4;
+}
+
+.right-sidebar-panel a::before {
+  content: '';
+  position: absolute;
+  inset-inline-start: calc(1rem * var(--depth, 0) + 0.1rem);
+  top: 50%;
+  width: 4px;
+  height: 4px;
+  margin-top: -2px;
+  background: var(--sd-frame-soft);
+}
+
+.right-sidebar-panel a:hover::before,
+.right-sidebar-panel a[aria-current='true']::before {
+  width: 6px;
+  height: 6px;
+  margin-top: -3px;
+  background: var(--sd-blueprint);
+}
+
+/* ---------- Title block ---------- */
+.sl-markdown-content h1,
+h1#_top,
+.content-panel h1 {
+  font-family: var(--sd-display);
+  font-weight: 400;
+  font-synthesis: none;
+  letter-spacing: 0.005em;
+  text-transform: uppercase;
+  line-height: 0.98;
+}
+
+/* The title block is a hairline with a vermillion sheet tick, not a thick
+   one-sided rule; it reads the same whether or not a description follows. */
+.content-panel:first-of-type .sl-container > h1#_top {
+  position: relative;
+  padding-bottom: 0.8rem;
+  border-bottom: 1px solid var(--sd-frame-soft);
+}
+
+.content-panel:first-of-type .sl-container > h1#_top::after {
+  content: '';
+  position: absolute;
+  inset-inline-start: 0;
+  bottom: -1px;
+  width: 2.75rem;
+  height: 3px;
+  background: var(--sd-cel-red);
+}
+
+/* The frontmatter description prints as the lead line under the rule: one
+   step above body (18px vs 16px) and one weight heavier, so the lede and the
+   prose below it read as different roles at a glance. */
+.page-lede {
+  max-width: 62ch;
+  margin-top: 0.6rem;
+  font-family: var(--sl-font);
+  font-size: 1.125rem;
+  font-weight: 500;
+  line-height: 1.5;
+  color: var(--sd-ink-soft);
+}
+
+/* Halftone edge: the printed screen, on heading tails only */
+.sl-markdown-content h2,
+.sl-markdown-content h3 {
+  position: relative;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--sd-frame-soft);
+}
+
+.sl-markdown-content h2::after,
+.sl-markdown-content h3::after {
+  content: '';
+  position: absolute;
+  inset-inline-end: 0;
+  bottom: 0;
+  width: 4.5rem;
+  height: 0.5rem;
+  background-image: radial-gradient(circle, var(--sd-frame-soft) 1px, transparent 1.2px);
+  background-size: 5px 5px;
+  opacity: 0.9;
+}
+
+/* Body copy prints in the sheet ink, never the old cool blueprint. */
+.sl-markdown-content {
+  color: var(--sd-ink);
+}
+
+/* ---------- Caption boxes (asides) ---------- */
+.sl-markdown-content .starlight-aside {
+  border: 1px solid var(--sd-ink);
+  border-radius: 0;
+  background: var(--sd-paper-raised);
+  font-size: 0.9375rem;
+}
+
+.sl-markdown-content .starlight-aside__title {
+  font: 700 0.6875rem/1 var(--sl-font-mono);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+/* ---------- Data panels (tables) + code ---------- */
+.sl-markdown-content table {
+  border: 1px solid var(--sd-ink);
+  font-size: 0.875rem;
+}
+
+.sl-markdown-content th {
+  background: var(--sd-paper-sunk);
+  font: 700 0.6875rem/1.4 var(--sl-font-mono);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.sl-markdown-content td,
+.sl-markdown-content th {
+  border-color: var(--sd-frame-soft);
+  font-variant-numeric: tabular-nums;
+}
+
+.sl-markdown-content pre,
+.expressive-code .frame pre {
+  border: 1px solid var(--sd-ink);
+  border-radius: 0;
+}
+
+/* Starlight's tab rail is a 2px rule under flush tab labels. Inset the list
+   so the labels do not sit on the rule, and carry the active indicator down
+   to the rail (the stock 2px shadow would float above it). */
+starlight-tabs .tablist-wrapper ul[role='tablist'] {
+  padding-block-end: 3px;
+}
+
+starlight-tabs .tablist-wrapper ul[role='tablist'] [role='tab'][aria-selected='true'] {
+  box-shadow: 0 3px 0 var(--sl-tab-color-border);
+}
+
+/* ---------- Sheet tabs (pagination) ---------- */
+.pagination-links a {
+  border: 1px solid var(--sd-ink);
+  border-radius: 0;
+  box-shadow: none;
+  background: var(--sd-paper-raised);
+}
+
+.pagination-links a:hover {
+  border-color: var(--sd-ink-strong);
+  background: color-mix(in srgb, var(--sd-cel-red) 8%, var(--sd-paper-raised));
+}
+
+/* The "Previous / Next" voice is the mono label; the title is the Anton tab. */
+.pagination-links a > span {
+  font: 700 0.6875rem/1.6 var(--sl-font-mono);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--sd-ink-soft);
+}
+
+.pagination-links a svg {
+  color: var(--sd-cel-red);
+}
+
+.pagination-links .link-title {
+  font-family: var(--sd-display);
+  font-weight: 400;
+  font-synthesis: none;
+  text-transform: uppercase;
+  letter-spacing: 0.01em;
+  color: var(--sd-ink-strong);
+}
+
+/* ---------- Revision block ---------- */
+.revision {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1px;
+  margin-top: 3rem;
+  border: 1px solid var(--sd-ink);
+  background: var(--sd-ink);
+}
+
+.revision-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.7rem 0.9rem;
+  background: var(--sd-paper-raised);
+  min-width: 9rem;
+}
+
+.revision-cell--wide {
+  flex: 1;
+}
+
+.revision-label {
+  font: 700 0.6875rem/1 var(--sl-font-mono);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--sd-ink-soft);
+}
+
+.revision-value {
+  display: flex;
+  gap: 0.9rem;
+  font: 400 0.8125rem/1.3 var(--sl-font-mono);
+  font-variant-numeric: tabular-nums;
+  color: var(--sd-ink-soft);
+}
+
+/* ---------- Footer pinned: no dead paper under the sheet ---------- */
+.main-pane {
+  min-width: 0;
+  flex: 1 1 auto;
+  min-height: calc(100vh - var(--sl-nav-height) - var(--sl-mobile-toc-height));
+  display: flex;
+  flex-direction: column;
+}
+
+/* The TOC rail is a margin note, not a column: cap it below a quarter of the
+   reading column so the docs opening reads as one pane plus a note, and the
+   long article never counts as a stretched multi-column hero. Below 1200px the
+   reading column narrows, so the cap tightens to keep the share under 25%. */
+.right-sidebar-container {
+  --sd-rail-cap: 14rem;
+  max-width: var(--sd-rail-cap);
+}
+
+/* The rail is fixed-positioned, so Starlight sizes its inner nav against the
+   viewport, not the capped rail; bind it to the rail so the text wraps inside
+   the margin note instead of running past the edge. */
+.right-sidebar-container .right-sidebar-panel .sl-container {
+  width: auto;
+  max-width: calc(var(--sd-rail-cap) - 2 * var(--sl-sidebar-pad-x));
+}
+
+@media (max-width: 1200px) {
+  .right-sidebar-container {
+    --sd-rail-cap: 12rem;
+  }
+}
+
+.sl-markdown-content {
+  min-width: 0;
+}
+
+main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.content-panel:last-of-type {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.content-panel:last-of-type > .sl-container {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.revision {
+  margin-top: auto;
+}
+
+/* ---------- Paper grain: static, cheap, print register only ----------
+   Confined to the panel margins (the inline padding gutters), so the
+   halftone never sits under body text. */
+:root[data-theme='light'] body:not(:has(#three-canvas)) .content-panel {
+  position: relative;
+}
+
+:root[data-theme='light'] body:not(:has(#three-canvas)) .content-panel::before,
+:root[data-theme='light'] body:not(:has(#three-canvas)) .content-panel::after {
+  content: '';
+  position: absolute;
+  inset-block: 0;
+  width: var(--sl-content-pad-x);
+  z-index: -1;
+  pointer-events: none;
+  background-image: radial-gradient(circle, rgba(23, 26, 38, 0.09) 0 1px, transparent 1.4px);
+  background-size: 7px 7px;
+}
+
+:root[data-theme='light'] body:not(:has(#three-canvas)) .content-panel::before {
+  inset-inline-start: 0;
+}
+
+:root[data-theme='light'] body:not(:has(#three-canvas)) .content-panel::after {
+  inset-inline-end: 0;
+}
+
+@media (max-width: 50rem) {
+  .eyecatch-tabs {
+    display: none;
+  }
+
+  .eyecatch-inner {
+    gap: 0.7rem;
+  }
+}
+
+
+/* ==========================================================================
+   Mobile: the experience keeps the screen. The bar condenses, the legend
+   plate becomes a tab on first input, the console sits above the thumbs.
+   ========================================================================== */
+@media (max-width: 50rem) {
+  .eyecatch-inner .site-title {
+    display: none;
+  }
+
+  /* The bar condenses to mark + search + menu; the theme key lives in the
+     menu sheet instead of the bar. */
+  .eyecatch-right starlight-theme-select {
+    display: none;
+  }
+
+  /* Search is an icon key on phones, square like the menu button. */
+  .eyecatch-right site-search button[data-open-modal] {
+    justify-content: center;
+    width: 2.1rem;
+    height: 2.1rem;
+    padding: 0;
+    border: 1px solid var(--sd-frame-soft);
+    background: var(--sd-paper-raised);
+    color: var(--sd-ink);
+  }
+
+  .eyecatch-inner {
+    gap: 0.5rem;
+  }
+
+  .eyecatch-right {
+    gap: 0.35rem;
+  }
+
+  /* The menu button owns the right edge; the header socials go with it. */
+  .eyecatch-right > a[rel='me'] {
+    display: none;
+  }
+
+  /* The copy button would sit on the first code line at this width. */
+  .expressive-code .copy {
+    display: none;
+  }
+
+  body:has(#three-canvas) .hero {
+    top: calc(var(--sl-nav-height) + 0.6rem);
+    width: calc(100% - 1.2rem);
+    max-width: none;
+    padding: 0.95rem 1rem 1.1rem;
+  }
+
+  body:has(#three-canvas) .hero h1 {
+    font-size: clamp(1.9rem, 9vw, 2.4rem);
+  }
+
+  body:has(#three-canvas) .hero .tagline {
+    font-size: 0.9rem;
+  }
+
+  body:has(#three-canvas) .hero .actions {
+    display: grid;
+    /* minmax(0, …) lets the buttons shrink below their content width at 320px
+       instead of overflowing the plate. */
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 0.45rem;
+  }
+
+  #hud-chips {
+    left: 0.6rem;
+    right: 0.6rem;
+    bottom: 4.6rem;
+    gap: 0.3rem;
+  }
+
+  #hud-chips > * {
+    padding: 0.3rem 0.45rem;
+    font-size: 0.6875rem;
+  }
+
+  #hud-sound {
+    right: 0.6rem;
+    bottom: 1.5rem;
+    padding: 0.45rem 0.6rem;
+    font-size: 0.6875rem;
+  }
+
+  #hud-thrust {
+    right: 0.6rem;
+    bottom: 5.2rem;
+  }
+}
+
+
+/* ==========================================================================
+   Mobile menu: a full-height sheet. The index keeps its ticks and numbers,
+   the preferences rail sits above the revision block pinned to the bottom.
+   ========================================================================== */
+.sl-menu-button {
+  border: 1px solid var(--sd-ink);
+  border-radius: 0;
+  background: var(--sd-paper-raised);
+  color: var(--sd-ink);
+  box-shadow: none;
+}
+
+.sl-menu-button:has(~ :popover-open),
+.sl-menu-button:focus-visible {
+  background: var(--sd-paper-sunk);
+  color: var(--sd-ink-strong);
+}
+
+#starlight__sidebar {
+  background: var(--sd-paper);
+  border-inline-end: 1px solid var(--sd-frame-soft);
+  box-shadow: none;
+}
+
+#starlight__sidebar .sidebar-content {
+  min-height: 100%;
+  padding-bottom: 0.85rem;
+}
+
+.mobile-preferences {
+  align-items: center;
+  gap: 1rem;
+  margin-top: auto;
+  padding-block: 0.85rem;
+  border-top: 1px solid var(--sd-frame-soft);
+}
+
+.mobile-preferences .social-icons {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-inline-end: auto;
+}
+
+.revision--menu {
+  position: sticky;
+  bottom: 0;
+  z-index: 1;
+  margin-top: 0.9rem;
+}
+
+.revision--menu .revision-cell {
+  flex: 1;
+}
+
+/* The stock mobile footer wrapper would trap the sticky revision in a
+   shrink-wrapped box; collapse it so the sheet itself is the scrollport. */
+@media (max-width: 50rem) {
+  #starlight__sidebar .sidebar-content > div:has(> .revision--menu) {
+    display: contents;
+  }
+}
+
+/* The mobile table of contents is a sheet tab, not a stock pill. */
+mobile-starlight-toc nav {
+  border-top: 1px solid var(--sd-frame-soft);
+  background: var(--sd-paper-raised);
+}
+
+mobile-starlight-toc summary {
+  border-bottom: 1px solid var(--sd-frame-soft);
+}
+
+mobile-starlight-toc .toggle {
+  border: 1px solid var(--sd-ink);
+  border-radius: 0;
+  background: var(--sd-paper);
+  color: var(--sd-ink);
+  font: 700 0.6875rem/1 var(--sl-font-mono);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+mobile-starlight-toc details[open] .toggle {
+  border-color: var(--sd-cel-red);
+  color: var(--sd-ink-strong);
+}
+
+mobile-starlight-toc .display-current {
+  font: 400 0.75rem/1.4 var(--sl-font-mono);
+  color: var(--sd-ink-soft);
+}
+
+mobile-starlight-toc .dropdown {
+  border-color: var(--sd-frame-soft);
+  background: var(--sd-paper);
+  box-shadow: none;
+}
+
+/* A long title may never grow the plate over the flight stack: the legend
+   title clamps to three display lines. */
+body:has(#three-canvas) .hero h1 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Collapsed legend: a tab, not a plate. */
+body:has(#three-canvas) .hero.is-collapsed {
+  width: auto;
+  max-width: 16rem;
+  padding: 0.6rem 0.8rem;
+  cursor: pointer;
+}
+
+body:has(#three-canvas) .hero.is-collapsed h1 {
+  font-size: 1.1rem;
+  margin: 0;
+}
+
+body:has(#three-canvas) .hero.is-collapsed .tagline,
+body:has(#three-canvas) .hero.is-collapsed .actions {
+  display: none;
+}
+
+body:has(#three-canvas) .hero.is-collapsed .copy::after {
+  content: 'TAP TO EXPAND';
+  display: block;
+  margin-top: 0.35rem;
+  font: 700 0.6875rem/1 var(--sl-font-mono);
+  letter-spacing: 0.14em;
+  color: var(--sd-hud-dim);
+}
+
+
+/* ==========================================================================
+   Console: no boxes. The reticle is the only frame on the viewport; every
+   readout is line-work, so the world stays visible behind it.
+   ========================================================================== */
+#hud-telemetry > *,
+#hud-flight > *,
+#hud-chips > *,
+#hud-sound,
+#compass-target,
+#hud-reticle {
+  border: 0 !important;
+  clip-path: none !important;
+  filter: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+}
+
+#hud-telemetry header,
+#hud-flight header,
+#hud-telemetry footer,
+#hud-telemetry dl,
+#hud-flight dl {
+  border: 0 !important;
+  background: transparent !important;
+}
+
+#hud-telemetry header,
+#hud-flight header {
+  border-bottom: 1px solid var(--sd-hud-line) !important;
+}
+
+#hud-telemetry dl div,
+#hud-flight dl div {
+  background: transparent !important;
+}
+
+#hud-telemetry dl div,
+#hud-flight dl div {
+  border: 0 !important;
+  border-bottom: 1px solid color-mix(in srgb, var(--sd-hud-line) 55%, transparent) !important;
+}
+
+/* Line-work must survive the scene: raise the hairline alpha past 3:1 and
+   back the text voices with a dark underlay — still lines, never boxes. */
+#hud-telemetry,
+#hud-flight,
+#hud-chips,
+#hud-sound,
+#compass-target {
+  --sd-hud-line: rgba(226, 236, 255, 0.55);
+  --sd-hud-line-accent: rgba(255, 179, 71, 0.6);
+  text-shadow:
+    0 1px 1px color-mix(in srgb, var(--sd-hud-fill-solid) 80%, transparent),
+    0 0 3px color-mix(in srgb, var(--sd-hud-fill-solid) 60%, transparent);
+}
+
+/* The incumbent theme paints a light glow on these; re-back them dark. */
+body #hud-telemetry header,
+body #hud-flight header,
+body #hud-telemetry dt,
+body #hud-flight dt,
+body #hud-telemetry dd,
+body #hud-flight dd,
+body #hud-chips > *,
+body #hud-sound,
+body #compass-target {
+  text-shadow:
+    0 1px 1px color-mix(in srgb, var(--sd-hud-fill-solid) 80%, transparent),
+    0 0 3px color-mix(in srgb, var(--sd-hud-fill-solid) 60%, transparent);
+}
+
+body #hud-sound[aria-pressed='true'] {
+  text-shadow:
+    0 1px 1px color-mix(in srgb, var(--sd-hud-fill-solid) 80%, transparent),
+    0 0 3px color-mix(in srgb, var(--sd-hud-fill-solid) 60%, transparent),
+    0 0 8px color-mix(in srgb, var(--sd-hud-accent) 55%, transparent);
+}
+
+body:has(#three-canvas) .hero.is-collapsed {
+  background: var(--sd-hero-plate) !important;
+  border: 1px solid var(--sd-hud-line);
+}
+
+
+/* ==========================================================================
+   Hero: real contrast, one primary action, accessible collapse.
+   ========================================================================== */
+#hero-toggle {
+  display: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--sd-hud-dim);
+  font: 700 0.6875rem/1 var(--sl-font-mono);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+#hero-toggle:focus-visible {
+  outline: 2px solid var(--sd-cel-red);
+  outline-offset: 3px;
+}
+
+body:has(#three-canvas) .hero .sl-link-button {
+  border-color: rgba(226, 236, 255, 0.45) !important;
+}
+
+body:has(#three-canvas) .hero .actions a:first-child {
+  background: var(--sd-cel-red);
+  border-color: var(--sd-cel-red);
+  color: #0b0c16;
+}
+
+body:has(#three-canvas) .hero .actions a:first-child::before {
+  background: #0b0c16;
+}
+
+body:has(#three-canvas) .hero.is-collapsed #hero-toggle {
+  display: block;
+  margin-top: 0.35rem;
+}
+
+body:has(#three-canvas) .hero.is-collapsed .copy::after {
+  content: none;
+}
+
+@media (max-width: 50rem) {
+  /* The readout yields while the plate is open, and never leaves the sheet. */
+  #compass-target {
+    max-width: calc(100vw - 1.2rem);
+  }
+
+  body:has(#three-canvas):has(.hero:not(.is-collapsed)) #compass-target {
+    display: none;
+  }
+}
+
+
+/* The examples sheet is a wall, not a column: it escapes the prose measure
+   and centres itself against the viewport. */
+.sl-markdown-content:has(.examples) {
+  max-width: none;
+}
+
+.sl-markdown-content:has(.examples) > * {
+  max-width: none;
+}
+
+.sl-markdown-content:has(.examples) .examples {
+  width: min(78rem, calc(100vw - 3rem));
+  margin-inline: calc(50% - min(39rem, 50vw - 1.5rem));
+  max-width: none;
+}
+
+/* Filter chips and the search field share one instrument height. */
+.examples .examples-filters {
+  align-items: center;
+}
+
+.examples .chip {
+  height: 2.5rem;
+}
+
+.examples .examples-search {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 2.5rem;
+  padding-inline: 0.7rem;
+  border: 1px solid var(--sd-ink);
+  background: var(--sd-paper-raised);
+  color: var(--sd-ink-soft);
+}
+
+.examples .examples-search::before {
+  content: 'SEARCH';
+  flex: none;
+  font: 700 0.6875rem/1 var(--sl-font-mono);
+  letter-spacing: 0.12em;
+  color: var(--sd-ink-soft);
+}
+
+.examples .examples-search input {
+  width: 12rem;
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--sd-ink);
+  font: 700 0.6875rem/1 var(--sl-font-mono);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.examples .examples-search input::placeholder {
+  color: transparent;
+}
+
+.examples .examples-search:focus-within {
+  border-color: var(--sd-ink-strong);
+}
+
+/* Phones: the legend plate CTAs must stay thumb-sized. */
+@media (max-width: 30rem) {
+  body:has(#three-canvas) .hero .sl-link-button {
+    min-height: 3rem;
+  }
+}
+
+
+/* Collapsed tab: the whole tab is the control, the body is out of the way.
+   The requested 70ms grow animates grid tracks, not width/max-width/padding:
+   the plate is a grid whose column track carries the open width, and the body
+   carries its own height in row tracks. Same one-shot snap, compositor-safe
+   property list. */
+@media (min-width: 50.01rem) {
+  body:has(#three-canvas) .hero {
+    display: grid;
+    width: max-content;
+    max-width: none;
+    grid-template-columns: minmax(0, calc(clamp(22rem, 40vw, 40rem) - 3.5rem - 2px));
+    transition: grid-template-columns 70ms ease-out;
+  }
+
+  body:has(#three-canvas) .hero.is-collapsed {
+    grid-template-columns: minmax(0, 8rem);
+  }
+}
+
+body:has(#three-canvas) #hero-body {
+  display: grid;
+  grid-template-rows: auto auto;
+  row-gap: 1.15rem;
+  opacity: 1;
+  interpolate-size: allow-keywords;
+  transition: grid-template-rows 70ms ease-out, row-gap 70ms ease-out, opacity 70ms ease-out;
+}
+
+body:has(#three-canvas) #hero-body > * {
+  min-height: 0;
+}
+
+body:has(#three-canvas) .hero.is-collapsed #hero-body {
+  grid-template-rows: 0fr 0fr;
+  row-gap: 0;
+  opacity: 0;
+  overflow: hidden;
+  visibility: hidden;
+}
+
+body:has(#three-canvas) .hero.is-collapsed #hero-toggle {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  padding: 0 0.8rem;
+  text-align: center;
+}
+
+body:has(#three-canvas) .hero.is-collapsed .copy::after {
+  content: none;
+}
+
+/* Plate fallback when both poster and animation are unavailable. Sits at the
+   bottom of the cover's stacking order so loaded covers always paint over it. */
+.plate-fallback {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  padding: 1rem;
+  text-align: center;
+  background: var(--sd-paper-sunk);
+}
+
+.plate-fallback strong {
+  font: 400 1.1rem/1.1 var(--sd-display);
+  letter-spacing: 0.01em;
+  font-synthesis: none;
+  text-transform: uppercase;
+  color: var(--sd-ink-strong);
+}
+
+.plate-fallback span {
+  font: 400 0.6875rem/1 var(--sl-font-mono);
+  letter-spacing: 0.05em;
+  color: var(--sd-ink-faint);
+}
+
+/* Poster and animation stack above the fallback; the animation stays the
+   topmost image so the hover swap keeps working. */
+.plate-cover img {
+  z-index: 1;
+}
+
+
+/* Line-work must survive a bright planet behind it: a soft dark halo, never a box. */
+#hud-telemetry,
+#hud-flight,
+#hud-chips,
+#hud-sound,
+#compass-target {
+  text-shadow: 0 1px 5px rgba(0, 0, 0, 0.85), 0 0 12px rgba(0, 0, 0, 0.55);
+}
+
+#hud-telemetry dl div,
+#hud-flight dl div {
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.5);
+}
+
+
+/* ==========================================================================
+   Preview: fly close to a world or a gate and its block opens as a small
+   page — thumbnail, one paragraph, one action. Still line-work, still glass.
+   ========================================================================== */
+.beacon-label.preview,
+.example-label.preview {
+  width: 20rem;
+  padding: 0.75rem 0.85rem !important;
+  background: var(--sd-hud-fill-solid) !important;
+  border: 1px solid var(--sd-hud-line) !important;
+}
+
+.beacon-label.preview .label-blurb,
+.example-label.preview .label-blurb {
+  display: block !important;
+}
+
+.example-label.preview img {
+  display: block !important;
+  width: 100% !important;
+  height: auto !important;
+  margin-bottom: 0.5rem;
+  border: 1px solid var(--sd-hud-line);
+}
+
+.beacon-label.preview .label-open,
+.example-label.preview .label-open {
+  display: inline-block !important;
+  margin-top: 0.45rem;
+}
+
+.beacon-label.preview::after,
+.example-label.preview::after {
+  content: 'PREVIEW';
+  position: absolute;
+  top: -0.55rem;
+  left: 0.7rem;
+  padding: 0.05rem 0.3rem;
+  background: var(--sd-cel-red);
+  color: var(--sd-void);
+  font: 700 0.6875rem/1.5 var(--sl-font-mono);
+  letter-spacing: 0.16em;
+}
+
+.beacon-label.preview .label-head b,
+.example-label.preview .label-head b {
+  font-size: 0.9rem;
+}
+
+
+/* ==========================================================================
+   Cockpit: the console wraps the canopy. A curved dashboard edge under the
+   bottom voices, a soft dark arc, and per-voice perspective curvature that
+   moveHud composes into the parallax transform.
+   ========================================================================== */
+#hud-cockpit {
+  position: fixed;
+  inset: auto 0 0 0;
+  height: 17vh;
+  z-index: 2;
+  pointer-events: none;
+  background:
+    radial-gradient(130% 120% at 50% 148%, rgba(5, 7, 12, 0.82) 0 34%, rgba(5, 7, 12, 0.34) 52%, transparent 70%);
+}
+
+#hud-cockpit::after {
+  content: '';
+  position: absolute;
+  inset: 0 6% 0 6%;
+  border-radius: 50% 50% 0 0 / 22% 22% 0 0;
+  border-top: 1px solid rgba(226, 236, 255, 0.22);
+  box-shadow: 0 -1px 0 rgba(0, 0, 0, 0.5);
+}
+
+@media (max-width: 50rem) {
+  #hud-cockpit {
+    height: 22vh;
+  }
+}
+
+
+/* ==========================================================================
+   HUD canvas (WICG html-in-canvas): the console voices are drawable children
+   of #hud-drawable. The canvas lays its children out statically and ignores
+   position and margins, so placement uses the individual `translate`
+   property, which the snapshot leaves out like every CSS transform. The host
+   is hidden with a filter — opacity or visibility on the canvas (or on a
+   voice) would blank the snapshots. The fixed DOM rules above stay the
+   fallback.
+   ========================================================================== */
+#hud-drawable {
+  position: fixed;
+  inset: 0;
+  width: 100dvw;
+  height: 100dvh;
+  z-index: -2;
+  pointer-events: none;
+  filter: opacity(0);
+}
+
+[data-hud-canvas='native'] #hud-chips,
+[data-hud-canvas='native'] #compass-target {
+  transform: none;
+}
+
+[data-hud-canvas='native'] #hud-flight {
+  translate: 1.5rem calc(100dvh - 1.5rem - 100%);
+}
+
+[data-hud-canvas='native'] #hud-sound {
+  translate: calc(100dvw - 1.5rem - 100%) calc(100dvh - 1.5rem - 100%);
+}
+
+[data-hud-canvas='native'] #hud-chips {
+  width: max-content;
+  translate: calc(50dvw - 50%) calc(100dvh - 1.5rem - 100%);
+}
+
+[data-hud-canvas='native'] #hud-telemetry {
+  translate: calc(100dvw - 1.5rem - 100%) calc(var(--sl-nav-height) + 1.5rem);
+}
+
+[data-hud-canvas='native'] #compass-target {
+  translate: calc(50dvw - 50%) calc(var(--sl-nav-height) + 0.9rem);
+}
+
+@media (max-width: 50rem) {
+  [data-hud-canvas='native'] #hud-chips {
+    width: calc(100dvw - 1.2rem);
+    max-width: none;
+    translate: 0.6rem calc(100dvh - 4.6rem - 100%);
+  }
+}

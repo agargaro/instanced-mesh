@@ -1,0 +1,28 @@
+---
+import LanguageSelect from "@astrojs/starlight/components/LanguageSelect.astro";
+import SocialIcons from "@astrojs/starlight/components/SocialIcons.astro";
+import ThemeSelect from "@astrojs/starlight/components/ThemeSelect.astro";
+
+/* Mobile menu sheet footer: the preferences rail, then the revision block
+   pinned to the bottom of the sheet so the index never trails off. */
+const year = new Date().getFullYear();
+---
+
+<div class="mobile-preferences sl-flex">
+  <div class="social-icons">
+    <SocialIcons />
+  </div>
+  <ThemeSelect />
+  <LanguageSelect />
+</div>
+
+<footer class="sl-flex revision revision--menu">
+  <div class="revision-cell">
+    <span class="revision-label">Project</span>
+    <span class="revision-value">InstancedMesh2</span>
+  </div>
+  <div class="revision-cell">
+    <span class="revision-label">Sheet</span>
+    <span class="revision-value">{year} · rev. A</span>
+  </div>
+</footer>
