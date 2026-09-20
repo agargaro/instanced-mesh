@@ -78,5 +78,12 @@
     "posterJpg": "/instanced-mesh/examples-thumbs/tween.jpg",
     "animGif": "/instanced-mesh/examples-reviews/tween.gif",
     "animWebp": "/instanced-mesh/examples-reviews/tween.webp"
+  },
+  {
+    "slug": "curiosita-kaykit",
+    "title": "curiosita — kaykit legion",
+    "url": "/instanced-mesh/examples/curiosita-kaykit/",
+    "posterJpg": "/instanced-mesh/examples-thumbs/curiosita-kaykit.jpg",
+    "animWebp": "/instanced-mesh/examples-reviews/curiosita-kaykit.webp"
   }
 ]

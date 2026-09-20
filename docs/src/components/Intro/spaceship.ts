@@ -21,8 +21,13 @@ export class SpaceShip extends Group {
     const gltf = get<GLTF>(GLB_PATH);
     const mesh = gltf.scene.querySelector("Mesh") as Mesh<BufferGeometry, MeshLambertMaterial>;
     prepareOutlineGeometry(mesh.geometry);
-    mesh.material = new MeshLambertMaterial({ map: mesh.material.map });
-    patchCelMaterial(mesh.material, { boot: bootProgress, phosphor: new Color("#ffffff"), rim: 0.08 });
+    const baseMap = (mesh.material as MeshLambertMaterial).map ?? null;
+    // Atlas §7: hull must read as a clearly red ship against the black void.
+    // Preserve the GLB's texture (panel detail) but tint it with the Atlas scafo rosso #9c2620.
+    const atlasRed = new Color(0x9c2620);
+    mesh.material = new MeshLambertMaterial({ color: atlasRed, map: baseMap });
+    if (baseMap) mesh.material.color.multiplyScalar(1.15);
+    patchCelMaterial(mesh.material, { boot: bootProgress, phosphor: new Color("#f2f6ff"), rim: 0.14 });
 
     /* Thin hull drawn after the surface: a contour, never a white slab. */
     const ink = new Mesh(mesh.geometry, outlineMaterial(0.03, 0xffffff));

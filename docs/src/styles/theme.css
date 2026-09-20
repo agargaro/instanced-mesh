@@ -756,8 +756,8 @@ body:has(#three-canvas) header.header site-search kbd {
    ------------------------------------------------------------------ */
 
 :root {
-  --sd-deep-space: #0b1120;
-  --sd-deep-space-2: #16203a;
+  --sd-deep-space: #050608;
+  --sd-deep-space-2: #0a0e14;
 
   /* Console palette (splash only). Anime HUD: ink-white readouts on dark
      glass, amber accents, red alerts, green reserved for objectives and
