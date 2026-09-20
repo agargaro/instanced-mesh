@@ -2,6 +2,7 @@ import { AnimationAction, AnimationClip, AnimationMixer, Bone, Euler, Object3D, 
 import { smooth } from './math.js';
 
 export type Robot = {
+  seed: number;
   distB: number;
   distC: number;
   distG: number;
@@ -69,21 +70,32 @@ export class Performance {
   private apply(name: string, weight: number, time: number) {
     const action = this.actions[name];
     if (!action) return;
-    action.enabled = true;
+    action.enabled = weight > 0.001;
+    if (!action.enabled) return;
     action.time = time;
     action.setEffectiveWeight(weight);
   }
 
   sample(pose: Pose, updateWorld = true) {
-    const run = pose.run ?? 0;
-    const jump = pose.jump ?? 0;
-    const wave = pose.wave ?? 0;
-    const cheer = pose.cheer ?? 0;
-    const hit = pose.hit ?? 0;
+    let run = pose.run ?? 0;
+    let jump = pose.jump ?? 0;
+    let wave = pose.wave ?? 0;
+    let cheer = pose.cheer ?? 0;
+    let hit = pose.hit ?? 0;
     let override = Math.min(1, run + jump + wave + cheer + hit);
     let idleWeight = (pose.idle ?? 1) * Math.max(0, 1 - override);
-    // Nobody is ever frozen: if every clip fades out, idle takes over.
-    if (idleWeight + override < 0.01) {
+    // Nobody is ever frozen: a thin idle layer always survives under the
+    // action, and if every clip fades out idle takes the whole pose.
+    if (override > 0 && (pose.idle ?? 1) > 0 && idleWeight < 0.12) {
+      const factor = (1 - 0.12) / override;
+      run *= factor;
+      jump *= factor;
+      wave *= factor;
+      cheer *= factor;
+      hit *= factor;
+      idleWeight = 0.12;
+      override = 1 - idleWeight;
+    } else if (idleWeight + override < 0.01) {
       idleWeight = 1;
       override = 0;
     }

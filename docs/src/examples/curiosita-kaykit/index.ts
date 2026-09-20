@@ -9,6 +9,7 @@ import { kaykitAudio, createSoundButton } from './audio.js';
 import { isDebug, maxInstancesBinding, pane, speedMonitor, timeMonitor, updateStatsOverlay } from './ui.js';
 import { pulse } from './math.js';
 import { createRegia } from './regia.js';
+import { CrowdDirector } from './controller.js';
 import { Performance, type Pose, type Robot } from './animation.js';
 
 createSoundButton(kaykitAudio);
@@ -78,7 +79,6 @@ async function init() {
   });
   const dur: Record<string, number> = {};
   for (const { name, clip } of clips) dur[name] = clip.duration;
-  const waveDur = dur.wave * 2;
 
   const hero = clone(character.scene);
   hero.traverse((o) => {
@@ -187,6 +187,7 @@ async function init() {
   crowd.bindMatrixInverse.copy(meshes[0].bindMatrixInverse);
   crowd.frustumCulled = true;
   crowd.addInstances(positions.length, (robot, i) => {
+    robot.seed = random();
     robot.position.copy(positions[i]);
     robot.quaternion.setFromAxisAngle(up, random() < 0.22 ? random() * Math.PI * 2 : Math.atan2(-robot.position.x, -robot.position.z));
     robot.offset = (i % 19) * 0.13;
@@ -243,126 +244,26 @@ async function init() {
   const crowdLook = new Vector3(0, 1.2, -25);
   let frameDelta = 0;
 
-  // ── crowd behaviour ───────────────────────────────────────────────
-  // reaction variants: 0 full jump · 1 knee bounce · 2 noticed only · 3 small hop · 4 arms up
-  const reactionPose = (robot: Robot, local: number, waveWindow: number): Pose | null => {
-    const speed = 0.85 + robot.energy * 0.35;
-    const jt = local * speed;
-    if (robot.reaction === 0) return jt < dur.jump ? { idle: 0, jump: pulse(jt, dur.jump, 0.08, 0.12), jumpTime: jt } : null;
-    if (robot.reaction === 1) return jt < 0.55 ? { idle: 0, jump: pulse(jt, 0.55, 0.08, 0.15), jumpTime: jt } : null;
-    if (robot.reaction === 2) return null;
-    if (robot.reaction === 3) {
-      const short = dur.jump * 0.72;
-      return jt < short ? { idle: 0, jump: pulse(jt, short, 0.06, 0.1), jumpTime: jt } : null;
-    }
-    return local < waveWindow ? { idle: 0, wave: pulse(local, waveWindow, 0.3, 0.5), waveTime: local + robot.offset } : null;
-  };
-
-  const robotPose = (robot: Robot, t: number): Pose => {
-    const s = settings;
-    const idle = (): Pose => ({ idle: 1, idleClip: robot.idleClip, idleTime: t * robot.idleSpeed + robot.offset });
-    if (robot.walk && t > robot.walk.t0 && t < robot.walk.t1) return { idle: 0, run: 1, runTime: t - robot.walk.t0 };
-    // scene 08 — C jumps too high and lands badly, D leans in, E flinches
-    if (robot.role && t >= s.cutAt && t < s.escalationAt) {
-      const local = t - s.cutAt;
-      if (robot.role === 1) {
-        const jt = local - 0.2;
-        if (jt > 0 && jt < dur.jump) {
-          const w = pulse(jt, dur.jump, 0.08, 0.12);
-          if (w > 0) return { idle: 0, jump: w, jumpTime: jt };
-        }
-        const ht = local - 1.5;
-        if (ht > 0 && ht < dur.hit) {
-          const w = pulse(ht, dur.hit, 0.05, 0.12);
-          if (w > 0) return { idle: 0, hit: w, hitTime: ht };
-        }
-        return idle();
-      }
-      if (robot.role === 2) {
-        const jt = local - 1.2;
-        if (jt > 0 && jt < 0.5) {
-          const w = pulse(jt, 0.5, 0.1, 0.15);
-          if (w > 0) return { idle: 0, jump: w, jumpTime: jt };
-        }
-        return idle();
-      }
-      const ht = local - 1.4;
-      if (ht > 0 && ht < dur.hit) {
-        const w = pulse(ht, dur.hit, 0.05, 0.12);
-        if (w > 0) return { idle: 0, hit: w, hitTime: ht };
-      }
-      return idle();
-    }
-    // scene 12 — the whole field answers the hero, ripple from him
-    const ct = t - (s.responseAt + robot.distC * s.cheerSpeed);
-    if (ct > 0 && ct < dur.cheer) {
-      const w = pulse(ct, dur.cheer, 0.12, 0.3);
-      if (w > 0) return { idle: 0, cheer: w, cheerTime: ct };
-    }
-    // scene 09 — Robot C's clumsy landing ripples through the mass
-    const w2 = t - (s.escalationAt + robot.distG * s.waveSpeed);
-    if (w2 > 0 && w2 < waveDur) {
-      const p = reactionPose(robot, w2, waveDur);
-      if (p) return p;
-    }
-    // scene 06 — the first big wave, born next to the hero
-    const w1 = t - (s.revealAt + robot.distC * s.waveSpeed);
-    if (w1 > 0 && w1 < waveDur) {
-      const p = reactionPose(robot, w1, waveDur);
-      if (p) return p;
-    }
-    // scene 04 — the hop contagion, from Robot B
-    const jt = t - (robot.isB ? s.reactionAt + 0.6 : s.contagionAt + robot.distB * s.hopSpeed);
-    if (jt > 0 && jt < waveDur) {
-      const p = reactionPose(robot, jt, dur.wave);
-      if (p) return p;
-    }
-    return idle();
-  };
-
-  const gazePoint = (robot: Robot, t: number, out: Vector3): boolean => {
-    const s = settings;
-    // B looks at the hero while it imitates him
-    if (robot.isB && t > s.reactionAt - 0.3 && t < s.reactionAt + 2.6) {
-      out.set(0, 1.15, 0);
-      return true;
-    }
-    // during a reaction, look where the wave came from
-    const w1 = t - (s.revealAt + robot.distC * s.waveSpeed);
-    if (w1 > 0 && w1 < 1.4) {
-      out.set(0, 1.2, 0);
-      return true;
-    }
-    const w2 = t - (s.escalationAt + robot.distG * s.waveSpeed);
-    if (w2 > 0 && w2 < 1.4) {
-      out.copy(groupPositions[0]).setY(1.2);
-      return true;
-    }
-    const jt = t - (robot.isB ? s.reactionAt + 0.6 : s.contagionAt + robot.distB * s.hopSpeed);
-    if (jt > 0 && jt < 1.4) {
-      out.copy(robotBPos).setY(1.2);
-      return true;
-    }
-    // scene 08 — D and E watch C
-    if (robot.role > 1 && t >= s.cutAt && t < s.escalationAt) {
-      out.copy(groupPositions[0]).setY(1.2);
-      return true;
-    }
-    out.copy(camera.position);
-    return false;
-  };
+  // ── animation controller ──────────────────────────────────────────
+  // Every pose and every gaze comes from the director: ripples, actor
+  // script, idle micro-actions. It always returns a valid, animated pose.
+  const director = new CrowdDirector(dur, groupPositions[0], groupPositions[1], groupPositions[2], robotBPos);
+  director.addHop(robotBPos, settings.reactionAt + 0.6, (r) => r.distB);
+  director.addWave(new Vector3(0, 1.2, 0), settings.revealAt + 0.5, (r) => r.distC);
+  director.addWave(groupPositions[0], settings.escalationAt, (r) => r.distG);
+  director.addCheer(new Vector3(0, 1.2, 0), settings.responseAt, (r) => r.distC);
 
   crowd.onFrustumEnter = (i) => {
     const robot = crowd.instances[i];
     const depth = relative.copy(robot.position).sub(camera.position).dot(viewDirection);
     if (depth > fog.far + 3) return false;
-    const poseInterval = depth < 22 ? 1 / 30 : depth < 65 ? 1 / 20 : 1 / 10;
+    const poseInterval = depth < 22 ? 1 / 30 : depth < 65 ? 1 / 20 : 1 / 15;
     if (elapsed >= robot.lastPose && elapsed - robot.lastPose < poseInterval) return true;
     const poseDelta = Number.isFinite(robot.lastPose) ? Math.min(0.2, Math.max(frameDelta, elapsed - robot.lastPose)) : frameDelta;
-    crowdPerformance.sample(robotPose(robot, elapsed));
-    const focused = gazePoint(robot, elapsed, gaze);
+    crowdPerformance.sample(director.pose(robot, elapsed));
+    const focused = director.gaze(robot, elapsed, camera.position, gaze);
     target.copy(gaze).sub(robot.position).applyQuaternion(inverse.copy(robot.quaternion).invert());
-    if (!focused) target.applyAxisAngle(up, robot.gazeOffset);
+    if (!focused) target.applyAxisAngle(up, director.wander(robot, elapsed));
     crowdPerformance.aim(target, poseDelta, robot.gaze);
     crowd.setBonesAt(i, false);
     robot.lastPose = elapsed;
@@ -371,7 +272,7 @@ async function init() {
   // first pose for every instance, so nobody starts in T-pose
   for (let i = 0; i < positions.length; i++) {
     const r = crowd.instances[i];
-    crowdPerformance.sample(robotPose(r, 0));
+    crowdPerformance.sample(director.pose(r, 0));
     crowd.setBonesAt(i, false);
   }
 
