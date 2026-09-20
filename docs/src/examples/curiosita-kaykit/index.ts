@@ -72,10 +72,11 @@ class KayKitAudio {
   }
   tick(dt: number, phase: string) {
     if (!this.enabled || !this.ctx) return;
-    this.pulseTimer += dt * (phase === 'run' ? 6.2 : phase === 'wave' ? 2.1 : 1.1);
+    this.pulseTimer += dt * (phase === 'run' ? 7.8 : phase === 'wave' ? 2.1 : 0.9);
     if (this.pulseTimer > 1) {
       this.pulseTimer = 0;
-      this.blip(phase === 'wave' ? 880 : 220, 0.04);
+      if (phase === 'run') this.footstep(0.85);
+      else this.blip(phase === 'wave' ? 880 : 180, 0.05);
     }
   }
   blip(freq: number, dur: number) {
@@ -87,12 +88,31 @@ class KayKitAudio {
   }
   salute() {
     if (!this.enabled || !this.ctx) return;
-    [523, 659, 784].forEach((f, i) => {
-      const t = this.ctx!.currentTime + i * 0.09;
+    [523, 659, 784, 1046].forEach((f, i) => {
+      const t = this.ctx!.currentTime + i * 0.11;
       const o = this.ctx!.createOscillator(); o.type = 'triangle'; o.frequency.value = f;
-      const g = this.ctx!.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.11, t+0.02); g.gain.exponentialRampToValueAtTime(0.0001, t+0.5);
-      o.connect(g).connect(this.master); o.start(t); o.stop(t+0.55);
+      const g = this.ctx!.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.13, t+0.02); g.gain.exponentialRampToValueAtTime(0.0001, t+0.6);
+      const filt = this.ctx!.createBiquadFilter(); filt.type = 'highpass'; filt.frequency.value = 320;
+      o.connect(filt).connect(g).connect(this.master); o.start(t); o.stop(t+0.65);
     });
+    // crowd cheer — filtered noise burst
+    const len = this.ctx!.sampleRate * 0.6;
+    const buf = this.ctx!.createBuffer(1, len, this.ctx!.sampleRate);
+    const data = buf.getChannelData(0);
+    for (let i=0;i<len;i++) data[i] = (Math.random()*2-1) * Math.pow(1 - i/len, 2) * 0.25;
+    const src = this.ctx!.createBufferSource(); src.buffer = buf;
+    const bp = this.ctx!.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 1800; bp.Q.value = 0.7;
+    const g2 = this.ctx!.createGain(); g2.gain.setValueAtTime(0.0001, this.ctx!.currentTime); g2.gain.exponentialRampToValueAtTime(0.09, this.ctx!.currentTime+0.04); g2.gain.exponentialRampToValueAtTime(0.0001, this.ctx!.currentTime+0.6);
+    src.connect(bp).connect(g2).connect(this.master); src.start();
+  }
+  footstep(intensity = 0.7) {
+    if (!this.enabled || !this.ctx) return;
+    const ctx = this.ctx!;
+    const o = ctx.createOscillator(); o.type = 'square'; o.frequency.setValueAtTime(90 + Math.random()*20, ctx.currentTime);
+    o.frequency.exponentialRampToValueAtTime(40, ctx.currentTime+0.08);
+    const g = ctx.createGain(); g.gain.setValueAtTime(0.0001, ctx.currentTime); g.gain.exponentialRampToValueAtTime(0.16*intensity, ctx.currentTime+0.01); g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime+0.12);
+    const hp = ctx.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 180;
+    o.connect(hp).connect(g).connect(this.master); o.start(); o.stop(ctx.currentTime+0.13);
   }
 }
 const kaykitAudio = new KayKitAudio();
