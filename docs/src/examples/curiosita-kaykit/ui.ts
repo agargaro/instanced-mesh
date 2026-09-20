@@ -85,7 +85,9 @@ export function updateStatsOverlay(
   info: { triangles: number; calls: number },
   elapsed: number
 ) {
-  const fade = settings.showPayoff ? Math.min(1, (elapsed - settings.payoffAt) / 0.35) : 0;
+  // ?debug keeps the overlay up for the whole run so it can be styled live.
+  const always = new URLSearchParams(location.search).has('debug');
+  const fade = settings.showPayoff ? (always ? 1 : Math.min(1, (elapsed - settings.payoffAt) / 0.35)) : 0;
   finalStats.style.display = fade > 0 ? 'block' : 'none';
   finalStats.style.opacity = String(Math.max(0, fade));
   if (fade <= 0) return;

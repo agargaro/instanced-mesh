@@ -79,8 +79,8 @@ export function createRegia(anchors: RegiaAnchors) {
   const fogTimes = [0, settings.greetHeroAt + 1.3, settings.revealAt, settings.arcAt, settings.cutAt, settings.escalationAt, settings.holdAt, settings.duration];
   // Once the camera rises, clear the near field and leave haze only on the
   // distant rows; the closer fog returns when the later details begin.
-  const fogNear = [10, 10, 16, 4, 4, 8, 15, 12];
-  const fogFar = [18, 18, 42, 150, 150, 110, 150, 220];
+  const fogNear = [12, 10, 16, 4, 4, 8, 15, 12];
+  const fogFar = [22, 18, 42, 150, 150, 110, 150, 220];
 
   function refreshTimes() {
     const s = settings;

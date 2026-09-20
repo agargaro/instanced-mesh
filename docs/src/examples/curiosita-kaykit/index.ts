@@ -4,7 +4,7 @@ import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { InstancedMesh2 } from '@three.ez/instanced-mesh';
 import { settings } from './config.js';
 import { camera, fog, main, scene } from './world.js';
-import { kaykitAudio, createSoundButton } from './audio.js';
+import { kaykitAudio, createSoundButton, createStartButton } from './audio.js';
 import { isDebug, maxInstancesBinding, pane, speedMonitor, timeMonitor, updateStatsOverlay } from './ui.js';
 import { smooth } from './math.js';
 import { createRegia } from './regia.js';
@@ -12,10 +12,11 @@ import { CrowdDirector } from './controller.js';
 import { DEATH_HOLD, Performance, type Robot } from './animation.js';
 
 createSoundButton(kaykitAudio);
+createStartButton(kaykitAudio);
 
 const up = new Vector3(0, 1, 0);
 const heroSpot = new Vector3(0, 0, 0);
-const heroWalkFrom = new Vector3(0, 0, -12);
+const heroWalkFrom = new Vector3(0, 0, -4);
 const robotBSpot = new Vector3(2.1, 0, -2.2);
 // Storyboard layout, two stages deep inside the crowd. The first holds the
 // trio in a line — greets, trains (punches), celebrates. The second is a ring

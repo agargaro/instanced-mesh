@@ -296,6 +296,25 @@ export class KayKitAudio {
 
 export const kaykitAudio = new KayKitAudio();
 
+/**
+ * First-run gate: audio needs a user gesture, and the piece wants sound.
+ * One clear button, then it gets out of the way; the corner key stays as the
+ * mute control.
+ */
+export function createStartButton(audio: KayKitAudio): HTMLButtonElement {
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.textContent = 'OK · START SOUND';
+  btn.style.cssText =
+    'position:fixed;left:50%;bottom:14%;transform:translateX(-50%);z-index:9999;padding:0.9rem 1.4rem;background:#ff5a36;color:#0b0c16;border:1px solid #ff5a36;font:700 12px/1 JetBrains Mono,monospace;letter-spacing:0.16em;text-transform:uppercase;cursor:pointer;box-shadow:0 0 24px rgba(255,90,54,0.35);';
+  btn.onclick = async () => {
+    await audio.toggle();
+    btn.remove();
+  };
+  document.body.appendChild(btn);
+  return btn;
+}
+
 export function createSoundButton(audio: KayKitAudio): HTMLButtonElement {
   const btn = document.createElement('button');
   btn.textContent = 'SOUND OFF';
