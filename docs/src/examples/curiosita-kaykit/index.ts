@@ -1,16 +1,15 @@
-import { AnimationClip, Quaternion, SkinnedMesh, Vector3 } from 'three';
+import { AnimationClip, Quaternion, SkinnedMesh, Vector2, Vector3 } from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import { clone } from 'three/addons/utils/SkeletonUtils.js';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { InstancedMesh2 } from '@three.ez/instanced-mesh';
 import { settings } from './config.js';
 import { camera, fog, main, scene } from './world.js';
 import { kaykitAudio, createSoundButton } from './audio.js';
 import { isDebug, maxInstancesBinding, pane, speedMonitor, timeMonitor, updateStatsOverlay } from './ui.js';
-import { pulse, smooth } from './math.js';
+import { smooth } from './math.js';
 import { createRegia } from './regia.js';
 import { CrowdDirector } from './controller.js';
-import { Performance, type Pose, type Robot } from './animation.js';
+import { DEATH_HOLD, Performance, type Robot } from './animation.js';
 
 createSoundButton(kaykitAudio);
 
@@ -18,12 +17,22 @@ const up = new Vector3(0, 1, 0);
 const heroSpot = new Vector3(0, 0, 0);
 const heroWalkFrom = new Vector3(0, 0, -12);
 const robotBSpot = new Vector3(2.1, 0, -2.2);
-const groupSpot = new Vector3(-8, 0, -22);
-const actorSpots = [new Vector3(-8, 0, -22), new Vector3(-9.8, 0, -20.2), new Vector3(-6.4, 0, -23.6)];
-const secondActorSpots = [
-  new Vector3(11, 0, -31), new Vector3(9.5, 0, -28.4), new Vector3(6.5, 0, -28.4),
-  new Vector3(5, 0, -31), new Vector3(6.5, 0, -33.6), new Vector3(9.5, 0, -33.6)
+// Storyboard layout, two stages deep inside the crowd. The first holds the
+// trio in a line — greets, trains (punches), celebrates. The second is a ring
+// of six who celebrate or use the tool, with the breakdancer at its centre.
+const groupSpot = new Vector3(-10, 0, -52);
+const actorSpots = [
+  new Vector3(-13.52, 0, -52),
+  new Vector3(-10, 0, -52),
+  new Vector3(-6.48, 0, -52)
 ];
+const secondSpot = new Vector3(10, 0, -70);
+// Twelve in the ring, one breakdancer in the middle.
+const secondActorSpots = Array.from({ length: 12 }, (_, k) => {
+  const angle = (k / 12) * Math.PI * 2;
+  return new Vector3(secondSpot.x + Math.cos(angle) * 5.85, 0, secondSpot.z + Math.sin(angle) * 5.85);
+});
+const spinSpot = new Vector3(10, 0, -70);
 const fieldHalfWidth = 140;
 const fieldStart = -14;
 const fieldDepth = 120;
@@ -63,7 +72,15 @@ function beatName(t: number) {
 async function init() {
   const loader = new GLTFLoader();
   const base = '/instanced-mesh/kaykit/';
-  const character = await loader.loadAsync(base + 'Mannequin_Medium_Animated.glb');
+  const [character, special, simulation, melee] = await Promise.all([
+    loader.loadAsync(base + 'Mannequin_Medium_Animated.glb'),
+    // Same Rig_Medium skeleton: the click sequence lives in the Special set.
+    loader.loadAsync(base + 'Rig_Medium_Special.glb'),
+    // Same skeleton again: the floor transitions (lie/sit down and back up).
+    loader.loadAsync(base + 'Rig_Medium_Simulation.glb'),
+    // And the twirl of the actor at the centre of the circle.
+    loader.loadAsync(base + 'Rig_Medium_CombatMelee.glb')
+  ]);
   const names: Record<string, string> = {
     idle: 'Idle_A', idleB: 'Idle_B', run: 'Running_A', jump: 'Jump_Full_Short',
     wave: 'Waving', cheer: 'Cheering', hit: 'Hit_A',
@@ -76,21 +93,44 @@ async function init() {
     if (!clip) throw new Error(`Missing KayKit clip: ${original}`);
     return { name, clip: new AnimationClip(name, clip.duration, clip.tracks.map((track) => track.clone())) };
   });
+  // Click sequence, in order: Skeletons_Death then the seventh of the Special
+  // set, Skeletons_Death_Resurrect, which recomposes and stands the robot up.
+  for (const [name, original] of [
+    ['death', 'Skeletons_Death'],
+    ['resurrect', 'Skeletons_Death_Resurrect']
+  ] as const) {
+    const clip = special.animations.find((c) => c.name === original);
+    if (!clip) throw new Error(`Missing KayKit clip: ${original}`);
+    const filtered = clip.tracks.filter((track) => character.scene.getObjectByName(track.name.split('.')[0]));
+    const tracks = (filtered.length ? filtered : clip.tracks).map((track) => track.clone());
+    clips.push({ name, clip: new AnimationClip(name, clip.duration, tracks) });
+  }
+  // Floor transitions from the Simulation set: the body lies/sits down and
+  // stands back up instead of snapping between idle and a floor pose.
+  for (const [name, original] of [
+    ['lieDown', 'Lie_Down'],
+    ['lieStandUp', 'Lie_StandUp'],
+    ['sitDown', 'Sit_Floor_Down'],
+    ['sitStandUp', 'Sit_Floor_StandUp']
+  ] as const) {
+    const clip = simulation.animations.find((c) => c.name === original);
+    if (!clip) throw new Error(`Missing KayKit clip: ${original}`);
+    const filtered = clip.tracks.filter((track) => character.scene.getObjectByName(track.name.split('.')[0]));
+    const tracks = (filtered.length ? filtered : clip.tracks).map((track) => track.clone());
+    clips.push({ name, clip: new AnimationClip(name, clip.duration, tracks) });
+  }
+  // The twirl at the centre of the circle.
+  {
+    const clip = melee.animations.find((c) => c.name === 'Melee_2H_Attack_Spin');
+    if (!clip) throw new Error('Missing KayKit clip: Melee_2H_Attack_Spin');
+    const filtered = clip.tracks.filter((track) => character.scene.getObjectByName(track.name.split('.')[0]));
+    const tracks = (filtered.length ? filtered : clip.tracks).map((track) => track.clone());
+    clips.push({ name: 'spin', clip: new AnimationClip('spin', clip.duration, tracks) });
+  }
   const dur: Record<string, number> = {};
   for (const { name, clip } of clips) dur[name] = clip.duration;
-
-  const hero = clone(character.scene);
-  hero.traverse((o) => {
-    o.frustumCulled = true;
-    (o as any).draggable = false;
-    (o as any).interceptByRaycaster = false;
-  });
-  (hero as any).draggable = false;
-  (hero as any).interceptByRaycaster = false;
-  hero.position.copy(heroWalkFrom);
-  scene.add(hero);
-  const heroPerformance = new Performance(hero, clips);
-  const heroGaze = new Quaternion();
+  // Death runs straight into the resurrection: the full window a robot is down.
+  const dismantleWindow = dur.death + DEATH_HOLD + dur.resurrect;
 
   const source = character.scene;
   source.updateMatrixWorld(true);
@@ -124,8 +164,10 @@ async function init() {
   for (let attempt = 0; positions.length < 8000 && attempt < 900000; attempt++) {
     const x = (random() * 2 - 1) * fieldHalfWidth + (random() - 0.5) * 2.6;
     const z = fieldStart - random() * fieldDepth + (random() - 0.5) * 2.6;
-    // small clearing where scene 08 plays out
-    if (Math.hypot(x - groupSpot.x, z - groupSpot.z) < 8) continue;
+    // the two detail stages inside the crowd: the trio keeps it tight, the
+    // ring of six gets room to dance
+    if (Math.hypot(x - groupSpot.x, z - groupSpot.z) < 8.8) continue;
+    if (Math.hypot(x - secondSpot.x, z - secondSpot.z) < 12) continue;
     const cx = Math.floor(x / gap),
       cz = Math.floor(z / gap);
     let clear = true;
@@ -145,10 +187,14 @@ async function init() {
   }
   // innermost robots first: the instance slider expands outwards from the hero
   positions.sort((a, b) => a.lengthSq() - b.lengthSq());
+  // Instance 0 is the protagonist: same geometry, same skeleton, same draw call
+  // as the crowd — never a second clone of the character.
+  const heroId = 0;
   // B — one robot walks out of the field and stands near the hero
   let bIndex = 0;
   let bBest = Infinity;
   positions.forEach((p, i) => {
+    if (i === heroId) return;
     const d = p.distanceToSquared(robotBSpot);
     if (d < bBest) {
       bBest = d;
@@ -162,7 +208,7 @@ async function init() {
   let wIndex = 0;
   let wBest = Infinity;
   positions.forEach((p, i) => {
-    if (i === bIndex) return;
+    if (i === bIndex || i === heroId) return;
     const d = p.distanceToSquared(new Vector3(-5, 0, -11));
     if (d < wBest) {
       wBest = d;
@@ -172,10 +218,10 @@ async function init() {
   const walkerSpot = new Vector3(-2.1, 0, -3.4);
   const walkerFrom = new Vector3(-4, 0, -18);
   positions[wIndex].copy(walkerFrom);
-  // the three individuals of scene 08 step into their small clearing
+  // the trio of the close-up steps into the first circle
   const groupOrder = positions
     .map((p, i) => ({ i, d: p.distanceToSquared(groupSpot) }))
-    .filter(({ i }) => i !== bIndex && i !== wIndex)
+    .filter(({ i }) => i !== bIndex && i !== wIndex && i !== heroId)
     .sort((a, b) => a.d - b.d)
     .slice(0, 3);
   groupOrder.forEach(({ i }, k) => positions[i].copy(actorSpots[k]));
@@ -183,16 +229,21 @@ async function init() {
   const groupCenter = new Vector3();
   for (const p of groupPositions) groupCenter.add(p);
   groupCenter.multiplyScalar(1 / groupPositions.length);
+  // the second group: twelve in the ring, the breakdancer at its centre
   const secondOrder = positions
-    .map((p, i) => ({ i, d: p.distanceToSquared(new Vector3(8, 0, -29)) }))
-    .filter(({ i }) => i !== bIndex && i !== wIndex && !groupOrder.some((entry) => entry.i === i))
+    .map((p, i) => ({ i, d: p.distanceToSquared(secondSpot) }))
+    .filter(({ i }) => i !== bIndex && i !== wIndex && i !== heroId && !groupOrder.some((entry) => entry.i === i))
     .sort((a, b) => a.d - b.d)
-    .slice(0, 6);
-  secondOrder.forEach(({ i }, k) => positions[i].copy(secondActorSpots[k]));
-  const secondPositions = secondOrder.map(({ i }) => positions[i].clone());
+    .slice(0, 13);
+  secondOrder.slice(0, 12).forEach(({ i }, k) => positions[i].copy(secondActorSpots[k]));
+  const spinIndex = secondOrder[12].i;
+  positions[spinIndex].copy(spinSpot);
+  const secondPositions = secondOrder.slice(0, 12).map(({ i }) => positions[i].clone());
   const secondCenter = new Vector3();
   for (const p of secondPositions) secondCenter.add(p);
   secondCenter.multiplyScalar(1 / secondPositions.length);
+  // the protagonist owns the empty stage in front of the field
+  positions[heroId].copy(heroSpot);
 
   const crowd = new InstancedMesh2<Robot>(geometry, meshes[0].material, { capacity: positions.length, createEntities: true });
   crowd.initSkeleton(skeleton, false);
@@ -203,8 +254,14 @@ async function init() {
   crowd.frustumCulled = true;
   crowd.addInstances(positions.length, (robot, i) => {
     robot.seed = random();
+    robot.isHero = i === heroId;
     robot.position.copy(positions[i]);
-    robot.quaternion.setFromAxisAngle(up, random() < 0.22 ? random() * Math.PI * 2 : Math.atan2(-robot.position.x, -robot.position.z));
+    // The protagonist is authored: he always starts square to the camera,
+    // never on a random yaw the slow body turn would have to unwind.
+    robot.quaternion.setFromAxisAngle(
+      up,
+      robot.isHero ? 0 : random() < 0.22 ? random() * Math.PI * 2 : Math.atan2(-robot.position.x, -robot.position.z)
+    );
     robot.offset = random() * dur.idle;
     robot.idleSpeed = 0.88 + random() * 0.28;
     robot.idleClip = random() < 0.5 ? 0 : 1;
@@ -239,11 +296,19 @@ async function init() {
   walker.locomotion = 'walk';
   // The left companion walks in and arrives one second after the hero.
   walker.walk = { from: walkerFrom.clone(), to: walkerSpot.clone(), t0: settings.walkStart + 0.22, t1: settings.walkEnd + 3 };
+  // The protagonist is an ordinary instance of the same mesh, authored by the
+  // scene: it starts off-stage and walks in through the same entrance
+  // mechanism — and the same walk clip — the whole crowd uses.
+  const heroRobot = crowd.instances[heroId];
+  heroRobot.position.copy(heroWalkFrom);
+  heroRobot.entrance = { from: heroWalkFrom.clone(), to: heroSpot.clone(), t0: settings.walkStart, t1: settings.walkEnd };
   for (const robot of crowd.instances) robot.distB = robot.position.distanceTo(robotBPos);
   groupOrder.forEach(({ i }, k) => {
     crowd.instances[i].role = (k + 1) as Robot['role'];
   });
-  secondOrder.forEach(({ i }) => { crowd.instances[i].toolGroup = true; });
+  secondOrder.slice(0, 12).forEach(({ i }) => { crowd.instances[i].toolGroup = true; });
+  // the twirl sits at the centre of the second group, not the first
+  crowd.instances[spinIndex].role = 4;
   for (const robot of crowd.instances) robot.distG = robot.position.distanceTo(groupCenter);
   let activeCount = positions.length;
   const applyCount = (n: number) => {
@@ -265,19 +330,46 @@ async function init() {
   const viewDirection = new Vector3();
   const relative = new Vector3();
   const gaze = new Vector3();
-  const heroAttention = new Vector3();
+  const heroBodyTarget = new Vector3();
   let frameDelta = 0;
 
   // Semantic decisions are independent of the cinematic camera clock.
   const director = new CrowdDirector(dur, crowd.instances, settings.seed);
   director.update(0, activeCount);
+  const pointer = new Vector2();
+  const intersections: any[] = [];
+  main.renderer.domElement.addEventListener('pointerdown', (event) => {
+    const rect = main.renderer.domElement.getBoundingClientRect();
+    pointer.set(
+      ((event.clientX - rect.left) / rect.width) * 2 - 1,
+      -((event.clientY - rect.top) / rect.height) * 2 + 1
+    );
+    main.raycaster.setFromCamera(pointer, camera);
+    intersections.length = 0;
+    crowd.raycast(main.raycaster, intersections);
+    // The hit box is the bind pose: a robot lying on the floor keeps the
+    // standing silhouette, so a downed robot is skipped until it stands up —
+    // the protagonist is the exception, he is always pokeable.
+    const crowdHit = intersections.find((entry) => {
+      const id = entry.instanceId;
+      if (!Number.isInteger(id)) return false;
+      if (id === heroId) return true;
+      const down = lifeTime - director.dismantleAt[id];
+      return !(down >= 0 && down < dismantleWindow);
+    });
+    if (!crowdHit) return;
+    const id = crowdHit.instanceId as number;
+    director.playHit(id, lifeTime);
+    director.playDismantle(id, lifeTime);
+    kaykitAudio.tap(id === heroId ? 1.1 : 0.85);
+  });
 
   // The field itself enters after the hero's celebration. Keep the home layout
   // for deterministic reactions, but render each robot from a deeper starting
   // point and advance it into place with a staggered walking clip.
   for (let i = 0; i < crowd.instances.length; i++) {
     const robot = crowd.instances[i];
-    if (robot.isB || robot === walker) continue;
+    if (robot.isHero || robot.isB || robot === walker) continue;
     const home = robot.position.clone();
     const isDetailActor = robot.role > 0 || robot.toolGroup;
     const depthOffset = isDetailActor ? 26 : 12;
@@ -293,6 +385,8 @@ async function init() {
   }
 
   crowd.onFrustumEnter = (i) => {
+    // The protagonist is sampled every frame by the authored scene pass.
+    if (i === heroId) return true;
     const robot = crowd.instances[i];
     const depth = relative.copy(robot.position).sub(camera.position).dot(viewDirection);
     if (depth > fog.far + 3) return false;
@@ -300,7 +394,7 @@ async function init() {
     if (lifeTime >= robot.lastPose && lifeTime - robot.lastPose < poseInterval) return true;
     const poseDelta = Number.isFinite(robot.lastPose) ? Math.min(0.2, Math.max(frameDelta, lifeTime - robot.lastPose)) : frameDelta;
     crowdPerformance.sample(director.pose(robot, lifeTime));
-    if (depth < 75 && !director.isGroundAction(robot)) {
+    if (depth < 75) {
       director.gaze(robot, lifeTime, camera.position, gaze);
       target.copy(gaze).sub(robot.position).applyQuaternion(inverse.copy(robot.quaternion).invert());
       crowdPerformance.aim(target, poseDelta, robot.gaze, 1, 1 - smooth((depth - 50) / 25), robot, director.torsoReady(robot, lifeTime));
@@ -319,16 +413,21 @@ async function init() {
   }
 
   const cues: [number, () => void][] = [
-    [settings.walkStart + 0.2, () => kaykitAudio.tap(0.25)],
-    [settings.walkStart + 0.7, () => kaykitAudio.tap(0.25)],
-    [settings.walkStart + 1.2, () => kaykitAudio.tap(0.25)],
-    [settings.walkStart + 1.7, () => kaykitAudio.tap(0.25)],
+    [settings.walkStart + 0.2, () => kaykitAudio.footstep(0, 0.8)],
+    [settings.walkStart + 0.7, () => kaykitAudio.footstep(1, 0.8)],
+    [settings.walkStart + 1.2, () => kaykitAudio.footstep(2, 0.8)],
+    [settings.walkStart + 1.7, () => kaykitAudio.footstep(1, 0.75)],
     [settings.walkEnd - 0.32, () => kaykitAudio.blip(330, 0.1, 0.05)],
-    [settings.greetHeroAt + 0.2, () => kaykitAudio.blip(330, 0.1, 0.05)],
-    [settings.greetBAt + 0.2, () => kaykitAudio.blip(392, 0.1, 0.05)],
-    [settings.greetWalkerAt + 0.2, () => kaykitAudio.blip(440, 0.1, 0.05)],
-    [settings.greetHeroAt + settings.greetingSpacing + 0.2, () => kaykitAudio.blip(350, 0.1, 0.05)],
-    [settings.celebrateAt, () => kaykitAudio.cheer(0.5)],
+    [settings.greetHeroAt + 0.2, () => { kaykitAudio.blip(330, 0.1, 0.05); kaykitAudio.greetingVoice(); }],
+    [settings.greetBAt + 0.2, () => { kaykitAudio.blip(392, 0.1, 0.05); kaykitAudio.greetingVoice(); }],
+    [settings.greetWalkerAt + 0.2, () => { kaykitAudio.blip(440, 0.1, 0.05); kaykitAudio.greetingVoice(); }],
+    [settings.greetHeroAt + settings.greetingSpacing + 0.2, () => { kaykitAudio.blip(350, 0.1, 0.05); kaykitAudio.greetingVoice(); }],
+    [settings.celebrateAt, () => { kaykitAudio.cheer(0.5); kaykitAudio.crowdVoice(); }],
+    [settings.reactionAt + 1.25, () => kaykitAudio.crowdCall()],
+    [settings.reactionAt + 1.75, () => kaykitAudio.footstep(0, 0.7)],
+    [settings.reactionAt + 2.3, () => kaykitAudio.footstep(1, 0.7)],
+    [settings.reactionAt + 2.9, () => kaykitAudio.footstep(2, 0.7)],
+    [settings.reactionAt + 3.5, () => kaykitAudio.footstep(0, 0.65)],
     [settings.reactionAt + 0.6, () => kaykitAudio.tap(0.6)],
     [settings.contagionAt + 0.15, () => kaykitAudio.tap(0.5)],
     [settings.contagionAt + 0.55, () => kaykitAudio.tap(0.45)],
@@ -340,6 +439,7 @@ async function init() {
       () => {
         kaykitAudio.whoosh(1.6);
         kaykitAudio.cheer(0.6);
+        kaykitAudio.crowdVoice();
       }
     ],
     [settings.arcAt, () => kaykitAudio.whoosh(1.2)],
@@ -367,8 +467,8 @@ async function init() {
     elapsed = lifeTime = 0;
     cueIndex = 0;
     director.reset(settings.seed);
-    heroGaze.identity();
-    hero.position.copy(heroWalkFrom);
+    heroRobot.gaze.identity();
+    heroRobot.position.copy(heroWalkFrom);
   };
 
   elapsed = 0;
@@ -392,78 +492,14 @@ async function init() {
     speedMonitor.speed = camSpeed;
     timeMonitor.time = t;
     timeMonitor.beat = beatName(t);
-    // Two alternating greetings, with the body leading each change of attention.
-    // Return to the audience before celebrating and releasing the camera.
-    // The hero starts facing the camera. Only when the friends arrive does he
-    // turn away from us to acknowledge them.
-    heroAttention.copy(camera.position);
-    const crowdCallAt = settings.celebrateAt - 0.45;
-    // Let the camera complete its first truck before the hero acknowledges us.
-    const cameraTurnAt = settings.reactionAt + 1.1;
-    const facingCrowd = t >= crowdCallAt && t < cameraTurnAt;
-    if (facingCrowd) heroAttention.set(0, 1.35, -18);
-    if (!motionPreference.matches && !facingCrowd && t >= settings.greetHeroAt - 0.45 && t < settings.celebrateAt) {
-      const exchange = Math.min(1, Math.floor((t - settings.greetHeroAt + 0.45) / (settings.greetingSpacing)));
-      heroAttention.copy(exchange % 2 === 0 ? walker.position : robotB.position).setY(1.5);
-    }
-    const walkTravelEnd = settings.walkEnd - 0.42;
-    const walkU = (t - settings.walkStart) / (walkTravelEnd - settings.walkStart);
-    hero.position.lerpVectors(heroWalkFrom, heroSpot, motionPreference.matches ? 1 : smooth(walkU));
-    const turn = 1 - Math.exp(-settings.bodyFollow * frameDelta);
-    rotation.setFromAxisAngle(up, Math.atan2(heroAttention.x - hero.position.x, heroAttention.z - hero.position.z));
-    hero.quaternion.slerp(rotation, turn);
-    // The opening walk resolves into the greeting; the only hero hop is the finale.
-    const jt = t - settings.finalHopAt;
-    const heroRest: Pose = { idle: 1, idleClip: 0, idleTime: lifeTime * 0.95 + 0.37 };
-    let heroPose: Pose;
-    if (motionPreference.matches) heroPose = heroRest;
-    else if (walkU > 0 && t < settings.walkEnd) {
-      // Let the running clip settle for the final 420 ms while the first
-      // greeting fades in, matching the crowd's weight-driven transitions.
-      const runTime = t - settings.walkStart;
-      const arrivalWaveTime = t - (settings.walkEnd - 0.42);
-      heroPose = {
-        ...heroRest,
-        run: pulse(runTime, settings.walkEnd - settings.walkStart, 0.22, 0.42),
-        runTime,
-        wave: pulse(arrivalWaveTime, 1.25, 0.2, 0.3),
-        waveTime: arrivalWaveTime
-      };
-    }
-    else if (jt > 0 && jt < dur.jump) heroPose = { ...heroRest, jump: pulse(jt, dur.jump, 0.1, 0.24), jumpTime: jt };
-    else {
-      const sinceGreeting = t - settings.greetHeroAt;
-      const exchange = Math.max(0, Math.min(1, Math.floor(sinceGreeting / (settings.greetingSpacing))));
-      const greetingTime = sinceGreeting - exchange * settings.greetingSpacing;
-      const celebrationTime = t - settings.celebrateAt;
-      const callTime = t - crowdCallAt;
-      const cameraGreetingTime = t - cameraTurnAt;
-      const crowdWave = pulse(callTime, 0.8, 0.12, 0.2);
-      const cameraWave = pulse(cameraGreetingTime, 1.35, 0.16, 0.3);
-      const finaleWaveTime = t >= settings.finaleAt ? (t - settings.finaleAt) % 2.4 : -1;
-      const finaleWave = finaleWaveTime >= 0 ? pulse(finaleWaveTime, 1.35, 0.16, 0.3) : 0;
-      heroPose = {
-        ...heroRest,
-        wave: Math.max(crowdWave, cameraWave, finaleWave),
-        waveTime: finaleWave > Math.max(crowdWave, cameraWave) ? finaleWaveTime : cameraWave > crowdWave ? cameraGreetingTime : callTime,
-        cheer: pulse(celebrationTime, dur.cheer, 0.2, 0.4), cheerTime: celebrationTime
-      };
-      if (t < settings.greetHeroAt) {
-        const arrivalWaveTime = t - (settings.walkEnd - 0.42);
-        heroPose = {
-          ...heroRest,
-          wave: pulse(arrivalWaveTime, 1.25, 0.15, 0.25),
-          waveTime: arrivalWaveTime
-        };
-      }
-      else heroPose = {
-        ...heroRest,
-        wave: pulse(greetingTime, dur.wave, 0.35, 0.45), waveTime: greetingTime,
-        cheer: pulse(celebrationTime, dur.cheer, 0.2, 0.4), cheerTime: celebrationTime
-      };
-    }
-    heroPerformance.sample(heroPose);
-    heroPerformance.aim(heroAttention, frameDelta, heroGaze, 1, 1, undefined, false, true);
+    // The protagonist is animated exactly like any other instance: the same
+    // director pose, the same shared mixer, one clip at a time — never a mix.
+    // lifeTime (not the clamped camera clock) keeps him alive after the end.
+    crowdPerformance.sample(director.pose(heroRobot, lifeTime));
+    director.gaze(heroRobot, lifeTime, camera.position, gaze);
+    target.copy(gaze).sub(heroRobot.position).applyQuaternion(inverse.copy(heroRobot.quaternion).invert());
+    crowdPerformance.aim(target, frameDelta, heroRobot.gaze, 1, 1, undefined, false, false, 1.4);
+    crowd.setBonesAt(heroId, false);
     // walkers move through the world while the camera watches
     for (const robot of crowd.instances) {
       if (robot.walk) {
@@ -481,6 +517,17 @@ async function init() {
         const travelEnd = Math.max(robot.entrance.t0 + 0.1, robot.entrance.t1 - 0.45);
         const u = motionPreference.matches ? 1 : smooth((t - robot.entrance.t0) / (travelEnd - robot.entrance.t0));
         robot.position.lerpVectors(robot.entrance.from, robot.entrance.to, u);
+        if (robot.isHero) {
+          // Body fully turned to his friends and to the crew he calls; the
+          // neck brings the eyes the rest of the way.
+          const staged = director.heroFacing(lifeTime, heroBodyTarget);
+          if (!staged) heroBodyTarget.copy(camera.position);
+          rotation.setFromAxisAngle(up, Math.atan2(heroBodyTarget.x - robot.position.x, heroBodyTarget.z - robot.position.z));
+          const blend = motionPreference.matches || lifeTime < 0.25 ? 1 : 1 - Math.exp(-(staged ? 3.2 : settings.bodyFollow) * frameDelta);
+          robot.quaternion.slerp(rotation, blend);
+          robot.updateMatrix();
+          continue;
+        }
         const walkingYaw = Math.atan2(
           robot.entrance.to.x - robot.entrance.from.x,
           robot.entrance.to.z - robot.entrance.from.z
@@ -512,7 +559,8 @@ async function init() {
       kaykitDebug: {
         crowd,
         director,
-        hero,
+        hero: heroRobot,
+        performance: crowdPerformance,
         camera,
         source,
         regia,
@@ -537,7 +585,7 @@ async function init() {
           lifeTime = Math.max(0, time);
           elapsed = Math.min(settings.duration + 1.5, lifeTime);
           director.reset(settings.seed);
-          heroGaze.identity();
+          heroRobot.gaze.identity();
           cueIndex = cues.findIndex(([at]) => at > time);
           if (cueIndex < 0) cueIndex = cues.length;
         },

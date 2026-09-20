@@ -2,13 +2,70 @@ export class KayKitAudio {
   ctx: AudioContext | null = null;
   master!: GainNode;
   enabled = false;
+  private samples = new Map<string, AudioBuffer>();
+  private sampleLoading: Promise<void> | null = null;
+  private music?: AudioBufferSourceNode;
+  private musicGain?: GainNode;
 
   async toggle() {
     if (!this.ctx) this.init();
     await this.ctx!.resume();
+    await this.loadSamples();
     this.enabled = !this.enabled;
     if (this.master) this.master.gain.linearRampToValueAtTime(this.enabled ? 0.18 : 0, this.ctx!.currentTime + 0.25);
+    if (this.enabled) {
+      this.startMusic();
+      this.musicGain?.gain.linearRampToValueAtTime(0.065, this.ctx!.currentTime + 0.4);
+    }
+    else if (this.musicGain) this.musicGain.gain.linearRampToValueAtTime(0.0001, this.ctx!.currentTime + 0.25);
     return this.enabled;
+  }
+
+  private async loadSamples() {
+    if (this.sampleLoading) return this.sampleLoading;
+    const files: Record<string, string> = {
+      foot0: 'footstep-metal-0.ogg', foot1: 'footstep-metal-1.ogg', foot2: 'footstep-metal-2.ogg',
+      greeting: 'metal-greeting.ogg', call: 'robot-call.ogg', cheerVoice: 'robot-cheer.ogg', music: 'music-loop.ogg'
+    };
+    this.sampleLoading = Promise.all(Object.entries(files).map(async ([name, file]) => {
+      const response = await fetch(`/instanced-mesh/kaykit/audio/${file}`);
+      if (!response.ok) return;
+      this.samples.set(name, await this.ctx!.decodeAudioData(await response.arrayBuffer()));
+    })).then(() => undefined);
+    return this.sampleLoading;
+  }
+
+  private playSample(name: string, gain = 0.2, rate = 1) {
+    if (!this.enabled || !this.ctx) return;
+    const buffer = this.samples.get(name);
+    if (!buffer) return;
+    const source = this.ctx.createBufferSource();
+    source.buffer = buffer;
+    source.playbackRate.value = rate;
+    const g = this.ctx.createGain();
+    g.gain.value = gain;
+    source.connect(g).connect(this.master);
+    source.start();
+  }
+
+  footstep(variant = 0, intensity = 1) {
+    this.playSample(`foot${variant % 3}`, 0.22 * intensity, 0.94 + (variant % 4) * 0.035);
+  }
+
+  greetingVoice() { this.playSample('greeting', 0.16, 1.05); }
+  crowdCall() { this.playSample('call', 0.13, 0.96); }
+  crowdVoice() { this.playSample('cheerVoice', 0.12, 1.02); }
+
+  private startMusic() {
+    if (!this.ctx || this.music || !this.samples.get('music')) return;
+    this.music = this.ctx.createBufferSource();
+    this.music.buffer = this.samples.get('music')!;
+    this.music.loop = true;
+    this.musicGain = this.ctx.createGain();
+    this.musicGain.gain.value = 0.0001;
+    this.music.connect(this.musicGain).connect(this.master);
+    this.music.start();
+    this.musicGain.gain.linearRampToValueAtTime(0.065, this.ctx.currentTime + 1.2);
   }
 
   private init() {

@@ -1,5 +1,5 @@
 import { loadPending, Main, PerspectiveCameraAuto } from "@three.ez/main";
-import { ACESFilmicToneMapping, Color, DirectionalLight, HemisphereLight, REVISION, Scene, Vector3 } from "three";
+import { ACESFilmicToneMapping, Color, DirectionalLight, HemisphereLight, Scene, Vector3 } from "three";
 import { AsteroidField } from "./asteroids";
 import { BeaconHalos, FeatureBeacons, OrbitRings, PlanetMoons } from "./beacons";
 import { EXAMPLE_COUNT, ExampleGates } from "./examples";
@@ -10,8 +10,6 @@ import { bootProgress } from "./shader";
 import { Smoke } from "./smoke";
 import { SpaceShip } from "./spaceship";
 import { Starfield } from "./starfield";
-
-const EZ_MAIN_VERSION = "0.5.12";
 
 await loadPending();
 
@@ -105,7 +103,6 @@ const orbital = new OrbitalIndicators(orbitalTargets, camera);
 scene.add(orbital);
 
 const compassTarget = document.getElementById("compass-target");
-const exampleFound = document.getElementById("st-examples");
 const labelLayer = document.getElementById("hud-labels");
 const exampleLayer = document.getElementById("hud-examples");
 
@@ -113,7 +110,6 @@ const exampleLabels = Array.from(exampleLayer?.querySelectorAll<HTMLAnchorElemen
 const exampleDistances = exampleLabels.map((label) => label.querySelector<HTMLElement>(".example-dist"));
 const exampleImages = exampleLabels.map((label) => label.querySelector<HTMLImageElement>("img"));
 
-const featureFound = document.getElementById("st-found");
 let activeFeature = -1;
 
 /* One anchored HTML block per beacon: name, live distance, and the doc blurb
@@ -150,18 +146,6 @@ main.createView({ scene, camera, enabled: false });
 /* The console lives inside the splash canvas when the browser ships the
    html-in-canvas APIs; otherwise the voices stay the fixed DOM console. */
 const hudMode = initHudCanvas({ scene, camera, renderer: main.renderer });
-
-if (import.meta.env.DEV || new URLSearchParams(location.search).has("stats")) {
-  main.showStats = true;
-  const statsDom = document.body.lastElementChild as HTMLElement | null;
-  if (statsDom?.style.zIndex === "10000") {
-    statsDom.style.top = "auto";
-    statsDom.style.left = "0.5rem";
-    statsDom.style.bottom = "13rem";
-    statsDom.style.transform = "scale(0.85)";
-    statsDom.style.transformOrigin = "bottom left";
-  }
-}
 
 if (import.meta.env.DEV || new URLSearchParams(location.search).has("stats")) {
   (window as unknown as Record<string, unknown>).__introDebug = {
@@ -249,11 +233,8 @@ let stoppedFor = 0;
 let shakeBurst = 0;
 let lastThrust = 0;
 let elapsed = 0;
-let fps = 0;
 let lastFlush = performance.now();
 let lastDom = -1;
-let renderedFrames = 0;
-let fpsWindow = performance.now();
 
 /* Frame pacing: the splash draws at most 60 times a second. An accumulator
    keeps that cadence stable on high-refresh panels (120Hz renders every
@@ -295,7 +276,6 @@ scene.on("beforeanimate", () => {
   if (frameDue) {
     frameDelta = frameAcc / 1000;
     frameAcc %= FRAME_MS;
-    renderedFrames++;
   }
   scene.needsRender = frameDue;
 });
@@ -441,12 +421,6 @@ scene.on("animate", (e) => {
     updateOrbital();
     updateDiscovery();
   }
-  if (now - fpsWindow >= 500) {
-    fps = (renderedFrames * 1000) / (now - fpsWindow);
-    renderedFrames = 0;
-    fpsWindow = now;
-  }
-
   if (now - lastFlush < 100) return;
   lastFlush = now;
   if (elapsed - lastDom < 0.001) {
@@ -529,7 +503,7 @@ const hudBoxes: { x: number; y: number; w: number; h: number }[] = [];
 
 function measureHudBoxes(): void {
   hudBoxes.length = 0;
-  for (const id of ["hud-telemetry", "hud-flight", "hud-chips", "hud-sound", "compass-target"]) {
+  for (const id of ["hud-chips", "hud-sound", "compass-target"]) {
     const el = document.getElementById(id);
     if (!el || getComputedStyle(el).display === "none") continue;
     const r = el.getBoundingClientRect();
@@ -655,7 +629,6 @@ function updateDiscovery(): void {
       beacons.discovered.add(i);
       shipAudio.blip();
       featureLabels[i]?.label.classList.add("found");
-      if (featureFound) featureFound.textContent = `${beacons.discovered.size}/${FEATURE_COUNT}`;
     }
   }
 
@@ -683,7 +656,6 @@ function updateDiscovery(): void {
       exampleGates.discovered.add(i);
       shipAudio.blip();
       label.classList.add("found");
-      if (exampleFound) exampleFound.textContent = `${exampleGates.discovered.size}/${EXAMPLE_COUNT}`;
     }
   }
 
@@ -905,23 +877,9 @@ window.addEventListener("keydown", (e) => {
 
 const $ = (id: string) => document.getElementById(id);
 const hud = {
-  vel: $("v-vel"),
-  thr: $("v-thr"),
-  alt: $("v-alt"),
-  draws: $("st-draws"),
-  tris: $("st-tris"),
-  fps: $("st-fps"),
-  inst: $("st-inst"),
-  smoke: $("st-smoke"),
-  version: $("st-version"),
   reticle: $("hud-reticle"),
   sound: $("hud-sound") as HTMLButtonElement | null,
 };
-
-if (hud.version) {
-  const webgl = main.renderer.capabilities.isWebGL2 ? "WEBGL2" : "WEBGL1";
-  hud.version.textContent = `THREE R${REVISION} · EZ MAIN ${EZ_MAIN_VERSION} · ${webgl}`;
-}
 
 hud.sound?.addEventListener("click", async () => {
   const on = await shipAudio.toggle();
@@ -934,8 +892,6 @@ hud.sound?.addEventListener("click", async () => {
    one projected surface, each voice at its own depth. */
 const HUD_PARALLAX: [HTMLElement | null, number, number][] = [];
 for (const [el, kx, ky] of [
-  [document.getElementById("hud-telemetry"), 5, 4],
-  [document.getElementById("hud-flight"), 7, 5],
   [document.getElementById("hud-chips"), 4, 3],
   [document.getElementById("compass-target"), 6, 4],
   [hud.sound, 6, 4],
@@ -956,17 +912,6 @@ function moveHud(): void {
 }
 
 function flushHud(): void {
-  const info = main.renderer.info;
-  const smokeCount = smoke.instancesCount;
-
-  if (hud.vel) hud.vel.textContent = String(Math.round(speed * 12));
-  if (hud.thr) hud.thr.textContent = `${Math.round((speed / MAX_SPEED) * 100)}%`;
-  if (hud.alt) hud.alt.textContent = String(Math.round(spaceship.position.y * 10));
-  if (hud.draws) hud.draws.textContent = String(info.render.calls);
-  if (hud.tris) hud.tris.textContent = info.render.triangles.toLocaleString("en-US");
-  if (hud.fps) hud.fps.textContent = String(Math.round(fps));
-  if (hud.inst) hud.inst.textContent = (asteroids.instancesCount + smokeCount).toLocaleString("en-US");
-  if (hud.smoke) hud.smoke.textContent = String(smokeCount);
   if (hud.reticle) {
     const transform = `translate(${(pointer.x * 34).toFixed(1)}px, ${(pointer.y * 22).toFixed(1)}px)`;
     if (transform !== lastReticleTransform) {

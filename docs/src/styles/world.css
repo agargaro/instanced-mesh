@@ -854,14 +854,6 @@ main {
     font-size: 0.9rem;
   }
 
-  body:has(#three-canvas) .hero .actions {
-    display: grid;
-    /* minmax(0, …) lets the buttons shrink below their content width at 320px
-       instead of overflowing the plate. */
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    gap: 0.45rem;
-  }
-
   #hud-chips {
     left: 0.6rem;
     right: 0.6rem;
@@ -1028,8 +1020,6 @@ body:has(#three-canvas) .hero.is-collapsed .copy::after {
    Console: no boxes. The reticle is the only frame on the viewport; every
    readout is line-work, so the world stays visible behind it.
    ========================================================================== */
-#hud-telemetry > *,
-#hud-flight > *,
 #hud-chips > *,
 #hud-sound,
 #compass-target,
@@ -1041,35 +1031,8 @@ body:has(#three-canvas) .hero.is-collapsed .copy::after {
   background: transparent !important;
 }
 
-#hud-telemetry header,
-#hud-flight header,
-#hud-telemetry footer,
-#hud-telemetry dl,
-#hud-flight dl {
-  border: 0 !important;
-  background: transparent !important;
-}
-
-#hud-telemetry header,
-#hud-flight header {
-  border-bottom: 1px solid var(--sd-hud-line) !important;
-}
-
-#hud-telemetry dl div,
-#hud-flight dl div {
-  background: transparent !important;
-}
-
-#hud-telemetry dl div,
-#hud-flight dl div {
-  border: 0 !important;
-  border-bottom: 1px solid color-mix(in srgb, var(--sd-hud-line) 55%, transparent) !important;
-}
-
 /* Line-work must survive the scene: raise the hairline alpha past 3:1 and
    back the text voices with a dark underlay — still lines, never boxes. */
-#hud-telemetry,
-#hud-flight,
 #hud-chips,
 #hud-sound,
 #compass-target {
@@ -1081,12 +1044,6 @@ body:has(#three-canvas) .hero.is-collapsed .copy::after {
 }
 
 /* The incumbent theme paints a light glow on these; re-back them dark. */
-body #hud-telemetry header,
-body #hud-flight header,
-body #hud-telemetry dt,
-body #hud-flight dt,
-body #hud-telemetry dd,
-body #hud-flight dd,
 body #hud-chips > *,
 body #hud-sound,
 body #compass-target {
@@ -1127,6 +1084,15 @@ body:has(#three-canvas) .hero.is-collapsed {
 #hero-toggle:focus-visible {
   outline: 2px solid var(--sd-cel-red);
   outline-offset: 3px;
+}
+
+body:has(#three-canvas) .hero .actions {
+  display: grid;
+  /* Two columns at every width: the four entrance actions read as one block,
+     never a 3+1 wrap. minmax(0, …) lets the buttons shrink below their content
+     width at 320px instead of overflowing the plate. */
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.45rem;
 }
 
 body:has(#three-canvas) .hero .sl-link-button {
@@ -1329,17 +1295,10 @@ body:has(#three-canvas) .hero.is-collapsed .copy::after {
 
 
 /* Line-work must survive a bright planet behind it: a soft dark halo, never a box. */
-#hud-telemetry,
-#hud-flight,
 #hud-chips,
 #hud-sound,
 #compass-target {
   text-shadow: 0 1px 5px rgba(0, 0, 0, 0.85), 0 0 12px rgba(0, 0, 0, 0.55);
-}
-
-#hud-telemetry dl div,
-#hud-flight dl div {
-  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.5);
 }
 
 
@@ -1448,10 +1407,6 @@ body:has(#three-canvas) .hero.is-collapsed .copy::after {
   transform: none;
 }
 
-[data-hud-canvas='native'] #hud-flight {
-  translate: 1.5rem calc(100dvh - 1.5rem - 100%);
-}
-
 [data-hud-canvas='native'] #hud-sound {
   translate: calc(100dvw - 1.5rem - 100%) calc(100dvh - 1.5rem - 100%);
 }
@@ -1459,10 +1414,6 @@ body:has(#three-canvas) .hero.is-collapsed .copy::after {
 [data-hud-canvas='native'] #hud-chips {
   width: max-content;
   translate: calc(50dvw - 50%) calc(100dvh - 1.5rem - 100%);
-}
-
-[data-hud-canvas='native'] #hud-telemetry {
-  translate: calc(100dvw - 1.5rem - 100%) calc(var(--sl-nav-height) + 1.5rem);
 }
 
 [data-hud-canvas='native'] #compass-target {

@@ -40,7 +40,7 @@ export function createRegia(anchors: RegiaAnchors) {
   const massCenter = new Vector3(0, 2, -95);
   const group = anchors.group;
   const groupChest = new Vector3(group.x, 1.25, group.z);
-  const groupEye = new Vector3(group.x + 2.6, 1.4 * H, group.z + 7);
+  const groupEye = new Vector3(group.x + 2.6, 1.4 * H, group.z + 11);
   const group2 = anchors.group2;
   const group2Chest = new Vector3(group2.x, 1.25, group2.z);
   const group2WideEye = new Vector3(group2.x - 3.8, 1.75 * H, group2.z + 15);

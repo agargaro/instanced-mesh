@@ -2,6 +2,7 @@ import { AnimationAction, AnimationClip, AnimationMixer, Bone, Euler, Object3D, 
 
 export type Robot = {
   seed: number;
+  isHero: boolean;
   distB: number;
   distC: number;
   distG: number;
@@ -21,7 +22,7 @@ export type Robot = {
   headLock: Quaternion;
   torsoYaw: number;
   lastPose: number;
-  role: 0 | 1 | 2 | 3;
+  role: 0 | 1 | 2 | 3 | 4;
   toolGroup: boolean;
   walk: { from: Vector3; to: Vector3; t0: number; t1: number } | null;
   entrance: { from: Vector3; to: Vector3; t0: number; t1: number } | null;
@@ -45,7 +46,12 @@ export type Pose = {
   cheerTime?: number;
   hit?: number;
   hitTime?: number;
+  disassemble?: number;
+  disassembleTime?: number;
 };
+
+/** Click sequence: the death clip runs straight into the resurrection. */
+export const DEATH_HOLD = 0;
 
 /**
  * Weight-driven mixer over a fixed clip set. Every instance of the crowd is
@@ -102,8 +108,25 @@ export class Performance {
     const wave = weight('wave', pose.wave);
     const cheer = weight('cheer', pose.cheer);
     const hit = weight('hit', pose.hit);
+    // Click sequence: Skeletons_Death runs straight into
+    // Skeletons_Death_Resurrect — no dead idle in between.
+    const deathDur = this.duration('death');
+    const resurrectDur = this.duration('resurrect');
+    const dt = pose.disassembleTime ?? 0;
+    const dis = weight('death', pose.disassemble);
+    let deathW = 0, deathT = 0, resurrectW = 0, resurrectT = 0;
+    if (dis > 0) {
+      if (dt < deathDur) {
+        deathW = dis * Math.min(1, dt / 0.1);
+        deathT = dt;
+      } else {
+        resurrectT = dt - deathDur;
+        resurrectW = dis * Math.min(1, Math.max(0, (resurrectDur - resurrectT) / 0.25));
+      }
+    }
+    const dismantle = Math.max(deathW, resurrectW);
     const activity = weight(pose.activity ?? '', pose.activityWeight);
-    const total = run + jump + wave + cheer + hit + activity;
+    const total = run + jump + wave + cheer + hit + dismantle + activity;
     const scale = total > 1 ? 1 / total : 1;
     const idleWeight = 1 - Math.min(1, total);
     const idleTime = pose.idleTime ?? 0;
@@ -115,14 +138,16 @@ export class Performance {
     this.apply('wave', wave * scale, pose.waveTime ?? 0);
     this.apply('cheer', cheer * scale, pose.cheerTime ?? 0);
     this.apply('hit', hit * scale, pose.hitTime ?? 0);
-    for (const name of ['pushUps', 'sitUps', 'useItem', 'spawn', 'walkA', 'walkB', 'walkC', 'sneak', 'punch']) {
+    this.apply('death', deathW * scale, deathT);
+    this.apply('resurrect', resurrectW * scale, resurrectT);
+    for (const name of ['pushUps', 'sitUps', 'useItem', 'spawn', 'walkA', 'walkB', 'walkC', 'sneak', 'punch', 'lieDown', 'lieStandUp', 'sitDown', 'sitStandUp', 'spin']) {
       this.apply(name, name === pose.activity ? activity * scale : 0, pose.activityTime ?? 0);
     }
     this.mixer.update(0);
     if (updateWorld) this.root.updateMatrixWorld(true);
   }
 
-  aim(target: Vector3, dt: number, state: Quaternion, speed = 1, strength = 1, torso?: Robot, followBody = false, steady = false) {
+  aim(target: Vector3, dt: number, state: Quaternion, speed = 1, strength = 1, torso?: Robot, followBody = false, steady = false, maxYaw = 0.55) {
     if (!this.head?.parent) return;
     this.head.getWorldPosition(this.direction);
     this.direction.subVectors(target, this.direction);
@@ -133,7 +158,7 @@ export class Performance {
     this.direction.applyQuaternion(this.inverse);
     this.angles.set(
       -Math.asin(Math.max(-0.45, Math.min(0.45, this.direction.y))),
-      Math.max(-0.55, Math.min(0.55, Math.atan2(this.direction.x, this.direction.z))),
+      Math.max(-maxYaw, Math.min(maxYaw, Math.atan2(this.direction.x, this.direction.z))),
       0
     );
     if (torso && this.chest) {

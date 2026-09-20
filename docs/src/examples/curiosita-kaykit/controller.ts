@@ -1,7 +1,7 @@
 import { Vector3 } from 'three';
 import { settings } from './config.js';
 import { pulse, smooth } from './math.js';
-import type { Pose, Robot } from './animation.js';
+import { DEATH_HOLD, type Pose, type Robot } from './animation.js';
 
 export type Durations = Record<string, number>;
 type Individual = Robot & { id: number; position: Vector3 };
@@ -13,7 +13,9 @@ export const hash = (seed: number, stream: number) => {
   return ((h ^ (h >>> 16)) >>> 0) / 4294967296;
 };
 
-const ACTIVITIES = ['pushUps', 'sitUps', 'useItem', 'spawn', 'walkA', 'walkB', 'walkC'];
+// The crowd only ever greets, jumps or celebrates: no floor poses, no
+// lying/sitting down, no spawning. Detail shots author their own beats.
+const ACTIVITIES = ['wave', 'jump', 'cheer'];
 const STEP = 0.2;
 const NEIGHBORS = 6;
 // The opening has a small clearing; this reaches its edge without broadcasting.
@@ -32,6 +34,8 @@ export class CrowdDirector {
   readonly sociability: Float32Array;
   readonly nextDecision: Float64Array;
   readonly actionAt: Float64Array;
+  readonly hitAt: Float64Array;
+  readonly dismantleAt: Float64Array;
   readonly cooldown: Float64Array;
   readonly action: Uint8Array; // 0 rest, 1–8 distinct activities
   readonly attention: Int32Array;
@@ -51,18 +55,29 @@ export class CrowdDirector {
   private count = 0;
   private hero = new Vector3(0, 1.15, 0);
   private poseBuffer: Pose = {};
+  // The protagonist's storyboard beats, one clip at a time.
+  private heroBeats: { at: number; kind: number; duration: number }[];
   private duration(kind: number) {
     const clip = ACTIVITIES[kind - 1];
-    return (this.dur[clip] ?? 0) * (kind <= 2 ? 3 : 1);
+    return this.dur[clip] ?? 0;
   }
 
   constructor(private dur: Durations, private robots: Individual[], private seed = 72491) {
+    this.heroBeats = [
+      { at: settings.walkEnd, kind: 1, duration: dur.wave },        // arrival wave, to us
+      { at: settings.greetHeroAt, kind: 1, duration: dur.wave },    // greeting the friends
+      { at: settings.greetBAt, kind: 1, duration: dur.wave },       // answering Robot B
+      { at: settings.celebrateAt, kind: 3, duration: dur.cheer },   // calling the whole crowd
+      { at: settings.finalHopAt, kind: 2, duration: dur.jump }      // the finale hop
+    ];
     const n = robots.length;
     this.energy = new Float32Array(n);
     this.curiosity = new Float32Array(n);
     this.sociability = new Float32Array(n);
     this.nextDecision = new Float64Array(n);
     this.actionAt = new Float64Array(n);
+    this.hitAt = new Float64Array(n);
+    this.dismantleAt = new Float64Array(n);
     this.cooldown = new Float64Array(n);
     this.action = new Uint8Array(n);
     this.attention = new Int32Array(n);
@@ -103,6 +118,8 @@ export class CrowdDirector {
     this.tick = -1;
     this.action.fill(0);
     this.actionAt.fill(0);
+    this.hitAt.fill(-Infinity);
+    this.dismantleAt.fill(-Infinity);
     this.cooldown.fill(0);
     this.attention.fill(NONE);
     this.attentionUntil.fill(0);
@@ -129,6 +146,68 @@ export class CrowdDirector {
       r.lastPose = -Infinity;
       this.nextDecision[i] = 0.5 + hash(r.seed, 8) * 12;
     }
+    // The protagonist and his right-hand friend must never breathe in step:
+    // different clip, different tempo, different phase.
+    const hero = this.robots.find((r) => r.isHero);
+    if (hero) {
+      hero.idleClip = 0;
+      hero.breathRate = 1.18;
+      hero.offset = this.dur.idle * 0.2;
+      hero.breathPhase = 0.7;
+      hero.breathDrift = 0.21;
+    }
+    const friend = this.robots.find((r) => r.isB);
+    if (friend) {
+      friend.idleClip = 1;
+      friend.breathRate = 0.78;
+      friend.offset = this.dur.idleB * 0.75;
+      friend.breathPhase = 4.4;
+      friend.breathDrift = 0.34;
+    }
+  }
+
+  /** The active storyboard beat of the protagonist, if any. */
+  private heroBeat(t: number) {
+    for (const beat of this.heroBeats) {
+      const local = t - beat.at;
+      if (local >= 0 && local < beat.duration) return { kind: beat.kind, local };
+    }
+    return null;
+  }
+
+  private heroBeatPose(p: Pose, kind: number, local: number) {
+    const weight = (duration: number, fadeIn: number, fadeOut: number) => pulse(local, duration, fadeIn, fadeOut);
+    if (kind === 1) {
+      p.wave = weight(this.dur.wave, 0.35, 0.45);
+      p.waveTime = local;
+    } else if (kind === 2) {
+      p.jump = weight(this.dur.jump, 0.1, 0.24);
+      p.jumpTime = local;
+    } else {
+      p.cheer = weight(this.dur.cheer, 0.2, 0.4);
+      p.cheerTime = local;
+    }
+  }
+
+  /**
+   * Where the protagonist's body points: his two friends while he greets them,
+   * the crew while he calls it. Returns false to keep facing the camera.
+   */
+  heroFacing(t: number, out: Vector3): boolean {
+    const beat = this.heroBeat(t);
+    if (beat?.kind === 3) {
+      out.set(0, 0, -24);
+      return true;
+    }
+    if (t >= settings.greetHeroAt && t < settings.greetingEnd) {
+      const exchange = Math.floor((t - settings.greetHeroAt) / settings.greetingSpacing);
+      const friend = exchange % 2 === 0 ? this.robots.find((r) => r.walk && !r.isB) : this.robots.find((r) => r.isB);
+      if (friend) {
+        out.copy(friend.position);
+        return true;
+      }
+    }
+    return false;
   }
 
   private positionAt(i: number, t: number, out: Vector3) {
@@ -169,6 +248,14 @@ export class CrowdDirector {
 
   playOneShot(id: number, t: number) {
     if (id >= 0 && id < this.count && this.cooldown[id] <= t) this.start(id, 1 + id % ACTIVITIES.length, t);
+  }
+
+  playHit(id: number, t: number) {
+    if (id >= 0 && id < this.count) this.hitAt[id] = t;
+  }
+
+  playDismantle(id: number, t: number) {
+    if (id >= 0 && id < this.count) this.dismantleAt[id] = t;
   }
 
   update(t: number, count = this.robots.length) {
@@ -217,6 +304,8 @@ export class CrowdDirector {
 
   pose(robot: Individual, t: number): Pose {
     // Reuse the sampler input: no allocation per visible character per frame.
+    // Every field is reset here, so one instance's action can never leak into
+    // the pose of the next one through this shared buffer.
     const p = this.poseBuffer;
     p.idle = 1;
     p.idleClip = robot.idleClip;
@@ -225,9 +314,43 @@ export class CrowdDirector {
     // changing the breathing rhythm does not change the speed of other activities.
     const drift = 0.22 * (Math.sin(t * robot.breathDrift + robot.breathPhase) - Math.sin(robot.breathPhase));
     p.idleTime = t * robot.breathRate + robot.offset + drift;
-    p.run = p.jump = p.wave = p.cheer = p.hit = 0;
+    p.run = 0;
+    p.runTime = 0;
+    p.jump = 0;
+    p.jumpTime = 0;
+    p.wave = 0;
+    p.waveTime = 0;
+    p.cheer = 0;
+    p.cheerTime = 0;
+    p.hit = 0;
+    p.hitTime = 0;
+    p.disassemble = 0;
+    p.disassembleTime = 0;
     p.activity = undefined;
     p.activityWeight = 0;
+    p.activityTime = 0;
+    const hitTime = t - this.hitAt[robot.id];
+    const dismantleTime = t - this.dismantleAt[robot.id];
+    // Death runs straight into the resurrection: no dead idle in between.
+    const dismantleWindow = this.dur.death + DEATH_HOLD + this.dur.resurrect;
+    if (dismantleTime >= 0 && dismantleTime < dismantleWindow && !this.reducedMotion) {
+      p.disassemble = 1;
+      p.disassembleTime = dismantleTime;
+      return p;
+    }
+    if (hitTime >= 0 && hitTime < this.dur.hit && !this.reducedMotion) {
+      p.hit = pulse(hitTime, this.dur.hit, 0.06, 0.2);
+      p.hitTime = hitTime;
+      return p;
+    }
+    // The protagonist follows the storyboard beats instead of random actions.
+    if (robot.isHero) {
+      const beat = this.heroBeat(t);
+      if (beat) {
+        this.heroBeatPose(p, beat.kind, beat.local);
+        return p;
+      }
+    }
     if (robot.walk && !this.reducedMotion) {
       const local = t - robot.walk.t0;
       p.activity = ['walkA', 'walkB', 'walkC'][robot.id % 3];
@@ -261,50 +384,106 @@ export class CrowdDirector {
     // The three actors in the close-up have authored beats instead of random
     // crowd decisions: wave, punch, and hop. Their poses stay active for the
     // entire detail shot and never fall back to walking in place.
-    if (robot.role > 0 && t >= settings.cutAt && t < settings.cutAt + 2.2 && !this.reducedMotion) {
-      const cycle = robot.role === 1 ? 2.3 : robot.role === 2 ? 1.65 : 1.55;
-      const local = (t - settings.cutAt + robot.role * 0.18) % cycle;
-      const weight = pulse(local, cycle, 0.32, 0.32);
+    // The three actors in the close-up have authored beats, in a line: greet,
+    // train (punch) and celebrate. The ring of six celebrates or uses the
+    // tool, and the breakdancer twirls at its centre.
+    if (robot.role > 0 && t >= settings.cutAt && t < settings.cutAt + 8.5 && !this.reducedMotion) {
+      const local = t - settings.cutAt + robot.role * 0.18;
+      if (robot.role === 4) {
+        const cycle = this.dur.spin;
+        const beat = local % cycle;
+        p.activity = 'spin';
+        p.activityTime = beat;
+        p.activityWeight = pulse(beat, cycle, 0.2, 0.25);
+        return p;
+      }
+      const cycle = robot.role === 1 ? 2.3 : robot.role === 2 ? 1.5 : 1.8;
+      const beat = local % cycle;
+      const weight = pulse(beat, cycle, 0.32, 0.32);
       if (robot.role === 1) {
         p.wave = weight;
-        p.waveTime = local;
+        p.waveTime = beat;
       } else if (robot.role === 2) {
         p.activity = 'punch';
         p.activityWeight = weight;
-        p.activityTime = local;
+        p.activityTime = beat;
       } else {
-        p.jump = weight;
-        p.jumpTime = local;
+        p.cheer = weight;
+        p.cheerTime = beat;
       }
       // Keep the authored idle blend during the small gap at a cycle boundary;
       // never hand control back to a random crowd action in the close-up.
       return p;
     }
+    // The ring of six: half of them celebrate, half work the tool.
     if (robot.toolGroup && t >= settings.cutAt + 2.2 && t < settings.holdAt + 1.2 && !this.reducedMotion) {
       const local = ((t - settings.cutAt - 2.2) * 0.78) % 1.8;
-      p.activity = 'useItem';
-      p.activityWeight = pulse(local, 1.8, 0.3, 0.3);
-      p.activityTime = local;
+      if (robot.id % 2 === 0) {
+        p.cheer = pulse(local, 1.8, 0.3, 0.3);
+        p.cheerTime = local;
+      } else {
+        p.activity = 'useItem';
+        p.activityWeight = pulse(local, 1.8, 0.3, 0.3);
+        p.activityTime = local;
+      }
       return p;
     }
     const kind = this.action[robot.id];
-    if (kind && !this.reducedMotion) {
+    if (kind && !robot.isHero && !this.reducedMotion) {
       const local = (t - this.actionAt[robot.id]) * robot.idleSpeed;
       const duration = this.duration(kind);
-      p.activity = ACTIVITIES[kind - 1];
-      p.activityWeight = pulse(local, duration, 0.65, 0.7);
-      p.activityTime = local;
-
+      const w = pulse(local, duration, 0.35, 0.45);
+      const clip = ACTIVITIES[kind - 1];
+      if (clip === 'wave') {
+        p.wave = w;
+        p.waveTime = local;
+      } else if (clip === 'jump') {
+        p.jump = w;
+        p.jumpTime = local;
+      } else {
+        p.cheer = w;
+        p.cheerTime = local;
+      }
     }
     return p;
   }
 
-  isGroundAction(robot: Individual) {
-    const kind = this.action[robot.id];
-    return kind === 1 || kind === 2 || kind === 4;
-  }
-
-  gaze(robot: Individual, t: number, _cameraPos: Vector3, out: Vector3): boolean {
+  gaze(robot: Individual, t: number, cameraPos: Vector3, out: Vector3): boolean {
+    if (robot.isHero) {
+      // Poked by us: eyes on the audience, whatever else is happening.
+      const dismantleTime = t - this.dismantleAt[robot.id];
+      const hitTime = t - this.hitAt[robot.id];
+      const poked =
+        (dismantleTime >= 0 && dismantleTime < this.dur.death + DEATH_HOLD + this.dur.resurrect) ||
+        (hitTime >= 0 && hitTime < this.dur.hit);
+      if (poked) {
+        out.copy(cameraPos);
+        return true;
+      }
+      const beat = this.heroBeat(t);
+      // Cheering the crew: he watches the crew.
+      if (beat?.kind === 3) {
+        out.set(0, 1.35, -24);
+        return true;
+      }
+      // Greeting his two friends: he watches whoever he is answering.
+      if (t >= settings.greetHeroAt && t < settings.greetingEnd) {
+        const exchange = Math.floor((t - settings.greetHeroAt) / settings.greetingSpacing);
+        const friend = exchange % 2 === 0 ? this.robots.find((r) => r.walk && !r.isB) : this.robots.find((r) => r.isB);
+        if (friend) {
+          out.copy(friend.position).setY(1.35);
+          return true;
+        }
+      }
+      // The finale hop: he watches the crowd he just called.
+      if (beat?.kind === 2) {
+        out.set(0, 1.2, -24);
+        return true;
+      }
+      // Idle, or waving at us: eyes on the audience.
+      out.copy(cameraPos);
+      return true;
+    }
     if (robot.walk && t >= robot.walk.t1 && t < settings.greetingEnd) {
       out.copy(this.hero);
       return true;

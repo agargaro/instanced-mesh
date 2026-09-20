@@ -828,8 +828,6 @@ body:has(#three-canvas) {
    Holographic HUD (splash): the voices float on the space viewport in both
    themes, so they keep the reticle's ink-white + amber, never the page ink.
    -------------------------------------------------------------------------- */
-#hud-telemetry,
-#hud-flight,
 #hud-chips,
 #hud-sound,
 #compass-target {
@@ -846,8 +844,6 @@ body:has(#three-canvas) {
   --sd-hud-glow: rgba(226, 236, 255, 0.28);
 }
 
-#hud-telemetry > *,
-#hud-flight > *,
 #hud-chips > *,
 #hud-sound {
   backdrop-filter: none;

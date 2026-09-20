@@ -48,6 +48,10 @@ along their path and turn toward the camera as they settle, keeping the entry
 readable instead of showing mostly backs.
 The authored detail actors use a deeper hidden starting lane, so the three-person
 close-up groups cannot be seen before their shots.
+Clicking the protagonist or any visible crowd mannequin performs the same short
+blended `Hit_A` reaction; the protagonist uses a slightly stronger, longer hit.
+The click also runs a 2.55-second disassemble/reassemble gesture. The manual
+raycast does not re-enable dragging.
 The camera remains still while these nearer walkers settle into the frame. The
 initial fog is tight enough to hide the field while the hero arrives, waves and
 holds; it begins easing only after that greeting, then expands with the panorama

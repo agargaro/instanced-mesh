@@ -42,14 +42,12 @@ type Voice = {
   curveY: number;
 };
 
-const VOICE_IDS = ["hud-telemetry", "hud-flight", "hud-chips", "hud-sound", "compass-target"] as const;
+const VOICE_IDS = ["hud-chips", "hud-sound", "compass-target"] as const;
 
 /* Cockpit curvature (DESIGN.md: perspective(1100px), rotateX ±5–7° on the
-   rows, rotateY −7° on the telemetry rail). The 2D context cannot project a
-   plane, so the lean is baked as the cosine of each angle. */
+   rows). The 2D context cannot project a plane, so the lean is baked as the
+   cosine of each angle. */
 const CURVATURE: Record<(typeof VOICE_IDS)[number], { curveX: number; curveY: number }> = {
-  "hud-telemetry": { curveX: 0, curveY: -7 },
-  "hud-flight": { curveX: 5, curveY: 0 },
   "hud-chips": { curveX: 6, curveY: 0 },
   "hud-sound": { curveX: 5, curveY: 0 },
   "compass-target": { curveX: -6, curveY: 0 },

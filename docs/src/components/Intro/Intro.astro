@@ -1,6 +1,5 @@
 ---
 import itemsJson from "../../data/examples.manifest.json";
-import { LIBRARY_FEATURES } from "./features";
 
 type StripItem = {
   slug: string;
@@ -11,7 +10,6 @@ type StripItem = {
 };
 
 const examples: StripItem[] = (itemsJson as StripItem[]).slice(0, 8);
-const featureCount = LIBRARY_FEATURES.length;
 ---
 
 <style is:global>
@@ -28,31 +26,6 @@ const featureCount = LIBRARY_FEATURES.length;
      mapped onto a screen-space quad inside the 3D scene; without it
      hudcanvas.ts relocates them and they render as the fixed DOM console. -->
 <canvas id="hud-drawable" content="drawable" layoutsubtree>
-  <!-- Flight readout -->
-  <section id="hud-flight" drawable aria-hidden="true" data-impeccable-ignore="dark-glow ai-color-palette gpt-thin-border-wide-shadow repeating-stripes-gradient">
-    <header><span class="hud-dot"></span>SHIP · NOMINAL</header>
-    <dl>
-      <div><dt>VEL</dt><dd id="v-vel">0</dd></div>
-      <div><dt>THR</dt><dd id="v-thr">0%</dd></div>
-      <div><dt>ALT</dt><dd id="v-alt">0</dd></div>
-    </dl>
-  </section>
-
-  <!-- Live + nerd stats, fed by the scene -->
-  <section id="hud-telemetry" drawable aria-hidden="true" data-impeccable-ignore="dark-glow ai-color-palette gpt-thin-border-wide-shadow repeating-stripes-gradient">
-    <header>TELEMETRY · LIVE</header>
-    <dl>
-      <div><dt>DRAWS</dt><dd id="st-draws">0</dd></div>
-      <div><dt>TRIANGLES</dt><dd id="st-tris">0</dd></div>
-      <div><dt>FPS</dt><dd id="st-fps">0</dd></div>
-      <div><dt>INSTANCES</dt><dd id="st-inst">0</dd></div>
-      <div><dt>SMOKE</dt><dd id="st-smoke">0</dd></div>
-      <div><dt>FOUND</dt><dd id="st-found">0/{featureCount}</dd></div>
-      <div><dt>EXAMPLES</dt><dd id="st-examples">0/{examples.length}</dd></div>
-    </dl>
-    <footer id="st-version"></footer>
-  </section>
-
   <!-- Objective readout: bearings live on the 3D orbital compass around the ship -->
   <p id="compass-target" drawable aria-live="polite" data-impeccable-ignore="dark-glow ai-color-palette gpt-thin-border-wide-shadow">NO TARGET</p>
 
@@ -259,93 +232,7 @@ const featureCount = LIBRARY_FEATURES.length;
     box-shadow: 0 0 10px 2px color-mix(in srgb, var(--sd-safety-orange-night) 75%, transparent); /* impeccable-disable-line dark-glow ai-color-palette gpt-thin-border-wide-shadow -- neon reticle core */
   }
 
-  /* HUD voices: no panel boxes — every readout is its own chamfered item. */
-  :global(#hud-flight),
-  :global(#hud-telemetry) {
-    position: fixed;
-    z-index: 3;
-    display: grid;
-    gap: 0.4rem;
-    min-width: 10rem;
-    font: 600 0.6875rem/1.3 var(--sl-font-mono);
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-  }
-
-  :global(#hud-flight) header,
-  :global(#hud-telemetry) header,
-  :global(#hud-flight) dl div,
-  :global(#hud-telemetry) dl div,
-  :global(#hud-telemetry) footer {
-    padding: 0.4rem 0.6rem;
-    background: var(--sd-hud-field), var(--sd-hud-scanline);
-    border: 1px solid var(--sd-hud-line);
-    clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 0 100%);
-    filter: drop-shadow(0 0 14px var(--sd-hud-glow)); /* impeccable-disable-line dark-glow ai-color-palette gpt-thin-border-wide-shadow -- projected readout */
-  }
-
-  :global(#hud-flight) header,
-  :global(#hud-telemetry) header {
-    display: flex;
-    align-items: center;
-    gap: 0.45rem;
-    color: var(--sd-hud-ink);
-    font-weight: 700;
-    text-shadow: 0 0 14px color-mix(in srgb, var(--sd-hud-ink) 75%, transparent); /* impeccable-disable-line dark-glow ai-color-palette -- projected header */
-  }
-
-  .hud-dot {
-    width: 6px;
-    height: 6px;
-    background: var(--sd-hud-accent);
-    box-shadow: 0 0 9px color-mix(in srgb, var(--sd-hud-accent) 70%, transparent); /* impeccable-disable-line dark-glow ai-color-palette gpt-thin-border-wide-shadow -- status dot */
-  }
-
-  :global(#hud-flight) dl,
-  :global(#hud-telemetry) dl {
-    display: grid;
-    gap: 0.3rem;
-    margin: 0;
-  }
-
-  :global(#hud-flight) dl div,
-  :global(#hud-telemetry) dl div {
-    display: flex;
-    justify-content: space-between;
-    gap: 1.25rem;
-  }
-
-  :global(#hud-flight) dt,
-  :global(#hud-telemetry) dt {
-    color: var(--sd-hud-dim);
-    font-weight: 400;
-  }
-
-  :global(#hud-flight) dd,
-  :global(#hud-telemetry) dd {
-    margin: 0;
-    color: var(--sd-hud-bright);
-    font-weight: 700;
-    font-variant-numeric: tabular-nums;
-  }
-
-  :global(#hud-telemetry) footer {
-    color: var(--sd-hud-dim);
-    text-transform: none;
-    letter-spacing: normal;
-    font-variant-numeric: tabular-nums;
-  }
-
-  :global(#hud-flight) {
-    left: 1.5rem;
-    bottom: 1.5rem;
-  }
-
-  :global(#hud-telemetry) {
-    top: calc(var(--sl-nav-height) + 1.5rem);
-    right: 1.5rem;
-  }
-
+  /* HUD voices: no panel boxes — every readout is its own line-work. */
   :global(#hud-sound) {
     position: fixed;
     z-index: 3;
@@ -669,17 +556,7 @@ const featureCount = LIBRARY_FEATURES.length;
   }
 
   /* Responsive scrub */
-  @media (max-width: 72rem) {
-    :global(#hud-telemetry) {
-      display: none;
-    }
-  }
-
   @media (max-width: 40rem) {
-    :global(#hud-flight) {
-      display: none;
-    }
-
     :global(.beacon-label),
     :global(.example-label) {
       max-width: 12.5rem;
