@@ -15,6 +15,10 @@ import {
 
 export const main = new Main({ showStats: location.hash === '#debug' });
 export const scene = new Scene();
+// This experience is cinematic: no 3D object participates in mouse picking
+// or drag interactions. HTML controls remain interactive independently.
+scene.draggable = false;
+scene.interceptByRaycaster = false;
 export const fog = new Fog(0x25272c, 1, 18);
 scene.fog = fog;
 export const camera = new PerspectiveCameraAuto(48, 0.1, 500);
@@ -57,5 +61,9 @@ ground.position.y = -0.03;
 export const light = new DirectionalLight(0xffffff, 2.4);
 light.position.set(5, 10, 4);
 scene.add(ground, light, new AmbientLight(0xffffff, 1));
+scene.traverse((object: any) => {
+  object.draggable = false;
+  object.interceptByRaycaster = false;
+});
 
 main.createView({ scene, camera, backgroundColor: 0x25272c });

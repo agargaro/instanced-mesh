@@ -1,178 +1,326 @@
 import { Vector3 } from 'three';
 import { settings } from './config.js';
-import { pulse } from './math.js';
+import { pulse, smooth } from './math.js';
 import type { Pose, Robot } from './animation.js';
 
 export type Durations = Record<string, number>;
+type Individual = Robot & { id: number; position: Vector3 };
 
-type RippleKind = 'hop' | 'wave' | 'cheer';
-
-type Ripple = {
-  kind: RippleKind;
-  at: number;
-  speed: number;
-  window: number;
-  distance: (robot: Robot) => number;
-  origin: Vector3;
-};
-
-const up = new Vector3(0, 1, 0);
-
-/** Deterministic per-robot randomness: same robot, same tick, same behaviour. */
-const hash = (a: number, b: number) => {
-  let h = (Math.imul(a | 0, 374761393) + Math.imul(b | 0, 668265263)) >>> 0;
+/** Independent streams: changing a decision never reshuffles personality. */
+export const hash = (seed: number, stream: number) => {
+  let h = (Math.imul(seed | 0, 374761393) + Math.imul(stream | 0, 668265263)) >>> 0;
   h = Math.imul(h ^ (h >>> 13), 1274126177) >>> 0;
   return ((h ^ (h >>> 16)) >>> 0) / 4294967296;
 };
 
+const ACTIVITIES = ['pushUps', 'sitUps', 'useItem', 'spawn', 'walkA', 'walkB', 'walkC'];
+const STEP = 0.2;
+const NEIGHBORS = 6;
+// The opening has a small clearing; this reaches its edge without broadcasting.
+const RADIUS = 14;
+const NONE = -1;
+const HERO = -2;
+
 /**
- * The animation controller of the crowd.
- *
- * Everything a robot does comes from here: it always returns a valid pose
- * (idle is the floor), it layers global wave events on top of each robot's
- * personality, and it keeps a slow schedule of micro-actions so that nobody
- * is ever standing still — even between two waves.
+ * One semantic controller, compact state for all individuals. Decisions run at
+ * 5 Hz regardless of visibility; the existing shared mixer samples smooth poses.
+ * No character is ever dead between actions. There is always a living baseline.
  */
 export class CrowdDirector {
-  private ripples: Ripple[] = [];
+  readonly energy: Float32Array;
+  readonly curiosity: Float32Array;
+  readonly sociability: Float32Array;
+  readonly nextDecision: Float64Array;
+  readonly actionAt: Float64Array;
+  readonly cooldown: Float64Array;
+  readonly action: Uint8Array; // 0 rest, 1–8 distinct activities
+  readonly attention: Int32Array;
+  readonly attentionUntil: Float64Array;
+  readonly attentionAt: Float64Array;
+  readonly neighbors: Int32Array;
+  private pendingAt: Float64Array;
+  private pendingSource: Int32Array;
+  private pendingDepth: Uint8Array;
+  private sequence: Uint32Array;
+  private depth: Uint8Array;
+  reactionsEnabled = true;
+  reducedMotion = false;
+  private eventPosition = new Vector3();
+  private receiverPosition = new Vector3();
+  private tick = -1;
+  private count = 0;
   private hero = new Vector3(0, 1.15, 0);
-
-  constructor(
-    private dur: Durations,
-    private actorC: Vector3,
-    private actorD: Vector3,
-    private actorE: Vector3,
-    private robotB: Vector3
-  ) {}
-
-  addHop(origin: Vector3, at: number, distance: (robot: Robot) => number) {
-    this.ripples.push({ kind: 'hop', origin: origin.clone(), at, speed: settings.hopSpeed, window: this.dur.wave, distance });
+  private poseBuffer: Pose = {};
+  private duration(kind: number) {
+    const clip = ACTIVITIES[kind - 1];
+    return (this.dur[clip] ?? 0) * (kind <= 2 ? 3 : 1);
   }
 
-  addWave(origin: Vector3, at: number, distance: (robot: Robot) => number) {
-    this.ripples.push({ kind: 'wave', origin: origin.clone(), at, speed: settings.waveSpeed, window: this.dur.wave * 2, distance });
-  }
-
-  addCheer(origin: Vector3, at: number, distance: (robot: Robot) => number) {
-    this.ripples.push({ kind: 'cheer', origin: origin.clone(), at, speed: settings.cheerSpeed, window: this.dur.cheer, distance });
-  }
-
-  private active(robot: Robot, t: number) {
-    let best: { ripple: Ripple; local: number } | null = null;
-    for (const ripple of this.ripples) {
-      const local = t - (ripple.at + ripple.distance(robot) * ripple.speed);
-      if (local > 0 && local < ripple.window && (!best || ripple.at >= best.ripple.at)) best = { ripple, local };
+  constructor(private dur: Durations, private robots: Individual[], private seed = 72491) {
+    const n = robots.length;
+    this.energy = new Float32Array(n);
+    this.curiosity = new Float32Array(n);
+    this.sociability = new Float32Array(n);
+    this.nextDecision = new Float64Array(n);
+    this.actionAt = new Float64Array(n);
+    this.cooldown = new Float64Array(n);
+    this.action = new Uint8Array(n);
+    this.attention = new Int32Array(n);
+    this.attentionUntil = new Float64Array(n);
+    this.attentionAt = new Float64Array(n);
+    this.neighbors = new Int32Array(n * NEIGHBORS).fill(NONE);
+    this.pendingAt = new Float64Array(n);
+    this.pendingSource = new Int32Array(n);
+    this.pendingDepth = new Uint8Array(n);
+    this.sequence = new Uint32Array(n);
+    this.depth = new Uint8Array(n);
+    // Placement is static apart from the opening walkers. Use their destinations
+    // and check actual distance when delivering events so no distant links fire.
+    const cells = new Map<string, number[]>();
+    const home = (i: number) => robots[i].walk?.to ?? robots[i].position;
+    for (let i = 0; i < n; i++) {
+      const p = home(i), key = `${Math.floor(p.x / RADIUS)},${Math.floor(p.z / RADIUS)}`;
+      if (!cells.has(key)) cells.set(key, []);
+      cells.get(key)!.push(i);
     }
-    return best;
-  }
-
-  pose(robot: Robot, t: number): Pose {
-    const s = settings;
-    if (robot.walk && t > robot.walk.t0 && t < robot.walk.t1) return { idle: 0, run: 1, runTime: t - robot.walk.t0 };
-    if (robot.role && t >= s.cutAt && t < s.escalationAt) return this.actorPose(robot, t);
-    const act = this.active(robot, t);
-    if (act) {
-      const p = this.reactionPose(robot, act.ripple.kind, act.local, act.ripple.window);
-      if (p) return p;
+    for (let i = 0; i < n; i++) {
+      const p = home(i), x = Math.floor(p.x / RADIUS), z = Math.floor(p.z / RADIUS);
+      const candidates: { id: number; distance: number }[] = [];
+      for (let dx = -1; dx <= 1; dx++) for (let dz = -1; dz <= 1; dz++) {
+        for (const id of cells.get(`${x + dx},${z + dz}`) ?? []) {
+          const distance = p.distanceToSquared(home(id));
+          if (id !== i && distance < RADIUS * RADIUS) candidates.push({ id, distance });
+        }
+      }
+      candidates.sort((a, b) => a.distance - b.distance);
+      for (let k = 0; k < Math.min(NEIGHBORS, candidates.length); k++) this.neighbors[i * NEIGHBORS + k] = candidates[k].id;
     }
-    return this.idlePose(robot, t);
+    this.reset(seed);
   }
 
-  /** Returns true when the robot is focused on an event (no idle wander). */
-  gaze(robot: Robot, t: number, cameraPos: Vector3, out: Vector3): boolean {
-    const s = settings;
-    if (robot.isB && t > s.reactionAt - 0.3 && t < s.reactionAt + 2.6) {
+  reset(seed = this.seed) {
+    this.seed = seed;
+    this.tick = -1;
+    this.action.fill(0);
+    this.actionAt.fill(0);
+    this.cooldown.fill(0);
+    this.attention.fill(NONE);
+    this.attentionUntil.fill(0);
+    this.attentionAt.fill(0);
+    this.pendingAt.fill(Infinity);
+    this.pendingSource.fill(NONE);
+    this.sequence.fill(0);
+    this.depth.fill(0);
+    for (let i = 0; i < this.robots.length; i++) {
+      const r = this.robots[i];
+      r.seed = (hash(seed, i) * 4294967296) >>> 0;
+      this.energy[i] = r.energy = 0.2 + hash(r.seed, 1) * 0.7;
+      this.curiosity[i] = hash(r.seed, 2);
+      this.sociability[i] = hash(r.seed, 3);
+      r.idleSpeed = 0.95 + hash(r.seed, 4) * 0.1;
+      r.idleClip = hash(r.seed, 5) < 0.5 ? 0 : 1;
+      r.offset = hash(r.seed, 6) * this.dur[r.idleClip ? 'idleB' : 'idle'];
+      r.breathRate = 0.65 + hash(r.seed, 21) * 0.5;
+      r.breathPhase = hash(r.seed, 22) * Math.PI * 2;
+      r.breathDrift = 0.17 + hash(r.seed, 23) * 0.24;
+      r.gazeOffset = (hash(r.seed, 7) - 0.5) * 0.55;
+      r.gaze.identity();
+      r.torsoYaw = 0;
+      r.lastPose = -Infinity;
+      this.nextDecision[i] = 0.5 + hash(r.seed, 8) * 12;
+    }
+  }
+
+  private positionAt(i: number, t: number, out: Vector3) {
+    const r = this.robots[i];
+    if (!r.walk) return out.copy(r.position);
+    const travelEnd = Math.max(r.walk.t0 + 0.1, r.walk.t1 - 0.42);
+    const u = smooth((t - r.walk.t0) / (travelEnd - r.walk.t0));
+    return out.lerpVectors(r.walk.from, r.walk.to, u);
+  }
+
+  private notice(i: number, source: number, t: number, depth: number) {
+    if (!this.reactionsEnabled) return;
+    if (this.robots[i].walk && t < settings.greetingEnd) return;
+    if (this.pendingAt[i] !== Infinity || this.attentionUntil[i] > t) return;
+    const r = this.robots[i];
+    const origin = source === HERO ? this.hero : this.positionAt(source, t, this.eventPosition);
+    const distance = this.positionAt(i, t, this.receiverPosition).distanceTo(origin);
+    if (distance > RADIUS) return;
+    const chance = (0.2 + this.curiosity[i] * 0.55) * (1 - distance / (RADIUS * 1.4));
+    if (hash(r.seed, this.tick * 17 + source) > chance) return;
+    this.pendingAt[i] = t + 0.18 + hash(r.seed, this.tick + 103) * 0.65;
+    this.pendingSource[i] = source;
+    this.pendingDepth[i] = depth;
+  }
+
+  private start(i: number, kind: number, t: number, depth = 0) {
+    if (this.reducedMotion || !(this.duration(kind) > 0)) return;
+    this.action[i] = kind;
+    this.actionAt[i] = t;
+    this.depth[i] = depth;
+    this.cooldown[i] = t + this.duration(kind) / this.robots[i].idleSpeed + 3 + hash(this.robots[i].seed, this.tick + 71) * 5;
+    if (depth >= 2) return;
+    for (let k = 0; k < NEIGHBORS; k++) {
+      const neighbor = this.neighbors[i * NEIGHBORS + k];
+      if (neighbor >= 0 && neighbor < this.count) this.notice(neighbor, i, t, depth + 1);
+    }
+  }
+
+  playOneShot(id: number, t: number) {
+    if (id >= 0 && id < this.count && this.cooldown[id] <= t) this.start(id, 1 + id % ACTIVITIES.length, t);
+  }
+
+  update(t: number, count = this.robots.length) {
+    this.count = count;
+    if (t < this.tick * STEP) this.reset();
+    const targetTick = Math.floor(t / STEP + 1e-8);
+    while (this.tick < targetTick) {
+      const now = ++this.tick * STEP;
+      for (let i = 0; i < count; i++) {
+        const r = this.robots[i];
+        // Reserve the two opening companions for their authored greeting.
+        if (r.walk && now < settings.greetingEnd) continue;
+        // Entrance locomotion owns the pose until the character has settled;
+        // random actions must never interrupt a visible walk cycle.
+        if (r.entrance && now < r.entrance.t1) continue;
+        if (this.action[i] && (now - this.actionAt[i]) * r.idleSpeed >= this.duration(this.action[i])) this.action[i] = 0;
+        if (this.attentionUntil[i] <= now) this.attention[i] = NONE;
+        if (this.pendingAt[i] <= now) {
+          const source = this.pendingSource[i];
+          this.pendingAt[i] = Infinity;
+          if (source === HERO || source < count) {
+            this.attention[i] = source;
+            this.attentionAt[i] = now;
+            this.attentionUntil[i] = now + 1 + this.curiosity[i] * 2;
+            const imitate = hash(r.seed, this.tick + 311) < this.sociability[i] * this.energy[i] * 0.5;
+            if (imitate && this.cooldown[i] <= now && !this.action[i]) this.start(i, 1 + i % ACTIVITIES.length, now + 0.25, this.pendingDepth[i]);
+          }
+        }
+        if (now < this.nextDecision[i]) continue;
+        const decision = ++this.sequence[i];
+        this.nextDecision[i] = now + 2 + (1 - this.energy[i]) * 5 + hash(r.seed, decision * 11) * 5;
+        if (r.walk && now < r.walk.t1) continue;
+        if (this.attentionUntil[i] <= now) {
+          const neighbor = this.neighbors[i * NEIGHBORS + Math.floor(hash(r.seed, decision * 11 + 1) * NEIGHBORS)];
+          this.attention[i] = neighbor >= 0 && neighbor < count && hash(r.seed, decision * 11 + 2) < this.curiosity[i] ? neighbor : NONE;
+          this.attentionAt[i] = now;
+          this.attentionUntil[i] = now + 0.8 + hash(r.seed, decision * 11 + 3) * 2.2;
+        }
+        if (!this.action[i] && this.cooldown[i] <= now && hash(r.seed, decision * 11 + 4) < 0.08 + this.energy[i] * 0.18) {
+          const choice = hash(r.seed, decision * 11 + 5);
+          this.start(i, 1 + Math.floor(choice * ACTIVITIES.length), now);
+        }
+      }
+    }
+  }
+
+  pose(robot: Individual, t: number): Pose {
+    // Reuse the sampler input: no allocation per visible character per frame.
+    const p = this.poseBuffer;
+    p.idle = 1;
+    p.idleClip = robot.idleClip;
+    // Independent rest clocks: broad tempo variation plus gentle, personal drift.
+    // Analytic phase stays continuous across culling, seeking and action recovery;
+    // changing the breathing rhythm does not change the speed of other activities.
+    const drift = 0.22 * (Math.sin(t * robot.breathDrift + robot.breathPhase) - Math.sin(robot.breathPhase));
+    p.idleTime = t * robot.breathRate + robot.offset + drift;
+    p.run = p.jump = p.wave = p.cheer = p.hit = 0;
+    p.activity = undefined;
+    p.activityWeight = 0;
+    if (robot.walk && !this.reducedMotion) {
+      const local = t - robot.walk.t0;
+      p.activity = ['walkA', 'walkB', 'walkC'][robot.id % 3];
+      p.activityWeight = pulse(local, robot.walk.t1 - robot.walk.t0, 0.3, 0.45);
+      p.activityTime = local;
+      if (p.activityWeight > 0) return p;
+    }
+    if (robot.walk && t < settings.greetingEnd) {
+      if (!this.reducedMotion) {
+        const local = t - (robot.isB ? settings.greetBAt : settings.greetWalkerAt);
+        p.wave = pulse(local, this.dur.wave, 0.35, 0.45);
+        p.waveTime = local;
+      }
+      return p;
+    }
+    if (robot.entrance && !this.reducedMotion) {
+      const local = t - robot.entrance.t0;
+      const span = robot.entrance.t1 - robot.entrance.t0;
+      p.run = pulse(local, span, 0.28, 0.42);
+      p.runTime = local;
+      if (p.run > 0) return p;
+      // A few arrivals acknowledge the group after settling, adding life
+      // without making the entire field wave in the same beat.
+      if (robot.id % 17 < 14) {
+        const waveTime = t - robot.entrance.t1;
+        p.wave = pulse(waveTime, 1.45, 0.18, 0.3);
+        p.waveTime = waveTime;
+        if (p.wave > 0) return p;
+      }
+    }
+    // The three actors in the close-up have authored beats instead of random
+    // crowd decisions: wave, punch, and hop. Their poses stay active for the
+    // entire detail shot and never fall back to walking in place.
+    if (robot.role > 0 && t >= settings.cutAt && t < settings.cutAt + 2.2 && !this.reducedMotion) {
+      const cycle = robot.role === 1 ? 2.3 : robot.role === 2 ? 1.65 : 1.55;
+      const local = (t - settings.cutAt + robot.role * 0.18) % cycle;
+      const weight = pulse(local, cycle, 0.32, 0.32);
+      if (robot.role === 1) {
+        p.wave = weight;
+        p.waveTime = local;
+      } else if (robot.role === 2) {
+        p.activity = 'punch';
+        p.activityWeight = weight;
+        p.activityTime = local;
+      } else {
+        p.jump = weight;
+        p.jumpTime = local;
+      }
+      // Keep the authored idle blend during the small gap at a cycle boundary;
+      // never hand control back to a random crowd action in the close-up.
+      return p;
+    }
+    if (robot.toolGroup && t >= settings.cutAt + 2.2 && t < settings.holdAt + 1.2 && !this.reducedMotion) {
+      const local = ((t - settings.cutAt - 2.2) * 0.78) % 1.8;
+      p.activity = 'useItem';
+      p.activityWeight = pulse(local, 1.8, 0.3, 0.3);
+      p.activityTime = local;
+      return p;
+    }
+    const kind = this.action[robot.id];
+    if (kind && !this.reducedMotion) {
+      const local = (t - this.actionAt[robot.id]) * robot.idleSpeed;
+      const duration = this.duration(kind);
+      p.activity = ACTIVITIES[kind - 1];
+      p.activityWeight = pulse(local, duration, 0.65, 0.7);
+      p.activityTime = local;
+
+    }
+    return p;
+  }
+
+  isGroundAction(robot: Individual) {
+    const kind = this.action[robot.id];
+    return kind === 1 || kind === 2 || kind === 4;
+  }
+
+  gaze(robot: Individual, t: number, _cameraPos: Vector3, out: Vector3): boolean {
+    if (robot.walk && t >= robot.walk.t1 && t < settings.greetingEnd) {
       out.copy(this.hero);
       return true;
     }
-    if (robot.role > 1 && t >= s.cutAt && t < s.escalationAt) {
-      out.copy(this.actorC).setY(1.2);
-      return true;
+    const id = this.attention[robot.id];
+    if (id === HERO) out.copy(this.hero);
+    else if (id >= 0 && id < this.count) out.copy(this.robots[id].position).setY(1.25);
+    else {
+      // Persist a fixation between decisions, with a tiny bounded drift.
+      const angle = robot.yawOffset + robot.gazeOffset + Math.sin(t * 0.45 + robot.offset) * 0.025;
+      out.set(robot.position.x + Math.sin(angle) * 8, 1.2, robot.position.z + Math.cos(angle) * 8);
     }
-    const act = this.active(robot, t);
-    if (act && act.local < 1.6) {
-      out.copy(act.ripple.origin);
-      return true;
-    }
-    out.copy(cameraPos);
-    return false;
+    return id !== NONE;
   }
 
-  /** Idle wander added on top of the camera gaze. */
-  wander(robot: Robot, t: number) {
-    return robot.gazeOffset + Math.sin(t * 0.27 + robot.seed * 9.1) * 0.22;
-  }
-
-  private actorPose(robot: Robot, t: number): Pose {
-    const local = t - settings.cutAt;
-    if (robot.role === 1) {
-      const jt = local - 0.2;
-      if (jt > 0 && jt < this.dur.jump) {
-        const w = pulse(jt, this.dur.jump, 0.08, 0.12);
-        if (w > 0) return { jump: w, jumpTime: jt };
-      }
-      const ht = local - 1.5;
-      if (ht > 0 && ht < this.dur.hit) {
-        const w = pulse(ht, this.dur.hit, 0.05, 0.12);
-        if (w > 0) return { hit: w, hitTime: ht };
-      }
-      return this.idlePose(robot, t);
-    }
-    if (robot.role === 2) {
-      const jt = local - 1.2;
-      if (jt > 0 && jt < 0.5) {
-        const w = pulse(jt, 0.5, 0.1, 0.15);
-        if (w > 0) return { jump: w, jumpTime: jt };
-      }
-      return this.idlePose(robot, t);
-    }
-    const ht = local - 1.4;
-    if (ht > 0 && ht < this.dur.hit) {
-      const w = pulse(ht, this.dur.hit, 0.05, 0.12);
-      if (w > 0) return { hit: w, hitTime: ht };
-    }
-    return this.idlePose(robot, t);
-  }
-
-  private reactionPose(robot: Robot, kind: RippleKind, local: number, window: number): Pose | null {
-    const speed = 0.85 + robot.energy * 0.35;
-    const jt = local * speed;
-    if (kind === 'cheer') {
-      const w = pulse(local, window, 0.12, 0.3);
-      return w > 0 ? { cheer: w, cheerTime: local } : null;
-    }
-    if (kind === 'wave' && robot.reaction === 4) {
-      const w = pulse(local, window, 0.3, 0.5);
-      return w > 0 ? { wave: w, waveTime: local + robot.offset } : null;
-    }
-    if (robot.reaction === 0) return jt < this.dur.jump ? { jump: pulse(jt, this.dur.jump, 0.08, 0.12), jumpTime: jt } : null;
-    if (robot.reaction === 1) return jt < 0.55 ? { jump: pulse(jt, 0.55, 0.08, 0.15), jumpTime: jt } : null;
-    if (robot.reaction === 2) return null;
-    if (robot.reaction === 3) {
-      const short = this.dur.jump * 0.72;
-      return jt < short ? { jump: pulse(jt, short, 0.06, 0.1), jumpTime: jt } : null;
-    }
-    const w = pulse(local, window, 0.3, 0.5);
-    return w > 0 ? { wave: w, waveTime: local + robot.offset } : null;
-  }
-
-  /**
-   * The floor of the whole system: idle plus a slow schedule of micro-actions
-   * (a small bounce, a short wave, a look around) so the crowd keeps living.
-   */
-  private idlePose(robot: Robot, t: number): Pose {
-    const idleTime = t * robot.idleSpeed + robot.offset;
-    const period = 3.6 + robot.energy * 3.2;
-    const phase = robot.offset * 7.3 + robot.seed * 11.7;
-    const local = t + phase - Math.floor((t + phase) / period) * period;
-    if (local < 1.5) {
-      const h = hash(robot.seed * 1000, Math.floor((t + phase) / period));
-      const w = pulse(local, 1.5, 0.3, 0.4) * (0.35 + robot.energy * 0.3);
-      if (w > 0.01) {
-        if (h < 0.34) return { idle: 1 - w, idleTime, jump: w, jumpTime: local };
-        if (h < 0.67) return { idle: 1 - w, idleTime, wave: w, waveTime: local + robot.offset };
-      }
-    }
-    return { idle: 1, idleClip: robot.idleClip, idleTime };
+  torsoReady(robot: Individual, t: number) {
+    return this.attention[robot.id] !== NONE && t - this.attentionAt[robot.id] > 0.45;
   }
 }

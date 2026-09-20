@@ -21,31 +21,28 @@ setTimeout(updatePaneVisibility, 80);
 window.addEventListener('hashchange', updatePaneVisibility);
 
 const timeline = pane.addFolder({ title: 'Timeline (s)' });
-timeline.addBinding(settings, 'duration', { min: 12, max: 30, step: 0.5, label: 'Duration' });
-timeline.addBinding(settings, 'walkStart', { min: 0, max: 6, step: 0.05, label: 'Walk in' });
-timeline.addBinding(settings, 'walkEnd', { min: 0.5, max: 8, step: 0.05, label: 'Walk end' });
-timeline.addBinding(settings, 'firstHopAt', { min: 0, max: 8, step: 0.05, label: 'First hop' });
-timeline.addBinding(settings, 'reactionAt', { min: 0, max: 8, step: 0.05, label: 'Reaction' });
-timeline.addBinding(settings, 'contagionAt', { min: 2, max: 10, step: 0.05, label: 'Contagion' });
-timeline.addBinding(settings, 'pullBackAt', { min: 2, max: 12, step: 0.05, label: 'Pull back' });
-timeline.addBinding(settings, 'revealAt', { min: 3, max: 14, step: 0.05, label: 'First wave' });
-timeline.addBinding(settings, 'arcAt', { min: 4, max: 16, step: 0.05, label: 'Arc' });
-timeline.addBinding(settings, 'cutAt', { min: 5, max: 18, step: 0.05, label: 'Cut actors' });
-timeline.addBinding(settings, 'escalationAt', { min: 6, max: 20, step: 0.05, label: 'Escalation' });
-timeline.addBinding(settings, 'holdAt', { min: 8, max: 22, step: 0.05, label: 'Hold' });
-timeline.addBinding(settings, 'payoffAt', { min: 10, max: 24, step: 0.05, label: 'Payoff' });
-timeline.addBinding(settings, 'finaleAt', { min: 12, max: 26, step: 0.05, label: 'Finale' });
-timeline.addBinding(settings, 'finalHopAt', { min: 13, max: 28, step: 0.05, label: 'Final hop' });
-timeline.addBinding(settings, 'responseAt', { min: 14, max: 30, step: 0.05, label: 'Crowd response' });
+timeline.addBinding(settings, 'duration', { min: 12, max: 40, step: 0.5, label: 'Duration' });
+timeline.addBinding(settings, 'walkStart', { min: 0, max: 40, step: 0.05, label: 'Walk in' });
+timeline.addBinding(settings, 'walkEnd', { min: 0.5, max: 40, step: 0.05, label: 'Walk end' });
+timeline.addBinding(settings, 'firstHopAt', { min: 0, max: 40, step: 0.05, label: 'First hop' });
+timeline.addBinding(settings, 'reactionAt', { min: 0, max: 40, step: 0.05, label: 'Reaction' });
+timeline.addBinding(settings, 'contagionAt', { min: 2, max: 40, step: 0.05, label: 'Contagion' });
+timeline.addBinding(settings, 'pullBackAt', { min: 2, max: 40, step: 0.05, label: 'Pull back' });
+timeline.addBinding(settings, 'revealAt', { min: 3, max: 40, step: 0.05, label: 'Community' });
+timeline.addBinding(settings, 'arcAt', { min: 4, max: 40, step: 0.05, label: 'Arc' });
+timeline.addBinding(settings, 'cutAt', { min: 5, max: 40, step: 0.05, label: 'Cut actors' });
+timeline.addBinding(settings, 'escalationAt', { min: 6, max: 40, step: 0.05, label: 'Escalation' });
+timeline.addBinding(settings, 'holdAt', { min: 8, max: 40, step: 0.05, label: 'Hold' });
+timeline.addBinding(settings, 'payoffAt', { min: 10, max: 40, step: 0.05, label: 'Payoff' });
+timeline.addBinding(settings, 'finaleAt', { min: 12, max: 40, step: 0.05, label: 'Finale' });
+timeline.addBinding(settings, 'finalHopAt', { min: 13, max: 40, step: 0.05, label: 'Final hop' });
+timeline.addBinding(settings, 'responseAt', { min: 14, max: 40, step: 0.05, label: 'Crowd response' });
 
 const cameraFolder = pane.addFolder({ title: 'Camera' });
 cameraFolder.addBinding(settings, 'headFollow', { min: 0, max: 1, label: 'Head follow' });
 cameraFolder.addBinding(settings, 'bodyFollow', { min: 0, max: 6, label: 'Body turn' });
 
 const crowdFolder = pane.addFolder({ title: 'Crowd' });
-crowdFolder.addBinding(settings, 'hopSpeed', { min: 0.01, max: 0.2, step: 0.005, label: 'Hop speed' });
-crowdFolder.addBinding(settings, 'waveSpeed', { min: 0.01, max: 0.2, step: 0.005, label: 'Wave speed' });
-crowdFolder.addBinding(settings, 'cheerSpeed', { min: 0, max: 0.05, step: 0.001, label: 'Cheer speed' });
 crowdFolder.addBinding(settings, 'showPayoff', { label: 'Payoff overlay' });
 
 export const maxInstancesBinding: any = crowdFolder.addBinding(settings, 'maxInstances', {

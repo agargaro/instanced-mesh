@@ -7,7 +7,7 @@ import { settings } from './config.js';
 import { camera, fog, main, scene } from './world.js';
 import { kaykitAudio, createSoundButton } from './audio.js';
 import { isDebug, maxInstancesBinding, pane, speedMonitor, timeMonitor, updateStatsOverlay } from './ui.js';
-import { pulse } from './math.js';
+import { pulse, smooth } from './math.js';
 import { createRegia } from './regia.js';
 import { CrowdDirector } from './controller.js';
 import { Performance, type Pose, type Robot } from './animation.js';
@@ -17,16 +17,22 @@ createSoundButton(kaykitAudio);
 const up = new Vector3(0, 1, 0);
 const heroSpot = new Vector3(0, 0, 0);
 const heroWalkFrom = new Vector3(0, 0, -12);
-const robotBSpot = new Vector3(3.5, 0, -7);
+const robotBSpot = new Vector3(2.1, 0, -2.2);
 const groupSpot = new Vector3(-8, 0, -22);
 const actorSpots = [new Vector3(-8, 0, -22), new Vector3(-9.8, 0, -20.2), new Vector3(-6.4, 0, -23.6)];
+const secondActorSpots = [
+  new Vector3(11, 0, -31), new Vector3(9.5, 0, -28.4), new Vector3(6.5, 0, -28.4),
+  new Vector3(5, 0, -31), new Vector3(6.5, 0, -33.6), new Vector3(9.5, 0, -33.6)
+];
 const fieldHalfWidth = 140;
-const fieldStart = -20;
-const fieldDepth = 160;
+const fieldStart = -14;
+const fieldDepth = 120;
 let elapsed = 0;
+let lifeTime = 0;
 let cueIndex = 0;
 let paused = false;
-let lastCamPos = new Vector3(0, 1.5, 20);
+const motionPreference = matchMedia('(prefers-reduced-motion: reduce)');
+let lastCamPos = new Vector3(0, 1.5, 12);
 let camSpeed = 0;
 let totalFrames = 0;
 let totalTime = 0;
@@ -38,12 +44,15 @@ pane.addButton({ title: 'Restart' }).on('click', () => restart());
 function beatName(t: number) {
   const s = settings;
   if (t < s.walkEnd) return '01 silence / walk-in';
-  if (t < s.reactionAt) return '02 first hop';
+  if (t < s.greetHeroAt) return '02 first hop';
+  if (t < s.celebrateAt) return '03 hello / reply';
+  if (t < s.celebrateAt + 1.7) return '04 celebration / camera starts';
+  if (t < s.reactionAt) return '03 greeting hold';
   if (t < s.contagionAt) return '03 reaction';
   if (t < s.pullBackAt) return '04 contagion';
   if (t < s.revealAt) return '05 crowd awakens';
-  if (t < s.arcAt) return '06 first wave';
-  if (t < s.cutAt) return '07 choreography';
+  if (t < s.arcAt) return '06 community';
+  if (t < s.cutAt) return '07 crowd';
   if (t < s.escalationAt) return '08 individuals';
   if (t < s.holdAt) return '09 escalation';
   if (t < s.payoffAt) return '10 grand reveal';
@@ -54,28 +63,18 @@ function beatName(t: number) {
 async function init() {
   const loader = new GLTFLoader();
   const base = '/instanced-mesh/kaykit/';
-  const [character, movement, general, simulation] = await Promise.all(
-    ['Mannequin_Medium.glb', 'Rig_Medium_MovementBasic.glb', 'Rig_Medium_General.glb', 'Rig_Medium_Simulation.glb'].map((file) =>
-      loader.loadAsync(base + file)
-    )
-  );
-  const pick = (gltf: typeof general, name: string) => {
-    const clip = gltf.animations.find((c) => c.name === name);
-    if (!clip) throw new Error(`Missing KayKit clip: ${name}`);
-    return clip;
+  const character = await loader.loadAsync(base + 'Mannequin_Medium_Animated.glb');
+  const names: Record<string, string> = {
+    idle: 'Idle_A', idleB: 'Idle_B', run: 'Running_A', jump: 'Jump_Full_Short',
+    wave: 'Waving', cheer: 'Cheering', hit: 'Hit_A',
+    pushUps: 'Push_Ups', sitUps: 'Sit_Ups', useItem: 'Use_Item', spawn: 'Spawn_Ground',
+    walkA: 'Walking_A', walkB: 'Walking_B', walkC: 'Walking_C', sneak: 'Sneaking',
+    punch: 'Melee_Unarmed_Attack_Punch_A'
   };
-  const clips = [
-    { name: 'idle', clip: pick(general, 'Idle_A') },
-    { name: 'idleB', clip: pick(general, 'Idle_B') },
-    { name: 'run', clip: pick(movement, 'Running_A') },
-    { name: 'jump', clip: pick(movement, 'Jump_Full_Short') },
-    { name: 'wave', clip: pick(simulation, 'Waving') },
-    { name: 'cheer', clip: pick(simulation, 'Cheering') },
-    { name: 'hit', clip: pick(general, 'Hit_A') }
-  ].map(({ name, clip }) => {
-    const filtered = clip.tracks.filter((track) => character.scene.getObjectByName(track.name.split('.')[0]));
-    const tracks = (filtered.length ? filtered : clip.tracks).map((t) => t.clone());
-    return { name, clip: new AnimationClip(name, clip.duration, tracks) };
+  const clips = Object.entries(names).map(([name, original]) => {
+    const clip = character.animations.find((c) => c.name === original);
+    if (!clip) throw new Error(`Missing KayKit clip: ${original}`);
+    return { name, clip: new AnimationClip(name, clip.duration, clip.tracks.map((track) => track.clone())) };
   });
   const dur: Record<string, number> = {};
   for (const { name, clip } of clips) dur[name] = clip.duration;
@@ -83,7 +82,11 @@ async function init() {
   const hero = clone(character.scene);
   hero.traverse((o) => {
     o.frustumCulled = true;
+    (o as any).draggable = false;
+    (o as any).interceptByRaycaster = false;
   });
+  (hero as any).draggable = false;
+  (hero as any).interceptByRaycaster = false;
   hero.position.copy(heroWalkFrom);
   scene.add(hero);
   const heroPerformance = new Performance(hero, clips);
@@ -153,7 +156,7 @@ async function init() {
     }
   });
   const robotBPos = robotBSpot.clone();
-  const bWalkFrom = new Vector3(3.5, 0, -24);
+  const bWalkFrom = new Vector3(3.5, 0, -17);
   positions[bIndex].copy(bWalkFrom);
   // a third walker on the left, so the opening has two or three little robots
   let wIndex = 0;
@@ -166,8 +169,8 @@ async function init() {
       wIndex = i;
     }
   });
-  const walkerSpot = new Vector3(-5, 0, -11);
-  const walkerFrom = new Vector3(-4, 0, -26);
+  const walkerSpot = new Vector3(-2.1, 0, -3.4);
+  const walkerFrom = new Vector3(-4, 0, -18);
   positions[wIndex].copy(walkerFrom);
   // the three individuals of scene 08 step into their small clearing
   const groupOrder = positions
@@ -180,9 +183,21 @@ async function init() {
   const groupCenter = new Vector3();
   for (const p of groupPositions) groupCenter.add(p);
   groupCenter.multiplyScalar(1 / groupPositions.length);
+  const secondOrder = positions
+    .map((p, i) => ({ i, d: p.distanceToSquared(new Vector3(8, 0, -29)) }))
+    .filter(({ i }) => i !== bIndex && i !== wIndex && !groupOrder.some((entry) => entry.i === i))
+    .sort((a, b) => a.d - b.d)
+    .slice(0, 6);
+  secondOrder.forEach(({ i }, k) => positions[i].copy(secondActorSpots[k]));
+  const secondPositions = secondOrder.map(({ i }) => positions[i].clone());
+  const secondCenter = new Vector3();
+  for (const p of secondPositions) secondCenter.add(p);
+  secondCenter.multiplyScalar(1 / secondPositions.length);
 
   const crowd = new InstancedMesh2<Robot>(geometry, meshes[0].material, { capacity: positions.length, createEntities: true });
   crowd.initSkeleton(skeleton, false);
+  (crowd as any).draggable = false;
+  (crowd as any).interceptByRaycaster = false;
   crowd.bindMatrix.copy(meshes[0].bindMatrix);
   crowd.bindMatrixInverse.copy(meshes[0].bindMatrixInverse);
   crowd.frustumCulled = true;
@@ -190,39 +205,50 @@ async function init() {
     robot.seed = random();
     robot.position.copy(positions[i]);
     robot.quaternion.setFromAxisAngle(up, random() < 0.22 ? random() * Math.PI * 2 : Math.atan2(-robot.position.x, -robot.position.z));
-    robot.offset = (i % 19) * 0.13;
+    robot.offset = random() * dur.idle;
     robot.idleSpeed = 0.88 + random() * 0.28;
     robot.idleClip = random() < 0.5 ? 0 : 1;
     robot.energy = 0.35 + random() * 0.65;
     const r = random();
     robot.reaction = r < 0.3 ? 0 : r < 0.5 ? 1 : r < 0.65 ? 2 : r < 0.8 ? 3 : 4;
-    robot.tracksCamera = random() < 0.6;
-    robot.yawOffset = (random() - 0.5) * 0.8;
+    robot.tracksCamera = false;
+    robot.yawOffset = Math.atan2(2 * robot.quaternion.w * robot.quaternion.y, 1 - 2 * robot.quaternion.y ** 2);
     robot.gazeOffset = (random() - 0.5) * 0.9;
     robot.gaze = new Quaternion();
+    robot.headLock = new Quaternion();
     robot.lastPose = -Infinity;
     robot.distB = 0;
     robot.distC = robot.position.length();
     robot.distG = 0;
     robot.isB = false;
     robot.role = 0;
+    robot.toolGroup = false;
     robot.walk = null;
+    robot.entrance = null;
+    robot.locomotion = 'walk';
   });
   const robotB = crowd.instances[bIndex];
   robotB.isB = true;
   robotB.energy = 0.95;
   robotB.reaction = 0;
-  robotB.walk = { from: bWalkFrom.clone(), to: robotBSpot.clone(), t0: 0.5, t1: 3.4 };
+  robotB.locomotion = 'walk';
+  // The right companion uses a slower walking entrance and arrives later.
+  robotB.walk = { from: bWalkFrom.clone(), to: robotBSpot.clone(), t0: settings.walkStart + 0.08, t1: settings.walkEnd + 6 };
   const walker = crowd.instances[wIndex];
   walker.energy = 0.7;
-  walker.walk = { from: walkerFrom.clone(), to: walkerSpot.clone(), t0: 0.9, t1: 3.5 };
+  walker.locomotion = 'walk';
+  // The left companion walks in and arrives one second after the hero.
+  walker.walk = { from: walkerFrom.clone(), to: walkerSpot.clone(), t0: settings.walkStart + 0.22, t1: settings.walkEnd + 3 };
   for (const robot of crowd.instances) robot.distB = robot.position.distanceTo(robotBPos);
   groupOrder.forEach(({ i }, k) => {
     crowd.instances[i].role = (k + 1) as Robot['role'];
   });
+  secondOrder.forEach(({ i }) => { crowd.instances[i].toolGroup = true; });
   for (const robot of crowd.instances) robot.distG = robot.position.distanceTo(groupCenter);
+  let activeCount = positions.length;
   const applyCount = (n: number) => {
-    const v = Math.min(n, positions.length);
+    const v = Math.max(0, Math.min(Math.floor(n), positions.length));
+    activeCount = v;
     for (let i = 0; i < positions.length; i++) (crowd as any).setActiveAt(i, i < v);
     (crowd as any).count = v;
   };
@@ -232,47 +258,63 @@ async function init() {
 
   // The mixer must own the original bone hierarchy, not the instanced draw mesh.
   const crowdPerformance = new Performance(source as any, clips);
-  const regia = createRegia({ robotB: robotBPos, group: groupCenter });
+  const regia = createRegia({ robotB: robotBPos, group: groupCenter, group2: secondCenter });
   const target = new Vector3();
   const rotation = new Quaternion();
   const inverse = new Quaternion();
   const viewDirection = new Vector3();
   const relative = new Vector3();
   const gaze = new Vector3();
-  const bLook = new Vector3(robotBSpot.x, 1.1, robotBSpot.z);
-  const bodyBFace = new Vector3();
-  const crowdLook = new Vector3(0, 1.2, -25);
+  const heroAttention = new Vector3();
   let frameDelta = 0;
 
-  // ── animation controller ──────────────────────────────────────────
-  // Every pose and every gaze comes from the director: ripples, actor
-  // script, idle micro-actions. It always returns a valid, animated pose.
-  const director = new CrowdDirector(dur, groupPositions[0], groupPositions[1], groupPositions[2], robotBPos);
-  director.addHop(robotBPos, settings.reactionAt + 0.6, (r) => r.distB);
-  director.addWave(new Vector3(0, 1.2, 0), settings.revealAt + 0.5, (r) => r.distC);
-  director.addWave(groupPositions[0], settings.escalationAt, (r) => r.distG);
-  director.addCheer(new Vector3(0, 1.2, 0), settings.responseAt, (r) => r.distC);
+  // Semantic decisions are independent of the cinematic camera clock.
+  const director = new CrowdDirector(dur, crowd.instances, settings.seed);
+  director.update(0, activeCount);
+
+  // The field itself enters after the hero's celebration. Keep the home layout
+  // for deterministic reactions, but render each robot from a deeper starting
+  // point and advance it into place with a staggered walking clip.
+  for (let i = 0; i < crowd.instances.length; i++) {
+    const robot = crowd.instances[i];
+    if (robot.isB || robot === walker) continue;
+    const home = robot.position.clone();
+    const isDetailActor = robot.role > 0 || robot.toolGroup;
+    const depthOffset = isDetailActor ? 26 : 12;
+    const from = home.clone().add(new Vector3((robot.seed % 17 - 8) * 0.08, 0, -depthOffset - (robot.seed % (isDetailActor ? 7 : 5))));
+    // A short stagger keeps the crowd alive without leaving visible robots
+    // frozen at their spawn points. Each path preserves its final x lane.
+    // The crowd must stay inside the fog until the hero has finished calling
+    // them and has turned back toward the camera.
+    const t0 = settings.reactionAt + 1.1 + (robot.seed % 1000) / 1000 * 0.65;
+    const walkDuration = isDetailActor ? 5.2 + (robot.seed % 700) / 1000 * 0.8 : 2.45 + (robot.seed % 700) / 1000 * 0.35;
+    robot.entrance = { from, to: home, t0, t1: t0 + walkDuration };
+    robot.position.copy(from);
+  }
 
   crowd.onFrustumEnter = (i) => {
     const robot = crowd.instances[i];
     const depth = relative.copy(robot.position).sub(camera.position).dot(viewDirection);
     if (depth > fog.far + 3) return false;
-    const poseInterval = depth < 22 ? 1 / 30 : depth < 65 ? 1 / 20 : 1 / 15;
-    if (elapsed >= robot.lastPose && elapsed - robot.lastPose < poseInterval) return true;
-    const poseDelta = Number.isFinite(robot.lastPose) ? Math.min(0.2, Math.max(frameDelta, elapsed - robot.lastPose)) : frameDelta;
-    crowdPerformance.sample(director.pose(robot, elapsed));
-    const focused = director.gaze(robot, elapsed, camera.position, gaze);
-    target.copy(gaze).sub(robot.position).applyQuaternion(inverse.copy(robot.quaternion).invert());
-    if (!focused) target.applyAxisAngle(up, director.wander(robot, elapsed));
-    crowdPerformance.aim(target, poseDelta, robot.gaze);
+    const poseInterval = depth < 65 ? 0 : depth < 110 ? 1 / 30 : 1 / 20;
+    if (lifeTime >= robot.lastPose && lifeTime - robot.lastPose < poseInterval) return true;
+    const poseDelta = Number.isFinite(robot.lastPose) ? Math.min(0.2, Math.max(frameDelta, lifeTime - robot.lastPose)) : frameDelta;
+    crowdPerformance.sample(director.pose(robot, lifeTime));
+    if (depth < 75 && !director.isGroundAction(robot)) {
+      director.gaze(robot, lifeTime, camera.position, gaze);
+      target.copy(gaze).sub(robot.position).applyQuaternion(inverse.copy(robot.quaternion).invert());
+      crowdPerformance.aim(target, poseDelta, robot.gaze, 1, 1 - smooth((depth - 50) / 25), robot, director.torsoReady(robot, lifeTime));
+    }
+    robot.headLock.copy(crowdPerformance.head.quaternion);
     crowd.setBonesAt(i, false);
-    robot.lastPose = elapsed;
+    robot.lastPose = lifeTime;
     return true;
   };
   // first pose for every instance, so nobody starts in T-pose
   for (let i = 0; i < positions.length; i++) {
     const r = crowd.instances[i];
     crowdPerformance.sample(director.pose(r, 0));
+    r.headLock.copy(crowdPerformance.head.quaternion);
     crowd.setBonesAt(i, false);
   }
 
@@ -281,8 +323,12 @@ async function init() {
     [settings.walkStart + 0.7, () => kaykitAudio.tap(0.25)],
     [settings.walkStart + 1.2, () => kaykitAudio.tap(0.25)],
     [settings.walkStart + 1.7, () => kaykitAudio.tap(0.25)],
-    [settings.firstHopAt + 0.05, () => kaykitAudio.boop()],
-    [settings.firstHopAt + 0.8, () => kaykitAudio.tap(1)],
+    [settings.walkEnd - 0.32, () => kaykitAudio.blip(330, 0.1, 0.05)],
+    [settings.greetHeroAt + 0.2, () => kaykitAudio.blip(330, 0.1, 0.05)],
+    [settings.greetBAt + 0.2, () => kaykitAudio.blip(392, 0.1, 0.05)],
+    [settings.greetWalkerAt + 0.2, () => kaykitAudio.blip(440, 0.1, 0.05)],
+    [settings.greetHeroAt + settings.greetingSpacing + 0.2, () => kaykitAudio.blip(350, 0.1, 0.05)],
+    [settings.celebrateAt, () => kaykitAudio.cheer(0.5)],
     [settings.reactionAt + 0.6, () => kaykitAudio.tap(0.6)],
     [settings.contagionAt + 0.15, () => kaykitAudio.tap(0.5)],
     [settings.contagionAt + 0.55, () => kaykitAudio.tap(0.45)],
@@ -313,12 +359,16 @@ async function init() {
     [settings.finalHopAt + 0.8, () => kaykitAudio.tap(1)],
     [settings.responseAt, () => kaykitAudio.cheer(1.3)]
   ];
+  cues.sort((a, b) => a[0] - b[0]);
   fireCues = (t) => {
     while (cueIndex < cues.length && cues[cueIndex][0] <= t) cues[cueIndex++][1]();
   };
   restart = () => {
-    elapsed = 0;
+    elapsed = lifeTime = 0;
     cueIndex = 0;
+    director.reset(settings.seed);
+    heroGaze.identity();
+    hero.position.copy(heroWalkFrom);
   };
 
   elapsed = 0;
@@ -327,61 +377,141 @@ async function init() {
   scene.on('animate', (e) => {
     if (document.hidden) return;
     frameDelta = Math.min(e.delta, 0.1);
-    if (!paused) elapsed = Math.min(settings.duration + 1.5, elapsed + frameDelta);
+    if (!paused) {
+      lifeTime += frameDelta;
+      elapsed = Math.min(settings.duration + 1.5, lifeTime);
+    }
+    director.reducedMotion = motionPreference.matches;
+    director.update(lifeTime, activeCount);
     const t = elapsed;
     fireCues(t);
-    regia.update(t);
+    regia.update(motionPreference.matches ? settings.duration : t);
     camera.getWorldDirection(viewDirection);
     camSpeed = camera.position.distanceTo(lastCamPos) / Math.max(0.001, frameDelta);
     lastCamPos.copy(camera.position);
     speedMonitor.speed = camSpeed;
     timeMonitor.time = t;
     timeMonitor.beat = beatName(t);
-    // hero — walks in, looks at B when B answers, glances at the crowd before the final hop
-    const walkU = (t - settings.walkStart) / (settings.walkEnd - settings.walkStart);
-    if (walkU >= 1) hero.position.copy(heroSpot);
-    else if (walkU > 0) hero.position.lerpVectors(heroWalkFrom, heroSpot, walkU);
-    const focusB = t > settings.reactionAt + 0.05 && t < settings.reactionAt + 2.3;
-    const bodyB = t > settings.reactionAt + 0.3 && t < settings.reactionAt + 2.5;
-    const glance = t > settings.finaleAt + 0.05 && t < settings.finaleAt + 0.55;
-    const headFace = glance ? crowdLook : focusB ? bLook : camera.position;
-    bodyBFace.lerpVectors(camera.position, bLook, 0.5);
-    const bodyFace = glance ? crowdLook : bodyB ? bodyBFace : camera.position;
-    const turn = 1 - Math.exp(-(glance || bodyB ? 4 : settings.bodyFollow) * frameDelta);
-    rotation.setFromAxisAngle(up, Math.atan2(bodyFace.x - hero.position.x, bodyFace.z - hero.position.z));
+    // Two alternating greetings, with the body leading each change of attention.
+    // Return to the audience before celebrating and releasing the camera.
+    // The hero starts facing the camera. Only when the friends arrive does he
+    // turn away from us to acknowledge them.
+    heroAttention.copy(camera.position);
+    const crowdCallAt = settings.celebrateAt - 0.45;
+    // Let the camera complete its first truck before the hero acknowledges us.
+    const cameraTurnAt = settings.reactionAt + 1.1;
+    const facingCrowd = t >= crowdCallAt && t < cameraTurnAt;
+    if (facingCrowd) heroAttention.set(0, 1.35, -18);
+    if (!motionPreference.matches && !facingCrowd && t >= settings.greetHeroAt - 0.45 && t < settings.celebrateAt) {
+      const exchange = Math.min(1, Math.floor((t - settings.greetHeroAt + 0.45) / (settings.greetingSpacing)));
+      heroAttention.copy(exchange % 2 === 0 ? walker.position : robotB.position).setY(1.5);
+    }
+    const walkTravelEnd = settings.walkEnd - 0.42;
+    const walkU = (t - settings.walkStart) / (walkTravelEnd - settings.walkStart);
+    hero.position.lerpVectors(heroWalkFrom, heroSpot, motionPreference.matches ? 1 : smooth(walkU));
+    const turn = 1 - Math.exp(-settings.bodyFollow * frameDelta);
+    rotation.setFromAxisAngle(up, Math.atan2(heroAttention.x - hero.position.x, heroAttention.z - hero.position.z));
     hero.quaternion.slerp(rotation, turn);
-    const jumpAt = t >= settings.finalHopAt ? settings.finalHopAt : settings.firstHopAt;
-    const jt = t - jumpAt;
+    // The opening walk resolves into the greeting; the only hero hop is the finale.
+    const jt = t - settings.finalHopAt;
+    const heroRest: Pose = { idle: 1, idleClip: 0, idleTime: lifeTime * 0.95 + 0.37 };
     let heroPose: Pose;
-    if (walkU > 0 && walkU < 1) heroPose = { idle: 0, run: 1, runTime: t - settings.walkStart };
-    else if (jt > 0 && jt < dur.jump) heroPose = { idle: 0, jump: pulse(jt, dur.jump, 0.08, 0.12), jumpTime: jt };
-    else heroPose = { idle: 1, idleClip: 0, idleTime: t * 0.95 + 0.37 };
+    if (motionPreference.matches) heroPose = heroRest;
+    else if (walkU > 0 && t < settings.walkEnd) {
+      // Let the running clip settle for the final 420 ms while the first
+      // greeting fades in, matching the crowd's weight-driven transitions.
+      const runTime = t - settings.walkStart;
+      const arrivalWaveTime = t - (settings.walkEnd - 0.42);
+      heroPose = {
+        ...heroRest,
+        run: pulse(runTime, settings.walkEnd - settings.walkStart, 0.22, 0.42),
+        runTime,
+        wave: pulse(arrivalWaveTime, 1.25, 0.2, 0.3),
+        waveTime: arrivalWaveTime
+      };
+    }
+    else if (jt > 0 && jt < dur.jump) heroPose = { ...heroRest, jump: pulse(jt, dur.jump, 0.1, 0.24), jumpTime: jt };
+    else {
+      const sinceGreeting = t - settings.greetHeroAt;
+      const exchange = Math.max(0, Math.min(1, Math.floor(sinceGreeting / (settings.greetingSpacing))));
+      const greetingTime = sinceGreeting - exchange * settings.greetingSpacing;
+      const celebrationTime = t - settings.celebrateAt;
+      const callTime = t - crowdCallAt;
+      const cameraGreetingTime = t - cameraTurnAt;
+      const crowdWave = pulse(callTime, 0.8, 0.12, 0.2);
+      const cameraWave = pulse(cameraGreetingTime, 1.35, 0.16, 0.3);
+      const finaleWaveTime = t >= settings.finaleAt ? (t - settings.finaleAt) % 2.4 : -1;
+      const finaleWave = finaleWaveTime >= 0 ? pulse(finaleWaveTime, 1.35, 0.16, 0.3) : 0;
+      heroPose = {
+        ...heroRest,
+        wave: Math.max(crowdWave, cameraWave, finaleWave),
+        waveTime: finaleWave > Math.max(crowdWave, cameraWave) ? finaleWaveTime : cameraWave > crowdWave ? cameraGreetingTime : callTime,
+        cheer: pulse(celebrationTime, dur.cheer, 0.2, 0.4), cheerTime: celebrationTime
+      };
+      if (t < settings.greetHeroAt) {
+        const arrivalWaveTime = t - (settings.walkEnd - 0.42);
+        heroPose = {
+          ...heroRest,
+          wave: pulse(arrivalWaveTime, 1.25, 0.15, 0.25),
+          waveTime: arrivalWaveTime
+        };
+      }
+      else heroPose = {
+        ...heroRest,
+        wave: pulse(greetingTime, dur.wave, 0.35, 0.45), waveTime: greetingTime,
+        cheer: pulse(celebrationTime, dur.cheer, 0.2, 0.4), cheerTime: celebrationTime
+      };
+    }
     heroPerformance.sample(heroPose);
-    heroPerformance.aim(headFace, frameDelta, heroGaze, focusB || glance ? 2.5 : 1);
+    heroPerformance.aim(heroAttention, frameDelta, heroGaze, 1, 1, undefined, false, true);
     // walkers move through the world while the camera watches
     for (const robot of crowd.instances) {
-      if (robot.walk && t > robot.walk.t0 && t < robot.walk.t1) {
-        const u = (t - robot.walk.t0) / (robot.walk.t1 - robot.walk.t0);
+      if (robot.walk) {
+        const travelEnd = Math.max(robot.walk.t0 + 0.1, robot.walk.t1 - 0.42);
+        const u = motionPreference.matches ? 1 : smooth((t - robot.walk.t0) / (travelEnd - robot.walk.t0));
         robot.position.lerpVectors(robot.walk.from, robot.walk.to, u);
+        // Turn the whole body gently toward the initiator; the head only fine-tunes.
+        const fromYaw = Math.atan2(robot.walk.to.x - robot.walk.from.x, robot.walk.to.z - robot.walk.from.z);
+        const greetingYaw = Math.atan2(heroSpot.x - robot.walk.to.x, heroSpot.z - robot.walk.to.z);
+        const facing = fromYaw + (greetingYaw - fromYaw) * smooth((t - robot.walk.t1) / 0.9);
+        robot.quaternion.setFromAxisAngle(up, facing);
         robot.updateMatrix();
       }
-      if (!robot.tracksCamera) continue;
-      if (relative.copy(robot.position).sub(camera.position).dot(viewDirection) > fog.far + 3) continue;
-      rotation.setFromAxisAngle(up, Math.atan2(camera.position.x - robot.position.x, camera.position.z - robot.position.z) + robot.yawOffset);
-      if (robot.quaternion.angleTo(rotation) < 0.0005) continue;
-      robot.quaternion.slerp(rotation, turn);
-      robot.updateMatrix();
+      if (robot.entrance) {
+        const travelEnd = Math.max(robot.entrance.t0 + 0.1, robot.entrance.t1 - 0.45);
+        const u = motionPreference.matches ? 1 : smooth((t - robot.entrance.t0) / (travelEnd - robot.entrance.t0));
+        robot.position.lerpVectors(robot.entrance.from, robot.entrance.to, u);
+        const walkingYaw = Math.atan2(
+          robot.entrance.to.x - robot.entrance.from.x,
+          robot.entrance.to.z - robot.entrance.from.z
+        );
+        const cameraYaw = Math.atan2(
+          camera.position.x - robot.position.x,
+          camera.position.z - robot.position.z
+        );
+        const delta = Math.atan2(Math.sin(cameraYaw - walkingYaw), Math.cos(cameraYaw - walkingYaw));
+        const faceCamera = smooth((t - (travelEnd - 0.9)) / 0.9);
+        robot.quaternion.setFromAxisAngle(up, walkingYaw + delta * faceCamera);
+        robot.updateMatrix();
+      }
+      if (robot.toolGroup && t >= settings.cutAt + 2.2 && t < settings.holdAt + 1.2) {
+        const toolYaw = Math.atan2(secondCenter.x - robot.position.x, secondCenter.z - robot.position.z);
+        robot.quaternion.setFromAxisAngle(up, toolYaw);
+        robot.updateMatrix();
+      }
+
     }
     totalFrames++;
     totalTime += frameDelta;
     const avgFps = totalFrames / Math.max(0.001, totalTime);
     const info: any = (main as any).renderer.info.render;
-    updateStatsOverlay(avgFps, (crowd as any).count as number, info, t);
+    updateStatsOverlay(avgFps, activeCount, info, t);
   });
   if (isDebug || new URLSearchParams(location.search).has('debug'))
     Object.assign(window, {
       kaykitDebug: {
         crowd,
+        director,
         hero,
         camera,
         source,
@@ -393,7 +523,7 @@ async function init() {
           return main.renderer.info.render.calls;
         },
         get instanceCount() {
-          return (crowd as any).count;
+          return activeCount;
         },
         setInstances(n: number) {
           settings.maxInstances = n;
@@ -404,10 +534,18 @@ async function init() {
           paused = v;
         },
         seek(time: number) {
-          elapsed = time;
+          lifeTime = Math.max(0, time);
+          elapsed = Math.min(settings.duration + 1.5, lifeTime);
+          director.reset(settings.seed);
+          heroGaze.identity();
           cueIndex = cues.findIndex(([at]) => at > time);
           if (cueIndex < 0) cueIndex = cues.length;
         },
+        setSeed(seed: number) {
+          settings.seed = seed >>> 0;
+          restart();
+        },
+        get lifeTime() { return lifeTime; },
         get time() {
           return elapsed;
         }

@@ -19,7 +19,7 @@ export const easeOutCubic: Ease = (t) => 1 - Math.pow(1 - t, 3);
 
 /** 1 inside the window, fading at both edges — used for one-shot clips. */
 export const pulse = (t: number, duration: number, fadeIn = 0.1, fadeOut = 0.15) =>
-  t <= 0 || t >= duration ? 0 : Math.min(1, t / fadeIn, (duration - t) / fadeOut);
+  t <= 0 || t >= duration ? 0 : smooth(Math.min(1, t / fadeIn, (duration - t) / fadeOut));
 
 export const segment = (time: number, times: number[]) => {
   let i = 0;

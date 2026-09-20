@@ -1,5 +1,4 @@
 import { AnimationAction, AnimationClip, AnimationMixer, Bone, Euler, Object3D, Quaternion, Vector3 } from 'three';
-import { smooth } from './math.js';
 
 export type Robot = {
   seed: number;
@@ -9,6 +8,9 @@ export type Robot = {
   isB: boolean;
   offset: number;
   idleSpeed: number;
+  breathRate: number;
+  breathPhase: number;
+  breathDrift: number;
   idleClip: 0 | 1;
   energy: number;
   reaction: 0 | 1 | 2 | 3 | 4;
@@ -16,12 +18,20 @@ export type Robot = {
   yawOffset: number;
   gazeOffset: number;
   gaze: Quaternion;
+  headLock: Quaternion;
+  torsoYaw: number;
   lastPose: number;
   role: 0 | 1 | 2 | 3;
+  toolGroup: boolean;
   walk: { from: Vector3; to: Vector3; t0: number; t1: number } | null;
+  entrance: { from: Vector3; to: Vector3; t0: number; t1: number } | null;
+  locomotion: 'walk' | 'sneak';
 };
 
 export type Pose = {
+  activity?: string;
+  activityWeight?: number;
+  activityTime?: number;
   idle?: number;
   idleTime?: number;
   idleClip?: 0 | 1;
@@ -46,12 +56,13 @@ export class Performance {
   mixer: AnimationMixer;
   actions: Record<string, AnimationAction> = {};
   head: Bone;
+  chest: Bone;
   offset = new Quaternion();
   target = new Quaternion();
   direction = new Vector3();
   inverse = new Quaternion();
   angles = new Euler(0, 0, 0, 'YXZ');
-  private waveSeam?: AnimationAction;
+
 
   constructor(
     public root: Object3D,
@@ -59,8 +70,9 @@ export class Performance {
   ) {
     this.mixer = new AnimationMixer(root);
     for (const { name, clip } of clips) this.actions[name] = this.mixer.clipAction(clip).play();
-    if (this.actions.wave) this.waveSeam = this.mixer.clipAction(this.actions.wave.getClip().clone()).play();
+    if (!this.actions.idle) throw new Error('A looping baseline clip is required');
     this.head = root.getObjectByName('head') as Bone;
+    this.chest = root.getObjectByName('chest') as Bone;
   }
 
   duration(name: string) {
@@ -72,63 +84,45 @@ export class Performance {
     if (!action) return;
     action.enabled = weight > 0.001;
     if (!action.enabled) return;
-    action.time = time;
+    const duration = action.getClip().duration;
+    const clock = Number.isFinite(time) ? time : 0;
+    // update(0) deliberately samples without advancing the shared mixer; it does
+    // not perform Three.js loop wrapping. Never send an unbounded clip time.
+    const loops = name === 'idle' || name === 'idleB' || name === 'run' || name === 'wave' || name === 'cheer' || ['pushUps', 'sitUps', 'useItem', 'walkA', 'walkB', 'walkC', 'sneak'].includes(name);
+    action.time = duration <= 0 ? 0 : loops ? ((clock % duration) + duration) % duration : Math.max(0, Math.min(duration, clock));
     action.setEffectiveWeight(weight);
   }
 
   sample(pose: Pose, updateWorld = true) {
-    let run = pose.run ?? 0;
-    let jump = pose.jump ?? 0;
-    let wave = pose.wave ?? 0;
-    let cheer = pose.cheer ?? 0;
-    let hit = pose.hit ?? 0;
-    let override = Math.min(1, run + jump + wave + cheer + hit);
-    let idleWeight = (pose.idle ?? 1) * Math.max(0, 1 - override);
-    // Nobody is ever frozen: a thin idle layer always survives under the
-    // action, and if every clip fades out idle takes the whole pose.
-    if (override > 0 && (pose.idle ?? 1) > 0 && idleWeight < 0.12) {
-      const factor = (1 - 0.12) / override;
-      run *= factor;
-      jump *= factor;
-      wave *= factor;
-      cheer *= factor;
-      hit *= factor;
-      idleWeight = 0.12;
-      override = 1 - idleWeight;
-    } else if (idleWeight + override < 0.01) {
-      idleWeight = 1;
-      override = 0;
-    }
+    // No character is ever dead between actions. There is always a living baseline.
+    // Only available clips count toward the budget; baseline fills its remainder.
+    const weight = (name: string, value = 0) => this.actions[name] && Number.isFinite(value) ? Math.max(0, value) : 0;
+    const run = weight('run', pose.run);
+    const jump = weight('jump', pose.jump);
+    const wave = weight('wave', pose.wave);
+    const cheer = weight('cheer', pose.cheer);
+    const hit = weight('hit', pose.hit);
+    const activity = weight(pose.activity ?? '', pose.activityWeight);
+    const total = run + jump + wave + cheer + hit + activity;
+    const scale = total > 1 ? 1 / total : 1;
+    const idleWeight = 1 - Math.min(1, total);
     const idleTime = pose.idleTime ?? 0;
-    const useB = pose.idleClip === 1;
+    const useB = pose.idleClip === 1 && !!this.actions.idleB;
     this.apply('idle', useB ? 0 : idleWeight, idleTime);
     this.apply('idleB', useB ? idleWeight : 0, idleTime);
-    this.apply('run', run, pose.runTime ?? 0);
-    this.apply('jump', jump, pose.jumpTime ?? 0);
-    this.apply('cheer', cheer, pose.cheerTime ?? 0);
-    this.apply('hit', hit, pose.hitTime ?? 0);
-    const waveAction = this.actions.wave;
-    if (waveAction) {
-      // Two overlapping copies of the wave clip kill the loop seam.
-      const duration = waveAction.getClip().duration;
-      const overlap = Math.min(0.65, duration * 0.25);
-      const period = duration - overlap;
-      const wt = Math.max(0, pose.waveTime ?? 0);
-      const cycle = Math.floor(wt / period);
-      const local = wt % period;
-      const seam = cycle > 0 ? smooth(local / overlap) : 1;
-      this.apply('wave', wave * seam, local);
-      if (this.waveSeam) {
-        this.waveSeam.enabled = true;
-        this.waveSeam.time = period + local;
-        this.waveSeam.setEffectiveWeight(wave * (1 - seam));
-      }
+    this.apply('run', run * scale, pose.runTime ?? 0);
+    this.apply('jump', jump * scale, pose.jumpTime ?? 0);
+    this.apply('wave', wave * scale, pose.waveTime ?? 0);
+    this.apply('cheer', cheer * scale, pose.cheerTime ?? 0);
+    this.apply('hit', hit * scale, pose.hitTime ?? 0);
+    for (const name of ['pushUps', 'sitUps', 'useItem', 'spawn', 'walkA', 'walkB', 'walkC', 'sneak', 'punch']) {
+      this.apply(name, name === pose.activity ? activity * scale : 0, pose.activityTime ?? 0);
     }
     this.mixer.update(0);
     if (updateWorld) this.root.updateMatrixWorld(true);
   }
 
-  aim(target: Vector3, dt: number, state: Quaternion, speed = 1) {
+  aim(target: Vector3, dt: number, state: Quaternion, speed = 1, strength = 1, torso?: Robot, followBody = false, steady = false) {
     if (!this.head?.parent) return;
     this.head.getWorldPosition(this.direction);
     this.direction.subVectors(target, this.direction);
@@ -142,10 +136,23 @@ export class Performance {
       Math.max(-0.55, Math.min(0.55, Math.atan2(this.direction.x, this.direction.z))),
       0
     );
+    if (torso && this.chest) {
+      const desired = followBody && Math.abs(this.angles.y) > 0.35 ? this.angles.y * 0.3 : 0;
+      torso.torsoYaw += (desired - torso.torsoYaw) * (1 - Math.exp(-1.5 * dt));
+      this.angles.y -= torso.torsoYaw;
+    }
     this.target.setFromEuler(this.angles);
-    this.offset.slerp(this.target, 1 - Math.exp(-1.2 * speed * dt));
-    state.slerp(this.offset, 1 - Math.exp(-2.2 * speed * dt));
-    this.head.quaternion.copy(state);
+    // The shared sampler has no persistent per-character smoothing state.
+    state.slerp(this.target, 1 - Math.exp(-3.5 * speed * dt));
+    this.offset.identity().slerp(state, strength);
+    if (steady) {
+      // Absolute local orientation removes the clip's exaggerated head sway.
+      this.head.quaternion.copy(this.offset);
+    } else this.head.quaternion.multiply(this.offset);
+    if (torso && this.chest) {
+      this.angles.set(0, torso.torsoYaw * strength, 0);
+      this.chest.quaternion.multiply(this.offset.setFromEuler(this.angles));
+    }
     this.root.updateMatrixWorld(true);
   }
 }
