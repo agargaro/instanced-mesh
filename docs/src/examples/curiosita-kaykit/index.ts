@@ -6,10 +6,10 @@ import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { InstancedMesh2 } from '@three.ez/instanced-mesh';
 import { Pane } from 'tweakpane';
 
-const settings = { fogNearStart: 8, fogFarStart: 22, fogNearEnd: 10, fogFarEnd: 210, duration: 15, headFollow: 0.65, bodyFollow: 2.5, saluto: 1.9, decollo: 8, orbita: 10, sorvolo: 14, maxInstances: 5000, cameraPartenza: 5 };
-const main = new Main({ showStats: true });
+const settings = { fogNearStart: 8, fogFarStart: 22, fogNearEnd: 10, fogFarEnd: 210, duration: 15, headFollow: 0.38, bodyFollow: 2.5, saluto: 1.9, decollo: 8, orbita: 10, sorvolo: 14, maxInstances: 5000, cameraPartenza: 5 };
+const main = new Main({ showStats: location.hash === '#debug' });
 const scene = new Scene();
-const fog = new Fog(0x050608, 1, 18);
+const fog = new Fog(0x25272c, 1, 18);
 scene.fog = fog;
 const camera = new PerspectiveCameraAuto(48, 0.1, 500);
 const cSize = 1024, cCells = 16;
@@ -22,6 +22,10 @@ for (let y = 0; y < cCells; y++) for (let x = 0; x < cCells; x++) {
   cCtx.strokeStyle = 'rgba(255,255,255,0.06)';
   cCtx.strokeRect((x * cSize) / cCells, (y * cSize) / cCells, cSize / cCells, cSize / cCells);
 }
+const fontLink = document.createElement('link');
+fontLink.rel = 'stylesheet';
+fontLink.href = 'https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500&display=swap';
+document.head.appendChild(fontLink);
 const checker = new CanvasTexture(cCanvas);
 checker.wrapS = checker.wrapT = RepeatWrapping;
 checker.repeat.set(42, 42);
@@ -37,10 +41,82 @@ ground.position.y = -0.03;
 const light = new DirectionalLight(0xffffff, 2.4);
 light.position.set(5, 10, 4);
 scene.add(ground, light, new AmbientLight(0xffffff, 1));
-main.createView({ scene, camera, backgroundColor: 0x050608 });
+main.createView({ scene, camera, backgroundColor: 0x25272c });
+
+// ── Sound design ──
+class KayKitAudio {
+  ctx: AudioContext | null = null;
+  master!: GainNode;
+  enabled = false;
+  private pulseTimer = 0;
+  async toggle() {
+    if (!this.ctx) this.init();
+    await this.ctx!.resume();
+    this.enabled = !this.enabled;
+    if (this.master) this.master.gain.linearRampToValueAtTime(this.enabled ? 0.18 : 0, this.ctx!.currentTime + 0.25);
+    return this.enabled;
+  }
+  private init() {
+    const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const master = ctx.createGain(); master.gain.value = 0; master.connect(ctx.destination);
+    const padOsc = ctx.createOscillator(); padOsc.type = 'sawtooth'; padOsc.frequency.value = 38;
+    const padGain = ctx.createGain(); padGain.gain.value = 0.06;
+    const padFilter = ctx.createBiquadFilter(); padFilter.type = 'lowpass'; padFilter.frequency.value = 420;
+    padOsc.connect(padFilter).connect(padGain).connect(master);
+    padOsc.start();
+    const lfo = ctx.createOscillator(); lfo.frequency.value = 0.07;
+    const lfoGain = ctx.createGain(); lfoGain.gain.value = 120;
+    lfo.connect(lfoGain).connect(padFilter.frequency);
+    lfo.start();
+    this.ctx = ctx; this.master = master;
+  }
+  tick(dt: number, phase: string) {
+    if (!this.enabled || !this.ctx) return;
+    this.pulseTimer += dt * (phase === 'run' ? 6.2 : phase === 'wave' ? 2.1 : 1.1);
+    if (this.pulseTimer > 1) {
+      this.pulseTimer = 0;
+      this.blip(phase === 'wave' ? 880 : 220, 0.04);
+    }
+  }
+  blip(freq: number, dur: number) {
+    if (!this.enabled || !this.ctx) return;
+    const ctx = this.ctx!;
+    const o = ctx.createOscillator(); o.type = 'sine'; o.frequency.value = freq;
+    const g = ctx.createGain(); g.gain.setValueAtTime(0.0001, ctx.currentTime); g.gain.exponentialRampToValueAtTime(0.14, ctx.currentTime + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + dur);
+    o.connect(g).connect(this.master); o.start(); o.stop(ctx.currentTime + dur + 0.05);
+  }
+  salute() {
+    if (!this.enabled || !this.ctx) return;
+    [523, 659, 784].forEach((f, i) => {
+      const t = this.ctx!.currentTime + i * 0.09;
+      const o = this.ctx!.createOscillator(); o.type = 'triangle'; o.frequency.value = f;
+      const g = this.ctx!.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.11, t+0.02); g.gain.exponentialRampToValueAtTime(0.0001, t+0.5);
+      o.connect(g).connect(this.master); o.start(t); o.stop(t+0.55);
+    });
+  }
+}
+const kaykitAudio = new KayKitAudio();
+const soundBtn = document.createElement('button');
+soundBtn.textContent = 'SOUND OFF';
+soundBtn.style.cssText = 'position:fixed;bottom:18px;right:18px;z-index:9997;padding:8px 12px;background:rgba(10,16,28,0.78);color:#e8f0ff;border:1px solid rgba(99,160,255,0.22);font:700 11px/1 JetBrains Mono,monospace;letter-spacing:0.12em;cursor:pointer;';
+soundBtn.onclick = async () => {
+  const on = await kaykitAudio.toggle();
+  soundBtn.textContent = on ? 'SOUND ON' : 'SOUND OFF';
+  soundBtn.style.borderColor = on ? 'rgba(99,160,255,0.55)' : 'rgba(99,160,255,0.22)';
+  if (on) kaykitAudio.salute();
+};
+document.body.appendChild(soundBtn);
 
 interface ScenePane { addBinding(t:any,k:any,o:any):any; addButton(o:any):any; }
+const isDebug = location.hash === '#debug';
 const pane = new Pane({ title: 'KayKit · regia' }) as unknown as ScenePane;
+const updatePaneVisibility = () => {
+  const el = document.querySelector('.tp-dfwv') as HTMLElement | null;
+  if (el) el.style.display = (isDebug || location.hash === '#debug') ? 'block' : 'none';
+  (pane as any).element.hidden = !(isDebug || location.hash === '#debug');
+};
+setTimeout(updatePaneVisibility, 80);
+window.addEventListener('hashchange', updatePaneVisibility);
 pane.addBinding(settings, 'fogNearStart', { min: 0, max: 30, label: 'Fog near iniziale' });
 pane.addBinding(settings, 'fogFarStart', { min: 2, max: 60, label: 'Fog far iniziale' });
 pane.addBinding(settings, 'fogNearEnd', { min: 10, max: 200, label: 'Fog near finale' });
@@ -55,21 +131,18 @@ pane.addBinding(settings, 'headFollow', { min: 0, max: 1, label: 'Sguardo' });
 pane.addBinding(settings, 'bodyFollow', { min: 0, max: 6, label: 'Rotazione' });
 const maxInstancesBinding: any = pane.addBinding(settings, 'maxInstances', { min: 500, max: 8000, step: 100, label: 'Istanze' });
 let elapsed = 0;
-let heroWaveStart = 0;
-let crowdIsWaving = false;
-let crowdSkinnedRef: any = null;
-let crowdSkelRef: any = null;
 let lastCamPos = new Vector3();
 let camSpeed = 0;
 const speedMonitor = { speed: 0 };
-pane.addBinding(speedMonitor, 'speed', { readonly: true, view: 'graph', min: 0, max: 30, label: 'velocità m/s' });
+if (isDebug) pane.addBinding(speedMonitor, 'speed', { readonly: true, view: 'graph', min: 0, max: 30, label: 'velocità m/s' });
 pane.addButton({ title: 'Ricomincia' }).on('click', () => { elapsed = 0; });
 // ──────────── ⚡ OVERDRIVE — finale tecnico in inglese ────────────
 const finalStats = document.createElement('div');
 finalStats.id = 'final-stats';
 finalStats.style.cssText = 'position:fixed;top:6%;left:50%;transform:translateX(-50%);color:#e8f0ff;display:none;z-index:9998;text-align:center;pointer-events:none;min-width:560px;';
 finalStats.innerHTML = `
-  <div style="font:400 clamp(2.8rem,6vw,5.2rem)/0.88 Anton,Arial Narrow,sans-serif;letter-spacing:0.02em;text-transform:uppercase;text-shadow:0 0 22px rgba(99,160,255,0.55),0 2px 28px rgba(0,0,0,0.75)">LIVE TELEMETRY — INSTANCEDMESH2</div>
+  <div style="font:400 11px/1 JetBrains Mono,monospace;letter-spacing:0.22em;opacity:0.6;text-transform:uppercase;margin-bottom:10px">INSTANCEDMESH2 — LIVE TELEMETRY</div>
+  <div style="font:300 clamp(3.2rem,7vw,5.8rem)/0.86 Cormorant Garamond, Georgia, serif;letter-spacing:-0.02em;text-shadow:0 0 24px rgba(99,160,255,0.45),0 2px 32px rgba(0,0,0,0.75)">InstancedMesh<span style="font-weight:500;color:#a8c1ff">2</span></div>
   <div style="margin:12px auto 0;display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px;max-width:640px">
     <div style="background:rgba(12,18,32,0.72);border:1px solid rgba(99,160,255,0.22);padding:10px 8px"><div style="font:700 10px/1 JetBrains Mono,monospace;letter-spacing:0.14em;opacity:0.6">AVG FPS</div><div id="stat-fps" style="font:700 22px/1 Inter,system-ui;margin-top:4px">—</div></div>
     <div style="background:rgba(12,18,32,0.72);border:1px solid rgba(99,160,255,0.22);padding:10px 8px"><div style="font:700 10px/1 JetBrains Mono,monospace;letter-spacing:0.14em;opacity:0.6">INSTANCES</div><div id="stat-inst" style="font:700 22px/1 Inter,system-ui;margin-top:4px">—</div></div>
@@ -149,15 +222,22 @@ class Performance {
   }
   aim(target: Vector3, dt: number, state: Quaternion) {
     if (!this.head?.parent) return;
+    // Very smooth head — low-pass on direction, not on quaternion snap
     this.head.getWorldPosition(this.direction);
     this.direction.subVectors(target, this.direction);
+    const dist = this.direction.length();
+    if (dist < 0.001) return;
+    this.direction.normalize();
     this.head.parent.getWorldQuaternion(this.inverse).invert();
-    this.direction.applyQuaternion(this.inverse).normalize();
-    this.angles.set(-Math.asin(Math.max(-0.8, Math.min(0.8, this.direction.y))), Math.max(-0.9, Math.min(0.9, Math.atan2(this.direction.x, this.direction.z))), 0);
+    this.direction.applyQuaternion(this.inverse);
+    // Clamp to avoid neck snap
+    this.angles.set(-Math.asin(Math.max(-0.45, Math.min(0.45, this.direction.y))), Math.max(-0.55, Math.min(0.55, Math.atan2(this.direction.x, this.direction.z))), 0);
     this.target.setFromEuler(this.angles);
-    this.offset.identity().slerp(this.target, settings.headFollow);
-    state.slerp(this.offset, 1 - Math.exp(-3 * dt));
-    this.head.quaternion.multiply(state);
+    // Much smoother follow — headFollow now controls max angle, not slerp speed
+    this.offset.slerp(this.target, 1 - Math.exp(-1.2 * dt));
+    state.slerp(this.offset, 1 - Math.exp(-2.2 * dt));
+    // Apply as delta, not absolute multiply, to avoid double rotation
+    this.head.quaternion.copy(state);
     this.root.updateMatrixWorld(true);
   }
 }
@@ -184,10 +264,14 @@ async function init() {
   source.traverse(o => { if ((o as SkinnedMesh).isSkinnedMesh) meshes.push(o as SkinnedMesh); });
   const skeleton = meshes[0].skeleton;
   if (meshes.some(m => m.skeleton.bones.some((bone, i) => bone !== skeleton.bones[i]))) throw new Error('Joint order differs');
-  const geometry = mergeGeometries(meshes.map(m => m.geometry.clone()), false);
-  if (!geometry) throw new Error('Cannot merge');
-  // Assicura che il materiale supporti lo skinning per InstancedMesh2
-  (meshes[0].material as any).skinning = true;
+  const mergedRaw: any = mergeGeometries(meshes.map(m => m.geometry.clone()), false);
+  if (!mergedRaw) throw new Error('Cannot merge');
+  // Fix skin attributes for WebGL2: skinIndex must be Uint16, skinWeight Float32
+  const skinIndex = mergedRaw.getAttribute('skinIndex') as any;
+  if (skinIndex && (skinIndex as any).isFloat32BufferAttribute) {
+    mergedRaw.setAttribute('skinIndex', new (await import('three')).Uint16BufferAttribute(new Uint16Array(skinIndex.array), 4));
+  }
+  const geometry: any = mergedRaw;
   const positions: Vector3[] = [];
   let seed = 72491;
   const random = () => { seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0; return seed / 4294967296; };
@@ -260,7 +344,8 @@ async function init() {
   applyCount(settings.maxInstances);
   maxInstancesBinding.on('change', (ev: any) => applyCount(ev.value));
   scene.add(crowd);
-  const crowdPerformance = new Performance(crowdSkinnedRef as any, clips);
+  // The mixer must own the original bone hierarchy, not the instanced draw mesh.
+  const crowdPerformance = new Performance(source as any, clips);
   const target = new Vector3(); const rotation = new Quaternion(); const inverse = new Quaternion(); const viewDirection = new Vector3(); const relative = new Vector3(); let frameDelta = 0;
   crowd.onFrustumEnter = (i) => {
     const robot: any = crowd.instances[i];
@@ -269,31 +354,23 @@ async function init() {
     const poseInterval = depth < 22 ? 1 / 30 : depth < 65 ? 1 / 20 : 1 / 10;
     if (elapsed >= robot.lastPose && elapsed - robot.lastPose < poseInterval) return true;
     const poseDelta = Number.isFinite(robot.lastPose) ? Math.min(0.2, Math.max(frameDelta, elapsed - robot.lastPose)) : frameDelta;
-    const isWalking = (robot as any)._advancing && elapsed >= ((robot as any)._advanceStart ?? settings.cameraPartenza - 3) && elapsed < ((robot as any)._advanceStart ?? settings.cameraPartenza - 3) + 3.2;
-    if (isWalking) {
-      crowdPerformance.sample(elapsed, -1, 1, (robot as any).offset);
-    } else {
-      // quando la camera parte, tutti passano da idle a saluto
-      const doWave = elapsed >= settings.cameraPartenza;
-      const wTime = doWave ? (elapsed - settings.cameraPartenza - (robot as any)._waveDelay * 0.15) : -1;
-      crowdPerformance.sample(elapsed, wTime, 0, (robot as any).offset);
-      // aggiorna crowdIsWaving per coerenza
-      if (doWave) crowdIsWaving = true;
-    }
-    try {
-      const headBone: any = crowdSkelRef.bones.find((b: any) => b.name.toLowerCase()==='head');
-      if (headBone) {
-        const origQuat = headBone.quaternion.clone();
-        headBone.lookAt(camera.position);
-        headBone.quaternion.slerp(origQuat, 1 - 0.08);
-      }
-    } catch {}
-    try { robot.updateBones?.(); } catch {}
+    const isUp = camera.position.y > 6.2;
+    const waveTime = isUp ? (elapsed - settings.cameraPartenza - 0.8 - (robot as any)._waveDelay * 0.12) : -1;
+    crowdPerformance.sample(elapsed, waveTime, 0, robot.offset);
+    target.copy(camera.position).sub(robot.position).applyQuaternion(inverse.copy(robot.quaternion).invert());
+    crowdPerformance.aim(target, poseDelta, robot.gaze);
+    // World matrices were updated recursively above; do not overwrite them.
+    crowd.setBonesAt(i, false);
     robot.lastPose = elapsed;
     return true;
   };
+  // inizializza ogni istanza con il suo offset così non partono in T-pose
+  for (let i = 0; i < positions.length; i++) {
+    const r: any = crowd.instances[i];
+    crowdPerformance.sample(0, -1, 0, r.offset);
+    crowd.setBonesAt(i, false);
+  }
   crowdPerformance.sample(0, -1, 0);
-  for (let i = 0; i < positions.length; i++) crowd.setBonesAt(i, false);
   elapsed = 0;
   lastCamPos.copy(camStartPos);
   scene.on('animate', e => {
@@ -311,27 +388,13 @@ async function init() {
     hero.position.set(0, 0, -16.5 + 15.7 * travel);
     const turn = 1 - Math.exp(-settings.bodyFollow * frameDelta);
     if (tClamped >= 3) { rotation.setFromAxisAngle(up, Math.atan2(camera.position.x, camera.position.z - hero.position.z)); hero.quaternion.slerp(rotation, turn); } else hero.quaternion.identity();
+    const justStartedWave = tClamped >= 3 && (tClamped - frameDelta) < 3;
+    if (justStartedWave) kaykitAudio.salute();
     heroPerformance.sample(tClamped, tClamped - 3, 1 - smooth((tClamped - 2.35) / 0.45));
     heroPerformance.aim(camera.position, frameDelta, heroGaze);
+    kaykitAudio.tick(frameDelta, tClamped >= 3 ? 'wave' : 'idle');
     for (const robot of crowd.instances) {
-      const adv = (robot as any)._advancing;
-      const advStart = (robot as any)._advanceStart ?? settings.cameraPartenza - 3;
-      if (adv && tClamped >= advStart && tClamped < advStart + 3.2 && (robot as any)._initialPos) {
-        const initPos2: any = (robot as any)._initialPos;
-        const prog = smooth((tClamped - advStart) / 3.2);
-        // verso centro -4 senza mai arrivare
-        const center = new Vector3(0, 0, -4);
-        const targetPos = new Vector3().copy((robot as any)._initialPos).lerp(center, prog * 0.72);
-        robot.position.lerp(targetPos, 0.055);
-        const yawAdv = Math.atan2(center.x - robot.position.x, center.z - robot.position.z);
-        robot.quaternion.slerp(new Quaternion().setFromAxisAngle(up, yawAdv), 0.09);
-      }
-      // salto di gioia per alcuni — solo quando salutano
-      if ((robot as any)._jumping && tClamped >= heroWaveStart) {
-        const jumpPhase = (tClamped - heroWaveStart - (robot as any)._waveDelay * 0.12) % 1.1;
-        const jumpH = Math.max(0, Math.sin(jumpPhase * Math.PI * 1.8)) * 0.55;
-        robot.position.y = jumpH;
-      }
+      // Keep the generated spacing intact: no convergence towards the hero.
       if (relative.copy(robot.position).sub(camera.position).dot(viewDirection) > fog.far + 3) continue;
       rotation.setFromAxisAngle(up, Math.atan2(camera.position.x - robot.position.x, camera.position.z - robot.position.z));
       if (robot.quaternion.angleTo(rotation) < 0.0005) continue;
@@ -341,8 +404,9 @@ async function init() {
     totalFrames++;
     totalTime += frameDelta;
     const avgFps = totalFrames / Math.max(0.001, totalTime);
-    const isFinale = tClamped >= settings.duration - 0.15;
-    finalStats.style.display = isFinale ? 'block' : 'none';
+    const showStats = (isDebug || location.hash === '#debug') && tClamped >= settings.duration - 0.15;
+    finalStats.style.display = showStats ? 'block' : 'none';
+    const isFinale = showStats;
     if (isFinale) {
       const info: any = (main as any).renderer.info.render;
       const crowdCount = (typeof crowd !== 'undefined' && crowd) ? (crowd as any).count : 0;
@@ -359,7 +423,7 @@ async function init() {
       if (lines) lines.textContent = '';
     }
   });
-  if (new URLSearchParams(location.search).has('debug')) Object.assign(window, { kaykitDebug: { crowd, hero, camera, source, renderer: main.renderer, get calls() { return main.renderer.info.render.calls; }, get instanceCount() { return (crowd as any).count; }, seek(time: number) { elapsed = time; }, get time() { return elapsed; } } });
+  if (location.hash === '#debug' || new URLSearchParams(location.search).has('debug')) Object.assign(window, { kaykitDebug: { crowd, hero, camera, source, renderer: main.renderer, get calls() { return main.renderer.info.render.calls; }, get instanceCount() { return (crowd as any).count; }, seek(time: number) { elapsed = time; }, get time() { return elapsed; } } });
 }
 init().catch(error => {
   console.error('[KayKit]', error);
