@@ -32,6 +32,7 @@ src/pages/examples/[...slug].astro   # importmap for example dependencies
 - Add an example in `src/examples/<kebab-name>/index.ts`, then embed it in a page with `<Example path="<kebab-name>" />`. Maximum 2 levels of nesting.
 - Example dependencies must be pre-configured in the importmap in `src/pages/examples/[...slug].astro`.
 - The `api/` folder is generated from JSDoc: update the source in `../src` and rebuild, do not edit the generated files.
+- For step-by-step procedures, load the `add-docs-page` skill (and `add-example` for embedded examples) from the root `.opencode/skills/`.
 
 ## Boundaries
 

@@ -10,8 +10,17 @@ Human contributor documentation lives in [docs/CONTRIBUTE.md](docs/CONTRIBUTE.md
 - Language: TypeScript, ESM (`module` and `moduleResolution` are `NodeNext`).
 - Bundler: Vite (library mode) — entry `src/index.ts` → `build/index.js` (ESM) and `build/index.cjs` (CJS), with sourcemaps.
 - Types: declaration files are emitted by `tsc` (`tsconfig.build.json`, `emitDeclarationOnly`) and shipped inside the generated `dist/` folder.
-- Peer dependency: `three` (>= 0.159.0). Runtime dependency: `bvh.js`.
+- Peer dependency: `three` (>= 0.186.0). Runtime dependency: `bvh.js`.
 - The npm package is published from the generated `dist/` folder (see `publish-*` scripts).
+
+## Performance first
+
+Performance is the primary goal of this library. **Any change — including a purely cosmetic or refactoring change — must not make the library slower.** Treat a throughput/frame-time regression in a hot path as a bug.
+
+- Before refactoring or micro-optimizing, write and run a benchmark first, then report real before/after numbers — never intuition.
+- Never claim "X is faster than Y" without measuring.
+- Keep the existing allocation-free style: reuse module-scope temporaries, avoid per-instance allocations in hot loops, and avoid uploading/binding buffers or textures more than necessary.
+- If a change is expected to be performance-neutral, verify it. If it cannot be measured, prefer the already-measured, simpler implementation.
 
 ## Commands
 
@@ -22,10 +31,13 @@ npm install
 npm run start   # Vite dev server for the examples app (index.html + examples/)
 npm run build   # vite build && tsc --build tsconfig.build.json  ->  dist/
 npm run lint    # eslint --fix
+npm run bench   # CPU micro-benchmarks (vite-node + tinybench) -> benchmarks/results.json
 npm test        # NOT IMPLEMENTED YET (placeholder)
 ```
 
 There is **no test suite**. Do not claim tests pass. If you add tests, use Vitest and wire it to the `test` script.
+
+The only automated verification is `npm run lint` + `npm run build` (and `npm run bench` for performance-sensitive changes). Examples in `examples/` are linted but are **not** type-checked by the build (only `src/**` is). There is no test runner to fall back on: validate behavior with the examples and the benchmarks.
 
 ## Repository layout
 
@@ -54,7 +66,16 @@ docs/                       # separate Astro Starlight documentation site (own p
 - Do **not** add comments. Only JSDoc on public API is expected; use `/** @internal */` for non-public members (stripped from `.d.ts` via `stripInternal`).
 - GLSL is authored in `src/shaders/chunks/*.glsl` and injected at runtime through `onBeforeCompile`.
 - Follow the existing code style and run `npm run lint` before finishing.
-- Do not assert performance claims (e.g. "X is faster than Y") without measuring. When proposing micro-optimizations, validate with a micro-benchmark first and report real numbers, not intuition.
+
+## Workflows
+
+Repo-specific, multi-step procedures are packaged as skills in `.opencode/skills/`. Load the matching skill **before** starting the task:
+
+- `add-example` — add a runnable example to the root Vite app (`examples/`) or the docs site (`docs/src/examples/`).
+- `add-shader-chunk` — add and wire a GLSL chunk in `src/shaders/`.
+- `add-feature-mixin` — add a new `InstancedMesh2` feature in `src/core/feature/`.
+- `add-docs-page` — add a page to the Astro Starlight site in `docs/`.
+- `run-benchmark` — measure/verify performance and detect regressions (CPU micro-benchmarks).
 
 ## Documentation site
 
