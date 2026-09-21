@@ -29,9 +29,9 @@ await bench.run();
 console.table(bench.table());
 
 const results = bench.tasks
-  .filter((task) => task.result !== null && task.result !== undefined)
-  .map((task) => {
-    const result = task.result as any;
+  .map((task) => ({ task, result: task.result as any }))
+  .filter(({ result }) => result && result.throughput && typeof result.throughput.mean === 'number')
+  .map(({ task, result }) => {
     return {
       name: task.name,
       unit: 'ops/sec',
