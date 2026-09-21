@@ -54,6 +54,7 @@ docs/                       # separate Astro Starlight documentation site (own p
 - Do **not** add comments. Only JSDoc on public API is expected; use `/** @internal */` for non-public members (stripped from `.d.ts` via `stripInternal`).
 - GLSL is authored in `src/shaders/chunks/*.glsl` and injected at runtime through `onBeforeCompile`.
 - Follow the existing code style and run `npm run lint` before finishing.
+- Do not assert performance claims (e.g. "X is faster than Y") without measuring. When proposing micro-optimizations, validate with a micro-benchmark first and report real numbers, not intuition.
 
 ## Documentation site
 

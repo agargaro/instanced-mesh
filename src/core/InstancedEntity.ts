@@ -240,14 +240,19 @@ export class InstancedEntity {
   }
 
   /**
-   * Copies the transformation properties (`position`, `scale`, `quaternion`) of this instance to the specified `Object3D`.
+   * Copies the transformation properties of this instance to the specified `Object3D`.
+   * If `allowsEuler` is enabled, copies the Euler rotation (preserving its order), otherwise copies the quaternion.
    * @param target The `Object3D` where the transformation properties will be copied.
    */
   public copyTo(target: Object3D): void {
     target.position.copy(this.position);
     target.scale.copy(this.scale);
-    target.quaternion.copy(this.quaternion);
-    if (this.rotation) target.rotation.copy(this.rotation); // TODO check if this is necessary.. it's probably already synched
+
+    if (this.rotation) {
+      target.rotation.copy(this.rotation);
+    } else {
+      target.quaternion.copy(this.quaternion);
+    }
   }
 
   /**
