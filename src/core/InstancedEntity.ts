@@ -144,7 +144,7 @@ export class InstancedEntity {
     const owner = this.owner;
     const matricesTexture = owner.matricesTexture;
     const position = this.position;
-    const quaternion = this.quaternion as any;
+    const quaternion = this.quaternion;
     const scale = this.scale;
     const te = matricesTexture._data;
     const id = this.id;
