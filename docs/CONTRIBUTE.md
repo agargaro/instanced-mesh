@@ -1,28 +1,24 @@
 # Contributing to Documentation
 
-This guide explains how to add and maintain documentation for this project, following the [Diátaxis](https://diataxis.fr/) framework principles.
+This guide explains how to add and maintain documentation for `@three.ez/instanced-mesh`, following the [Diátaxis](https://diataxis.fr/) framework.
 
-## Documentation Types
+For the full step-by-step procedure, see [`docs/AGENTS.md`](./AGENTS.md) and the `add-docs-page` / `add-example` skills in the root `.opencode/skills/`.
 
-We organize documentation into:
+## Documentation types
 
-- **Tutorials**: Step-by-step lessons for beginners
-- **How-to Guides**: Practical guides in `src/content/docs/guides/`
-- **Reference**: Technical details in `src/content/docs/reference/`
-- **Explanation**: Concept discussions and background
+Pages live in `docs/src/content/docs/`:
 
-## Adding Documentation Pages
+- `getting-started/` — tutorials (step-by-step lessons)
+- `basics/` — how-to guides
+- `advanced/` — advanced guides
+- `more/` — FAQ, known issues, performance tips
+- `api/` — **generated** from JSDoc in `../src` by starlight-typedoc; never edit by hand
 
-1. Choose appropriate directory based on content type:
+## Adding a page
 
-   ```
-   src/content/docs/guides/     # For how-to guides
-   src/content/docs/reference/  # For technical reference
-   src/content/docs/tutorials/  # For tutorials
-   src/content/docs/concepts/   # For explanations
-   ```
+1. Create the `.mdx` file in the directory matching its Diátaxis type, using a numeric filename prefix to control sidebar order (e.g. `basics/11-my-feature.mdx`). Pages inside the four directories are auto-discovered; a new top-level directory must be registered in `astro.config.mjs`.
+2. Add frontmatter:
 
-2. Add required frontmatter:
    ```md
    ---
    title: Your Page Title
@@ -30,77 +26,37 @@ We organize documentation into:
    ---
    ```
 
-## Adding Code Examples
+3. Embed a runnable example with `<Example path="my-example" />` — it is auto-imported, so no `import` statement is needed.
 
-1. Create your example:
+## Adding an example
 
-   ```bash
-   code src/examples/myExample/index.ts
-   ```
+1. Create `docs/src/examples/<kebab-case-name>/index.ts` (required) plus optional local files such as `app.ts`. Maximum 2 levels of nesting.
+2. Import local files with the `.js` extension (`import { x } from './app.js'`); import three.js addons from `three/addons/...`.
+3. Embed it with `<Example path="<kebab-case-name>" />`. Preview it at `http://localhost:4321/instanced-mesh/examples/<name>`.
 
-   > **Note**: Maximum 2 levels of nesting allowed. Deeper nesting is not supported.
+`<Example>` props:
 
-2. Write your Three.js code in `index.ts`:
-
-   ```typescript
-   import { Scene, PerspectiveCamera } from 'three';
-
-   // Your Three.js example code here
-   ```
-
-   > **Note**: you can also import from local files, like `import { MyComponent } from './MyComponent'`.
-
-3. Reference in docs with:
-
-   ```md
-   <Example path="myExample" />
-   ```
-
-   | Prop             | Type    | Default  | Description                             |
-   | ---------------- | ------- | -------- | --------------------------------------- |
-   | `path`           | string  | required | Directory path relative to src/examples |
-   | `hideCode`       | boolean | `false`  | Hides the source code section           |
-   | `hidePreview`    | boolean | `false`  | Hides the example preview               |
-   | `hideStackblitz` | boolean | `false`  | Hides "Open in Stackblitz" button       |
-
-   > **Note**: You can see the example in full screen in path `http://localhost:4321/instanced-mesh/examples/<ExampleName>`
-
-## Example Guidelines
-
-### Keep It Simple
-
-- Focus on one concept per example
-- Add clear code comments
-- Avoid mixing multiple complex features
-
-### Use Clear Names
-
-- Use descriptive directory names (e.g. `frustum-culling`)
-- Follow kebab-case for directory names
-- Avoid generic names
-
-### Development
-
-1. Available scripts:
-
-   ```bash
-   npm run dev     # Dev mode with hot reload
-   npm run start   # Production preview
-   npm run build   # Production build
-   ```
-
-   > **Note**: all of those scripts build the examples, in the public folder.
+| Prop | Type | Default | Description |
+| --- | --- | --- | --- |
+| `path` | string | required | folder name under `src/examples` |
+| `hideCode` | boolean | `false` | hides the source panel |
+| `hidePreview` | boolean | `false` | hides the preview |
+| `hideStackblitz` | boolean | `false` | hides the "Open in StackBlitz" button |
 
 ### Dependencies
 
-- Examples use import maps in `[...slug].astro`
-### Dependencies
+Examples resolve bare imports through the importmap in `docs/src/pages/examples/[...slug].astro`. Pre-configured: `three`, `three/addons/`, `@three.ez/main`, `@three.ez/instanced-mesh`, `@three.ez/asset-manager`, `bvh.js`.
 
-- Examples use import maps in `[...slug].astro`
-- Pre-configured libraries:
-    - `three`
-    - `@three.ez/main`
-    - `@three.ez/instanced-mesh`
-    - `three/examples/jsm/`
-    - `bvh.js`
-- Add new dependencies to `importmap` if needed.
+A new dependency must be added in three places: the importmap, `docs/package.json`, and the StackBlitz package (`src/components/Example/stackblitz-files/stackblitz-package.json`).
+
+## Development
+
+From `docs/`:
+
+```bash
+npm run dev      # dev server with hot reload
+npm run build    # build the site (also regenerates api/ and compiles examples)
+npm run preview  # preview the production build
+```
+
+Examples are compiled to `public/examples/` (gitignored). Never edit generated output: `dist/`, `.astro/`, `src/content/docs/api/`, `public/examples/`.
