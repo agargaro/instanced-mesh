@@ -78,7 +78,10 @@ export class InstancedEntity {
   /**
    * The world transform matrix got by multiplying the matrix got from `owner.matricesTexture` and `this.owner.matrixWorld`.
    */
-  public get matrixWorld(): Matrix4 { return this.matrix.premultiply(this.owner.matrixWorld); }
+  public get matrixWorld(): Matrix4 {
+    const owner = this.owner;
+    return owner.getMatrixAt(this.id, _matrixWorld).premultiply(owner.matrixWorld);
+  }
 
   /**
    * This object is instantiated automatically by setting `createEntities` to `true` in the `InstancedMesh2` constructor parameters.
@@ -105,7 +108,8 @@ export class InstancedEntity {
    */
   public setMatrixIdentity(): void {
     const owner = this.owner;
-    const te = owner.matricesTexture._data;
+    const matricesTexture = owner.matricesTexture;
+    const te = matricesTexture._data;
     const id = this.id;
     const offset = id * 16;
 
@@ -129,7 +133,7 @@ export class InstancedEntity {
     te[offset + 14] = 0;
     te[offset + 15] = 1;
 
-    owner.matricesTexture.enqueueUpdate(id);
+    matricesTexture.enqueueUpdate(id);
   }
 
   /**
@@ -138,10 +142,11 @@ export class InstancedEntity {
    */
   public updateMatrix(): void {
     const owner = this.owner;
+    const matricesTexture = owner.matricesTexture;
     const position = this.position;
     const quaternion = this.quaternion as any;
     const scale = this.scale;
-    const te = owner.matricesTexture._data;
+    const te = matricesTexture._data;
     const id = this.id;
     const offset = id * 16;
 
@@ -173,10 +178,11 @@ export class InstancedEntity {
     te[offset + 14] = position.z;
     te[offset + 15] = 1;
 
-    owner.matricesTexture.enqueueUpdate(id);
+    matricesTexture.enqueueUpdate(id);
 
-    if (owner.bvh && owner.autoUpdateBVH) {
-      owner.bvh.move(id);
+    const bvh = owner.bvh;
+    if (bvh && owner.autoUpdateBVH) {
+      bvh.move(id);
     }
   }
 
@@ -187,8 +193,9 @@ export class InstancedEntity {
    */
   public updateMatrixPosition(): void {
     const owner = this.owner;
+    const matricesTexture = owner.matricesTexture;
     const position = this.position;
-    const te = owner.matricesTexture._data;
+    const te = matricesTexture._data;
     const id = this.id;
     const offset = id * 16;
 
@@ -196,10 +203,11 @@ export class InstancedEntity {
     te[offset + 13] = position.y;
     te[offset + 14] = position.z;
 
-    owner.matricesTexture.enqueueUpdate(id);
+    matricesTexture.enqueueUpdate(id);
 
-    if (owner.bvh && owner.autoUpdateBVH) {
-      owner.bvh.move(id);
+    const bvh = owner.bvh;
+    if (bvh && owner.autoUpdateBVH) {
+      bvh.move(id);
     }
   }
 
@@ -362,6 +370,7 @@ export class InstancedEntity {
   }
 }
 
+const _matrixWorld = new Matrix4();
 const _quat = new Quaternion();
 const _vec3 = new Vector3();
 const _xAxis = new Vector3(1, 0, 0);

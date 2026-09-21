@@ -102,6 +102,7 @@ export class SquareDataTexture extends DataTexture {
   /** @internal */ _data: TypedArray; // TODO make it public or remove it?
   protected _channels: ChannelSize;
   protected _pixelsPerInstance: number;
+  protected _elementsPerRow: number;
   protected _stride: number;
   protected _rowToUpdate: boolean[];
   protected _uniformMap: UniformMap;
@@ -125,6 +126,7 @@ export class SquareDataTexture extends DataTexture {
     this._data = array;
     this._channels = channels;
     this._pixelsPerInstance = pixelsPerInstance;
+    this._elementsPerRow = size / pixelsPerInstance;
     this._stride = pixelsPerInstance * channels;
     this._rowToUpdate = new Array(size);
     this._uniformMap = uniformMap;
@@ -152,6 +154,7 @@ export class SquareDataTexture extends DataTexture {
     this.dispose();
     this.image = { data, height: size, width: size };
     this._data = data;
+    this._elementsPerRow = size / this._pixelsPerInstance;
   }
 
   /**
@@ -163,8 +166,7 @@ export class SquareDataTexture extends DataTexture {
     this._needsUpdate = true;
     if (!this.partialUpdate) return;
 
-    const elementsPerRow = this.image.width / this._pixelsPerInstance;
-    const rowIndex = Math.floor(index / elementsPerRow);
+    const rowIndex = Math.floor(index / this._elementsPerRow);
     this._rowToUpdate[rowIndex] = true;
   }
 
@@ -450,6 +452,7 @@ export class SquareDataTexture extends DataTexture {
     this.maxUpdateCalls = source.maxUpdateCalls;
     this._channels = source._channels;
     this._pixelsPerInstance = source._pixelsPerInstance;
+    this._elementsPerRow = source._elementsPerRow;
     this._stride = source._stride;
     this._rowToUpdate = source._rowToUpdate;
     this._uniformMap = source._uniformMap;
