@@ -25,15 +25,40 @@ jobs:
           node-version: 20.x
           cache: npm
 
-      - run: npm ci
+      - run: npm ci --ignore-scripts
 
       - name: Run benchmarks
         run: npm run bench
         env:
           BENCH_TIME: 500
 
+      - name: Check benchmark history
+        id: history
+        run: |
+          refs="$(git ls-remote --heads origin gh-pages)"
+          if [ -n "$refs" ]; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Initialize benchmark history
+        if: github.event_name == 'push' && github.ref == 'refs/heads/master' && steps.history.outputs.exists == 'false'
+        run: |
+          git switch --orphan gh-pages
+          git -c user.name=github-actions[bot] -c user.email=41898282+github-actions[bot]@users.noreply.github.com commit --allow-empty -m "Initialize benchmark history"
+          git checkout -
+
+      - name: Summarize first benchmark run
+        if: steps.history.outputs.exists == 'false'
+        run: |
+          echo 'No baseline is available yet. The first push to master will initialize benchmark history.' >> "$GITHUB_STEP_SUMMARY"
+          echo '```json' >> "$GITHUB_STEP_SUMMARY"
+          cat benchmarks/results.json >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+
       - name: Compare against baseline
-        uses: benchmark-action/github-action-benchmark@v1
+        uses: benchmark-action/github-action-benchmark@4322e5726e6334590d251fc4f92bec0efafc45dc
         if: github.event_name == 'push' && github.ref == 'refs/heads/master'
         with:
           tool: customBiggerIsBetter
@@ -41,19 +66,21 @@ jobs:
           benchmark-data-dir-path: bench
           github-token: ${{ secrets.GITHUB_TOKEN }}
           auto-push: true
+          skip-fetch-gh-pages: ${{ steps.history.outputs.exists == 'false' }}
           alert-threshold: "115%"
           comment-on-alert: true
           fail-on-alert: false
           summary-always: true
 
       - name: Comment results on PR
-        uses: benchmark-action/github-action-benchmark@v1
-        if: github.event_name == 'pull_request'
+        uses: benchmark-action/github-action-benchmark@4322e5726e6334590d251fc4f92bec0efafc45dc
+        if: github.event_name == 'pull_request' && steps.history.outputs.exists == 'true'
         with:
           tool: customBiggerIsBetter
           output-file-path: benchmarks/results.json
+          benchmark-data-dir-path: bench
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          comment-on-alert: true
+          comment-on-alert: ${{ github.event.pull_request.head.repo.full_name == github.repository }}
           fail-on-alert: false
           summary-always: true
           alert-threshold: "115%"

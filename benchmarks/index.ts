@@ -30,7 +30,7 @@ console.table(bench.table());
 
 const results = bench.tasks
   .map((task) => ({ task, result: task.result as any }))
-  .filter(({ result }) => result && result.throughput && typeof result.throughput.mean === 'number')
+  .filter(({ result }) => typeof result?.throughput?.mean === 'number')
   .map(({ task, result }) => {
     return {
       name: task.name,
