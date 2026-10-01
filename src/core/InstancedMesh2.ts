@@ -143,8 +143,9 @@ export class InstancedMesh2<
   /**
    * Array storing visibility and availability for instances.
    * [visible0, active0, visible1, active1, ...]
+   * A value of `1` means `true`, `0` means `false`.
    */
-  public readonly availabilityArray: boolean[];
+  public availabilityArray: Uint8Array;
   /**
    * Contains data for managing LOD, allowing different levels of detail for rendering and shadow casting.
    */
@@ -274,7 +275,7 @@ export class InstancedMesh2<
     this.material = material;
     this._allowsEuler = allowsEuler ?? false;
     this._tempInstance = new InstancedEntity(this, -1, allowsEuler);
-    this.availabilityArray = LOD?.availabilityArray ?? new Array(capacity * 2);
+    this.availabilityArray = LOD?.availabilityArray ?? new Uint8Array(capacity * 2);
     this._createEntities = createEntities;
 
     this.initLastRenderInfo();
@@ -649,7 +650,7 @@ export class InstancedMesh2<
    * @param visible Whether the instance should be visible.
    */
   public setVisibilityAt(id: number, visible: boolean): void {
-    this.availabilityArray[id * 2] = visible;
+    this.availabilityArray[id * 2] = visible ? 1 : 0;
     this._indexArrayNeedsUpdate = true;
   }
 
@@ -659,7 +660,7 @@ export class InstancedMesh2<
    * @returns Whether the instance is visible.
    */
   public getVisibilityAt(id: number): boolean {
-    return this.availabilityArray[id * 2];
+    return this.availabilityArray[id * 2] === 1;
   }
 
   /**
@@ -668,7 +669,7 @@ export class InstancedMesh2<
    * @param active Whether the instance is active (not deleted).
    */
   public setActiveAt(id: number, active: boolean): void {
-    this.availabilityArray[id * 2 + 1] = active;
+    this.availabilityArray[id * 2 + 1] = active ? 1 : 0;
     this._indexArrayNeedsUpdate = true;
   }
 
@@ -678,7 +679,7 @@ export class InstancedMesh2<
    * @returns Whether the instance is active (not deleted).
    */
   public getActiveAt(id: number): boolean {
-    return this.availabilityArray[id * 2 + 1];
+    return this.availabilityArray[id * 2 + 1] === 1;
   }
 
   /**
@@ -689,7 +690,7 @@ export class InstancedMesh2<
   public getActiveAndVisibilityAt(id: number): boolean {
     const offset = id * 2;
     const availabilityArray = this.availabilityArray;
-    return availabilityArray[offset] && availabilityArray[offset + 1];
+    return availabilityArray[offset] === 1 && availabilityArray[offset + 1] === 1;
   }
 
   /**
@@ -700,8 +701,9 @@ export class InstancedMesh2<
   public setActiveAndVisibilityAt(id: number, value: boolean): void {
     const offset = id * 2;
     const availabilityArray = this.availabilityArray;
-    availabilityArray[offset] = value;
-    availabilityArray[offset + 1] = value;
+    const intValue = value ? 1 : 0;
+    availabilityArray[offset] = intValue;
+    availabilityArray[offset + 1] = intValue;
     this._indexArrayNeedsUpdate = true;
   }
 

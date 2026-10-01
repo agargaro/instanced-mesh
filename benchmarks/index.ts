@@ -2,6 +2,7 @@ import { writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { Bench } from 'tinybench';
 import { registerBVHBenchmarks } from './core/bvh.bench.js';
+import { registerFrustumBenchmarks } from './core/frustum.bench.js';
 import { registerInstancesBenchmarks } from './core/instances.bench.js';
 import { registerMatricesBenchmarks } from './core/matrices.bench.js';
 import { registerSortingBenchmarks } from './core/sorting.bench.js';
@@ -22,6 +23,7 @@ const bench = new Bench({
 registerInstancesBenchmarks(bench);
 registerMatricesBenchmarks(bench);
 registerBVHBenchmarks(bench);
+registerFrustumBenchmarks(bench);
 registerSortingBenchmarks(bench);
 
 await bench.run();
