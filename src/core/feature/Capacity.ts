@@ -27,8 +27,8 @@ InstancedMesh2.prototype.resizeBuffers = function (capacity: number): InstancedM
     this.instanceIndex.array = indexArray;
   }
 
-  const availabilityArray = new Uint8Array(capacity * 2);
-  availabilityArray.set(this.availabilityArray.subarray(0, Math.min(this.availabilityArray.length, capacity * 2)));
+  const availabilityArray = new Uint8Array(capacity);
+  availabilityArray.set(this.availabilityArray.subarray(0, Math.min(this.availabilityArray.length, capacity)));
   this.availabilityArray = availabilityArray;
 
   if (this.LODinfo) {
