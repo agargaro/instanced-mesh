@@ -42,7 +42,7 @@ export function createInstancedMesh2From<TData = {}>(mesh: Mesh, params: Instanc
     function copyInstances(): void {
       instancedMesh.setInstancesArrayCount(mesh.count);
       instancedMesh._instancesCount = mesh.count;
-      instancedMesh.availabilityArray.fill(true, 0, mesh.count * 2);
+      instancedMesh.availabilityArray.fill(1, 0, mesh.count * 2);
     }
 
     function copyMatrices(): void {

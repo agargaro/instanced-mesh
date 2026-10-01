@@ -27,8 +27,13 @@ InstancedMesh2.prototype.resizeBuffers = function (capacity: number): InstancedM
     this.instanceIndex.array = indexArray;
   }
 
+  const availabilityArray = new Uint8Array(capacity * 2);
+  availabilityArray.set(this.availabilityArray.subarray(0, Math.min(this.availabilityArray.length, capacity * 2)));
+  this.availabilityArray = availabilityArray;
+
   if (this.LODinfo) {
     for (const obj of this.LODinfo.objects) {
+      obj.availabilityArray = availabilityArray;
       obj._capacity = capacity;
 
       if (obj.instanceIndex) {
@@ -37,9 +42,11 @@ InstancedMesh2.prototype.resizeBuffers = function (capacity: number): InstancedM
         obj.instanceIndex.array = indexArray;
       }
     }
+  } else if (this._parentLOD?.LODinfo) {
+    for (const obj of this._parentLOD.LODinfo.objects) {
+      obj.availabilityArray = availabilityArray;
+    }
   }
-
-  this.availabilityArray.length = capacity * 2;
 
   this.matricesTexture.resize(capacity);
 
