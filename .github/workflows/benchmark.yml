@@ -34,13 +34,26 @@ jobs:
 
       - name: Compare against baseline
         uses: benchmark-action/github-action-benchmark@v1
+        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
         with:
           tool: customBiggerIsBetter
           output-file-path: benchmarks/results.json
           benchmark-data-dir-path: bench
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          auto-push: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
+          auto-push: true
           alert-threshold: "115%"
           comment-on-alert: true
           fail-on-alert: false
           summary-always: true
+
+      - name: Comment results on PR
+        uses: benchmark-action/github-action-benchmark@v1
+        if: github.event_name == 'pull_request'
+        with:
+          tool: customBiggerIsBetter
+          output-file-path: benchmarks/results.json
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          comment-on-alert: true
+          fail-on-alert: false
+          summary-always: true
+          alert-threshold: "115%"
