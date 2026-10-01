@@ -1,4 +1,4 @@
-import { Color, ColorManagement, DataTexture, FloatType, IntType, Matrix3, Matrix4, NoColorSpace, PixelFormat, RedFormat, RedIntegerFormat, RGBAFormat, RGBAIntegerFormat, RGFormat, RGIntegerFormat, TextureDataType, TypedArray, UnsignedIntType, Vector2, Vector3, Vector4, WebGLRenderer, WebGLUtils } from 'three';
+import { Color, ColorManagement, DataTexture, FloatType, IntType, Matrix3, Matrix4, NoColorSpace, PixelFormat, RedFormat, RedIntegerFormat, RGBAFormat, RGBAIntegerFormat, RGFormat, RGIntegerFormat, TextureDataType, TextureSource, TypedArray, UnsignedIntType, Vector2, Vector3, Vector4, WebGLRenderer, WebGLUtils } from 'three';
 
 /**
  * Represents the number of elements per pixel.
@@ -445,6 +445,21 @@ export class SquareDataTexture extends DataTexture {
     return components;
   }
 
+  public override clone(): this {
+    const capacity = this._elementsPerRow * this.image.width;
+
+    const clone = new (this.constructor as new (arrayType: TypedArrayConstructor, channels: ChannelSize, pixelsPerInstance: number, capacity: number, uniformMap?: UniformMap, fetchInFragmentShader?: boolean) => this)(
+      this._data.constructor as TypedArrayConstructor,
+      this._channels,
+      this._pixelsPerInstance,
+      capacity,
+      this._uniformMap,
+      this._fetchUniformsInFragmentShader
+    );
+
+    return clone.copy(this);
+  }
+
   public override copy(source: SquareDataTexture): this {
     super.copy(source);
 
@@ -454,9 +469,14 @@ export class SquareDataTexture extends DataTexture {
     this._pixelsPerInstance = source._pixelsPerInstance;
     this._elementsPerRow = source._elementsPerRow;
     this._stride = source._stride;
-    this._rowToUpdate = source._rowToUpdate;
-    this._uniformMap = source._uniformMap;
+    this._rowToUpdate = source._rowToUpdate.slice();
+    this._uniformMap = new Map(source._uniformMap);
     this._fetchUniformsInFragmentShader = source._fetchUniformsInFragmentShader;
+
+    const data = new (source._data.constructor as TypedArrayConstructor)(source._data.length) as TypedArray;
+    data.set(source._data);
+    this._data = data;
+    this.source = new TextureSource({ data, width: source.image.width, height: source.image.height });
 
     return this;
   }

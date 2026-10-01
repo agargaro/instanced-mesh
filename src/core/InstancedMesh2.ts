@@ -126,6 +126,7 @@ export class InstancedMesh2<
   /**
    * BVH structure for optimized culling and intersection testing.
    * It's possible to create the BVH using the `computeBVH` method. Once created it will be updated automatically.
+   * It is not copied by `clone` and `copy`: the new mesh has `bvh` set to `null`.
    */
   public bvh: InstancedMeshBVH = null;
   /**
@@ -243,8 +244,7 @@ export class InstancedMesh2<
   // @ts-expect-error It's defined as a property, but is overridden as an accessor.
   public override get geometry(): TGeometry { return this._geometry; }
   public override set geometry(value: TGeometry) {
-    this._geometry = value;
-    this.patchGeometry(value);
+    this._geometry = this.patchGeometry(value);
   }
 
   /** @internal */
@@ -270,7 +270,6 @@ export class InstancedMesh2<
     this._capacity = capacity;
     this._parentLOD = LOD;
     this._useDistanceForLOD = useDistanceForLOD ?? true;
-    this._geometry = geometry;
     this.material = material;
     this._allowsEuler = allowsEuler ?? false;
     this._tempInstance = new InstancedEntity(this, -1, allowsEuler);
@@ -377,6 +376,16 @@ export class InstancedMesh2<
       return;
     }
 
+    let geometry = this._geometry;
+    const usedInstanceIndex = geometry.getAttribute('instanceIndex') as unknown as GLInstancedBufferAttribute; // TODO fix d.ts
+
+    if (usedInstanceIndex) {
+      console.warn('The geometry has been cloned because it was already used.');
+      geometry = geometry.clone();
+      geometry.deleteAttribute('instanceIndex');
+      this._geometry = geometry;
+    }
+
     const gl = this._renderer.getContext() as WebGL2RenderingContext;
     const capacity = this._capacity;
     const array = new Uint32Array(capacity);
@@ -386,7 +395,7 @@ export class InstancedMesh2<
     }
 
     this.instanceIndex = new GLInstancedBufferAttribute(gl, gl.UNSIGNED_INT, 1, 4, array);
-    this._geometry.setAttribute('instanceIndex', this.instanceIndex as unknown as BufferAttribute);
+    geometry.setAttribute('instanceIndex', this.instanceIndex as unknown as BufferAttribute);
   }
 
   protected initLastRenderInfo(): void {
@@ -421,11 +430,11 @@ export class InstancedMesh2<
     }
   }
 
-  protected patchGeometry(geometry: TGeometry): void {
+  protected patchGeometry(geometry: TGeometry): TGeometry {
     const instanceIndex = geometry.getAttribute('instanceIndex') as unknown as GLInstancedBufferAttribute; // TODO fix d.ts
 
     if (instanceIndex) {
-      if (instanceIndex === this.instanceIndex) return;
+      if (instanceIndex === this.instanceIndex) return geometry;
 
       console.warn('The geometry has been cloned because it was already used.');
       geometry = geometry.clone();
@@ -435,6 +444,8 @@ export class InstancedMesh2<
     if (this.instanceIndex) {
       geometry.setAttribute('instanceIndex', this.instanceIndex as unknown as BufferAttribute); // TODO fix d.ts
     }
+
+    return geometry;
   }
 
   protected _customProgramCacheKey = (): string => {
@@ -813,48 +824,84 @@ export class InstancedMesh2<
     }
   }
 
+  /**
+   * Returns a clone of this `InstancedMesh2` and its instances.
+   * @remarks The BVH is not copied: the clone has `bvh` set to `null`. Call `computeBVH` on the clone if needed.
+   * @param recursive Whether to clone children recursively.
+   * @returns The cloned `InstancedMesh2`.
+   */
   public override clone(recursive?: boolean): this { // wrong three d.ts
     const params: InstancedMesh2Params = {
       capacity: this._capacity,
       renderer: this._renderer,
       allowsEuler: this._allowsEuler,
-      createEntities: this._createEntities
+      createEntities: this._createEntities,
+      useDistanceForLOD: this._useDistanceForLOD
     };
     return new (this as any).constructor(this.geometry, this.material, params).copy(this, recursive);
   }
 
+  /**
+   * Copies the properties and instance data from the given `InstancedMesh2`.
+   * @remarks The BVH is not copied and `bvh` is set to `null`. Call `computeBVH` after copying if needed.
+   * @param source The `InstancedMesh2` to copy from.
+   * @param recursive Whether to copy children recursively.
+   * @returns The current `InstancedMesh2` instance.
+   */
   public override copy(source: InstancedMesh2, recursive?: boolean): this {
     super.copy(source, recursive);
 
-    this.count = source._capacity;
+    this.count = source.count;
     this._instancesCount = source._instancesCount;
     this._instancesArrayCount = source._instancesArrayCount;
     this._capacity = source._capacity;
+    this._useOpacity = source._useOpacity;
+    this._useDistanceForLOD = source._useDistanceForLOD;
+    this.autoUpdate = source.autoUpdate;
+    this.autoUpdateBVH = source.autoUpdateBVH;
+    this.raycastOnlyFrustum = source.raycastOnlyFrustum;
+    this.perObjectFrustumCulled = source.perObjectFrustumCulled;
+    this.sortObjects = source.sortObjects;
 
-    if (source.boundingBox !== null) this.boundingBox = source.boundingBox.clone();
-    if (source.boundingSphere !== null) this.boundingSphere = source.boundingSphere.clone();
+    this.availabilityArray = source.availabilityArray.slice();
+    this._freeIds = source._freeIds.slice();
+    this._indexArrayNeedsUpdate = true;
+    this.bvh = null;
 
-    this.matricesTexture = source.matricesTexture.clone(); // TODO we can avoid cloning it because it already exists
-    this.matricesTexture.image.data = (this.matricesTexture.image.data as TypedArray).slice();
+    this.boundingBox = source.boundingBox === null ? null : source.boundingBox.clone();
+    this.boundingSphere = source.boundingSphere === null ? null : source.boundingSphere.clone();
 
-    if (source.colorsTexture !== null) {
-      this.colorsTexture = source.colorsTexture.clone();
-      this.colorsTexture.image.data = (this.colorsTexture.image.data as TypedArray).slice();
-    }
+    this.matricesTexture = source.matricesTexture.clone();
 
-    if (source.uniformsTexture !== null) {
-      this.uniformsTexture = source.uniformsTexture.clone();
-      this.uniformsTexture.image.data = (this.uniformsTexture.image.data as TypedArray).slice();
-    }
+    this.colorsTexture = source.colorsTexture === null ? null : source.colorsTexture.clone();
+    this.uniformsTexture = source.uniformsTexture === null ? null : source.uniformsTexture.clone();
+    this.boneTexture = source.boneTexture === null ? null : source.boneTexture.clone();
+    this.morphTexture = source.morphTexture === null ? null : source.morphTexture.clone();
 
-    if (source.morphTexture !== null) {
-      this.morphTexture = source.morphTexture.clone();
+    if (this.morphTexture !== null) {
       this.morphTexture.image.data = (this.morphTexture.image.data as TypedArray).slice();
     }
 
-    if (source.boneTexture !== null) {
-      this.boneTexture = source.boneTexture.clone();
-      this.boneTexture.image.data = (this.boneTexture.image.data as TypedArray).slice(); // TODO check if they fix d.ts
+    if (this.instanceIndex && this.instanceIndex.array.length !== this._capacity) {
+      const indexArray = new Uint32Array(this._capacity);
+      indexArray.set(this.instanceIndex.array.subarray(0, Math.min(this.instanceIndex.array.length, this._capacity)));
+      this.instanceIndex.array = indexArray;
+    }
+
+    if (this._createEntities) {
+      this.createEntities(0);
+
+      const instances = this.instances;
+      for (const id of this._freeIds) {
+        if (!instances[id]) instances[id] = new InstancedEntity(this, id, this._allowsEuler) as Entity<TData>;
+      }
+
+      const data = this.matricesTexture._data;
+      for (let i = 0; i < this._instancesArrayCount; i++) {
+        _tempMat4.fromArray(data, i * 16);
+        const instance = instances[i];
+        _tempMat4.decompose(instance.position, instance.quaternion, instance.scale);
+      }
     }
 
     // TODO copies and handle LOD?
@@ -870,6 +917,7 @@ export class InstancedMesh2<
 
     this.matricesTexture.dispose();
     this.colorsTexture?.dispose();
+    this.morphTexture?.dispose();
     this.boneTexture?.dispose();
     this.uniformsTexture?.dispose();
   }
