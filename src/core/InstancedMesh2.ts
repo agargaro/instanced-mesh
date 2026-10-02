@@ -1,4 +1,5 @@
 import { AttachedBindMode, BindMode, Box3, BufferAttribute, BufferGeometry, Camera, Color, ColorManagement, ColorRepresentation, DataTexture, DetachedBindMode, InstancedBufferAttribute, Material, Matrix4, Mesh, Object3D, Object3DEventMap, Scene, Skeleton, Sphere, TypedArray, Vector3, WebGLProgramParametersWithUniforms, WebGLRenderer } from 'three';
+import { getMorphInstanceVertexChunk } from '../shaders/ShaderChunkUtils.js';
 import { CustomSortCallback, OnFrustumEnterCallback } from './feature/FrustumCulling.js';
 import { Entity } from './feature/Instances.js';
 import { LODInfo } from './feature/LOD.js';
@@ -459,6 +460,10 @@ export class InstancedMesh2<
     shader.defines['USE_INSTANCING_INDIRECT'] = '';
 
     shader.uniforms.matricesTexture = { value: this.matricesTexture };
+
+    if (this.morphTexture) {
+      shader.vertexShader = shader.vertexShader.replace('#include <morphinstance_vertex>', getMorphInstanceVertexChunk());
+    }
 
     if (this.uniformsTexture) {
       shader.uniforms.uniformsTexture = { value: this.uniformsTexture };

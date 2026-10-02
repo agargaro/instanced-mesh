@@ -56,15 +56,15 @@ const _position = new Vector3();
 const _sphere = new Sphere();
 
 InstancedMesh2.prototype.performFrustumCulling = function (camera: Camera, cameraLOD = camera) {
-  if ((camera as OrthographicCamera).isOrthographicCamera && this._useDistanceForLOD) {
-    throw new Error('Distance-based LOD is not supported for orthographic cameras. Set useDistanceForLOD to false during creation.');
-  }
-
   const mainMesh = this._parentLOD ?? this;
   const LODinfo = mainMesh.LODinfo;
   let LODrenderList: LODRenderList;
 
   if (LODinfo) {
+    if ((cameraLOD as OrthographicCamera).isOrthographicCamera && mainMesh._useDistanceForLOD) {
+      throw new Error('Distance-based LOD is not supported for orthographic cameras. Set useDistanceForLOD to false during creation.');
+    }
+
     const isShadowRendering = camera !== cameraLOD;
     LODrenderList = !isShadowRendering ? LODinfo.render : (LODinfo.shadowRender ?? LODinfo.render);
 
