@@ -9,6 +9,7 @@ ShaderChunk['instanced_pars_vertex'] = instanced_pars_vertex;
 ShaderChunk['instanced_color_pars_vertex'] = instanced_color_pars_vertex;
 ShaderChunk['instanced_vertex'] = instanced_vertex;
 ShaderChunk['instanced_color_vertex'] = instanced_color_vertex;
+ShaderChunk['instanced_skinning_pars_vertex'] = instanced_skinning_pars_vertex; // TODO capire se lo vogliamo
 
 /**
  * Patches the given shader string by adding a condition for indirect instancing support.
@@ -29,6 +30,6 @@ ShaderChunk['batching_vertex'] = ShaderChunk['batching_vertex'].concat('\n#inclu
 
 ShaderChunk.skinning_pars_vertex = instanced_skinning_pars_vertex;
 
-// use 'getPatchedShader' function to make these example works
+// use 'patchShader' function to make these examples work
 // examples/jsm/modifiers/CurveModifier.js
 // examples/jsm/postprocessing/OutlinePass.js
