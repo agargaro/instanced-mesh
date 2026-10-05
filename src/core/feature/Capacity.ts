@@ -67,6 +67,8 @@ InstancedMesh2.prototype.resizeBuffers = function (capacity: number): InstancedM
 
   this.uniformsTexture?.resize(capacity);
 
+  this.bvh?.resizeNodes(capacity);
+
   return this;
 };
 

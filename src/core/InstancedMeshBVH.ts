@@ -59,9 +59,10 @@ export class InstancedMeshBVH {
    */
   public bvh: BVH<{}, number>;
   /**
-   * A map that stores the BVH nodes for each instance.
+   * An array that stores the BVH nodes for each instance, indexed by instance id.
+   * Its length always matches the target capacity.
    */
-  public nodesMap = new Map<number, BVHNode<{}, number>>();
+  public nodes: (BVHNode<{}, number> | null)[] = null;
   /**
    * Enables accurate frustum culling by checking intersections without applying margin to the bounding box.
    */
@@ -74,6 +75,8 @@ export class InstancedMeshBVH {
   protected _cameraPos: Float32Array;
   protected _getBoxFromSphere: boolean;
   protected _geoBoundingSphere: Sphere = null;
+  protected _geoBoxCenter: Float64Array;
+  protected _geoBoxExtents: Float64Array;
   protected _sphereTarget: SphereTarget = null;
 
   /**
@@ -91,6 +94,11 @@ export class InstancedMeshBVH {
 
     if (!geometry.boundingBox) geometry.computeBoundingBox();
     this.geoBoundingBox = geometry.boundingBox;
+
+    const min = this.geoBoundingBox.min;
+    const max = this.geoBoundingBox.max;
+    this._geoBoxCenter = new Float64Array([(min.x + max.x) * 0.5, (min.y + max.y) * 0.5, (min.z + max.z) * 0.5]);
+    this._geoBoxExtents = new Float64Array([(max.x - min.x) * 0.5, (max.y - min.y) * 0.5, (max.z - min.z) * 0.5]);
 
     if (getBBoxFromBSphere) {
       if (!geometry.boundingSphere) geometry.computeBoundingSphere();
@@ -110,6 +118,8 @@ export class InstancedMeshBVH {
     this._dir = new Float32Array(3);
     this._cameraPos = new Float32Array(3);
     this._getBoxFromSphere = getBBoxFromBSphere;
+
+    this.nodes = new Array(target._capacity).fill(null);
   }
 
   /**
@@ -133,7 +143,7 @@ export class InstancedMeshBVH {
     }
 
     this.bvh.createFromArray(objects as unknown as number[], boxes, (node) => {
-      this.nodesMap.set(node.object, node);
+      this.nodes[node.object] = node;
     }, this._margin);
   }
 
@@ -143,7 +153,7 @@ export class InstancedMeshBVH {
    */
   public insert(id: number): void {
     const node = this.bvh.insert(id, this.getBox(id, new Float32Array(6)), this._margin);
-    this.nodesMap.set(id, node);
+    this.nodes[id] = node;
   }
 
   /**
@@ -159,7 +169,7 @@ export class InstancedMeshBVH {
     }
 
     this.bvh.insertRange(ids, boxes, this._margin, (node) => {
-      this.nodesMap.set(node.object, node);
+      this.nodes[node.object] = node;
     });
   }
 
@@ -168,10 +178,31 @@ export class InstancedMeshBVH {
    * @param id The id of the instance to move.
    */
   public move(id: number): void {
-    const node = this.nodesMap.get(id);
+    const node = this.nodes[id];
     if (!node) return;
     this.getBox(id, node.box as Float32Array); // this also updates box
     this.bvh.move(node, this._margin);
+  }
+
+  /** @internal */
+  public moveByDelta(id: number, dx: number, dy: number, dz: number): void {
+    if (this._margin > 0) {
+      this.move(id);
+      return;
+    }
+
+    const node = this.nodes[id];
+    if (!node) return;
+
+    const box = node.box as Float32Array;
+    box[0] += dx;
+    box[1] += dx;
+    box[2] += dy;
+    box[3] += dy;
+    box[4] += dz;
+    box[5] += dz;
+
+    this.bvh.move(node, 0);
   }
 
   /**
@@ -179,10 +210,10 @@ export class InstancedMeshBVH {
    * @param id The id of the instance to delete.
    */
   public delete(id: number): void {
-    const node = this.nodesMap.get(id);
+    const node = this.nodes[id];
     if (!node) return;
     this.bvh.delete(node);
-    this.nodesMap.delete(id);
+    this.nodes[id] = null;
   }
 
   /**
@@ -190,7 +221,15 @@ export class InstancedMeshBVH {
    */
   public clear(): void {
     this.bvh.clear();
-    this.nodesMap.clear();
+    this.nodes.fill(null);
+  }
+
+  /** @internal */
+  public resizeNodes(capacity: number): void {
+    const nodes = this.nodes;
+    const length = nodes.length;
+    nodes.length = capacity;
+    nodes.fill(null, Math.min(length, capacity));
   }
 
   /**
@@ -285,11 +324,49 @@ export class InstancedMeshBVH {
       array[4] = centerZ - radius;
       array[5] = centerZ + radius;
     } else {
-      _box3.copy(this.geoBoundingBox).applyMatrix4(this.target.getMatrixAt(id));
-      box3ToArray(_box3, array);
+      this.getBoxFromMatrix(id, array);
     }
 
     return array;
+  }
+
+  protected getBoxFromMatrix(id: number, array: Float32Array): void {
+    const matrixArray = this.target.matricesTexture._data as Float32Array;
+    const center = this._geoBoxCenter;
+    const extents = this._geoBoxExtents;
+    const offset = id * 16;
+
+    const cx = center[0];
+    const cy = center[1];
+    const cz = center[2];
+    const ex = extents[0];
+    const ey = extents[1];
+    const ez = extents[2];
+
+    const m0 = matrixArray[offset + 0];
+    const m1 = matrixArray[offset + 1];
+    const m2 = matrixArray[offset + 2];
+    const m4 = matrixArray[offset + 4];
+    const m5 = matrixArray[offset + 5];
+    const m6 = matrixArray[offset + 6];
+    const m8 = matrixArray[offset + 8];
+    const m9 = matrixArray[offset + 9];
+    const m10 = matrixArray[offset + 10];
+
+    const x = m0 * cx + m4 * cy + m8 * cz + matrixArray[offset + 12];
+    const y = m1 * cx + m5 * cy + m9 * cz + matrixArray[offset + 13];
+    const z = m2 * cx + m6 * cy + m10 * cz + matrixArray[offset + 14];
+
+    const hx = Math.abs(m0) * ex + Math.abs(m4) * ey + Math.abs(m8) * ez;
+    const hy = Math.abs(m1) * ex + Math.abs(m5) * ey + Math.abs(m9) * ez;
+    const hz = Math.abs(m2) * ex + Math.abs(m6) * ey + Math.abs(m10) * ez;
+
+    array[0] = x - hx;
+    array[1] = x + hx;
+    array[2] = y - hy;
+    array[3] = y + hy;
+    array[4] = z - hz;
+    array[5] = z + hz;
   }
 
   protected getSphereFromMatrix_centeredGeometry(id: number, array: Float32Array, target: SphereTarget): SphereTarget {
@@ -318,5 +395,3 @@ export class InstancedMeshBVH {
     return target;
   }
 }
-
-const _box3 = new Box3();
