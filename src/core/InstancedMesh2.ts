@@ -1,4 +1,4 @@
-import { AttachedBindMode, BindMode, Box3, BufferAttribute, BufferGeometry, Camera, Color, ColorManagement, ColorRepresentation, DataTexture, DetachedBindMode, InstancedBufferAttribute, Material, Matrix4, Mesh, Object3D, Object3DEventMap, Scene, Skeleton, Sphere, TextureSource, TypedArray, Vector3, WebGLProgramParametersWithUniforms, WebGLRenderer } from 'three';
+import { AttachedBindMode, BindMode, Box3, BufferAttribute, BufferGeometry, Camera, Color, ColorManagement, ColorRepresentation, DataTexture, DetachedBindMode, InstancedBufferAttribute, Material, Matrix4, Mesh, Object3D, Object3DEventMap, Scene, Skeleton, Sphere, TypedArray, Vector3, WebGLProgramParametersWithUniforms, WebGLRenderer } from 'three';
 import { getMorphInstanceVertexChunk } from '../shaders/ShaderChunkUtils.js';
 import { CustomSortCallback, OnFrustumEnterCallback } from './feature/FrustumCulling.js';
 import { Entity } from './feature/Instances.js';
@@ -127,7 +127,6 @@ export class InstancedMesh2<
   /**
    * BVH structure for optimized culling and intersection testing.
    * It's possible to create the BVH using the `computeBVH` method. Once created it will be updated automatically.
-   * It is not copied by `clone` and `copy`: the new mesh has `bvh` set to `null`.
    */
   public bvh: InstancedMeshBVH = null;
   /**
@@ -146,7 +145,7 @@ export class InstancedMesh2<
    * Array storing visibility and availability for instances.
    * [visible0, active0, visible1, active1, ...]
    */
-  public availabilityArray: boolean[];
+  public readonly availabilityArray: boolean[];
   /**
    * Contains data for managing LOD, allowing different levels of detail for rendering and shadow casting.
    */
@@ -203,7 +202,6 @@ export class InstancedMesh2<
   protected _definesBase: { [key: string]: any } = null;
   protected _freeIds: number[] = [];
   protected _createEntities: boolean;
-  protected _copiedInstanceIndex: Uint32Array = null;
 
   // HACK TO MAKE IT WORK WITHOUT UPDATE CORE
   /** @internal */ isInstancedMesh = true; // must be set to use instancing rendering
@@ -394,11 +392,6 @@ export class InstancedMesh2<
 
     for (let i = 0; i < capacity; i++) {
       array[i] = i;
-    }
-
-    if (this._copiedInstanceIndex) {
-      array.set(this._copiedInstanceIndex.subarray(0, capacity));
-      this._copiedInstanceIndex = null;
     }
 
     this.instanceIndex = new GLInstancedBufferAttribute(gl, gl.UNSIGNED_INT, 1, 4, array);
@@ -839,166 +832,53 @@ export class InstancedMesh2<
     }
   }
 
-  /**
-   * Returns a clone of this `InstancedMesh2` and its instances.
-   * @remarks The BVH is not copied: the clone has `bvh` set to `null`. Call `computeBVH` on the clone if needed.
-   * @param recursive Whether to clone children recursively.
-   * @returns The cloned `InstancedMesh2`.
-   */
   public override clone(recursive?: boolean): this { // wrong three d.ts
     const params: InstancedMesh2Params = {
       capacity: this._capacity,
       renderer: this._renderer,
       allowsEuler: this._allowsEuler,
-      createEntities: this._createEntities,
-      useDistanceForLOD: this._useDistanceForLOD
+      createEntities: this._createEntities
     };
     return new (this as any).constructor(this.geometry, this.material, params).copy(this, recursive);
   }
 
-  /**
-   * Copies the properties and instance data from the given `InstancedMesh2`.
-   * @remarks The BVH is not copied and `bvh` is set to `null`. Call `computeBVH` after copying if needed.
-   * @param source The `InstancedMesh2` to copy from.
-   * @param recursive Whether to copy children recursively.
-   * @returns The current `InstancedMesh2` instance.
-   */
   public override copy(source: InstancedMesh2, recursive?: boolean): this {
-    if (source === this) return this;
+    super.copy(source, recursive);
 
-    this.clearCopiedLOD();
-    super.copy(source, false);
-    this.initLastRenderInfo();
-
-    this.count = source.count;
+    this.count = source._capacity;
     this._instancesCount = source._instancesCount;
     this._instancesArrayCount = source._instancesArrayCount;
     this._capacity = source._capacity;
-    this._useOpacity = source._useOpacity;
-    this._useDistanceForLOD = source._useDistanceForLOD;
-    this.autoUpdate = source.autoUpdate;
-    this.autoUpdateBVH = source.autoUpdateBVH;
-    this.raycastOnlyFrustum = source.raycastOnlyFrustum;
-    this.perObjectFrustumCulled = source.perObjectFrustumCulled;
-    this.sortObjects = source.sortObjects;
-    this.customSort = source.customSort;
-    this.onFrustumEnter = source.onFrustumEnter;
-    this.skeleton = source.skeleton;
-    this.bindMode = source.bindMode;
-    this.bindMatrix = source.bindMatrix?.clone() ?? null;
-    this.bindMatrixInverse = source.bindMatrixInverse?.clone() ?? null;
 
-    this.availabilityArray = source.availabilityArray.slice();
-    this._freeIds = source._freeIds.slice();
-    this._indexArrayNeedsUpdate = true;
-    this.bvh = null;
+    if (source.boundingBox !== null) this.boundingBox = source.boundingBox.clone();
+    if (source.boundingSphere !== null) this.boundingSphere = source.boundingSphere.clone();
 
-    this.copyTextures(source);
+    this.matricesTexture = source.matricesTexture.clone(); // TODO we can avoid cloning it because it already exists
+    this.matricesTexture.image.data = (this.matricesTexture.image.data as TypedArray).slice();
 
-    this.copyInstanceIndex(source);
-    this.copyEntities();
-    if (recursive !== false) this.copyChildren(source);
+    if (source.colorsTexture !== null) {
+      this.colorsTexture = source.colorsTexture.clone();
+      this.colorsTexture.image.data = (this.colorsTexture.image.data as TypedArray).slice();
+    }
+
+    if (source.uniformsTexture !== null) {
+      this.uniformsTexture = source.uniformsTexture.clone();
+      this.uniformsTexture.image.data = (this.uniformsTexture.image.data as TypedArray).slice();
+    }
+
+    if (source.morphTexture !== null) {
+      this.morphTexture = source.morphTexture.clone();
+      this.morphTexture.image.data = (this.morphTexture.image.data as TypedArray).slice();
+    }
+
+    if (source.boneTexture !== null) {
+      this.boneTexture = source.boneTexture.clone();
+      this.boneTexture.image.data = (this.boneTexture.image.data as TypedArray).slice(); // TODO check if they fix d.ts
+    }
+
+    // TODO copies and handle LOD?
 
     return this;
-  }
-
-  /** @internal */
-  protected clearCopiedLOD(): void {
-    if (this.LODinfo) {
-      for (const object of this.LODinfo.objects) {
-        if (object !== this) this.remove(object);
-      }
-    }
-    this.LODinfo = null;
-  }
-
-  /** @internal */
-  protected copyTextures(source: InstancedMesh2): void {
-    this.boundingBox = source.boundingBox === null ? null : source.boundingBox.clone();
-    this.boundingSphere = source.boundingSphere === null ? null : source.boundingSphere.clone();
-
-    this.matricesTexture = source.matricesTexture.clone();
-
-    this.colorsTexture = source.colorsTexture === null ? null : source.colorsTexture.clone();
-    this.uniformsTexture = source.uniformsTexture === null ? null : source.uniformsTexture.clone();
-    this.boneTexture = source.boneTexture === null ? null : source.boneTexture.clone();
-    this.morphTexture = source.morphTexture === null ? null : source.morphTexture.clone();
-
-    if (this.morphTexture !== null) {
-      const image = source.morphTexture.image;
-      this.morphTexture.source = new TextureSource({ ...image, data: (image.data as TypedArray).slice() });
-      this.morphTexture.needsUpdate = true;
-    }
-  }
-
-  /** @internal */
-  protected copyInstanceIndex(source: InstancedMesh2): void {
-    const sourceArray = source.instanceIndex?.array ?? source._copiedInstanceIndex;
-    const array = new Uint32Array(this._capacity);
-    this._copiedInstanceIndex = null;
-    if (sourceArray) array.set(sourceArray.subarray(0, this._capacity));
-
-    if (this.instanceIndex) {
-      this.instanceIndex.array = array;
-      this.instanceIndex._needsUpdate = true;
-    } else if (sourceArray) {
-      this._copiedInstanceIndex = array;
-    }
-  }
-
-  /** @internal */
-  protected copyEntities(): void {
-    if (this._createEntities) {
-      this.createEntities(0);
-
-      const instances = this.instances;
-      for (const id of this._freeIds) {
-        if (!instances[id]) instances[id] = new InstancedEntity(this, id, this._allowsEuler) as Entity<TData>;
-      }
-
-      const data = this.matricesTexture._data;
-      for (let i = 0; i < this._instancesArrayCount; i++) {
-        _tempMat4.fromArray(data, i * 16);
-        const instance = instances[i];
-        _tempMat4.decompose(instance.position, instance.quaternion, instance.scale);
-      }
-    }
-  }
-
-  /** @internal */
-  protected copyChildren(source: InstancedMesh2): void {
-    const info = source.LODinfo;
-    const objects = new Map<InstancedMesh2, InstancedMesh2>([[source, this]]);
-
-    if (info) {
-      for (const object of info.objects) {
-        if (object === source) continue;
-        const copy = new InstancedMesh2(object.geometry, object.material, { capacity: this._capacity, renderer: this._renderer }, this);
-        copy.copy(object, false);
-        copy.availabilityArray = this.availabilityArray;
-        this.patchLevel(copy);
-        objects.set(object, copy);
-        this.add(copy);
-      }
-
-      const copyRenderList = (list: LODInfo['render']): LODInfo['render'] => list === null
-        ? null
-        : {
-            levels: list.levels.map((level) => ({ ...level, object: objects.get(level.object) })),
-            count: list.count.slice()
-          };
-      this.LODinfo = {
-        objects: info.objects.map((object) => objects.get(object)) as InstancedMesh2<TData>[],
-        render: copyRenderList(info.render) as LODInfo<TData>['render'],
-        shadowRender: copyRenderList(info.shadowRender) as LODInfo<TData>['shadowRender']
-      };
-    }
-
-    for (const child of source.children) {
-      const lodCopy = objects.get(child as InstancedMesh2);
-      if (lodCopy) lodCopy.copyChildren(child as InstancedMesh2);
-      else this.add(child.clone());
-    }
   }
 
   /**

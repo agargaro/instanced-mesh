@@ -1,7 +1,6 @@
 import assert from 'node:assert/strict';
-import { Bone, Box3, BoxGeometry, DataTexture, FloatType, Matrix4, MeshBasicMaterial, Object3D, OrthographicCamera, PerspectiveCamera, Raycaster, RedFormat, ShaderChunk, Skeleton, Vector3, WebGLRenderer } from 'three';
+import { Box3, BoxGeometry, DataTexture, FloatType, Matrix4, MeshBasicMaterial, OrthographicCamera, PerspectiveCamera, Raycaster, RedFormat, ShaderChunk, Vector3, WebGLRenderer } from 'three';
 import { InstancedMesh2 } from '../src/index.js';
-import { SquareDataTexture } from '../src/core/utils/SquareDataTexture.js';
 import { compareResults } from '../benchmarks/compare.js';
 
 let passed = 0;
@@ -80,125 +79,6 @@ check('BVH capacity, deletion, reused IDs and clear', () => {
   assert.ok(object.bvh.nodes[4]);
   object.clearInstances();
   assert.ok(object.bvh.nodes.every((node) => node === null));
-});
-
-check('copy preserves manual rendering indices and queues GPU upload', () => {
-  const source = mesh(3, true);
-  source.addInstances(3);
-  source.setVisibilityAt(0, false);
-  source.setVisibilityAt(1, false);
-  source.perObjectFrustumCulled = false;
-  source.updateIndexArray();
-  source.autoUpdate = false;
-  const target = mesh(1, true).copy(source);
-  assert.equal(target.count, 1);
-  assert.equal(target.autoUpdate, false);
-  assert.equal(target.instanceIndex.array[0], 2);
-  assert.equal(target.instanceIndex._needsUpdate, true);
-  assert.notEqual(target.instanceIndex.array, source.instanceIndex.array);
-  const deferred = mesh(1).copy(source);
-  (deferred as any)._renderer = renderer;
-  (deferred as any).initIndexAttribute();
-  assert.equal(deferred.instanceIndex.array[0], 2);
-  assert.equal(deferred.count, 1);
-});
-
-check('clone restores entities, free IDs, flags and independent matrices', () => {
-  const source = mesh(5, false, true);
-  source.addInstances(4, (entity, id) => entity.position.set(id + 0.25, 2, 3));
-  source.removeInstances(1, 3);
-  source.setVisibilityAt(2, false);
-  source.computeBVH();
-  const copy = source.clone();
-  assert.equal(copy.bvh, null);
-  assert.equal(copy.instancesCount, 2);
-  assert.equal(copy.instances[2].owner, copy);
-  assert.equal(copy.instances[2].position.x, 2.25);
-  assert.equal(copy.getVisibilityAt(2), false);
-  assert.notEqual(copy.matricesTexture._data, source.matricesTexture._data);
-  copy.addInstances(2);
-  assert.equal(copy.instancesCount, 4);
-  assert.equal(source.instancesCount, 2);
-});
-
-check('morph copies have independent sources and preserve original data', () => {
-  const source = mesh(2);
-  source.addInstances(1);
-  source.morphTexture = new DataTexture(new Float32Array([0.8, 0.2, 1, 0]), 2, 2, RedFormat, FloatType);
-  const originalData = source.morphTexture.image.data;
-  const copy = source.clone();
-  assert.equal(source.morphTexture.image.data, originalData);
-  assert.notEqual(copy.morphTexture.source, source.morphTexture.source);
-  (copy.morphTexture.image.data as Float32Array)[1] = 0.9;
-  assert.equal(originalData[1], Math.fround(0.2));
-});
-
-check('texture copy resets renderer state and preserves options and uniforms', () => {
-  const map = new Map([['weight', { offset: 0, size: 1, type: 'float' as const }]]);
-  const source = new SquareDataTexture(Float32Array, 1, 1, 4, map);
-  source.partialUpdate = false;
-  source.maxUpdateCalls = 2;
-  source._data[0] = 42;
-  const copy = source.clone();
-  assert.equal(copy._data[0], 42);
-  assert.equal(copy.partialUpdate, false);
-  assert.equal(copy.maxUpdateCalls, 2);
-  assert.notEqual(copy.source, source.source);
-  assert.notEqual((copy as any)._uniformMap, map);
-  assert.ok(copy.source.version > 0);
-  (copy as any)._needsUpdate = false;
-  (copy as any)._lastWidth = 2;
-  copy.copy(source);
-  assert.equal((copy as any)._needsUpdate, true);
-  assert.equal((copy as any)._lastWidth, -1);
-});
-
-check('LOD clone rebuilds render and shadow levels with shared clone data', () => {
-  const source = mesh(2, true);
-  source.addInstances(2);
-  source.addLOD(new BoxGeometry(0.5, 0.5, 0.5), new MeshBasicMaterial(), 10);
-  source.addShadowLOD(new BoxGeometry(0.2, 0.2, 0.2), 20);
-  const marker = new Object3D();
-  marker.name = 'marker';
-  source.add(marker);
-  const copy = source.clone();
-  assert.equal(copy.LODinfo.objects.length, 3);
-  assert.equal(copy.LODinfo.render.levels[0].object, copy);
-  assert.equal(copy.LODinfo.shadowRender.levels[0].object._parentLOD, copy);
-  assert.ok(copy.getObjectByName('marker'));
-  assert.notEqual(copy.LODinfo.render.levels, source.LODinfo.render.levels);
-  for (const child of copy.LODinfo.objects.slice(1)) {
-    assert.equal(child.matricesTexture, copy.matricesTexture);
-    assert.equal(child.availabilityArray, copy.availabilityArray);
-    assert.notEqual(child.matricesTexture, source.matricesTexture);
-  }
-  copy.LODinfo.objects[1].resizeBuffers(8);
-  assert.equal(copy.capacity, 8);
-  assert.ok(copy.LODinfo.objects.every((object) => object.capacity === 8));
-  copy.setVisibilityAt(1, false);
-  assert.equal(copy.LODinfo.objects[1].getVisibilityAt(1), false);
-  assert.equal(source.getVisibilityAt(1), true);
-  assert.equal(source.clone(false).children.length, 0);
-  copy.copy(mesh());
-  assert.equal(copy.LODinfo, null);
-  assert.ok(!copy.children.some((child) => (child as InstancedMesh2)._parentLOD === copy));
-});
-
-check('skinning copy preserves skeleton and independent bind matrices and bone data', () => {
-  const source = mesh(2);
-  const root = new Object3D();
-  const bone = new Bone();
-  root.add(bone);
-  source.initSkeleton(new Skeleton([bone]));
-  source.addInstances(1);
-  source.setBonesAt(0);
-  const copy = source.clone();
-  assert.equal(copy.skeleton, source.skeleton);
-  assert.notEqual(copy.bindMatrix, source.bindMatrix);
-  assert.notEqual(copy.boneTexture._data, source.boneTexture._data);
-  copy.setBonesAt(0);
-  copy.resizeBuffers(100);
-  assert.ok(copy.boneTexture._data.length >= 100 * 16);
 });
 
 check('orthographic cameras only reject distance LOD', () => {
