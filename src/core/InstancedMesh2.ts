@@ -535,7 +535,6 @@ export class InstancedMesh2<
 
   /**
    * Sets the local transformation matrix for a specific instance.
-   * @remarks The matrix must be affine: projective transforms are not supported.
    * @param id The index of the instance.
    * @param matrix A `Matrix4` representing the local transformation to apply to the instance.
    */
@@ -886,10 +885,10 @@ export class InstancedMesh2<
    */
   public override dispose(): void {
     super.dispose();
+    // morphTexture disposed by super
 
     this.matricesTexture.dispose();
     this.colorsTexture?.dispose();
-    this.morphTexture?.dispose();
     this.boneTexture?.dispose();
     this.uniformsTexture?.dispose();
   }
