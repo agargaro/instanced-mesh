@@ -28,7 +28,6 @@ export function patchShader(shader: string): string {
   return shader.replace('#ifdef USE_INSTANCING', '#if defined USE_INSTANCING || defined USE_INSTANCING_INDIRECT');
 }
 
-
 // use 'patchShader' function to make these examples work
 // examples/jsm/modifiers/CurveModifier.js
 // examples/jsm/postprocessing/OutlinePass.js

@@ -9,6 +9,7 @@ declare module '../InstancedMesh2.js' {
      * Resizes internal buffers to accommodate the specified capacity.
      * This ensures that the buffers are large enough to handle the required number of instances.
      * @param capacity The new capacity of the buffers.
+     * @throws {RangeError} If the capacity is invalid or would discard active instance IDs.
      * @returns The current `InstancedMesh2` instance.
      */
     resizeBuffers(capacity: number): this;
@@ -23,6 +24,8 @@ InstancedMesh2.prototype.resizeBuffers = function (capacity: number): InstancedM
   }
 
   if (!Number.isInteger(capacity) || capacity < 0) throw new RangeError('Capacity must be a non-negative integer.');
+  if (capacity < this._instancesArrayCount) throw new RangeError('Capacity must accommodate all active instance IDs.');
+  if (capacity < this._capacity) this._freeIds = this._freeIds.filter((id) => id < capacity); // TODO non mi piace la filter
 
   const oldCapacity = this._capacity;
   this._capacity = capacity;

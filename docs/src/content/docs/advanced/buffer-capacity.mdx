@@ -31,5 +31,6 @@ iMesh.resizeBuffers(1000);
 ```
 
 :::caution
-Do not set a capacity lower than the current number of instances, otherwise instances will be lost.
+The new capacity must be at least the highest active instance ID plus one. Otherwise, `resizeBuffers` throws a `RangeError` without changing the mesh.
+Removed instances can leave gaps between active IDs, so `instancesCount` alone is not a safe minimum capacity.
 :::

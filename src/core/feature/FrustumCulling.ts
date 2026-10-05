@@ -149,12 +149,11 @@ InstancedMesh2.prototype.updateIndexArray = function () {
   if (!this._indexArrayNeedsUpdate) return;
 
   const array = this.instanceIndex.array;
-  const availabilityArray = this.availabilityArray;
   const instancesArrayCount = this._instancesArrayCount;
   let count = 0;
 
   for (let i = 0; i < instancesArrayCount; i++) {
-    if (availabilityArray[i * 2] && availabilityArray[i * 2 + 1]) {
+    if (this.getActiveAndVisibilityAt(i)) {
       array[count++] = i;
     }
   }
@@ -164,11 +163,10 @@ InstancedMesh2.prototype.updateIndexArray = function () {
 };
 
 InstancedMesh2.prototype.updateRenderList = function () {
-  const availabilityArray = this.availabilityArray;
   const instancesArrayCount = this._instancesArrayCount;
 
   for (let i = 0; i < instancesArrayCount; i++) {
-    if (availabilityArray[i * 2] && availabilityArray[i * 2 + 1]) {
+    if (this.getActiveAndVisibilityAt(i)) {
       const depth = this.getPositionAt(i).sub(_cameraPos).dot(_forward);
       _renderList.push(depth, i);
     }

@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { Bone, Box3, BoxGeometry, DataTexture, FloatType, Matrix4, Mesh, MeshBasicMaterial, Object3D, OrthographicCamera, PerspectiveCamera, Raycaster, RedFormat, ShaderChunk, Skeleton, Vector3, WebGLRenderer } from 'three';
+import { Bone, Box3, BoxGeometry, DataTexture, FloatType, Matrix4, MeshBasicMaterial, Object3D, OrthographicCamera, PerspectiveCamera, Raycaster, RedFormat, ShaderChunk, Skeleton, Vector3, WebGLRenderer } from 'three';
 import { InstancedMesh2 } from '../src/index.js';
 import { SquareDataTexture } from '../src/core/utils/SquareDataTexture.js';
 import { compareResults } from '../benchmarks/compare.js';
@@ -227,20 +227,55 @@ check('morph shader patch is local and geometry sharing isolates indices', () =>
   assert.equal(other.geometry.getAttribute('instanceIndex'), other.instanceIndex);
 });
 
-check('capacity shrink removes truncated BVH instances and can regrow with morph data', () => {
+check('capacity shrink preserves active IDs and can regrow with morph data', () => {
   const object = mesh(8);
   object.addInstances(8);
   object.computeBVH();
   object.morphTexture = new DataTexture(new Float32Array(16).fill(0.25), 2, 8, RedFormat, FloatType);
-  object.resizeBuffers(2);
+  const matrices = object.matricesTexture._data;
+  const morphData = object.morphTexture.image.data;
+  assert.throws(() => object.resizeBuffers(2), /active instance IDs/);
+  assert.equal(object.capacity, 8);
+  assert.equal(object.instancesCount, 8);
+  assert.equal(object.bvh.nodes.length, 8);
+  assert.equal(object.matricesTexture._data, matrices);
+  assert.equal(object.morphTexture.image.data, morphData);
+  object.removeInstances(1, 2, 3, 4, 5, 6);
   assert.equal(object.instancesCount, 2);
+  assert.throws(() => object.resizeBuffers(2), /active instance IDs/);
+  assert.ok(object.bvh.nodes[7]);
+  object.removeInstances(7);
+  object.resizeBuffers(2);
+  assert.equal(object.instancesCount, 1);
   assert.equal(object.bvh.nodes.length, 2);
   assert.equal(object.morphTexture.image.data.length, 4);
-  object.addInstances(2, (entity, id) => entity.position.set(id, 0, 0));
+  assert.ok(Array.from(object.morphTexture.image.data).every((value) => value === 0.25));
+  object.addInstances(3, (entity, id) => entity.position.set(id, 0, 0));
   assert.equal(object.instancesCount, 4);
   assert.equal(object.getActiveAt(3), true);
   assert.ok(object.bvh.nodes[3]);
   assert.throws(() => object.resizeBuffers(-1), RangeError);
+});
+
+check('capacity shrink through LOD preserves shared data and rejects active ID loss', () => {
+  const object = mesh(8, true);
+  object.addInstances(8);
+  object.addLOD(new BoxGeometry(), new MeshBasicMaterial(), 10);
+  const child = object.LODinfo.objects[1];
+  assert.throws(() => child.resizeBuffers(2), /active instance IDs/);
+  assert.ok(object.LODinfo.objects.every((level) => level.capacity === 8));
+  object.removeInstances(2, 3, 4, 5, 6, 7);
+  child.resizeBuffers(2);
+  assert.equal(object.instancesCount, 2);
+  for (const level of object.LODinfo.objects) {
+    assert.equal(level.capacity, 2);
+    assert.equal(level.instanceIndex.array.length, 2);
+    assert.equal(level.availabilityArray, object.availabilityArray);
+    assert.equal(level.matricesTexture, object.matricesTexture);
+  }
+  object.addInstances(1);
+  assert.equal(object.instancesCount, 3);
+  assert.equal(object.getActiveAt(2), true);
 });
 
 check('benchmark comparison uses throughput and rejects missing or invalid results', () => {
@@ -250,7 +285,7 @@ check('benchmark comparison uses throughput and rejects missing or invalid resul
   assert.equal(compareResults([result('case', 115)], [result('case', 100)])[0].alert, false);
   assert.throws(() => compareResults([result('case', 100)], []));
   assert.throws(() => compareResults([result('case', 100)], [result('other', 100)]));
-  assert.throws(() => compareResults([result('case', 100)], [result('case', NaN)]));
+  assert.throws(() => compareResults([result('case', 100)], [result('case', Number.NaN)]));
 });
 
 console.log(`${passed} regression checks passed.`);
