@@ -26,7 +26,7 @@ npm run lint    # eslint --fix
 npm run bench   # CPU micro-benchmarks -> benchmarks/results.json
 ```
 
-There is **no test suite**: `npm test` is a placeholder, so do not claim tests pass. The only automated verification is `npm run lint` + `npm run build` (plus `npm run bench` for performance-sensitive changes); `examples/` are linted but not type-checked. Validate behavior with the examples and benchmarks.
+Run regression checks with `node node_modules/vite-node/dist/cli.mjs tests/regressions.ts`. `npm test` remains a placeholder. Verification includes the regression checks, `npm run lint`, `npm run build`, and `npm run bench` for performance-sensitive changes. Regression rendering checks use a minimal renderer stub; validate actual GPU rendering with the examples. `examples/` are linted but not type-checked.
 
 ## Conventions
 

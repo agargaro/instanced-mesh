@@ -1,4 +1,5 @@
 import { AttachedBindMode, BindMode, Box3, BufferAttribute, BufferGeometry, Camera, Color, ColorManagement, ColorRepresentation, DataTexture, DetachedBindMode, InstancedBufferAttribute, Material, Matrix4, Mesh, Object3D, Object3DEventMap, Scene, Skeleton, Sphere, TypedArray, Vector3, WebGLProgramParametersWithUniforms, WebGLRenderer } from 'three';
+import { getMorphInstanceVertexChunk } from '../shaders/ShaderChunkUtils.js';
 import { CustomSortCallback, OnFrustumEnterCallback } from './feature/FrustumCulling.js';
 import { Entity } from './feature/Instances.js';
 import { LODInfo } from './feature/LOD.js';
@@ -243,8 +244,7 @@ export class InstancedMesh2<
   // @ts-expect-error It's defined as a property, but is overridden as an accessor.
   public override get geometry(): TGeometry { return this._geometry; }
   public override set geometry(value: TGeometry) {
-    this._geometry = value;
-    this.patchGeometry(value);
+    this._geometry = this.patchGeometry(value);
   }
 
   /** @internal */
@@ -270,7 +270,6 @@ export class InstancedMesh2<
     this._capacity = capacity;
     this._parentLOD = LOD;
     this._useDistanceForLOD = useDistanceForLOD ?? true;
-    this._geometry = geometry;
     this.material = material;
     this._allowsEuler = allowsEuler ?? false;
     this._tempInstance = new InstancedEntity(this, -1, allowsEuler);
@@ -377,6 +376,16 @@ export class InstancedMesh2<
       return;
     }
 
+    let geometry = this._geometry;
+    const usedInstanceIndex = geometry.getAttribute('instanceIndex') as unknown as GLInstancedBufferAttribute; // TODO fix d.ts
+
+    if (usedInstanceIndex) {
+      console.warn('The geometry has been cloned because it was already used.');
+      geometry = geometry.clone();
+      geometry.deleteAttribute('instanceIndex');
+      this._geometry = geometry;
+    }
+
     const gl = this._renderer.getContext() as WebGL2RenderingContext;
     const capacity = this._capacity;
     const array = new Uint32Array(capacity);
@@ -386,7 +395,7 @@ export class InstancedMesh2<
     }
 
     this.instanceIndex = new GLInstancedBufferAttribute(gl, gl.UNSIGNED_INT, 1, 4, array);
-    this._geometry.setAttribute('instanceIndex', this.instanceIndex as unknown as BufferAttribute);
+    geometry.setAttribute('instanceIndex', this.instanceIndex as unknown as BufferAttribute);
   }
 
   protected initLastRenderInfo(): void {
@@ -421,11 +430,11 @@ export class InstancedMesh2<
     }
   }
 
-  protected patchGeometry(geometry: TGeometry): void {
+  protected patchGeometry(geometry: TGeometry): TGeometry {
     const instanceIndex = geometry.getAttribute('instanceIndex') as unknown as GLInstancedBufferAttribute; // TODO fix d.ts
 
     if (instanceIndex) {
-      if (instanceIndex === this.instanceIndex) return;
+      if (instanceIndex === this.instanceIndex) return geometry;
 
       console.warn('The geometry has been cloned because it was already used.');
       geometry = geometry.clone();
@@ -435,6 +444,8 @@ export class InstancedMesh2<
     if (this.instanceIndex) {
       geometry.setAttribute('instanceIndex', this.instanceIndex as unknown as BufferAttribute); // TODO fix d.ts
     }
+
+    return geometry;
   }
 
   protected _customProgramCacheKey = (): string => {
@@ -448,6 +459,10 @@ export class InstancedMesh2<
     shader.defines['USE_INSTANCING_INDIRECT'] = '';
 
     shader.uniforms.matricesTexture = { value: this.matricesTexture };
+
+    if (this.morphTexture) {
+      shader.vertexShader = shader.vertexShader.replace('#include <morphinstance_vertex>', getMorphInstanceVertexChunk());
+    }
 
     if (this.uniformsTexture) {
       shader.uniforms.uniformsTexture = { value: this.uniformsTexture };
@@ -870,6 +885,7 @@ export class InstancedMesh2<
    */
   public override dispose(): void {
     super.dispose();
+    // morphTexture disposed by super
 
     this.matricesTexture.dispose();
     this.colorsTexture?.dispose();

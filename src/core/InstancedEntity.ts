@@ -205,9 +205,8 @@ export class InstancedEntity {
 
     matricesTexture.enqueueUpdate(id);
 
-    const bvh = owner.bvh;
-    if (bvh && owner.autoUpdateBVH) {
-      bvh.move(id);
+    if (owner.bvh && owner.autoUpdateBVH) {
+      owner.bvh.move(id);
     }
   }
 

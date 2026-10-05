@@ -5,6 +5,8 @@ title: Know Issue
 ### Limitations
 
 - Works only with [`WebGLRenderer`](https://threejs.org/docs/#api/en/renderers/WebGLRenderer).
+- A single `WebGLRenderer` at a time is supported: the renderer properties override keeps its state at module level,
+  so the same material must not be rendered by two renderers.
 - A geometry **cannot be shared** between two `InstancedMesh2`: if reused, it is cloned automatically (an instance index
   attribute is added to it).
 - Morph target data (`morphTexture`) is a plain `DataTexture` and does not support

@@ -7,13 +7,13 @@ export default defineConfig(({ command }) => ({
   publicDir: command === 'build' ? false : 'public',
   resolve: {
     alias: {
-      '@three.ez/instanced-mesh': resolve(__dirname, 'src/index.ts')
+      '@three.ez/instanced-mesh': resolve(import.meta.dirname, 'src/index.ts')
     }
   },
   build: {
     sourcemap: true,
     lib: {
-      entry: resolve(__dirname, 'src/index.ts'),
+      entry: resolve(import.meta.dirname, 'src/index.ts'),
       fileName: 'build/index',
       formats: ['es', 'cjs']
     }

@@ -13,19 +13,35 @@ permissions:
 jobs:
   benchmark:
     name: CPU micro-benchmarks
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0
 
       - name: Use Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
-          node-version: 20.x
+          node-version: 24.x
           cache: npm
 
       - run: npm ci --ignore-scripts
+
+      - name: Check regressions
+        run: node node_modules/vite-node/dist/cli.mjs tests/regressions.ts
+
+      - name: Run baseline benchmarks on this runner
+        if: github.event_name == 'pull_request'
+        env:
+          BASE_REVISION: ${{ github.event.pull_request.base.sha }}
+          BENCH_TIME: 500
+        run: |
+          baseline_dir="$(mktemp -d "$RUNNER_TEMP/instanced-mesh-base.XXXXXX")"
+          git archive "$BASE_REVISION" | tar -x -C "$baseline_dir"
+          cp -R benchmarks/. "$baseline_dir/benchmarks/"
+          ln -s "$GITHUB_WORKSPACE/node_modules" "$baseline_dir/node_modules"
+          cd "$baseline_dir"
+          BENCH_OUTPUT="$GITHUB_WORKSPACE/benchmarks/before.json" node "$GITHUB_WORKSPACE/node_modules/vite-node/dist/cli.mjs" benchmarks/index.ts
 
       - name: Run benchmarks
         run: npm run bench
@@ -50,7 +66,7 @@ jobs:
           git checkout -
 
       - name: Summarize first benchmark run
-        if: steps.history.outputs.exists == 'false'
+        if: github.event_name == 'push' && steps.history.outputs.exists == 'false'
         run: |
           echo 'No baseline is available yet. The first push to master will initialize benchmark history.' >> "$GITHUB_STEP_SUMMARY"
           echo '```json' >> "$GITHUB_STEP_SUMMARY"
@@ -72,15 +88,6 @@ jobs:
           fail-on-alert: false
           summary-always: true
 
-      - name: Comment results on PR
-        uses: benchmark-action/github-action-benchmark@4322e5726e6334590d251fc4f92bec0efafc45dc
-        if: github.event_name == 'pull_request' && steps.history.outputs.exists == 'true'
-        with:
-          tool: customBiggerIsBetter
-          output-file-path: benchmarks/results.json
-          benchmark-data-dir-path: bench
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          comment-on-alert: ${{ github.event.pull_request.head.repo.full_name == github.repository }}
-          fail-on-alert: false
-          summary-always: true
-          alert-threshold: "115%"
+      - name: Compare PR against its base on this runner
+        if: github.event_name == 'pull_request'
+        run: node node_modules/vite-node/dist/cli.mjs --script benchmarks/compare-cli.ts

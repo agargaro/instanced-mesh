@@ -2,6 +2,7 @@ import { writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { Bench } from 'tinybench';
 import { registerBVHBenchmarks } from './core/bvh.bench.js';
+import { registerFrustumBenchmarks } from './core/frustum.bench.js';
 import { registerInstancesBenchmarks } from './core/instances.bench.js';
 import { registerMatricesBenchmarks } from './core/matrices.bench.js';
 import { registerSortingBenchmarks } from './core/sorting.bench.js';
@@ -22,11 +23,19 @@ const bench = new Bench({
 registerInstancesBenchmarks(bench);
 registerMatricesBenchmarks(bench);
 registerBVHBenchmarks(bench);
+registerFrustumBenchmarks(bench);
 registerSortingBenchmarks(bench);
 
 await bench.run();
 
 console.table(bench.table());
+
+for (const task of bench.tasks) {
+  const result = task.result as any;
+  if (result.state !== 'completed' || !Number.isFinite(result.throughput?.mean)) {
+    throw new Error('Benchmark failed: ' + task.name, { cause: result.error });
+  }
+}
 
 const results = bench.tasks
   .map((task) => ({ task, result: task.result as any }))

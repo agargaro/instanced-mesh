@@ -37,6 +37,10 @@ See [`BVHParams`](https://agargaro.github.io/instanced-mesh/api/interfaces/bvhpa
 `getBBoxFromBSphere` requires a geometry with the bounding sphere centered at the origin.
 :::
 
+### Clone and copy
+
+The BVH is **not copied** by `clone` and `copy`: the new mesh has `bvh` set to `null`. Call `computeBVH()` again on it if needed.
+
 ### Remove the BVH
 
 ```ts
