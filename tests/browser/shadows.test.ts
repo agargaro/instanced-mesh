@@ -96,7 +96,7 @@ test.each([false, true])('buffer growth preserves directional shadow LOD pixels 
       expect(image()).toEqual(baseline);
       for (const object of mesh.LODinfo.objects) {
         expect(object.capacity).toBe(capacity);
-        expect(object.instanceIndex.array.length).toBe(capacity);
+        expect(object.instanceIndex.array).toHaveLength(capacity);
         expect(object.matricesTexture).toBe(mesh.matricesTexture);
       }
     }

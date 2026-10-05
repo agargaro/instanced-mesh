@@ -283,7 +283,7 @@ test.each([0, 0.2])('BVH mutations preserve boxes and query membership against i
     mesh.perObjectFrustumCulled = true;
   }
   mesh.resizeBuffers(128);
-  expect(mesh.bvh.nodes.length).toBe(128);
+  expect(mesh.bvh.nodes).toHaveLength(128);
   mesh.computeBVH();
   mesh.performFrustumCulling(ctx.camera);
   expect(renderedIds(mesh).sort((a, b) => a - b)).toEqual(expectedVisible(mesh, ctx.camera, true));

@@ -40,7 +40,7 @@ test.each(modes)('growth preserves live data and GPU indices (lazy=$lazy, BVH=$b
     expect(mesh.getUniformAt(1, 'gain')).toBe(0.25);
     expect(mesh.getActiveAndVisibilityAt(0)).toBe(true);
     if (entities) expect(mesh.instances[0]).toBe(entity);
-    if (bvh) expect(mesh.bvh.nodes.length).toBe(capacity);
+    if (bvh) expect(mesh.bvh.nodes).toHaveLength(capacity);
     ctx.render();
     ctx.render();
     ctx.pixel(16, [128, 0, 0], 2);
@@ -119,7 +119,7 @@ test.each([false, true])('LOD child growth preserves every level index and share
     expect(levels.map(renderedIds)).toEqual([[0], [1], [2]]);
     for (const level of levels) {
       expect(level.capacity).toBe(capacity);
-      expect(level.instanceIndex.array.length).toBe(capacity);
+      expect(level.instanceIndex.array).toHaveLength(capacity);
       expect(level.matricesTexture).toBe(mesh.matricesTexture);
       expect(level.colorsTexture).toBe(mesh.colorsTexture);
       expect(level.uniformsTexture).toBe(mesh.uniformsTexture);

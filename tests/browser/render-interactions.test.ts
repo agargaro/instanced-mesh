@@ -67,6 +67,8 @@ test('opaque draws precede transparent draws regardless of renderOrder', () => {
   opaque.renderOrder = 100;
   transparent.renderOrder = -100;
   ctx.render();
+  expect(opaque.count).toBe(1);
+  expect(transparent.count).toBe(1);
   ctx.pixel(32, [128, 0, 128], 2);
 });
 

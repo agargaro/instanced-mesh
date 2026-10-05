@@ -29,8 +29,8 @@ jobs:
         node-version: 24.x
         cache: 'npm'
     - run: npm ci
-    - run: npx playwright install --with-deps chromium
-    - run: npx eslint .
+    - run: node node_modules/playwright/cli.js install --with-deps chromium
+    - run: node node_modules/eslint/bin/eslint.js .
     - run: npm run build
     - run: npm run test:types
     - run: npm run test:coverage

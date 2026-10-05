@@ -67,7 +67,7 @@ export function createTestScene(): TestScene {
 }
 
 export function expectNumbers(actual: ArrayLike<number>, expected: ArrayLike<number>, precision = 5): void {
-  expect(actual.length).toBe(expected.length);
+  expect(actual).toHaveLength(expected.length);
   for (let i = 0; i < actual.length; i++) expect(actual[i]).toBeCloseTo(expected[i], precision);
 }
 

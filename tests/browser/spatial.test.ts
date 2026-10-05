@@ -235,11 +235,11 @@ test('BVH insertion after creation and growth initializes nodes for reused IDs',
   mesh.addInstances(1);
   expect(mesh.bvh.nodes[1].object).toBe(1);
   mesh.addInstances(5, (entity, id) => entity.position.set(id, 0, 0));
-  expect(mesh.bvh.nodes.length).toBe(mesh.capacity);
+  expect(mesh.bvh.nodes).toHaveLength(mesh.capacity);
   expect(mesh.bvh.nodes[6].object).toBe(6);
   mesh.clearInstances();
   mesh.resizeBuffers(1);
-  expect(mesh.bvh.nodes.length).toBe(1);
+  expect(mesh.bvh.nodes).toHaveLength(1);
 });
 
 test.each([false, true].flatMap((bvh) => [FrontSide, BackSide, DoubleSide].map((side) => ({ bvh, side }))))('group raycasting respects draw ranges and material sides (BVH=$bvh, side=$side)', ({ bvh, side }) => {
@@ -287,7 +287,7 @@ test.fails.each([false, true])('raycasting transformed meshes returns world-spac
   const original = ray.ray;
   const expected = ray.intersectObject(native);
   const actual = ray.intersectObject(mesh);
-  expect(actual.length).toBe(expected.length);
+  expect(actual).toHaveLength(expected.length);
   expect(actual.length).toBeGreaterThan(0);
   expect(ray.ray).toBe(original);
   for (let i = 0; i < expected.length; i++) {

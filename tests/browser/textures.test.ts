@@ -133,6 +133,7 @@ test('combines vertex colors with per-instance colors on the GPU', () => {
   mesh.addInstances(1);
   mesh.setColorAt(0, new Color(0x00ff00));
   ctx.render();
+  expect(mesh.count).toBe(1);
   ctx.pixel(32, [0, 255, 0]);
 });
 
@@ -142,7 +143,7 @@ test.each([Float32Array, Uint32Array, Int32Array])('creates texture formats and 
     const info = getSquareTextureInfo(arrayType, channels, 1, 5);
     expect(info.size).toBe(3);
     expect(info.array).toBeInstanceOf(arrayType);
-    expect(info.array.length).toBe(9 * (channels === 3 ? 4 : channels));
+    expect(info.array).toHaveLength(9 * (channels === 3 ? 4 : channels));
     const texture = new SquareDataTexture(arrayType, channels, 1, 5);
     texture._data[0] = 42;
     const original = texture._data;
