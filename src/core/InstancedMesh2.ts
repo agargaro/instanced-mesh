@@ -5,6 +5,7 @@ import { Entity } from './feature/Instances.js';
 import { LODInfo } from './feature/LOD.js';
 import { InstancedEntity } from './InstancedEntity.js';
 import { BVHParams, InstancedMeshBVH } from './InstancedMeshBVH.js';
+import { activeAndVisibleMask, activeMask, visibleMask } from './utils/Availability.js';
 import { GLInstancedBufferAttribute } from './utils/GLInstancedBufferAttribute.js';
 import { patchProperties, unpatchProperties } from './utils/PropertiesOverride.js';
 import { SquareDataTexture } from './utils/SquareDataTexture.js';
@@ -666,7 +667,7 @@ export class InstancedMesh2<
    */
   public setVisibilityAt(id: number, visible: boolean): void {
     const availabilityArray = this.availabilityArray;
-    availabilityArray[id] = visible ? availabilityArray[id] | _visibleMask : availabilityArray[id] & ~_visibleMask;
+    availabilityArray[id] = visible ? availabilityArray[id] | visibleMask : availabilityArray[id] & ~visibleMask;
     this._indexArrayNeedsUpdate = true;
   }
 
@@ -676,7 +677,7 @@ export class InstancedMesh2<
    * @returns Whether the instance is visible.
    */
   public getVisibilityAt(id: number): boolean {
-    return (this.availabilityArray[id] & _visibleMask) !== 0;
+    return (this.availabilityArray[id] & visibleMask) !== 0;
   }
 
   /**
@@ -686,7 +687,7 @@ export class InstancedMesh2<
    */
   public setActiveAt(id: number, active: boolean): void {
     const availabilityArray = this.availabilityArray;
-    availabilityArray[id] = active ? availabilityArray[id] | _activeMask : availabilityArray[id] & ~_activeMask;
+    availabilityArray[id] = active ? availabilityArray[id] | activeMask : availabilityArray[id] & ~activeMask;
     this._indexArrayNeedsUpdate = true;
   }
 
@@ -696,7 +697,7 @@ export class InstancedMesh2<
    * @returns Whether the instance is active (not deleted).
    */
   public getActiveAt(id: number): boolean {
-    return (this.availabilityArray[id] & _activeMask) !== 0;
+    return (this.availabilityArray[id] & activeMask) !== 0;
   }
 
   /**
@@ -705,7 +706,7 @@ export class InstancedMesh2<
    * @returns Whether the instance is visible and active.
    */
   public getActiveAndVisibilityAt(id: number): boolean {
-    return (this.availabilityArray[id] & _bothMask) === _bothMask;
+    return (this.availabilityArray[id] & activeAndVisibleMask) === activeAndVisibleMask;
   }
 
   /**
@@ -714,7 +715,7 @@ export class InstancedMesh2<
    * @param value Whether the instance is active and active (not deleted).
    */
   public setActiveAndVisibilityAt(id: number, value: boolean): void {
-    this.availabilityArray[id] = value ? _bothMask : 0;
+    this.availabilityArray[id] = value ? activeAndVisibleMask : 0;
     this._indexArrayNeedsUpdate = true;
   }
 
@@ -943,9 +944,6 @@ export class InstancedMesh2<
 }
 
 const _defaultCapacity = 1000;
-const _visibleMask = 1;
-const _activeMask = 2;
-const _bothMask = 3;
 const _box3 = new Box3();
 const _sphere = new Sphere();
 const _tempMat4 = new Matrix4();
