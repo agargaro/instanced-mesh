@@ -24,11 +24,6 @@ InstancedMesh2.prototype.resizeBuffers = function (capacity: number): InstancedM
 
   if (!Number.isInteger(capacity) || capacity < 0) throw new RangeError('Capacity must be a non-negative integer.');
 
-  if (capacity < this._instancesArrayCount) {
-    for (let i = this._instancesArrayCount - 1; i >= capacity; i--) this.removeInstances(i);
-  }
-  if (capacity < this._capacity) this._freeIds = this._freeIds.filter((id) => id < capacity);
-
   const oldCapacity = this._capacity;
   this._capacity = capacity;
   const minCapacity = Math.min(capacity, oldCapacity);
@@ -39,13 +34,9 @@ InstancedMesh2.prototype.resizeBuffers = function (capacity: number): InstancedM
     this.instanceIndex.array = indexArray;
   }
 
-  const availabilityArray = this.availabilityArray;
-  availabilityArray.length = capacity * 2;
-
   if (this.LODinfo) {
     for (const obj of this.LODinfo.objects) {
-      obj.availabilityArray = availabilityArray;
-      obj._capacity = capacity;
+      obj._capacity = capacity; // TODO this can be a shared getter like other props?
 
       if (obj.instanceIndex) {
         const indexArray = new Uint32Array(capacity);
@@ -54,6 +45,8 @@ InstancedMesh2.prototype.resizeBuffers = function (capacity: number): InstancedM
       }
     }
   }
+
+  this.availabilityArray.length = capacity * 2;
 
   this.matricesTexture.resize(capacity);
 

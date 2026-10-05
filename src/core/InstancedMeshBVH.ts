@@ -209,6 +209,7 @@ export class InstancedMeshBVH {
 
   /** @internal */
   public resizeNodes(capacity: number): void {
+    // TODO capire come gestire le istanze perse, forse è meglio dare errore
     const nodes = this.nodes;
     const length = nodes.length;
     nodes.length = capacity;
