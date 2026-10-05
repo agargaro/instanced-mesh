@@ -9,7 +9,15 @@ ShaderChunk['instanced_pars_vertex'] = instanced_pars_vertex;
 ShaderChunk['instanced_color_pars_vertex'] = instanced_color_pars_vertex;
 ShaderChunk['instanced_vertex'] = instanced_vertex;
 ShaderChunk['instanced_color_vertex'] = instanced_color_vertex;
-ShaderChunk['instanced_skinning_pars_vertex'] = instanced_skinning_pars_vertex; // TODO capire se lo vogliamo
+ShaderChunk.skinning_pars_vertex = instanced_skinning_pars_vertex;
+
+ShaderChunk.project_vertex = patchShader(ShaderChunk.project_vertex);
+ShaderChunk.worldpos_vertex = patchShader(ShaderChunk.worldpos_vertex);
+ShaderChunk.defaultnormal_vertex = patchShader(ShaderChunk.defaultnormal_vertex);
+
+ShaderChunk.batching_pars_vertex = ShaderChunk.batching_pars_vertex.concat('\n#include <instanced_pars_vertex>');
+ShaderChunk.color_pars_vertex = ShaderChunk.color_pars_vertex.concat('\n#include <instanced_color_pars_vertex>');
+ShaderChunk['batching_vertex'] = ShaderChunk['batching_vertex'].concat('\n#include <instanced_vertex>');
 
 /**
  * Patches the given shader string by adding a condition for indirect instancing support.
@@ -20,15 +28,6 @@ export function patchShader(shader: string): string {
   return shader.replace('#ifdef USE_INSTANCING', '#if defined USE_INSTANCING || defined USE_INSTANCING_INDIRECT');
 }
 
-ShaderChunk.project_vertex = patchShader(ShaderChunk.project_vertex);
-ShaderChunk.worldpos_vertex = patchShader(ShaderChunk.worldpos_vertex);
-ShaderChunk.defaultnormal_vertex = patchShader(ShaderChunk.defaultnormal_vertex);
-
-ShaderChunk.batching_pars_vertex = ShaderChunk.batching_pars_vertex.concat('\n#include <instanced_pars_vertex>');
-ShaderChunk.color_pars_vertex = ShaderChunk.color_pars_vertex.concat('\n#include <instanced_color_pars_vertex>');
-ShaderChunk['batching_vertex'] = ShaderChunk['batching_vertex'].concat('\n#include <instanced_vertex>');
-
-ShaderChunk.skinning_pars_vertex = instanced_skinning_pars_vertex;
 
 // use 'patchShader' function to make these examples work
 // examples/jsm/modifiers/CurveModifier.js
