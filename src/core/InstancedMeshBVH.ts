@@ -133,6 +133,10 @@ export class InstancedMeshBVH {
     const objects = new Uint32Array(count);
     let index = 0;
 
+    const min = this.geoBoundingBox.min;
+    const max = this.geoBoundingBox.max;
+    this._geoBoxCenter.set([(min.x + max.x) * 0.5, (min.y + max.y) * 0.5, (min.z + max.z) * 0.5]);
+    this._geoBoxExtents.set([(max.x - min.x) * 0.5, (max.y - min.y) * 0.5, (max.z - min.z) * 0.5]);
     this.clear();
 
     for (let i = 0; i < instancesArrayCount; i++) {
@@ -182,27 +186,6 @@ export class InstancedMeshBVH {
     if (!node) return;
     this.getBox(id, node.box as Float32Array); // this also updates box
     this.bvh.move(node, this._margin);
-  }
-
-  /** @internal */
-  public moveByDelta(id: number, dx: number, dy: number, dz: number): void {
-    if (this._margin > 0) {
-      this.move(id);
-      return;
-    }
-
-    const node = this.nodes[id];
-    if (!node) return;
-
-    const box = node.box as Float32Array;
-    box[0] += dx;
-    box[1] += dx;
-    box[2] += dy;
-    box[3] += dy;
-    box[4] += dz;
-    box[5] += dz;
-
-    this.bvh.move(node, 0);
   }
 
   /**

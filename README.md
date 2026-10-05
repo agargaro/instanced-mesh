@@ -146,7 +146,7 @@ Setting a margin makes BVH updating faster, but may make raycasting and frustum 
 myInstancedMesh.computeBVH({ margin: 0 }); // margin is optional
 ```
 
-The BVH is **not copied** by `clone` and `copy`: the new mesh has `bvh` set to `null`. Call `computeBVH` again on it if needed.
+The BVH is **not copied** by `clone` and `copy`: the new mesh has `bvh` set to `null`. Call `computeBVH` again on it if needed. Instance textures and render indices are copied independently. Recursive copies rebuild render and shadow LOD levels around the new mesh; skeletons and materials remain shared.
 
 ### Sorting
 

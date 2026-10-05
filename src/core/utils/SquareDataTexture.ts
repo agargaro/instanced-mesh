@@ -469,7 +469,7 @@ export class SquareDataTexture extends DataTexture {
     this._pixelsPerInstance = source._pixelsPerInstance;
     this._elementsPerRow = source._elementsPerRow;
     this._stride = source._stride;
-    this._rowToUpdate = source._rowToUpdate.slice();
+    this._rowToUpdate = new Array(source.image.height).fill(true);
     this._uniformMap = new Map(source._uniformMap);
     this._fetchUniformsInFragmentShader = source._fetchUniformsInFragmentShader;
 
@@ -477,6 +477,10 @@ export class SquareDataTexture extends DataTexture {
     data.set(source._data);
     this._data = data;
     this.source = new TextureSource({ data, width: source.image.width, height: source.image.height });
+    this._utils = null;
+    this._needsUpdate = true;
+    this._lastWidth = -1;
+    this.needsUpdate = true;
 
     return this;
   }

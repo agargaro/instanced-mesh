@@ -38,6 +38,18 @@ export function registerBVHBenchmarks(bench: Bench): void {
     }
   });
 
+  bench.add('bvh/updateInstancesPosition (move)', () => {
+    mesh.updateInstancesPosition((entity, index) => {
+      entity.position.set(index % 128 + 0.1, (index * 7) % 128 + 0.2, (index * 13) % 128 + 0.3);
+    });
+  }, {
+    beforeEach: () => {
+      mesh = createMesh(COUNT, false);
+      seedInstances(mesh);
+      mesh.computeBVH();
+    }
+  });
+
   bench.add('bvh/setMatrixAt (move)', () => {
     for (let i = 0; i < COUNT; i++) {
       _position.set(i % 128, (i * 7) % 128, (i * 13) % 128);

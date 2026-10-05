@@ -1,11 +1,10 @@
-import { AttachedBindMode, BindMode, Box3, BufferAttribute, BufferGeometry, Camera, Color, ColorManagement, ColorRepresentation, DataTexture, DetachedBindMode, InstancedBufferAttribute, Material, Matrix4, Mesh, Object3D, Object3DEventMap, Scene, Skeleton, Sphere, TypedArray, Vector3, WebGLProgramParametersWithUniforms, WebGLRenderer } from 'three';
+import { AttachedBindMode, BindMode, Box3, BufferAttribute, BufferGeometry, Camera, Color, ColorManagement, ColorRepresentation, DataTexture, DetachedBindMode, InstancedBufferAttribute, Material, Matrix4, Mesh, Object3D, Object3DEventMap, Scene, Skeleton, Sphere, TextureSource, TypedArray, Vector3, WebGLProgramParametersWithUniforms, WebGLRenderer } from 'three';
 import { getMorphInstanceVertexChunk } from '../shaders/ShaderChunkUtils.js';
 import { CustomSortCallback, OnFrustumEnterCallback } from './feature/FrustumCulling.js';
 import { Entity } from './feature/Instances.js';
 import { LODInfo } from './feature/LOD.js';
 import { InstancedEntity } from './InstancedEntity.js';
 import { BVHParams, InstancedMeshBVH } from './InstancedMeshBVH.js';
-import { activeAndVisibleMask, activeMask, visibleMask } from './utils/Availability.js';
 import { GLInstancedBufferAttribute } from './utils/GLInstancedBufferAttribute.js';
 import { patchProperties, unpatchProperties } from './utils/PropertiesOverride.js';
 import { SquareDataTexture } from './utils/SquareDataTexture.js';
@@ -144,10 +143,10 @@ export class InstancedMesh2<
    */
   public raycastOnlyFrustum = false;
   /**
-   * Array storing visibility and availability flags for instances, one element per instance.
-   * Bit 0 is the visibility flag, bit 1 is the availability (active) flag.
+   * Array storing visibility and availability for instances.
+   * [visible0, active0, visible1, active1, ...]
    */
-  public availabilityArray: Uint8Array;
+  public availabilityArray: boolean[];
   /**
    * Contains data for managing LOD, allowing different levels of detail for rendering and shadow casting.
    */
@@ -204,6 +203,7 @@ export class InstancedMesh2<
   protected _definesBase: { [key: string]: any } = null;
   protected _freeIds: number[] = [];
   protected _createEntities: boolean;
+  protected _copiedInstanceIndex: Uint32Array = null;
 
   // HACK TO MAKE IT WORK WITHOUT UPDATE CORE
   /** @internal */ isInstancedMesh = true; // must be set to use instancing rendering
@@ -275,7 +275,7 @@ export class InstancedMesh2<
     this.material = material;
     this._allowsEuler = allowsEuler ?? false;
     this._tempInstance = new InstancedEntity(this, -1, allowsEuler);
-    this.availabilityArray = LOD?.availabilityArray ?? new Uint8Array(capacity);
+    this.availabilityArray = LOD?.availabilityArray ?? new Array(capacity * 2);
     this._createEntities = createEntities;
 
     this.initLastRenderInfo();
@@ -394,6 +394,11 @@ export class InstancedMesh2<
 
     for (let i = 0; i < capacity; i++) {
       array[i] = i;
+    }
+
+    if (this._copiedInstanceIndex) {
+      array.set(this._copiedInstanceIndex.subarray(0, capacity));
+      this._copiedInstanceIndex = null;
     }
 
     this.instanceIndex = new GLInstancedBufferAttribute(gl, gl.UNSIGNED_INT, 1, 4, array);
@@ -537,6 +542,7 @@ export class InstancedMesh2<
 
   /**
    * Sets the local transformation matrix for a specific instance.
+   * @remarks The matrix must be affine: projective transforms are not supported.
    * @param id The index of the instance.
    * @param matrix A `Matrix4` representing the local transformation to apply to the instance.
    */
@@ -666,8 +672,7 @@ export class InstancedMesh2<
    * @param visible Whether the instance should be visible.
    */
   public setVisibilityAt(id: number, visible: boolean): void {
-    const availabilityArray = this.availabilityArray;
-    availabilityArray[id] = visible ? availabilityArray[id] | visibleMask : availabilityArray[id] & ~visibleMask;
+    this.availabilityArray[id * 2] = visible;
     this._indexArrayNeedsUpdate = true;
   }
 
@@ -677,7 +682,7 @@ export class InstancedMesh2<
    * @returns Whether the instance is visible.
    */
   public getVisibilityAt(id: number): boolean {
-    return (this.availabilityArray[id] & visibleMask) !== 0;
+    return this.availabilityArray[id * 2];
   }
 
   /**
@@ -686,8 +691,7 @@ export class InstancedMesh2<
    * @param active Whether the instance is active (not deleted).
    */
   public setActiveAt(id: number, active: boolean): void {
-    const availabilityArray = this.availabilityArray;
-    availabilityArray[id] = active ? availabilityArray[id] | activeMask : availabilityArray[id] & ~activeMask;
+    this.availabilityArray[id * 2 + 1] = active;
     this._indexArrayNeedsUpdate = true;
   }
 
@@ -697,7 +701,7 @@ export class InstancedMesh2<
    * @returns Whether the instance is active (not deleted).
    */
   public getActiveAt(id: number): boolean {
-    return (this.availabilityArray[id] & activeMask) !== 0;
+    return this.availabilityArray[id * 2 + 1];
   }
 
   /**
@@ -706,7 +710,9 @@ export class InstancedMesh2<
    * @returns Whether the instance is visible and active.
    */
   public getActiveAndVisibilityAt(id: number): boolean {
-    return (this.availabilityArray[id] & activeAndVisibleMask) === activeAndVisibleMask;
+    const offset = id * 2;
+    const availabilityArray = this.availabilityArray;
+    return availabilityArray[offset] && availabilityArray[offset + 1];
   }
 
   /**
@@ -715,7 +721,10 @@ export class InstancedMesh2<
    * @param value Whether the instance is active and active (not deleted).
    */
   public setActiveAndVisibilityAt(id: number, value: boolean): void {
-    this.availabilityArray[id] = value ? activeAndVisibleMask : 0;
+    const offset = id * 2;
+    const availabilityArray = this.availabilityArray;
+    availabilityArray[offset] = value;
+    availabilityArray[offset + 1] = value;
     this._indexArrayNeedsUpdate = true;
   }
 
@@ -855,7 +864,11 @@ export class InstancedMesh2<
    * @returns The current `InstancedMesh2` instance.
    */
   public override copy(source: InstancedMesh2, recursive?: boolean): this {
-    super.copy(source, recursive);
+    if (source === this) return this;
+
+    this.clearCopiedLOD();
+    super.copy(source, false);
+    this.initLastRenderInfo();
 
     this.count = source.count;
     this._instancesCount = source._instancesCount;
@@ -868,12 +881,39 @@ export class InstancedMesh2<
     this.raycastOnlyFrustum = source.raycastOnlyFrustum;
     this.perObjectFrustumCulled = source.perObjectFrustumCulled;
     this.sortObjects = source.sortObjects;
+    this.customSort = source.customSort;
+    this.onFrustumEnter = source.onFrustumEnter;
+    this.skeleton = source.skeleton;
+    this.bindMode = source.bindMode;
+    this.bindMatrix = source.bindMatrix?.clone() ?? null;
+    this.bindMatrixInverse = source.bindMatrixInverse?.clone() ?? null;
 
     this.availabilityArray = source.availabilityArray.slice();
     this._freeIds = source._freeIds.slice();
     this._indexArrayNeedsUpdate = true;
     this.bvh = null;
 
+    this.copyTextures(source);
+
+    this.copyInstanceIndex(source);
+    this.copyEntities();
+    if (recursive !== false) this.copyChildren(source);
+
+    return this;
+  }
+
+  /** @internal */
+  protected clearCopiedLOD(): void {
+    if (this.LODinfo) {
+      for (const object of this.LODinfo.objects) {
+        if (object !== this) this.remove(object);
+      }
+    }
+    this.LODinfo = null;
+  }
+
+  /** @internal */
+  protected copyTextures(source: InstancedMesh2): void {
     this.boundingBox = source.boundingBox === null ? null : source.boundingBox.clone();
     this.boundingSphere = source.boundingSphere === null ? null : source.boundingSphere.clone();
 
@@ -885,15 +925,29 @@ export class InstancedMesh2<
     this.morphTexture = source.morphTexture === null ? null : source.morphTexture.clone();
 
     if (this.morphTexture !== null) {
-      this.morphTexture.image.data = (this.morphTexture.image.data as TypedArray).slice();
+      const image = source.morphTexture.image;
+      this.morphTexture.source = new TextureSource({ ...image, data: (image.data as TypedArray).slice() });
+      this.morphTexture.needsUpdate = true;
     }
+  }
 
-    if (this.instanceIndex && this.instanceIndex.array.length !== this._capacity) {
-      const indexArray = new Uint32Array(this._capacity);
-      indexArray.set(this.instanceIndex.array.subarray(0, Math.min(this.instanceIndex.array.length, this._capacity)));
-      this.instanceIndex.array = indexArray;
+  /** @internal */
+  protected copyInstanceIndex(source: InstancedMesh2): void {
+    const sourceArray = source.instanceIndex?.array ?? source._copiedInstanceIndex;
+    const array = new Uint32Array(this._capacity);
+    this._copiedInstanceIndex = null;
+    if (sourceArray) array.set(sourceArray.subarray(0, this._capacity));
+
+    if (this.instanceIndex) {
+      this.instanceIndex.array = array;
+      this.instanceIndex._needsUpdate = true;
+    } else if (sourceArray) {
+      this._copiedInstanceIndex = array;
     }
+  }
 
+  /** @internal */
+  protected copyEntities(): void {
     if (this._createEntities) {
       this.createEntities(0);
 
@@ -909,10 +963,42 @@ export class InstancedMesh2<
         _tempMat4.decompose(instance.position, instance.quaternion, instance.scale);
       }
     }
+  }
 
-    // TODO copies and handle LOD?
+  /** @internal */
+  protected copyChildren(source: InstancedMesh2): void {
+    const info = source.LODinfo;
+    const objects = new Map<InstancedMesh2, InstancedMesh2>([[source, this]]);
 
-    return this;
+    if (info) {
+      for (const object of info.objects) {
+        if (object === source) continue;
+        const copy = new InstancedMesh2(object.geometry, object.material, { capacity: this._capacity, renderer: this._renderer }, this);
+        copy.copy(object, false);
+        copy.availabilityArray = this.availabilityArray;
+        this.patchLevel(copy);
+        objects.set(object, copy);
+        this.add(copy);
+      }
+
+      const copyRenderList = (list: LODInfo['render']): LODInfo['render'] => list === null
+        ? null
+        : {
+            levels: list.levels.map((level) => ({ ...level, object: objects.get(level.object) })),
+            count: list.count.slice()
+          };
+      this.LODinfo = {
+        objects: info.objects.map((object) => objects.get(object)) as InstancedMesh2<TData>[],
+        render: copyRenderList(info.render) as LODInfo<TData>['render'],
+        shadowRender: copyRenderList(info.shadowRender) as LODInfo<TData>['shadowRender']
+      };
+    }
+
+    for (const child of source.children) {
+      const lodCopy = objects.get(child as InstancedMesh2);
+      if (lodCopy) lodCopy.copyChildren(child as InstancedMesh2);
+      else this.add(child.clone());
+    }
   }
 
   /**

@@ -17,6 +17,18 @@ declare module '../InstancedMesh2.js' {
 }
 
 InstancedMesh2.prototype.resizeBuffers = function (capacity: number): InstancedMesh2 {
+  if (this._parentLOD) {
+    this._parentLOD.resizeBuffers(capacity);
+    return this;
+  }
+
+  if (!Number.isInteger(capacity) || capacity < 0) throw new RangeError('Capacity must be a non-negative integer.');
+
+  if (capacity < this._instancesArrayCount) {
+    for (let i = this._instancesArrayCount - 1; i >= capacity; i--) this.removeInstances(i);
+  }
+  if (capacity < this._capacity) this._freeIds = this._freeIds.filter((id) => id < capacity);
+
   const oldCapacity = this._capacity;
   this._capacity = capacity;
   const minCapacity = Math.min(capacity, oldCapacity);
@@ -27,9 +39,8 @@ InstancedMesh2.prototype.resizeBuffers = function (capacity: number): InstancedM
     this.instanceIndex.array = indexArray;
   }
 
-  const availabilityArray = new Uint8Array(capacity);
-  availabilityArray.set(this.availabilityArray.subarray(0, Math.min(this.availabilityArray.length, capacity)));
-  this.availabilityArray = availabilityArray;
+  const availabilityArray = this.availabilityArray;
+  availabilityArray.length = capacity * 2;
 
   if (this.LODinfo) {
     for (const obj of this.LODinfo.objects) {
@@ -41,10 +52,6 @@ InstancedMesh2.prototype.resizeBuffers = function (capacity: number): InstancedM
         indexArray.set(new Uint32Array(obj.instanceIndex.array.buffer, 0, minCapacity)); // safely copy TODO method
         obj.instanceIndex.array = indexArray;
       }
-    }
-  } else if (this._parentLOD?.LODinfo) {
-    for (const obj of this._parentLOD.LODinfo.objects) {
-      obj.availabilityArray = availabilityArray;
     }
   }
 
@@ -59,13 +66,15 @@ InstancedMesh2.prototype.resizeBuffers = function (capacity: number): InstancedM
 
   if (this.morphTexture) { // test it
     const oldArray = this.morphTexture.image.data as TypedArray; // TODO check if they fix d.ts
-    const size = oldArray.length / oldCapacity;
+    const size = this.morphTexture.image.width;
     this.morphTexture.dispose();
     this.morphTexture = new DataTexture(new Float32Array(size * capacity), size, capacity, RedFormat, FloatType);
-    (this.morphTexture.image.data as TypedArray).set(oldArray); // FIX if reduce
+    (this.morphTexture.image.data as TypedArray).set(oldArray.subarray(0, size * capacity));
+    this.morphTexture.needsUpdate = true;
   }
 
   this.uniformsTexture?.resize(capacity);
+  this.boneTexture?.resize(capacity);
 
   this.bvh?.resizeNodes(capacity);
 

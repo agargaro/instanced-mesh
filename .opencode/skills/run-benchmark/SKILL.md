@@ -14,9 +14,10 @@ The suite runs in Node via `vite-node` (so the library source, including `.glsl`
 - `instances/addInstances`, `removeInstances`, `updateInstances`, `updateInstancesPosition` (with/without entities, with capacity growth);
 - `matrices/setMatrixAt`, `getMatrixAt`, `getPositionAt`, `resizeBuffers`;
 - `bvh/computeBVH`, BVH insert/delete/move;
-- `sorting/createRadixSort`.
+- `sorting/createRadixSort`;
+- CPU-only linear frustum culling and render-index updates using an index-array fixture.
 
-**Not benchmarked here:** anything that needs a WebGL renderer or a frustum-culled index array — `raycast`, `performFrustumCulling`, draw/skinning/LOD. These depend on `instanceIndex`, which is created only during a render, and CI runners have no GPU (software rendering is not representative). Validate those manually in `examples/` on fixed hardware; do not gate them in CI.
+**Not benchmarked here:** GPU rendering, texture uploads, draw/skinning/LOD and browser frame rates. CPU frustum benchmarks use an index-array fixture and do not represent rendering performance. Validate GPU behavior manually in `examples/` on fixed hardware.
 
 ## Run
 
@@ -70,8 +71,9 @@ Rules:
 
 `.github/workflows/benchmark.yml` runs `npm run bench` on every PR and on `master`, then `benchmark-action/github-action-benchmark`:
 
+- PRs compare their base revision and current code on the same runner with the same dependencies and benchmark suite;
 - baseline history is stored on the `gh-pages` branch under `bench/` (updated on push to `master`);
-- `alert-threshold: 115%` — a >15% regression posts a comment on the PR;
-- `fail-on-alert: false` — it warns, it does not fail the build yet. Tighten this only once the suite proves stable.
+- a baseline/current throughput ratio above 1.15 emits a warning in the PR check summary;
+- performance alerts warn without failing; benchmark errors or missing results fail the job.
 
 If a benchmark is inherently flaky, fix the fixture or raise the threshold rather than disabling the gate.

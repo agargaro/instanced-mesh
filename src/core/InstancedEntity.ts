@@ -199,27 +199,14 @@ export class InstancedEntity {
     const id = this.id;
     const offset = id * 16;
 
-    const bvh = owner.bvh;
-    const updateBVH = bvh && owner.autoUpdateBVH;
-
-    let oldX = 0;
-    let oldY = 0;
-    let oldZ = 0;
-
-    if (updateBVH) {
-      oldX = te[offset + 12];
-      oldY = te[offset + 13];
-      oldZ = te[offset + 14];
-    }
-
     te[offset + 12] = position.x;
     te[offset + 13] = position.y;
     te[offset + 14] = position.z;
 
     matricesTexture.enqueueUpdate(id);
 
-    if (updateBVH) {
-      bvh.moveByDelta(id, position.x - oldX, position.y - oldY, position.z - oldZ);
+    if (owner.bvh && owner.autoUpdateBVH) {
+      owner.bvh.move(id);
     }
   }
 

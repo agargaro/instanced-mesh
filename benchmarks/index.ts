@@ -30,6 +30,13 @@ await bench.run();
 
 console.table(bench.table());
 
+for (const task of bench.tasks) {
+  const result = task.result as any;
+  if (result.state !== 'completed' || !Number.isFinite(result.throughput?.mean)) {
+    throw new Error('Benchmark failed: ' + task.name, { cause: result.error });
+  }
+}
+
 const results = bench.tasks
   .map((task) => ({ task, result: task.result as any }))
   .filter(({ result }) => typeof result?.throughput?.mean === 'number')

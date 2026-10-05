@@ -2,7 +2,6 @@ import { BVHNode } from 'bvh.js';
 import { Camera, Frustum, Material, Matrix4, OrthographicCamera, PerspectiveCamera, Sphere, Vector3 } from 'three';
 import { sortOpaque, sortTransparent } from '../../utils/SortingUtils.js';
 import { InstancedMesh2 } from '../InstancedMesh2.js';
-import { activeAndVisibleMask } from '../utils/Availability.js';
 import { InstancedRenderItem, InstancedRenderList } from '../utils/InstancedRenderList.js';
 import { LODRenderList } from './LOD.js';
 
@@ -155,7 +154,7 @@ InstancedMesh2.prototype.updateIndexArray = function () {
   let count = 0;
 
   for (let i = 0; i < instancesArrayCount; i++) {
-    if (availabilityArray[i] === activeAndVisibleMask) {
+    if (availabilityArray[i * 2] && availabilityArray[i * 2 + 1]) {
       array[count++] = i;
     }
   }
@@ -169,7 +168,7 @@ InstancedMesh2.prototype.updateRenderList = function () {
   const instancesArrayCount = this._instancesArrayCount;
 
   for (let i = 0; i < instancesArrayCount; i++) {
-    if (availabilityArray[i] === activeAndVisibleMask) {
+    if (availabilityArray[i * 2] && availabilityArray[i * 2 + 1]) {
       const depth = this.getPositionAt(i).sub(_cameraPos).dot(_forward);
       _renderList.push(depth, i);
     }
@@ -211,14 +210,13 @@ InstancedMesh2.prototype.linearCulling = function (camera: Camera) {
   const instancesArrayCount = this._instancesArrayCount;
   const geometryCentered = center.x === 0 && center.y === 0 && center.z === 0;
   const sortObjects = this._sortObjects;
-  const availabilityArray = this.availabilityArray;
   const onFrustumEnter = this.onFrustumEnter;
   let count = 0;
 
   _frustum.setFromProjectionMatrix(_projScreenMatrix);
 
   for (let i = 0; i < instancesArrayCount; i++) {
-    if (availabilityArray[i] !== activeAndVisibleMask) continue;
+    if (!this.getActiveAndVisibilityAt(i)) continue;
 
     if (geometryCentered) {
       const maxScale = this.getPositionAndMaxScaleOnAxisAt(i, _sphere.center);
@@ -368,7 +366,6 @@ InstancedMesh2.prototype.linearCullingLOD = function (LODrenderList: LODRenderLi
   const center = bSphere.center;
   const instancesArrayCount = this._instancesArrayCount;
   const geometryCentered = center.x === 0 && center.y === 0 && center.z === 0;
-  const availabilityArray = this.availabilityArray;
   const onFrustumEnter = this.onFrustumEnter;
 
   _frustum.setFromProjectionMatrix(_projScreenMatrix);
@@ -380,7 +377,7 @@ InstancedMesh2.prototype.linearCullingLOD = function (LODrenderList: LODRenderLi
   const useDistanceForLOD = this._useDistanceForLOD;
 
   for (let i = 0; i < instancesArrayCount; i++) {
-    if (availabilityArray[i] !== activeAndVisibleMask) continue;
+    if (!this.getActiveAndVisibilityAt(i)) continue;
 
     if (geometryCentered) {
       const maxScale = this.getPositionAndMaxScaleOnAxisAt(i, _sphere.center);
