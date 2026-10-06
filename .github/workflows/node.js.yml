@@ -29,6 +29,11 @@ jobs:
         node-version: 24.x
         cache: 'npm'
     - run: npm ci
+    - name: Cache Chromium binaries
+      uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25
+      with:
+        path: ~/.cache/ms-playwright
+        key: playwright-ubuntu-24.04-${{ runner.arch }}-${{ hashFiles('package-lock.json') }}
     - run: node node_modules/playwright/cli.js install --with-deps chromium
     - run: node node_modules/eslint/bin/eslint.js .
     - run: npm run build

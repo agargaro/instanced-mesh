@@ -1,79 +1,77 @@
 ---
 name: run-benchmark
-description: Use when measuring performance, checking for a throughput/frame-time regression, or validating a refactoring or micro-optimization in this repository. Triggers include "benchmark", "bench", "performance", "regressione", "rallenta", "è più veloce", "misura le performance".
+description: Measure CPU performance in this repository, extend benchmark coverage, or check a throughput regression before and after a runtime change. Use for benchmarks, performance investigations, refactoring and micro-optimizations. GPU/frame-time investigations need separate browser measurements.
 ---
 
-# Run and extend benchmarks
+# Run and extend CPU benchmarks
 
-Performance is the primary goal of this library (see the "Performance first" section of `AGENTS.md`). Never claim faster/slower without measured before/after numbers.
+Read [benchmarks/README.md](../../../benchmarks/README.md) for the coverage matrix, controls, batch definitions, known unsupported paths and CI comparison contract. Follow `AGENTS.md`: performance claims require actual measurements; never commit, push or publish.
 
-## Scope: CPU micro-benchmarks only
+## Choose and validate the measurement
 
-The suite runs in Node via `vite-node` (so the library source, including `.glsl` chunks, loads without bundling) and only covers **CPU hot paths**:
+1. Identify the API and the work it actually performs. Only create a BVH variant if that call traverses or updates the BVH. Separate first-call initialization, repeatable calls, stationary writes, movement within a margin and relocation where relevant.
+2. Use deterministic, representative inputs. Include rotation, nonuniform scale, visibility/removal and workload sizes relevant to the change. Preserve identical fixtures and dependencies for baseline and candidate. Compare neither different task names nor different batch sizes.
+3. Keep the actual operation in the timed function. Use direct loops for batches of short calls; avoid an extra callback dispatch per instance. Very short single calls need batching to keep clock and harness overhead from dominating. Document what one batch means.
+4. Check observable results outside timing. Use independent references for culling, bounds, ray hits, sorting and LOD membership. A successful execution alone is insufficient; detect missing/duplicate IDs and incorrect ordering. Document known runtime defects and unsupported paths instead of bypassing them inside a benchmark.
 
-- `instances/addInstances`, `removeInstances`, `updateInstances`, `updateInstancesPosition` (with/without entities, with capacity growth);
-- `matrices/setMatrixAt`, `getMatrixAt`, `getPositionAt`, `resizeBuffers`;
-- `bvh/computeBVH`, BVH insert/delete/move;
-- `sorting/createRadixSort`;
-- CPU-only linear frustum culling and render-index updates using an index-array fixture.
+## Fixture lifecycle
 
-**Not benchmarked here:** GPU rendering, texture uploads, draw/skinning/LOD and browser frame rates. CPU frustum benchmarks use an index-array fixture and do not represent rendering performance. Validate GPU behavior manually in `examples/` on fixed hardware.
+Register tasks in `benchmarks/core/<topic>.bench.ts` and wire them into `benchmarks/index.ts`. The runner uses `FixtureBench`, with synchronous tasks and no async-detection invocation.
 
-## Run
+- Reads and bounded repeatable writes: create a fresh fixture in `beforeAll` for each warmup/run phase, dispose in `afterAll`.
+- Destructive operations: rebuild in `beforeEach`, validate and dispose in `afterEach`.
+- Reset accumulators, changing inputs and dirty flags outside timing. Avoid state or mutable target values leaking between tasks or phases.
+- Setup/reset and cleanup are excluded from reported latency. The iteration budget includes `beforeEach` setup plus timed work; cleanup is excluded. Minimum sample counts still apply. Allocation and GC can affect destructive tasks despite setup being untimed.
+- Use `createMesh`, `seedInstances`, `attachIndex` and reference checks where appropriate. The CPU index array is not a renderer; do not claim GPU timings from it.
 
-```bash
-npm run bench                      # all benchmarks, writes benchmarks/results.json
-BENCH_TIME=1000 BENCH_ITERATIONS=64 BENCH_COUNT=10000 npm run bench
-```
-
-- `BENCH_TIME` — time budget per task in ms (default 500).
-- `BENCH_ITERATIONS` — minimum iterations per task (default 32).
-- `BENCH_COUNT` — instance count per benchmark (default 1000).
-- `--output <path>` — where the JSON is written (default `benchmarks/results.json`, gitignored).
-
-Results are ops/sec (bigger is better). `range` is the relative margin of error; ignore differences smaller than a few percent. A run with a large `rme` is noisy — increase `BENCH_TIME`.
-
-## Add a benchmark
-
-Create `benchmarks/core/<topic>.bench.ts` exporting `register<topic>Benchmarks(bench: Bench): void`, then call it from `benchmarks/index.ts`.
+Example of a repeatable task with cleanup and validation:
 
 ```ts
 import { Bench } from 'tinybench';
 import { InstancedMesh2 } from '../../src/index.js';
-import { COUNT, createMesh, seedInstances } from '../shared.js';
+import { createMesh, seedInstances } from '../shared.js';
+import { verifyBounds } from '../verify.js';
 
 export function registerExampleBenchmarks(bench: Bench): void {
   let mesh: InstancedMesh2;
-
-  bench.add('topic/operation', () => {
-    mesh.operation();
-  }, {
-    beforeEach: () => { mesh = createMesh(COUNT, false); seedInstances(mesh); }
+  bench.add('example/computeBoundingBox', () => mesh.computeBoundingBox(), {
+    beforeAll: () => {
+      mesh = createMesh();
+      seedInstances(mesh);
+      mesh.computeBoundingBox();
+    },
+    afterAll: () => {
+      verifyBounds(mesh, 'box');
+      mesh.dispose();
+    }
   });
 }
 ```
 
-Rules:
+## Run and compare
 
-- State mutation must be isolated: rebuild the fixture in `beforeEach` (it runs before each iteration and is **not** timed). Never let a task accumulate state across iterations.
-- Use deterministic inputs so runs compare cleanly (see the seeded PRNG in `sorting.bench.ts` instead of `Math.random`). Note: `benchmarks/index.ts` writes JSON in the exact shape `github-action-benchmark` expects (`{ name, unit, value, range, extra }`) — keep it.
-- Keep the original call in the timed function. Do not move the measured work into `beforeEach`.
-- `benchmarks/**` is linted by `npm run lint` and excluded from the library build (only `src/**` is included in `tsconfig.build.json`).
+Use PowerShell in this workspace:
 
-## Before/after procedure
+```powershell
+$env:BENCH_COUNT = '10000'
+$env:BENCH_TIME = '500'
+$env:BENCH_ITERATIONS = '64'
+$env:BENCH_OUTPUT = 'benchmarks/before.json'
+npm run bench
+```
 
-1. Benchmark the baseline on the current code and save it: `npm run bench -- --output benchmarks/before.json`.
-2. Apply the change.
-3. Benchmark again: `npm run bench -- --output benchmarks/after.json`.
-4. Compare the same task names; report real numbers. If a change cannot be measured, prefer the simpler already-measured implementation.
+After the runtime change, keep the same suite, machine, dependencies and settings, set `BENCH_OUTPUT` to `benchmarks/results.json`, and run again. Run `node node_modules/vite-node/dist/cli.mjs --script benchmarks/compare-cli.ts` for an advisory single-pair comparison. When changing fixtures, use the new fixtures against both source revisions; old measurements are not comparable. CI archives the base source and overlays the PR benchmark suite.
 
-## CI
+For the failing gate, collect at least three independent pairs named `before-0.json`/`after-0.json` through `before-2.json`/`after-2.json`, alternating baseline/candidate, candidate/baseline, baseline/candidate. Set `BENCH_ROUNDS=3` and run the same comparator. Remove that environment variable for a single-pair comparison. Freeze benchmark files before collecting pairs: results record their hash, runtime versions, population, settings, uncertainty and sample counts. Mismatches or invalid results fail independently of performance.
 
-`.github/workflows/benchmark.yml` runs `npm run bench` on every PR and on `master`, then `benchmark-action/github-action-benchmark`:
+CI uses only 10,000 instances, with four disjoint `BENCH_SHARD` groups on separate PR runners and the complete suite on master. Preserve sequential base/candidate measurements within each job and complete suite coverage across groups. Small populations are local correctness checks, not a second CI performance population. Cache installed dependencies and browser binaries with version/platform keys; timing results from other runs are unsuitable for the paired gate. Use `BENCH_SHARD=all` locally for the full suite and set `BENCH_COUNT=10000` to match CI.
 
-- PRs compare their base revision and current code on the same runner with the same dependencies and benchmark suite;
-- baseline history is stored on the `gh-pages` branch under `bench/` (updated on push to `master`);
-- a baseline/current throughput ratio above 1.15 emits a warning in the PR check summary;
-- performance alerts warn without failing; benchmark errors or missing results fail the job.
+The default threshold is **1.10 times latency** (+10% time, approximately -9.09% throughput). A failing gate requires every paired conservative ratio to exceed it after accounting for both latency error margins. Uncertain slowdowns are warnings; a single pair cannot fail the performance gate. This screens noise but does not eliminate systematic runner effects.
 
-If a benchmark is inherently flaky, fix the fixture or raise the threshold rather than disabling the gate.
+If results are noisy, check fixture isolation and batch duration, increase `BENCH_TIME`, then repeat independent processes and an unchanged-source control. Do not raise thresholds or remove cases merely to make the gate pass. Keep coverage, builds and other CPU-intensive work separate from performance runs. Report machine, settings, batch definition, latency/throughput, error margins and limitations; claim no improvement when evidence is inconclusive.
+
+## Verify changes
+
+Run correctness smoke checks with populations 1 and 10000 (`BENCH_TIME=0`, `BENCH_ITERATIONS=2`, `BENCH_WARMUP_TIME=0`, `BENCH_WARMUP_ITERATIONS=1`). These are not performance measurements. Clear smoke overrides before measuring.
+
+Run `npm run lint`, `npx tsc -p tsconfig.benchmarks.json`, `npm run build`, `npm test`, `npm run test:types` and `npm run test:coverage`. Add meaningful regression checks for harness/comparator fixes. Finally run the actual benchmarks separately. Summarize outcomes and existing limitations without changing coverage exclusions or thresholds.

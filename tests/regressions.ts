@@ -1,7 +1,13 @@
 import assert from 'node:assert/strict';
 import { Box3, BoxGeometry, DataTexture, FloatType, Matrix4, MeshBasicMaterial, OrthographicCamera, PerspectiveCamera, Raycaster, RedFormat, ShaderChunk, Vector3, WebGLRenderer } from 'three';
 import { InstancedMesh2 } from '../src/index.js';
-import { compareResults } from '../benchmarks/compare.js';
+import { compareResults, compareRounds } from '../benchmarks/compare.js';
+import { FixtureBench } from '../benchmarks/harness.js';
+import { measurement } from '../benchmarks/results.js';
+import { verifyBounds, verifyBVHBounds, verifyCulling, verifyRayHits, verifySortedDepths } from '../benchmarks/verify.js';
+import { attachIndex } from '../benchmarks/shared.js';
+import { registerBenchmarks } from '../benchmarks/suite.js';
+import { BENCHMARK_SHARDS, benchmarkShard, selectBenchmarks } from '../benchmarks/shards.js';
 
 let passed = 0;
 function check(name: string, run: () => void): void {
@@ -162,10 +168,194 @@ check('benchmark comparison uses throughput and rejects missing or invalid resul
   const result = (name: string, value: number): { name: string; value: number; unit: string } => ({ name, value, unit: 'ops/sec' });
   assert.equal(compareResults([result('case', 100)], [result('case', 200)])[0].alert, false);
   assert.equal(compareResults([result('case', 100)], [result('case', 80)])[0].alert, true);
-  assert.equal(compareResults([result('case', 115)], [result('case', 100)])[0].alert, false);
+  assert.equal(compareResults([result('case', 110)], [result('case', 100)])[0].alert, false);
   assert.throws(() => compareResults([result('case', 100)], []));
   assert.throws(() => compareResults([result('case', 100)], [result('other', 100)]));
   assert.throws(() => compareResults([result('case', 100)], [result('case', Number.NaN)]));
+  assert.throws(() => compareResults([result('case', 100)], [{ ...result('case', 100), unit: 'ms' }]));
+  const reordered = compareResults([result('a', 100), result('b', 200)], [result('b', 200), result('a', 100)]);
+  assert.ok(reordered.every((entry) => entry.ratio === 1));
+});
+
+check('benchmark gate requires confirmed regression in every paired round', () => {
+  const result = (value: number, rme = 1): { name: string; value: number; unit: string; rme: number; count: number; context: string } => ({ name: 'case', value, unit: 'ops/sec', rme, count: 1000, context: 'same fixture and runtime' });
+  const base = [[result(100)], [result(101)], [result(99)]];
+  assert.equal(compareRounds(base, [[result(80)], [result(81)], [result(79)]])[0].confirmed, true);
+  assert.equal(compareRounds(base, [[result(80)], [result(100)], [result(79)]])[0].confirmed, false);
+  const noisy = compareRounds(base, [[result(80, 30)], [result(81, 30)], [result(79, 30)]])[0];
+  assert.equal(noisy.alert, true);
+  assert.equal(noisy.confirmed, false);
+  assert.equal(compareResults([{ name: 'case', value: 100, unit: 'ops/sec' }], [{ name: 'case', value: 80, unit: 'ops/sec' }])[0].confirmed, false);
+  assert.equal(compareRounds(base, [[result(200)], [result(200)], [result(200)]])[0].alert, false);
+  assert.throws(() => compareRounds(base.slice(0, 2), base.slice(0, 2)));
+  assert.throws(() => compareRounds(base, base.slice(0, 2)));
+  assert.throws(() => compareRounds(base, [[result(80)], [], [result(79)]]));
+  assert.throws(() => compareResults([result(100)], [result(80, -1)]));
+  assert.throws(() => compareResults([result(100)], [result(80, Infinity)]));
+  assert.throws(() => compareResults([result(100)], [{ ...result(80), count: 100 }]));
+  assert.throws(() => compareResults([result(100)], [{ ...result(100), context: 'different fixture' }]));
+  assert.throws(() => compareResults([result(100)], [{ ...result(100), context: undefined }]));
+  assert.throws(() => compareResults([result(100)], [result(80)], Number.NaN));
+  assert.throws(() => compareResults([result(100)], [result(80)], 1));
+  assert.throws(() => compareResults([result(100), result(100)], [result(80)]));
+  const missingMetadata = [[{ name: 'case', unit: 'ops/sec', value: 100 }]];
+  assert.throws(() => compareRounds([...missingMetadata, ...missingMetadata, ...missingMetadata], [...missingMetadata, ...missingMetadata, ...missingMetadata]));
+  const fourBase = Array.from({ length: 4 }, () => [result(100)]);
+  const fourAfter = [[result(80)], [result(80)], [result(100)], [result(100)]];
+  assert.equal(compareRounds(fourBase, fourAfter)[0].ratio, 1.125);
+  assert.equal(compareRounds(fourBase, fourAfter)[0].confirmed, false);
+  const drift = [[result(100)], [{ ...result(100), context: 'changed between rounds' }], [result(100)]];
+  assert.throws(() => compareRounds(drift, drift));
+  assert.equal(compareResults([result(100)], [result(50, 100)])[0].confirmed, false);
+});
+
+check('benchmark statistics reject nonfinite, empty and undersampled measurements', () => {
+  const valid = { mean: 2, rme: 1, samplesCount: 64 };
+  assert.equal(measurement('case', valid, 1000, 64).value, 500);
+  for (const mean of [0, -1, Infinity, Number.NaN]) assert.throws(() => measurement('case', { ...valid, mean }, 1000, 64));
+  for (const rme of [-1, Infinity, Number.NaN]) assert.throws(() => measurement('case', { ...valid, rme }, 1000, 64));
+  assert.throws(() => measurement('case', { ...valid, samplesCount: 63 }, 1000, 64));
+  assert.throws(() => measurement('case', valid, 0, 64));
+  assert.throws(() => measurement('case', valid, 1000, Number.NaN));
+});
+
+check('benchmark references detect corrupted bounds and radix permutations', () => {
+  const object = mesh(3);
+  object.addInstances(3, (entity, id) => entity.position.set(id * 3, 0, 0));
+  object.removeInstances(1);
+  object.computeBoundingBox();
+  verifyBounds(object, 'box');
+  object.boundingBox.max.x = 1;
+  assert.throws(() => verifyBounds(object, 'box'));
+  object.computeBoundingSphere();
+  verifyBounds(object, 'sphere');
+  object.boundingSphere.radius = Infinity;
+  assert.throws(() => verifyBounds(object, 'sphere'));
+  object.boundingSphere.radius = 0;
+  assert.throws(() => verifyBounds(object, 'sphere'));
+  object.computeBVH();
+  verifyBVHBounds(object);
+  object.bvh.nodes[0].box[0] = 100;
+  assert.throws(() => verifyBVHBounds(object));
+  const depths = new Float32Array([3, 1, 1]);
+  const sorted = [{ index: 1, depth: 1 }, { index: 2, depth: 1 }, { index: 0, depth: 3 }];
+  verifySortedDepths(sorted, depths, false);
+  assert.throws(() => verifySortedDepths([sorted[0], sorted[0], sorted[2]], depths, false));
+  assert.throws(() => verifySortedDepths(sorted.slice(1), depths, false));
+  assert.throws(() => verifySortedDepths(sorted, depths, true));
+  object.dispose();
+});
+
+check('benchmark references validate truly empty bounds, ray hits and sorting', () => {
+  const object = mesh(1);
+  object.addInstances(1);
+  object.removeInstances(0);
+  object.computeBoundingBox();
+  object.computeBoundingSphere();
+  verifyBounds(object, 'box');
+  verifyBounds(object, 'sphere');
+  object.boundingSphere.radius = 0;
+  assert.throws(() => verifyBounds(object, 'sphere'));
+  verifySortedDepths([], new Float32Array(), false);
+  verifyRayHits([], []);
+  object.dispose();
+});
+
+check('benchmark LOD reference detects incorrect membership with unchanged visible IDs', () => {
+  const object = mesh(1);
+  object.addInstances(1);
+  object.addLOD(new BoxGeometry(), new MeshBasicMaterial(), 5);
+  for (const level of object.LODinfo.objects) attachIndex(level);
+  const camera = new PerspectiveCamera(60, 1, 0.1, 100);
+  camera.position.z = 10;
+  camera.updateMatrixWorld();
+  object.performFrustumCulling(camera);
+  verifyCulling(object, camera, object.LODinfo.render);
+  object.LODinfo.render.levels[0].object.count = 1;
+  object.LODinfo.render.levels[1].object.count = 0;
+  object.LODinfo.render.count = [1, 0];
+  assert.throws(() => verifyCulling(object, camera, object.LODinfo.render));
+  object.dispose();
+});
+
+check('benchmark fixture budget includes setup but measured latency excludes it', () => {
+  let clock = 0;
+  let setups = 0;
+  let operations = 0;
+  let disposals = 0;
+  const bench = new FixtureBench({ time: 50, iterations: 1, warmup: false, now: () => clock }, () => clock);
+  bench.add('destructive', () => {
+    operations++;
+    clock += 5;
+  }, {
+    beforeEach: () => {
+      setups++;
+      clock += 20;
+    },
+    afterEach: () => {
+      disposals++;
+      clock += 100;
+    }
+  });
+  bench.runSync();
+  const result = bench.tasks[0].result;
+  assert.equal(result.state, 'completed');
+  if (result.state !== 'completed') throw new Error('Benchmark failed');
+  assert.equal(result.latency.mean, 5);
+  assert.equal(result.latency.samplesCount, 2);
+  assert.equal(setups, 2);
+  assert.equal(operations, 2);
+  assert.equal(disposals, 2);
+});
+
+check('benchmark minimum iterations survives an expensive fixture', () => {
+  let clock = 0;
+  const bench = new FixtureBench({ time: 1, iterations: 8, warmup: false, now: () => clock }, () => clock);
+  bench.add('expensive setup', () => {
+    clock += 1;
+  }, { beforeEach: () => {
+    clock += 1000;
+  } });
+  bench.runSync();
+  const result = bench.tasks[0].result;
+  assert.equal(result.state, 'completed');
+  if (result.state !== 'completed') throw new Error('Benchmark failed');
+  assert.equal(result.latency.samplesCount, 8);
+  assert.equal(result.latency.mean, 1);
+});
+
+check('benchmark shards partition the complete suite without dropped or duplicated tasks', () => {
+  const all = new FixtureBench({ warmup: false });
+  registerBenchmarks(all);
+  const expected = all.tasks.map((task) => task.name);
+  expected.sort((a, b) => a.localeCompare(b));
+  const actual: string[] = [];
+  for (const shard of BENCHMARK_SHARDS) {
+    const bench = new FixtureBench({ warmup: false });
+    registerBenchmarks(bench);
+    selectBenchmarks(bench, shard);
+    assert.ok(bench.tasks.length > 0);
+    actual.push(...bench.tasks.map((task) => task.name));
+  }
+  actual.sort((a, b) => a.localeCompare(b));
+  assert.deepEqual(actual, expected);
+  assert.equal(new Set(actual).size, expected.length);
+  assert.equal(benchmarkShard('matrices/getMatrixAt'), 'instances');
+  assert.equal(benchmarkShard('lod/getObjectLODIndex'), 'spatial');
+  assert.equal(benchmarkShard('bvh/query/raycast'), 'access');
+  assert.equal(benchmarkShard('bvh/computeBVH/sphere=false/margin=0'), 'lifecycle');
+});
+
+check('benchmark shard filters reject invalid groups and remove every excluded task', () => {
+  const bench = new FixtureBench({ warmup: false });
+  registerBenchmarks(bench);
+  selectBenchmarks(bench, 'instances', 'matrices/get');
+  const names = bench.tasks.map((task) => task.name);
+  names.sort((a, b) => a.localeCompare(b));
+  assert.deepEqual(names, ['matrices/getMatrixAt', 'matrices/getPositionAt']);
+  assert.throws(() => selectBenchmarks(bench, 'unknown'));
+  assert.throws(() => selectBenchmarks(bench, 'access'));
+  assert.throws(() => benchmarkShard('unknown/operation'));
 });
 
 console.log(`${passed} regression checks passed.`);
