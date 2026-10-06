@@ -42,3 +42,9 @@ Three independently warmed pairs used the same final source, fixtures, dependenc
 | matrices/getPositionAt | 107588 | 108202 | 0.996x | OK |
 | matrices/resizeBuffers (+50%) | 19986 | 19827 | 1.008x | OK |
 | matrices/updateMatrixWorld | 42103 | 41705 | 1.010x | OK |
+
+## Parallel CI validation
+
+The suite remains 187 scenarios, partitioned into instances (50), spatial (62), access (45) and lifecycle (30). Every group completed correctness smoke checks with populations 1 and 10,000. Regression checks verify complete, disjoint membership and reject invalid/empty selections. The complete suite also finished a separate 1,000-instance run with a 500 ms budget, minimum 64 samples and 100 ms/minimum-eight-sample warmup after adding the selector.
+
+The full browser suite, 18 Node regression checks, lint, library build and both type checks passed. Runtime coverage remains unchanged. The new PR workflow permits eight independently paired workers and primes an exact dependency cache in one preparation job; Chromium binaries are cached for browser tests. No hosted wall-time improvement is claimed before the new workflow has run, and no timing results are reused from a cache.

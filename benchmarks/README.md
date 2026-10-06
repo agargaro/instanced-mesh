@@ -43,6 +43,7 @@ Culling results are checked against independent three.js Frustum and transformed
 | BENCH_TIME | 500 | Per-task iteration budget, milliseconds; includes beforeEach setup when present |
 | BENCH_ITERATIONS | 32 | Minimum timed sample count |
 | BENCH_FILTER | unset | Substring of task name; unmatched filter fails |
+| BENCH_SHARD | all | One of instances, spatial, access, lifecycle, or the complete suite (all) |
 | BENCH_OUTPUT | results.json | Output path; `--output` also supported |
 | BENCH_WARMUP_TIME | 100 | Warmup budget per task, milliseconds |
 | BENCH_WARMUP_ITERATIONS | 8 | Minimum warmup sample count |
@@ -61,7 +62,11 @@ npm run bench
 
 ## PR comparison
 
-CI measures 1,000 and 10,000 instances. Each population compares three independent process pairs on the same runner, using PR fixtures and dependencies for both the PR and its base source. Pair order alternates base/PR, PR/base, base/PR. Each process performs its own warmup. Matrix jobs and master workflow runs are serialized to keep benchmark-history pushes from racing. A newer run supersedes an obsolete PR run.
+CI measures 1,000 and 10,000 instances. PRs partition the full suite into four groups per population, allowing eight jobs to run on separate runners. Each job compares three independent process pairs on its own runner, using PR fixtures and dependencies for both the PR and its base source. Pair order alternates base/PR, PR/base, base/PR. Processes within a pair are sequential and each performs its own warmup. Master runs the complete suite per population with serialized jobs and workflow runs to keep history pushes from racing. A newer run supersedes an obsolete PR run.
+
+The groups are `instances` (instances, matrices, entities), `spatial` (culling, LOD, sorting and BVH frustum queries), `access` (attributes, uniforms, morph/skeleton writes, bounds, mesh raycasting and BVH ray/box queries), and `lifecycle` (construction, BVH updates and texture queues). Regression checks verify that their union contains every registered task exactly once. Unknown groups, unassigned task areas and empty selections fail. `BENCH_FILTER` further narrows the chosen group. All tasks still run on every PR; grouping does not select tests by changed functions.
+
+One preparation job installs/restores dependencies and runs regressions/type checks. Installed dependencies are cached by Ubuntu version, architecture, exact Node version, package manifests and installation mode; workers restore that exact key, with a clean install fallback if unavailable. npm downloads are cached as well. The browser-test workflow caches Chromium binaries by platform and lockfile and still installs required system dependencies. Timing results are always measured afresh; master history and uploaded JSON artifacts are not used as cached PR baselines.
 
 The threshold is **1.10 times latency**, i.e. +10% time or approximately -9.09% throughput. It is not a 10% throughput-loss threshold. The summary reports the median of paired latency ratios and median batch throughputs.
 

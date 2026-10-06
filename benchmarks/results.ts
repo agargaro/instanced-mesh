@@ -11,7 +11,7 @@ export function benchmarkContext(time: number, iterations: number, warmupTime: n
     hash.update(readFileSync(fileURLToPath(new URL(file.replaceAll('\\', '/'), directory))));
   }
   const version = (name: string): string => JSON.parse(readFileSync(new URL(`../node_modules/${name}/package.json`, import.meta.url), 'utf8')).version;
-  return JSON.stringify({ fixtureHash: hash.digest('hex'), node: process.version, platform: process.platform, arch: process.arch, three: version('three'), tinybench: version('tinybench'), time, iterations, warmupTime, warmupIterations });
+  return JSON.stringify({ fixtureHash: hash.digest('hex'), node: process.version, platform: process.platform, arch: process.arch, three: version('three'), tinybench: version('tinybench'), time, iterations, warmupTime, warmupIterations, shard: process.env.BENCH_SHARD ?? 'all' });
 }
 
 export function measurement(name: string, latency: { mean: number; rme: number; samplesCount: number }, count: number, minimumSamples: number): { name: string; unit: string; value: number; latency: number; rme: number; samples: number; count: number; range: string } {

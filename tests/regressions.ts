@@ -6,6 +6,8 @@ import { FixtureBench } from '../benchmarks/harness.js';
 import { measurement } from '../benchmarks/results.js';
 import { verifyBounds, verifyBVHBounds, verifyCulling, verifyRayHits, verifySortedDepths } from '../benchmarks/verify.js';
 import { attachIndex } from '../benchmarks/shared.js';
+import { registerBenchmarks } from '../benchmarks/suite.js';
+import { BENCHMARK_SHARDS, benchmarkShard, selectBenchmarks } from '../benchmarks/shards.js';
 
 let passed = 0;
 function check(name: string, run: () => void): void {
@@ -320,6 +322,36 @@ check('benchmark minimum iterations survives an expensive fixture', () => {
   if (result.state !== 'completed') throw new Error('Benchmark failed');
   assert.equal(result.latency.samplesCount, 8);
   assert.equal(result.latency.mean, 1);
+});
+
+check('benchmark shards partition the complete suite without dropped or duplicated tasks', () => {
+  const all = new FixtureBench({ warmup: false });
+  registerBenchmarks(all);
+  const expected = all.tasks.map((task) => task.name).sort();
+  const actual: string[] = [];
+  for (const shard of BENCHMARK_SHARDS) {
+    const bench = new FixtureBench({ warmup: false });
+    registerBenchmarks(bench);
+    selectBenchmarks(bench, shard);
+    assert.ok(bench.tasks.length > 0);
+    actual.push(...bench.tasks.map((task) => task.name));
+  }
+  assert.deepEqual(actual.sort(), expected);
+  assert.equal(new Set(actual).size, expected.length);
+  assert.equal(benchmarkShard('matrices/getMatrixAt'), 'instances');
+  assert.equal(benchmarkShard('lod/getObjectLODIndex'), 'spatial');
+  assert.equal(benchmarkShard('bvh/query/raycast'), 'access');
+  assert.equal(benchmarkShard('bvh/computeBVH/sphere=false/margin=0'), 'lifecycle');
+});
+
+check('benchmark shard filters reject invalid groups and remove every excluded task', () => {
+  const bench = new FixtureBench({ warmup: false });
+  registerBenchmarks(bench);
+  selectBenchmarks(bench, 'instances', 'matrices/get');
+  assert.deepEqual(bench.tasks.map((task) => task.name).sort(), ['matrices/getMatrixAt', 'matrices/getPositionAt']);
+  assert.throws(() => selectBenchmarks(bench, 'unknown'));
+  assert.throws(() => selectBenchmarks(bench, 'access'));
+  assert.throws(() => benchmarkShard('unknown/operation'));
 });
 
 console.log(`${passed} regression checks passed.`);

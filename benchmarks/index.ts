@@ -1,15 +1,8 @@
 import { writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { FixtureBench } from './harness.js';
-import { registerBVHBenchmarks } from './core/bvh.bench.js';
-import { registerFrustumBenchmarks } from './core/frustum.bench.js';
-import { registerInstancesBenchmarks } from './core/instances.bench.js';
-import { registerMatricesBenchmarks } from './core/matrices.bench.js';
-import { registerSortingBenchmarks } from './core/sorting.bench.js';
-import { registerAccessBenchmarks, registerBoundsAndRayBenchmarks } from './core/access.bench.js';
-import { registerEntityBenchmarks } from './core/entity.bench.js';
-import { registerLifecycleBenchmarks } from './core/lifecycle.bench.js';
-import { registerSupplementalBenchmarks } from './core/supplemental.bench.js';
+import { registerBenchmarks } from './suite.js';
+import { selectBenchmarks } from './shards.js';
 import { benchmarkContext, measurement } from './results.js';
 
 const time = Number(process.env.BENCH_TIME ?? 500);
@@ -33,23 +26,8 @@ const bench = new FixtureBench({
   retainSamples: false
 });
 
-registerInstancesBenchmarks(bench);
-registerMatricesBenchmarks(bench);
-registerBVHBenchmarks(bench);
-registerFrustumBenchmarks(bench);
-registerSortingBenchmarks(bench);
-registerAccessBenchmarks(bench);
-registerBoundsAndRayBenchmarks(bench);
-registerEntityBenchmarks(bench);
-registerLifecycleBenchmarks(bench);
-registerSupplementalBenchmarks(bench);
-
-if (process.env.BENCH_FILTER) {
-  for (const task of bench.tasks) {
-    if (!task.name.includes(process.env.BENCH_FILTER)) bench.remove(task.name);
-  }
-}
-if (bench.tasks.length === 0) throw new Error('No benchmarks selected');
+registerBenchmarks(bench);
+selectBenchmarks(bench, process.env.BENCH_SHARD ?? 'all', process.env.BENCH_FILTER ?? '');
 const context = benchmarkContext(time, iterations, warmupTime, warmupIterations);
 
 await bench.run();
