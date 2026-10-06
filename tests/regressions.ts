@@ -327,7 +327,8 @@ check('benchmark minimum iterations survives an expensive fixture', () => {
 check('benchmark shards partition the complete suite without dropped or duplicated tasks', () => {
   const all = new FixtureBench({ warmup: false });
   registerBenchmarks(all);
-  const expected = all.tasks.map((task) => task.name).sort();
+  const expected = all.tasks.map((task) => task.name);
+  expected.sort((a, b) => a.localeCompare(b));
   const actual: string[] = [];
   for (const shard of BENCHMARK_SHARDS) {
     const bench = new FixtureBench({ warmup: false });
@@ -336,7 +337,8 @@ check('benchmark shards partition the complete suite without dropped or duplicat
     assert.ok(bench.tasks.length > 0);
     actual.push(...bench.tasks.map((task) => task.name));
   }
-  assert.deepEqual(actual.sort(), expected);
+  actual.sort((a, b) => a.localeCompare(b));
+  assert.deepEqual(actual, expected);
   assert.equal(new Set(actual).size, expected.length);
   assert.equal(benchmarkShard('matrices/getMatrixAt'), 'instances');
   assert.equal(benchmarkShard('lod/getObjectLODIndex'), 'spatial');
@@ -348,7 +350,9 @@ check('benchmark shard filters reject invalid groups and remove every excluded t
   const bench = new FixtureBench({ warmup: false });
   registerBenchmarks(bench);
   selectBenchmarks(bench, 'instances', 'matrices/get');
-  assert.deepEqual(bench.tasks.map((task) => task.name).sort(), ['matrices/getMatrixAt', 'matrices/getPositionAt']);
+  const names = bench.tasks.map((task) => task.name);
+  names.sort((a, b) => a.localeCompare(b));
+  assert.deepEqual(names, ['matrices/getMatrixAt', 'matrices/getPositionAt']);
   assert.throws(() => selectBenchmarks(bench, 'unknown'));
   assert.throws(() => selectBenchmarks(bench, 'access'));
   assert.throws(() => benchmarkShard('unknown/operation'));

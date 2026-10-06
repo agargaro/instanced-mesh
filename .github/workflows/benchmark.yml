@@ -7,8 +7,7 @@ on:
     branches: ["*"]
 
 permissions:
-  contents: write
-  pull-requests: write
+  contents: read
 
 concurrency:
   group: benchmark-${{ github.event.pull_request.number || github.ref }}
@@ -51,6 +50,9 @@ jobs:
     name: CPU micro-benchmarks (${{ matrix.count }} instances, ${{ matrix.shard }})
     needs: prepare
     runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+      pull-requests: write
     strategy:
       fail-fast: false
       max-parallel: ${{ github.event_name == 'pull_request' && 8 || 1 }}
