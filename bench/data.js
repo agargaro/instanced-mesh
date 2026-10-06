@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1790855629637,
+  "lastUpdate": 1791272110357,
   "repoUrl": "https://github.com/agargaro/instanced-mesh",
   "entries": {
     "Benchmark": [
@@ -136,6 +136,163 @@ window.BENCHMARK_DATA = {
             "range": "±0.09%",
             "unit": "ops/sec",
             "extra": "11887 samples, 0.0421 ms/op"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "devgargaro@gmail.com",
+            "name": "Andrea Gargaro",
+            "username": "agargaro"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "65654c78f02b694a239ae5a33c2ca71ef23bdabd",
+          "message": "Add real WebGL browser tests and PR coverage checks (#168)\n\n* Add real WebGL browser tests and PR coverage checks\n\n* Address PR analysis warnings and cover historical rendering bugs",
+          "timestamp": "2026-10-06T09:33:59+02:00",
+          "tree_id": "9af41ec72b8ecfe7eabcbe0b74d24f3fe9da4fdc",
+          "url": "https://github.com/agargaro/instanced-mesh/commit/65654c78f02b694a239ae5a33c2ca71ef23bdabd"
+        },
+        "date": 1791272109884,
+        "tool": "customBiggerIsBetter",
+        "benches": [
+          {
+            "name": "instances/addInstances",
+            "value": 26010.8676,
+            "range": "±0.21%",
+            "unit": "ops/sec",
+            "extra": "12695 samples, 0.0394 ms/op"
+          },
+          {
+            "name": "instances/addInstances (growth)",
+            "value": 22162.9199,
+            "range": "±0.39%",
+            "unit": "ops/sec",
+            "extra": "9668 samples, 0.0517 ms/op"
+          },
+          {
+            "name": "instances/addInstances (entities)",
+            "value": 12581.0757,
+            "range": "±0.21%",
+            "unit": "ops/sec",
+            "extra": "6236 samples, 0.0802 ms/op"
+          },
+          {
+            "name": "instances/removeInstances",
+            "value": 105150.345,
+            "range": "±0.11%",
+            "unit": "ops/sec",
+            "extra": "50840 samples, 0.0098 ms/op"
+          },
+          {
+            "name": "instances/updateInstances",
+            "value": 47597.1016,
+            "range": "±0.22%",
+            "unit": "ops/sec",
+            "extra": "22820 samples, 0.0219 ms/op"
+          },
+          {
+            "name": "instances/updateInstancesPosition",
+            "value": 109383.5092,
+            "range": "±0.19%",
+            "unit": "ops/sec",
+            "extra": "50070 samples, 0.0100 ms/op"
+          },
+          {
+            "name": "instances/updateInstances (entities)",
+            "value": 51725.6153,
+            "range": "±0.14%",
+            "unit": "ops/sec",
+            "extra": "25438 samples, 0.0197 ms/op"
+          },
+          {
+            "name": "matrices/setMatrixAt",
+            "value": 54278.0761,
+            "range": "±0.15%",
+            "unit": "ops/sec",
+            "extra": "26369 samples, 0.0190 ms/op"
+          },
+          {
+            "name": "matrices/getMatrixAt",
+            "value": 51789.6051,
+            "range": "±0.15%",
+            "unit": "ops/sec",
+            "extra": "25253 samples, 0.0198 ms/op"
+          },
+          {
+            "name": "matrices/getPositionAt",
+            "value": 106239.2625,
+            "range": "±0.11%",
+            "unit": "ops/sec",
+            "extra": "51511 samples, 0.0097 ms/op"
+          },
+          {
+            "name": "matrices/resizeBuffers (+50%)",
+            "value": 136983.7695,
+            "range": "±0.22%",
+            "unit": "ops/sec",
+            "extra": "43961 samples, 0.0114 ms/op"
+          },
+          {
+            "name": "bvh/computeBVH",
+            "value": 3928.3164,
+            "range": "±1.24%",
+            "unit": "ops/sec",
+            "extra": "1248 samples, 0.4008 ms/op"
+          },
+          {
+            "name": "bvh/addInstances (insert)",
+            "value": 772.0069,
+            "range": "±2.06%",
+            "unit": "ops/sec",
+            "extra": "337 samples, 1.4859 ms/op"
+          },
+          {
+            "name": "bvh/removeInstances (delete)",
+            "value": 14316.6821,
+            "range": "±0.31%",
+            "unit": "ops/sec",
+            "extra": "6101 samples, 0.0820 ms/op"
+          },
+          {
+            "name": "bvh/updateInstancesPosition (move)",
+            "value": 965.5248,
+            "range": "±1.40%",
+            "unit": "ops/sec",
+            "extra": "443 samples, 1.1349 ms/op"
+          },
+          {
+            "name": "bvh/setMatrixAt (move)",
+            "value": 22138.4588,
+            "range": "±0.25%",
+            "unit": "ops/sec",
+            "extra": "10649 samples, 0.0470 ms/op"
+          },
+          {
+            "name": "frustum/linearCulling",
+            "value": 40328.3719,
+            "range": "±0.14%",
+            "unit": "ops/sec",
+            "extra": "19865 samples, 0.0252 ms/op"
+          },
+          {
+            "name": "frustum/updateIndexArray",
+            "value": 420191.1696,
+            "range": "±0.05%",
+            "unit": "ops/sec",
+            "extra": "205174 samples, 0.0024 ms/op"
+          },
+          {
+            "name": "sorting/createRadixSort",
+            "value": 40827.3521,
+            "range": "±0.07%",
+            "unit": "ops/sec",
+            "extra": "20311 samples, 0.0246 ms/op"
           }
         ]
       }
