@@ -55,9 +55,9 @@ jobs:
       pull-requests: write
     strategy:
       fail-fast: false
-      max-parallel: ${{ github.event_name == 'pull_request' && 8 || 1 }}
+      max-parallel: ${{ github.event_name == 'pull_request' && 4 || 1 }}
       matrix:
-        count: [1000, 10000]
+        count: [10000]
         shard: ${{ fromJSON(github.event_name == 'pull_request' && '["instances", "spatial", "access", "lifecycle"]' || '["all"]') }}
     env:
       BENCH_COUNT: ${{ matrix.count }}

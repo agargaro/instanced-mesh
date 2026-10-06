@@ -53,7 +53,7 @@ export function registerExampleBenchmarks(bench: Bench): void {
 Use PowerShell in this workspace:
 
 ```powershell
-$env:BENCH_COUNT = '1000'
+$env:BENCH_COUNT = '10000'
 $env:BENCH_TIME = '500'
 $env:BENCH_ITERATIONS = '64'
 $env:BENCH_OUTPUT = 'benchmarks/before.json'
@@ -64,7 +64,7 @@ After the runtime change, keep the same suite, machine, dependencies and setting
 
 For the failing gate, collect at least three independent pairs named `before-0.json`/`after-0.json` through `before-2.json`/`after-2.json`, alternating baseline/candidate, candidate/baseline, baseline/candidate. Set `BENCH_ROUNDS=3` and run the same comparator. Remove that environment variable for a single-pair comparison. Freeze benchmark files before collecting pairs: results record their hash, runtime versions, population, settings, uncertainty and sample counts. Mismatches or invalid results fail independently of performance.
 
-CI uses four disjoint `BENCH_SHARD` groups per population on separate runners. Preserve sequential base/candidate measurements within each job and complete suite coverage across groups. Cache installed dependencies and browser binaries with version/platform keys; timing results from other runs are unsuitable for the paired gate. Use `BENCH_SHARD=all` locally for the full suite.
+CI uses only 10,000 instances, with four disjoint `BENCH_SHARD` groups on separate PR runners and the complete suite on master. Preserve sequential base/candidate measurements within each job and complete suite coverage across groups. Small populations are local correctness checks, not a second CI performance population. Cache installed dependencies and browser binaries with version/platform keys; timing results from other runs are unsuitable for the paired gate. Use `BENCH_SHARD=all` locally for the full suite and set `BENCH_COUNT=10000` to match CI.
 
 The default threshold is **1.10 times latency** (+10% time, approximately -9.09% throughput). A failing gate requires every paired conservative ratio to exceed it after accounting for both latency error margins. Uncertain slowdowns are warnings; a single pair cannot fail the performance gate. This screens noise but does not eliminate systematic runner effects.
 
