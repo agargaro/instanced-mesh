@@ -1,3 +1,7 @@
 node_modules
 dist
 benchmarks/*.json
+coverage
+.npm-cache
+debug.log
+.vitest

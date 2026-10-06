@@ -1,31 +1,54 @@
-# This workflow will do a clean installation of node dependencies, cache/restore them, build the source code and run tests across different versions of node
-# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-nodejs
-
 name: Node.js CI
 
 on:
   push:
-    branches: [ "master" ]
+    branches: [master]
   pull_request:
-    branches: [ "*" ]
+    types: [opened, synchronize, reopened, ready_for_review]
+  merge_group:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build:
-
+    name: Tests (Node 24, Chromium)
     runs-on: ubuntu-24.04
-
-    strategy:
-      matrix:
-        node-version: [24.x]
-        # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
+    timeout-minutes: 20
 
     steps:
     - uses: actions/checkout@v5
-    - name: Use Node.js ${{ matrix.node-version }}
+    - name: Use Node.js
       uses: actions/setup-node@v5
       with:
-        node-version: ${{ matrix.node-version }}
+        node-version: 24.x
         cache: 'npm'
     - run: npm ci
-    - run: npm run build --if-present
+    - run: node node_modules/playwright/cli.js install --with-deps chromium
+    - run: node node_modules/eslint/bin/eslint.js .
+    - run: npm run build
+    - run: npm run test:types
+    - run: npm run test:coverage
     - run: node node_modules/vite-node/dist/cli.mjs tests/regressions.ts
+    - name: Upload coverage report
+      if: always()
+      uses: actions/upload-artifact@v7
+      with:
+        name: coverage
+        path: coverage/
+        if-no-files-found: ignore
+        retention-days: 14
+    - name: Upload rendering failure screenshots
+      if: failure()
+      uses: actions/upload-artifact@v7
+      with:
+        name: rendering-failures
+        path: .vitest/attachments/
+        include-hidden-files: true
+        if-no-files-found: ignore
+        retention-days: 14

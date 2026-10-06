@@ -24,9 +24,24 @@ npm run start   # Vite dev server for the examples app
 npm run build   # vite build + declarations -> dist/
 npm run lint    # eslint --fix
 npm run bench   # CPU micro-benchmarks -> benchmarks/results.json
+npm test        # Chromium rendering tests + existing Node regressions
+npm run test:types # Type-check browser tests and their configuration
+npm run test:coverage # Browser suite coverage -> coverage/
 ```
 
-Run regression checks with `node node_modules/vite-node/dist/cli.mjs tests/regressions.ts`. `npm test` remains a placeholder. Verification includes the regression checks, `npm run lint`, `npm run build`, and `npm run bench` for performance-sensitive changes. Regression rendering checks use a minimal renderer stub; validate actual GPU rendering with the examples. `examples/` are linted but not type-checked.
+Install Chromium for rendering tests with `npx playwright install chromium`. See [tests/README.md](tests/README.md) for the test workflow. Run existing regression checks alone with `node node_modules/vite-node/dist/cli.mjs tests/regressions.ts`. Verification includes `npm test`, `npm run test:types`, `npm run test:coverage`, `npm run lint`, `npm run build`, and `npm run bench` for performance-sensitive changes. The browser suite uses a real `WebGLRenderer`; legacy regression rendering checks still use a minimal renderer stub. `examples/` are linted but not type-checked.
+
+## Testing requirements
+
+- Every PR that adds functionality or changes runtime behavior must include automated tests for that behavior. Tests are part of the implementation and must not be deferred to a follow-up PR.
+- Every bug fix must include a regression test that reproduces the bug and fails without the fix.
+- Cover normal behavior, edge cases, and relevant error paths with meaningful assertions on observable results. Do not add tests that merely execute code to increase coverage.
+- Target 100% line, statement, function, and branch coverage for all executable TypeScript under `src/`, including files not imported by tests. New and changed behavior must be fully covered while the existing coverage backlog is addressed.
+- Do not exclude executable source, lower coverage thresholds, or add coverage-ignore directives to satisfy coverage checks. Declaration-only files are outside runtime coverage; GLSL behavior requires rendering tests.
+- Use deterministic inputs and fixed seeds for randomized tests. Use real three.js objects and a real `WebGLRenderer` in browser tests for rendering behavior. Do not mock renderer patches, shader compilation, or WebGL uploads in new rendering tests.
+- Changes to frustum culling, sorting, or BVH must cover boundary cases and compare results with an independent reference. Include empty inputs, hidden/removed/reused instances, transformed bounds, camera changes, duplicate depths, and relevant update sequences. Sorting changes must also verify GPU index order and LOD membership; BVH changes must compare ray hits with ordinary three.js meshes.
+- Run the automated test suite, test type-check, and coverage report after changes, alongside lint and build. Include validation results in the PR description. The initial browser suite reports coverage; enforce the final 100% thresholds as the existing coverage backlog is completed.
+- Keep performance benchmarks separate from coverage-instrumented test runs. Performance-sensitive changes still require the benchmark workflow and measured before/after results.
 
 ## Conventions
 
