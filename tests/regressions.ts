@@ -210,11 +210,11 @@ check('benchmark gate requires confirmed regression in every paired round', () =
 check('benchmark statistics reject nonfinite, empty and undersampled measurements', () => {
   const valid = { mean: 2, rme: 1, samplesCount: 64 };
   assert.equal(measurement('case', valid, 1000, 64).value, 500);
-  for (const mean of [0, -1, Infinity, NaN]) assert.throws(() => measurement('case', { ...valid, mean }, 1000, 64));
-  for (const rme of [-1, Infinity, NaN]) assert.throws(() => measurement('case', { ...valid, rme }, 1000, 64));
+  for (const mean of [0, -1, Infinity, Number.NaN]) assert.throws(() => measurement('case', { ...valid, mean }, 1000, 64));
+  for (const rme of [-1, Infinity, Number.NaN]) assert.throws(() => measurement('case', { ...valid, rme }, 1000, 64));
   assert.throws(() => measurement('case', { ...valid, samplesCount: 63 }, 1000, 64));
   assert.throws(() => measurement('case', valid, 0, 64));
-  assert.throws(() => measurement('case', valid, 1000, NaN));
+  assert.throws(() => measurement('case', valid, 1000, Number.NaN));
 });
 
 check('benchmark references detect corrupted bounds and radix permutations', () => {

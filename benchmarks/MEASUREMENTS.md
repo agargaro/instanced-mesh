@@ -1,6 +1,6 @@
 # Local benchmark validation
 
-2026-10-06. Windows x64, Node 22.18.0, AMD Ryzen 9 5950X. CPU measurements only.
+2026-10-06. Windows x64, Node 22.18.0, AMD Ryzen 9 5950X. CPU measurements only. The tables and unchanged-source control below were collected for commit 342c690, before the subsequent static-analysis cleanup of registration and reference-check helpers. The cleanup preserved task names, populations and timed operations; all 187 cases, both smoke populations, tests, coverage, types, lint and build passed again. The full 500 ms/minimum-64-sample run also completed after cleanup. Fixture context hashes change with benchmark source edits, so old JSON is not reused in the paired gate.
 
 The reviewed suite completed all 187 distinct scenarios with 1,000 instances, a 500 ms iteration budget, 64 minimum timed samples, 100 ms warmup and eight minimum warmup samples. Correctness smoke checks completed with one and 10,000 instances. Browser tests, coverage and builds ran separately from performance measurements.
 

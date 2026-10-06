@@ -42,7 +42,7 @@ jobs:
         run: node node_modules/vite-node/dist/cli.mjs tests/regressions.ts
 
       - name: Type-check benchmark fixtures
-        run: npx tsc -p tsconfig.benchmarks.json
+        run: node node_modules/typescript/bin/tsc -p tsconfig.benchmarks.json
 
       - name: Run alternating base and PR benchmarks on this runner
         if: github.event_name == 'pull_request'

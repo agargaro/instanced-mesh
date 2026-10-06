@@ -45,7 +45,7 @@ registerLifecycleBenchmarks(bench);
 registerSupplementalBenchmarks(bench);
 
 if (process.env.BENCH_FILTER) {
-  for (const task of [...bench.tasks]) {
+  for (const task of bench.tasks) {
     if (!task.name.includes(process.env.BENCH_FILTER)) bench.remove(task.name);
   }
 }

@@ -1,7 +1,7 @@
 import { Bench, BenchOptions, Fn, FnOptions } from 'tinybench';
 
 export class FixtureBench extends Bench {
-  private clock: () => number;
+  private readonly clock: () => number;
 
   constructor(options: BenchOptions, clock: () => number = (): number => performance.now()) {
     super(options);

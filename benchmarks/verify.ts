@@ -58,6 +58,20 @@ export function verifyBVHBounds(mesh: InstancedMesh2): void {
 }
 
 export function verifyCulling(mesh: InstancedMesh2, camera: Camera, lod?: LODRenderList, cameraLOD = camera): void {
+  const expected = referenceVisibleIDs(mesh, camera);
+  const actual = lod
+    ? lod.levels.flatMap(({ object }, i) => {
+        assert.equal(object.count, lod.count[i], 'LOD count does not match render list');
+        return Array.from(object.instanceIndex.array.slice(0, object.count));
+      })
+    : Array.from(mesh.instanceIndex.array.slice(0, mesh.count));
+  assert.equal(actual.length, expected.size, 'Unexpected visible count');
+  assert.deepEqual(new Set(actual), expected, 'Unexpected visible IDs');
+  if (lod) verifyLODMembership(mesh, lod, cameraLOD);
+  else verifyNativeOrder(mesh, camera, actual);
+}
+
+function referenceVisibleIDs(mesh: InstancedMesh2, camera: Camera): Set<number> {
   const frustum = new Frustum().setFromProjectionMatrix(new Matrix4().multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse).multiply(mesh.matrixWorld));
   const matrix = new Matrix4();
   const box = new Box3();
@@ -71,46 +85,53 @@ export function verifyCulling(mesh: InstancedMesh2, camera: Camera, lod?: LODRen
       : frustum.intersectsSphere(sphere.copy(mesh.geometry.boundingSphere).applyMatrix4(matrix));
     if (visible && (!mesh.onFrustumEnter || mesh.onFrustumEnter(i, camera))) expected.add(i);
   }
-  const actual = lod
-    ? lod.levels.flatMap(({ object }, i) => {
-        assert.equal(object.count, lod.count[i], 'LOD count does not match render list');
-        return Array.from(object.instanceIndex.array.slice(0, object.count));
-      })
-    : Array.from(mesh.instanceIndex.array.slice(0, mesh.count));
-  assert.equal(actual.length, expected.size, 'Unexpected visible count');
-  assert.deepEqual(new Set(actual), expected, 'Unexpected visible IDs');
-  if (lod) {
-    const cameraPosition = new Vector3().setFromMatrixPosition(cameraLOD.matrixWorld).applyMatrix4(mesh.matrixWorld.clone().invert());
-    const distanceLOD = (mesh as any)._useDistanceForLOD;
-    const projection = Math.tan((cameraLOD as PerspectiveCamera).fov * Math.PI / 360);
-    for (let levelIndex = 0; levelIndex < lod.levels.length; levelIndex++) {
-      const object = lod.levels[levelIndex].object;
-      for (const id of object.instanceIndex.array.slice(0, object.count)) {
-        matrix.fromArray(mesh.matricesTexture.image.data, id * 16);
-        sphere.copy(mesh.geometry.boundingSphere).applyMatrix4(matrix);
-        const distance = sphere.center.distanceTo(cameraPosition);
-        const metric = distanceLOD ? distance : sphere.radius / (distance * projection);
-        let expectedLevel = 0;
-        for (let i = 1; i < lod.levels.length; i++) {
-          const level = lod.levels[i];
-          if (distanceLOD ? distance * distance >= level.metricSquared * (1 - level.hysteresis) : metric <= level.metric) expectedLevel = i;
-        }
-        assert.equal(levelIndex, expectedLevel, 'Incorrect LOD membership for instance ' + id);
-      }
+  return expected;
+}
+
+function referenceLODLevel(lod: LODRenderList, distanceLOD: boolean, distance: number, radius: number, projection: number): number {
+  const metric = radius / (distance * projection);
+  let result = 0;
+  for (let i = 1; i < lod.levels.length; i++) {
+    const level = lod.levels[i];
+    const selected = distanceLOD
+      ? distance * distance >= level.metricSquared * (1 - level.hysteresis)
+      : metric <= level.metric;
+    if (selected) result = i;
+  }
+  return result;
+}
+
+function verifyLODMembership(mesh: InstancedMesh2, lod: LODRenderList, cameraLOD: Camera): void {
+  const matrix = new Matrix4();
+  const sphere = new Sphere();
+  const cameraPosition = new Vector3().setFromMatrixPosition(cameraLOD.matrixWorld).applyMatrix4(mesh.matrixWorld.clone().invert());
+  const distanceLOD = (mesh as any)._useDistanceForLOD;
+  const projection = Math.tan((cameraLOD as PerspectiveCamera).fov * Math.PI / 360);
+  for (let levelIndex = 0; levelIndex < lod.levels.length; levelIndex++) {
+    const object = lod.levels[levelIndex].object;
+    for (const id of object.instanceIndex.array.slice(0, object.count)) {
+      matrix.fromArray(mesh.matricesTexture.image.data, id * 16);
+      sphere.copy(mesh.geometry.boundingSphere).applyMatrix4(matrix);
+      const distance = sphere.center.distanceTo(cameraPosition);
+      const expectedLevel = referenceLODLevel(lod, distanceLOD, distance, sphere.radius, projection);
+      assert.equal(levelIndex, expectedLevel, 'Incorrect LOD membership for instance ' + id);
     }
   }
-  if (!lod && mesh.sortObjects && !mesh.customSort) {
-    const view = new Matrix4().multiplyMatrices(camera.matrixWorldInverse, mesh.matrixWorld);
-    let previous = (mesh.material as any).transparent ? Infinity : -Infinity;
-    for (const id of actual) {
-      matrix.fromArray(mesh.matricesTexture.image.data, id * 16);
-      const elements = matrix.elements;
-      const v = view.elements;
-      const depth = -(v[2] * elements[12] + v[6] * elements[13] + v[10] * elements[14] + v[14]);
-      if ((mesh.material as any).transparent) assert.ok(depth <= previous + 1e-6);
-      else assert.ok(depth >= previous - 1e-6);
-      previous = depth;
-    }
+}
+
+function verifyNativeOrder(mesh: InstancedMesh2, camera: Camera, actual: number[]): void {
+  const matrix = new Matrix4();
+  if (!mesh.sortObjects || mesh.customSort) return;
+  const view = new Matrix4().multiplyMatrices(camera.matrixWorldInverse, mesh.matrixWorld);
+  let previous = (mesh.material as any).transparent ? Infinity : -Infinity;
+  for (const id of actual) {
+    matrix.fromArray(mesh.matricesTexture.image.data, id * 16);
+    const elements = matrix.elements;
+    const v = view.elements;
+    const depth = -(v[2] * elements[12] + v[6] * elements[13] + v[10] * elements[14] + v[14]);
+    if ((mesh.material as any).transparent) assert.ok(depth <= previous + 1e-6);
+    else assert.ok(depth >= previous - 1e-6);
+    previous = depth;
   }
 }
 

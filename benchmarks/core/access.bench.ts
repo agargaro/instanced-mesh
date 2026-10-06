@@ -177,6 +177,12 @@ export function registerAccessBenchmarks(bench: Bench): void {
 }
 
 export function registerBoundsAndRayBenchmarks(bench: Bench): void {
+  registerBoundsBenchmarks(bench);
+  registerRaycastingBenchmarks(bench);
+  registerBVHQueryBenchmarks(bench);
+}
+
+function registerBoundsBenchmarks(bench: Bench): void {
   let mesh: InstancedMesh2;
   for (const name of ['computeBoundingBox', 'computeBoundingSphere'] as const) {
     bench.add(`bounds/${name}/first-call`, () => mesh[name](), {
@@ -210,14 +216,14 @@ export function registerBoundsAndRayBenchmarks(bench: Bench): void {
       });
     }
   }
+}
+
+function registerRaycastingBenchmarks(bench: Bench): void {
+  let mesh: InstancedMesh2;
   const hits: Intersection[] = [];
   let expectedHits: Intersection[];
   const ray = new Raycaster(new Vector3(0, 0, 300), new Vector3(0, 0, -1), 0, 1000);
-  const box = new Box3(new Vector3(-5, -5, -5), new Vector3(50, 50, 50));
-  let intersections = 0;
-  const visit = (): void => {
-    intersections++;
-  };
+
   for (const bvh of [false, true]) {
     for (const hit of [false, true]) {
       bench.add(`raycast/${bvh ? 'bvh' : 'linear'}/${hit ? 'hit' : 'miss'}`, () => mesh.raycast(ray, hits), {
@@ -238,6 +244,16 @@ export function registerBoundsAndRayBenchmarks(bench: Bench): void {
       });
     }
   }
+}
+
+function registerBVHQueryBenchmarks(bench: Bench): void {
+  let mesh: InstancedMesh2;
+  const ray = new Raycaster(new Vector3(0, 0, 300), new Vector3(0, 0, -1), 0, 1000);
+  const box = new Box3(new Vector3(-5, -5, -5), new Vector3(50, 50, 50));
+  let intersections = 0;
+  const visit = (): void => {
+    intersections++;
+  };
   for (const name of ['raycast', 'intersectBox'] as const) {
     let expectedCandidates: Set<number>;
     bench.add('bvh/query/' + name, () => {

@@ -5,12 +5,19 @@ import { attachIndex, COUNT, createMesh, seedInstances } from '../shared.js';
 import { verifyCulling } from '../verify.js';
 
 export function registerFrustumBenchmarks(bench: Bench): void {
-  let mesh: InstancedMesh2;
   const camera = new PerspectiveCamera(60, 1, 0.1, 1000);
   const shadow = new PerspectiveCamera(60, 1, 0.1, 1000);
   shadow.position.set(64, 64, 300);
   shadow.lookAt(64, 64, 0);
   shadow.updateMatrixWorld();
+  registerVisibilityBenchmarks(bench, camera);
+  registerTransformedBenchmark(bench, camera);
+  registerLODBenchmarks(bench, camera, shadow);
+  registerIndexBenchmarks(bench, camera);
+}
+
+function registerVisibilityBenchmarks(bench: Bench, camera: PerspectiveCamera): void {
+  let mesh: InstancedMesh2;
   for (const bvh of [false, true]) {
     for (const visibility of ['all', 'partial', 'none', 'sparse']) {
       for (const sorting of ['none', 'opaque', 'transparent', 'radix']) {
@@ -45,6 +52,10 @@ export function registerFrustumBenchmarks(bench: Bench): void {
       }
     }
   }
+}
+
+function registerTransformedBenchmark(bench: Bench, camera: PerspectiveCamera): void {
+  let mesh: InstancedMesh2;
   bench.add('frustum/transformed/nonCentered/callback', () => mesh.performFrustumCulling(camera), {
     beforeAll: () => {
       mesh = new InstancedMesh2(new BoxGeometry().translate(3, 2, 1), new MeshBasicMaterial(), { capacity: COUNT });
@@ -66,42 +77,49 @@ export function registerFrustumBenchmarks(bench: Bench): void {
       mesh.dispose();
     }
   });
+}
+
+function registerLODBenchmarks(bench: Bench, camera: PerspectiveCamera, shadow: PerspectiveCamera): void {
+  let mesh: InstancedMesh2;
   for (const bvh of [false, true]) {
     for (const distance of [false, true]) {
-      for (const sorting of [false]) {
-        for (const shadows of [false, true]) {
-          bench.add(`lod/${bvh ? 'bvh' : 'linear'}/${distance ? 'distance' : 'screen'}/sort=${sorting}/shadow=${shadows}`, () => {
+      const sorting = false;
+      for (const shadows of [false, true]) {
+        bench.add(`lod/${bvh ? 'bvh' : 'linear'}/${distance ? 'distance' : 'screen'}/sort=${sorting}/shadow=${shadows}`, () => {
+          mesh.performFrustumCulling(shadows ? shadow : camera, camera);
+        }, {
+          beforeAll: () => {
+            mesh = new InstancedMesh2(new BoxGeometry(), new MeshBasicMaterial(), { capacity: COUNT, useDistanceForLOD: distance });
+            seedInstances(mesh);
+            mesh.geometry.computeBoundingSphere();
+            mesh.addLOD(mesh.geometry.clone(), mesh.material, distance ? 180 : 0.02);
+            mesh.addLOD(mesh.geometry.clone(), mesh.material, distance ? 270 : 0.005);
+            mesh.addShadowLOD(mesh.geometry, distance ? 0 : Infinity);
+            mesh.addShadowLOD(mesh.LODinfo.objects[2].geometry, distance ? 220 : 0.01);
+            for (const object of mesh.LODinfo.objects) attachIndex(object);
+            mesh.sortObjects = sorting;
+            camera.position.set(64, 64, 300);
+            camera.lookAt(0, 0, 0);
+            camera.fov = 60;
+            camera.updateProjectionMatrix();
+            camera.updateMatrixWorld();
+            if (bvh) mesh.computeBVH();
             mesh.performFrustumCulling(shadows ? shadow : camera, camera);
-          }, {
-            beforeAll: () => {
-              mesh = new InstancedMesh2(new BoxGeometry(), new MeshBasicMaterial(), { capacity: COUNT, useDistanceForLOD: distance });
-              seedInstances(mesh);
-              mesh.geometry.computeBoundingSphere();
-              mesh.addLOD(mesh.geometry.clone(), mesh.material, distance ? 180 : 0.02);
-              mesh.addLOD(mesh.geometry.clone(), mesh.material, distance ? 270 : 0.005);
-              mesh.addShadowLOD(mesh.geometry, distance ? 0 : Infinity);
-              mesh.addShadowLOD(mesh.LODinfo.objects[2].geometry, distance ? 220 : 0.01);
-              for (const object of mesh.LODinfo.objects) attachIndex(object);
-              mesh.sortObjects = sorting;
-              camera.position.set(64, 64, 300);
-              camera.lookAt(0, 0, 0);
-              camera.fov = 60;
-              camera.updateProjectionMatrix();
-              camera.updateMatrixWorld();
-              if (bvh) mesh.computeBVH();
-              mesh.performFrustumCulling(shadows ? shadow : camera, camera);
-            },
-            afterAll: () => {
-              verifyCulling(mesh, shadows ? shadow : camera, shadows ? mesh.LODinfo.shadowRender : mesh.LODinfo.render, camera);
-              for (const object of mesh.LODinfo.objects) object.geometry.dispose();
-              (mesh.material as MeshBasicMaterial).dispose();
-              mesh.dispose();
-            }
-          });
-        }
+          },
+          afterAll: () => {
+            verifyCulling(mesh, shadows ? shadow : camera, shadows ? mesh.LODinfo.shadowRender : mesh.LODinfo.render, camera);
+            for (const object of mesh.LODinfo.objects) object.geometry.dispose();
+            (mesh.material as MeshBasicMaterial).dispose();
+            mesh.dispose();
+          }
+        });
       }
     }
   }
+}
+
+function registerIndexBenchmarks(bench: Bench, camera: PerspectiveCamera): void {
+  let mesh: InstancedMesh2;
   for (const dirty of [false, true]) {
     bench.add(`frustum/updateIndexArray/dirty=${dirty}`, () => {
       for (let i = 0; i < (dirty ? 1 : COUNT); i++) mesh.updateIndexArray();
