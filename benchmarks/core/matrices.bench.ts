@@ -14,11 +14,12 @@ export function registerMatricesBenchmarks(bench: Bench): void {
       mesh.setMatrixAt(i, _matrix);
     }
   }, {
-    beforeEach: () => {
+    beforeAll: () => {
       mesh = createMesh(COUNT, false);
       seedInstances(mesh);
       _matrix.identity();
-    }
+    },
+    afterAll: () => mesh.dispose()
   });
 
   bench.add('matrices/getMatrixAt', () => {
@@ -26,10 +27,11 @@ export function registerMatricesBenchmarks(bench: Bench): void {
       mesh.getMatrixAt(i, _matrix);
     }
   }, {
-    beforeEach: () => {
+    beforeAll: () => {
       mesh = createMesh(COUNT, false);
       seedInstances(mesh);
-    }
+    },
+    afterAll: () => mesh.dispose()
   });
 
   bench.add('matrices/getPositionAt', () => {
@@ -37,10 +39,11 @@ export function registerMatricesBenchmarks(bench: Bench): void {
       mesh.getPositionAt(i, _position);
     }
   }, {
-    beforeEach: () => {
+    beforeAll: () => {
       mesh = createMesh(COUNT, false);
       seedInstances(mesh);
-    }
+    },
+    afterAll: () => mesh.dispose()
   });
 
   bench.add('matrices/resizeBuffers (+50%)', () => {
@@ -49,6 +52,7 @@ export function registerMatricesBenchmarks(bench: Bench): void {
     beforeEach: () => {
       mesh = createMesh(COUNT, false);
       seedInstances(mesh);
-    }
+    },
+    afterEach: () => mesh.dispose()
   });
 }

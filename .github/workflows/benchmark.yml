@@ -10,10 +10,21 @@ permissions:
   contents: write
   pull-requests: write
 
+concurrency:
+  group: benchmark-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   benchmark:
-    name: CPU micro-benchmarks
+    name: CPU micro-benchmarks (${{ matrix.count }} instances)
     runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      max-parallel: 1
+      matrix:
+        count: [1000, 10000]
+    env:
+      BENCH_COUNT: ${{ matrix.count }}
     steps:
       - uses: actions/checkout@v5
         with:
@@ -30,20 +41,38 @@ jobs:
       - name: Check regressions
         run: node node_modules/vite-node/dist/cli.mjs tests/regressions.ts
 
-      - name: Run baseline benchmarks on this runner
+      - name: Type-check benchmark fixtures
+        run: npx tsc -p tsconfig.benchmarks.json
+
+      - name: Run alternating base and PR benchmarks on this runner
         if: github.event_name == 'pull_request'
         env:
           BASE_REVISION: ${{ github.event.pull_request.base.sha }}
           BENCH_TIME: 500
+          BENCH_ITERATIONS: 64
         run: |
           baseline_dir="$(mktemp -d "$RUNNER_TEMP/instanced-mesh-base.XXXXXX")"
           git archive "$BASE_REVISION" | tar -x -C "$baseline_dir"
           cp -R benchmarks/. "$baseline_dir/benchmarks/"
           ln -s "$GITHUB_WORKSPACE/node_modules" "$baseline_dir/node_modules"
-          cd "$baseline_dir"
-          BENCH_OUTPUT="$GITHUB_WORKSPACE/benchmarks/before.json" node "$GITHUB_WORKSPACE/node_modules/vite-node/dist/cli.mjs" benchmarks/index.ts
+          run_base() {
+            (cd "$baseline_dir" && BENCH_OUTPUT="$GITHUB_WORKSPACE/benchmarks/before-$1.json" node "$GITHUB_WORKSPACE/node_modules/vite-node/dist/cli.mjs" benchmarks/index.ts)
+          }
+          run_current() {
+            BENCH_OUTPUT="$GITHUB_WORKSPACE/benchmarks/after-$1.json" node node_modules/vite-node/dist/cli.mjs benchmarks/index.ts
+          }
+          for round in 0 1 2; do
+            if [ "$((round % 2))" -eq 0 ]; then
+              run_base "$round"
+              run_current "$round"
+            else
+              run_current "$round"
+              run_base "$round"
+            fi
+          done
 
       - name: Run benchmarks
+        if: github.event_name == 'push'
         run: npm run bench
         env:
           BENCH_TIME: 500
@@ -79,11 +108,11 @@ jobs:
         with:
           tool: customBiggerIsBetter
           output-file-path: benchmarks/results.json
-          benchmark-data-dir-path: bench
+          benchmark-data-dir-path: bench/${{ matrix.count }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
           auto-push: true
           skip-fetch-gh-pages: ${{ steps.history.outputs.exists == 'false' }}
-          alert-threshold: "115%"
+          alert-threshold: "110%"
           comment-on-alert: true
           fail-on-alert: false
           summary-always: true
@@ -91,3 +120,14 @@ jobs:
       - name: Compare PR against its base on this runner
         if: github.event_name == 'pull_request'
         run: node node_modules/vite-node/dist/cli.mjs --script benchmarks/compare-cli.ts
+        env:
+          BENCH_ROUNDS: 3
+          BENCH_THRESHOLD: 1.1
+
+      - name: Upload benchmark measurements
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cpu-benchmarks-${{ matrix.count }}
+          path: benchmarks/*.json
+          if-no-files-found: error
